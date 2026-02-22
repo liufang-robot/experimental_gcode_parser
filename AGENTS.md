@@ -33,4 +33,7 @@ Implement a C++ library that parses G-code text/file into an AST + diagnostics.
   - How to reproduce locally (commands)
 - Every feature PR must include evidence of passing `./dev/check.sh` and list
   new tests plus SPEC sections covered.
+- Before starting implementation, the agent must run the OODA flow:
+  pick from `BACKLOG.md`, align priority with `ROADMAP.md`, and follow
+  `OODA.md` (Observe/Orient/Decide/Act, merge policy, and definition of done).
 - Prefer small PRs / small diffs.

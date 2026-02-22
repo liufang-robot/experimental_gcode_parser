@@ -36,6 +36,7 @@ How to reproduce locally (commands):
 - Added `ROADMAP.md` with milestone-based direction and exit criteria.
 - Added `BACKLOG.md` with prioritized tasks, acceptance criteria, and task template.
 - Added `OODA.md` with loop rules, merge policy, and definition of done.
+- Updated `AGENTS.md` to require agent use of `BACKLOG.md`, `ROADMAP.md`, and `OODA.md` before implementation starts.
 
 SPEC sections / tests:
 - SPEC: Section 6 (Testing Expectations) alignment and process enforcement
