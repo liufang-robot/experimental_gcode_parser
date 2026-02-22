@@ -1,0 +1,98 @@
+program
+line 1
+  block_delete: false
+  line_number: none
+  word G=1 raw=G1 at 1:1
+  word Z=-2 raw=Z-2 at 1:4
+  word F=40 raw=F40 at 1:8
+line 2
+  block_delete: false
+  line_number: none
+  word G=1 raw=G1 at 2:1
+  word X=100 raw=X100 at 2:4
+  word Y=100 raw=Y100 at 2:9
+  word Z=200 raw=Z200 at 2:14
+line 3
+  block_delete: false
+  line_number: none
+  word G=1 raw=G1 at 3:1
+  word AP=90 raw=AP=90 at 3:4 eq
+  word RP=10 raw=RP=10 at 3:10 eq
+  word F=40 raw=F40 at 3:16
+line 4
+  block_delete: false
+  line_number: none
+  word G=1 raw=G1 at 4:1
+  word G=94 raw=G94 at 4:4
+  word X=100 raw=X100 at 4:8
+  word Y=20 raw=Y20 at 4:13
+  word Z=30 raw=Z30 at 4:17
+  word A=40 raw=A40 at 4:21
+  word F=100 raw=F100 at 4:25
+line 5
+  block_delete: false
+  line_number: none
+  comment raw=; Mixed modes should error at 5:1
+line 6
+  block_delete: false
+  line_number: none
+  word G=1 raw=G1 at 6:1
+  word X=10 raw=X10 at 6:4
+  word AP=90 raw=AP=90 at 6:8 eq
+  word RP=10 raw=RP=10 at 6:14 eq
+line 7
+  block_delete: false
+  line_number: 30 at 7:1
+  word G=2 raw=G2 at 7:5
+  word X=115 raw=X115 at 7:8
+  word Y=113.3 raw=Y113.3 at 7:13
+  word I=AC(90) raw=I=AC(90) at 7:20 eq
+  word J=AC(70) raw=J=AC(70) at 7:29 eq
+line 8
+  block_delete: false
+  line_number: 30 at 8:1
+  word G=2 raw=G2 at 8:5
+  word X=115 raw=X115 at 8:8
+  word Y=113.3 raw=Y113.3 at 8:13
+  word CR=-50 raw=CR=-50 at 8:20 eq
+line 9
+  block_delete: false
+  line_number: 30 at 9:1
+  word G=2 raw=G2 at 9:5
+  word AR=269.31 raw=AR=269.31 at 9:8 eq
+  word I=-43 raw=I-43 at 9:18
+  word J=25.52 raw=J25.52 at 9:23
+line 10
+  block_delete: false
+  line_number: 30 at 10:1
+  word G=2 raw=G2 at 10:5
+  word AR=269.31 raw=AR=269.31 at 10:8 eq
+  word X=115 raw=X115 at 10:18
+  word Y=113.3 raw=Y113.3 at 10:23
+line 11
+  block_delete: false
+  line_number: none
+  word G=2 raw=G2 at 11:1
+  word AP=90 raw=AP=90 at 11:4 eq
+  word RP=10 raw=RP=10 at 11:10 eq
+line 12
+  block_delete: false
+  line_number: none
+  word G=2 raw=G2 at 12:1
+  word CIP raw=CIP at 12:4
+  word X=10 raw=X10 at 12:8
+  word Y=5 raw=Y5 at 12:12
+  word Z=0 raw=Z0 at 12:15
+  word I1=AC(1) raw=I1=AC(1) at 12:18 eq
+  word J1=AC(2) raw=J1=AC(2) at 12:27 eq
+  word K1=AC(3) raw=K1=AC(3) at 12:36 eq
+line 13
+  block_delete: false
+  line_number: none
+  word G=2 raw=G2 at 13:1
+  word CT raw=CT at 13:4
+  word X=10 raw=X10 at 13:7
+  word Y=5 raw=Y5 at 13:11
+  word Z=0 raw=Z0 at 13:14
+diagnostics
+  error at 6:8: mixed cartesian and polar words in G1 line

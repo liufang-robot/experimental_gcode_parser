@@ -1,0 +1,109 @@
+# SPEC — CNC G-code Parser Library (v0.1)
+
+## 1. Purpose
+Parse G-code text (string or file) into a simple, syntax-level JSON model
+focused on G1 (linear) and G2/G3 (circular) motion commands.
+
+v0.1 is **syntax-only** (no execution, no full modal semantics).
+
+## 2. Input / Output
+
+### 2.1 Input
+- UTF-8 text
+- Line endings: `\n` or `\r\n`
+- Tabs are whitespace
+- Comments:
+  - Semicolon: `; ...` to end-of-line
+  - Parentheses: `( ... )` with no nesting
+
+### 2.2 Output (Library + CLI)
+The parser returns:
+
+- AST (program → lines → items)
+- Diagnostics with line/column (1-based)
+
+The `gcode_parse` CLI prints a stable, line-oriented debug format of the AST
+followed by diagnostics. This format is used by golden tests.
+
+AST shape (v0.1):
+- Program: ordered list of `Line`
+- Line:
+  - `block_delete` (optional `/`)
+  - `line_number` (`N` + integer)
+  - `items` (ordered `Word` or `Comment`)
+- Word:
+  - `text` (raw token)
+  - `head` (uppercased word head, e.g. `G`, `X`, `AP`, `I1`, `CIP`)
+  - `value` (optional string; numeric or `AC(...)`)
+  - `has_equal` (whether `=` was present)
+- Comment:
+  - `text` (raw token)
+
+## 3. Supported Syntax (from testdata)
+
+### 3.1 Line structure
+- Optional block delete: `/`
+- Optional line number: `N` + integer
+- One motion command per line (GGroup1)
+
+### 3.2 Numbers
+- Integers: `0`, `10`, `-3`, `+7`
+- Decimals: `1.0`, `-2.5`, `.5`, `5.`, `+.25`
+- No scientific notation in v0.1
+
+### 3.3 G1 (linear interpolation)
+- Motion word: `G1`
+- Cartesian endpoint: `X`, `Y`, `Z`, optional `A`
+- Polar endpoint: `AP=...` and `RP=...`
+- Feedrate: `F...`
+- Mixed Cartesian + polar in one line is an error
+
+Examples (from `testdata/g1_samples.ngc`):
+```
+G1 Z-2 F40
+G1 X100 Y100 Z200
+G1 AP=90 RP=10 F40
+G1 G94 X100 Y20 Z30 A40 F100
+G1 X10 AP=90 RP=10   ; mixed modes should error
+```
+
+### 3.4 G2 / G3 (circular interpolation)
+- Motion words: `G2` (CW), `G3` (CCW)
+- Cartesian endpoint: `X`, `Y`, `Z`
+- Center point: `I`, `J`, `K`
+  - Optional `=` (e.g., `I-43` or `I=-43`)
+  - Absolute form with `AC(...)` (e.g., `I=AC(90)`)
+- Radius: `CR=...`
+- Opening angle: `AR=...`
+- Polar endpoint: `AP=... RP=...`
+- Intermediate point: `CIP` with `I1/J1/K1`
+  - Optional `=` and `AC(...)`
+- Tangential circle: `CT` with `X/Y/Z`
+
+Examples (from `testdata/g2g3_samples.ngc`):
+```
+N30 G2 X115 Y113.3 I=AC(90) J=AC(70)
+N30 G2 X115 Y113.3 CR=-50
+N30 G2 AR=269.31 I-43 J25.52
+N30 G2 AR=269.31 X115 Y113.3
+G2 AP=90 RP=10
+G2 CIP X10 Y5 Z0 I1=AC(1) J1=AC(2) K1=AC(3)
+G2 CT X10 Y5 Z0
+```
+
+## 4. Non-goals (v0.1)
+- Full modal group validation beyond GGroup1 single-motion rule
+- Units/distance-mode state
+- Full RS274NGC expressions/macros
+- Subprograms and flow control
+
+## 5. Diagnostics (v0.1)
+- Syntax errors reported by the lexer/parser with line/column.
+- Semantic errors:
+  - Mixed Cartesian (`X/Y/Z/A`) + polar (`AP/RP`) words in a `G1` line.
+  - Multiple motion commands (`G1/G2/G3`) in a single line.
+
+## 6. Testing Expectations
+- Golden tests for all examples in `SPEC.md`.
+- Property/fuzz testing: parser must never crash, hang, or use unbounded memory.
+- Regression tests: every fixed bug must get a test that fails first, then passes.

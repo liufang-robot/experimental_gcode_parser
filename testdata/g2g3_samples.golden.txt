@@ -1,0 +1,57 @@
+program
+line 1
+  block_delete: false
+  line_number: 30 at 1:1
+  word G=2 raw=G2 at 1:5
+  word X=115 raw=X115 at 1:8
+  word Y=113.3 raw=Y113.3 at 1:13
+  word I=AC(90) raw=I=AC(90) at 1:20 eq
+  word J=AC(70) raw=J=AC(70) at 1:29 eq
+line 2
+  block_delete: false
+  line_number: 30 at 2:1
+  word G=2 raw=G2 at 2:5
+  word X=115 raw=X115 at 2:8
+  word Y=113.3 raw=Y113.3 at 2:13
+  word CR=-50 raw=CR=-50 at 2:20 eq
+line 3
+  block_delete: false
+  line_number: 30 at 3:1
+  word G=2 raw=G2 at 3:5
+  word AR=269.31 raw=AR=269.31 at 3:8 eq
+  word I=-43 raw=I-43 at 3:18
+  word J=25.52 raw=J25.52 at 3:23
+line 4
+  block_delete: false
+  line_number: 30 at 4:1
+  word G=2 raw=G2 at 4:5
+  word AR=269.31 raw=AR=269.31 at 4:8 eq
+  word X=115 raw=X115 at 4:18
+  word Y=113.3 raw=Y113.3 at 4:23
+line 5
+  block_delete: false
+  line_number: none
+  word G=2 raw=G2 at 5:1
+  word AP=90 raw=AP=90 at 5:4 eq
+  word RP=10 raw=RP=10 at 5:10 eq
+line 6
+  block_delete: false
+  line_number: none
+  word G=2 raw=G2 at 6:1
+  word CIP raw=CIP at 6:4
+  word X=10 raw=X10 at 6:8
+  word Y=5 raw=Y5 at 6:12
+  word Z=0 raw=Z0 at 6:15
+  word I1=AC(1) raw=I1=AC(1) at 6:18 eq
+  word J1=AC(2) raw=J1=AC(2) at 6:27 eq
+  word K1=AC(3) raw=K1=AC(3) at 6:36 eq
+line 7
+  block_delete: false
+  line_number: none
+  word G=2 raw=G2 at 7:1
+  word CT raw=CT at 7:4
+  word X=10 raw=X10 at 7:7
+  word Y=5 raw=Y5 at 7:11
+  word Z=0 raw=Z0 at 7:14
+diagnostics
+  none
