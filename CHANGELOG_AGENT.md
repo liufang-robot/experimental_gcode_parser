@@ -18,6 +18,7 @@ How to reproduce locally (commands):
 ## 2026-02-22 (follow-up)
 - Ran `./dev/check.sh`, fixed `clang-format` violations in parser/test sources.
 - Updated sanitizer test invocation to set `ASAN_OPTIONS=detect_leaks=0` for environments where LeakSanitizer is blocked by ptrace.
+- Updated `CMakeLists.txt` to read `ANTLR4_RUNTIME_INCLUDE_DIR` and `ANTLR4_RUNTIME_LIB` from environment variables, matching CI configuration.
 
 SPEC sections / tests:
 - SPEC: Section 6 (Testing Expectations)
