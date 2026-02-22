@@ -19,6 +19,7 @@ How to reproduce locally (commands):
 - Ran `./dev/check.sh`, fixed `clang-format` violations in parser/test sources.
 - Updated sanitizer test invocation to set `ASAN_OPTIONS=detect_leaks=0` for environments where LeakSanitizer is blocked by ptrace.
 - Updated `CMakeLists.txt` to read `ANTLR4_RUNTIME_INCLUDE_DIR` and `ANTLR4_RUNTIME_LIB` from environment variables, matching CI configuration.
+- Reordered `./dev/check.sh` so `cmake --build` runs before `clang-tidy`, ensuring generated ANTLR headers exist for tidy analysis.
 
 SPEC sections / tests:
 - SPEC: Section 6 (Testing Expectations)

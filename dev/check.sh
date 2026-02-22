@@ -24,13 +24,13 @@ clang-format --dry-run -Werror "${format_targets[@]}"
 echo "==> cmake configure (build)"
 cmake -S "$ROOT_DIR" -B "$ROOT_DIR/build"
 
+echo "==> cmake build"
+cmake --build "$ROOT_DIR/build" -j
+
 echo "==> clang-tidy"
 for file in "${format_targets[@]}"; do
   clang-tidy -p "$ROOT_DIR/build" "$file"
 done
-
-echo "==> cmake build"
-cmake --build "$ROOT_DIR/build" -j
 
 echo "==> ctest"
 ctest --test-dir "$ROOT_DIR/build" --output-on-failure
