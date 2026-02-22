@@ -14,10 +14,17 @@ jobs:
       - name: Install dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y antlr4 clang-format clang-tidy cmake ninja-build libantlr4-runtime-dev
+          sudo apt-get install -y curl default-jre-headless clang-format clang-tidy cmake ninja-build libantlr4-runtime-dev
+
+      - name: Install ANTLR tool (4.10.1)
+        run: |
+          mkdir -p .tools
+          curl -fsSL -o .tools/antlr-4.10.1-complete.jar https://www.antlr.org/download/antlr-4.10.1-complete.jar
 
       - name: Dev check
         env:
+          ANTLR4_EXECUTABLE: ${{ github.workspace }}/dev/antlr4.sh
+          ANTLR4_JAR: ${{ github.workspace }}/.tools/antlr-4.10.1-complete.jar
           ANTLR4_RUNTIME_INCLUDE_DIR: /usr/include/antlr4-runtime
           ANTLR4_RUNTIME_LIB: /usr/lib/x86_64-linux-gnu/libantlr4-runtime.so
         run: |
