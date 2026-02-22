@@ -14,3 +14,17 @@ Known limitations:
 
 How to reproduce locally (commands):
 - `./dev/check.sh`
+
+## 2026-02-22 (follow-up)
+- Ran `./dev/check.sh`, fixed `clang-format` violations in parser/test sources.
+- Updated sanitizer test invocation to set `ASAN_OPTIONS=detect_leaks=0` for environments where LeakSanitizer is blocked by ptrace.
+
+SPEC sections / tests:
+- SPEC: Section 6 (Testing Expectations)
+- Tests: `./dev/check.sh` including normal and sanitizer `ctest`
+
+Known limitations:
+- Leak detection is disabled during sanitizer `ctest` in `./dev/check.sh`; dedicated leak checks should run in a compatible environment.
+
+How to reproduce locally (commands):
+- `./dev/check.sh`

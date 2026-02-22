@@ -51,7 +51,9 @@ std::string format(const ParseResult &result) {
     out << "  none\n";
   } else {
     for (const auto &diag : result.diagnostics) {
-      out << "  " << (diag.severity == Diagnostic::Severity::Error ? "error" : "warning")
+      out << "  "
+          << (diag.severity == Diagnostic::Severity::Error ? "error"
+                                                           : "warning")
           << " at ";
       writeLocation(out, diag.location);
       out << ": " << diag.message << "\n";

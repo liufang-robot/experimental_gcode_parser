@@ -45,4 +45,4 @@ echo "==> cmake build (sanitizers)"
 cmake --build "$ROOT_DIR/build-sanitize" -j
 
 echo "==> ctest (sanitizers)"
-ctest --test-dir "$ROOT_DIR/build-sanitize" --output-on-failure
+ASAN_OPTIONS=detect_leaks=0 ctest --test-dir "$ROOT_DIR/build-sanitize" --output-on-failure

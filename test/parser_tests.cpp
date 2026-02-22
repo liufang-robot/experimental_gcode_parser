@@ -15,7 +15,8 @@ struct TestFailure {
 };
 
 bool expectEqual(const std::string &label, const std::string &actual,
-                 const std::string &expected, std::vector<TestFailure> &failures) {
+                 const std::string &expected,
+                 std::vector<TestFailure> &failures) {
   if (actual == expected) {
     return true;
   }
@@ -41,8 +42,8 @@ bool runGolden(const std::filesystem::path &input_path,
   auto expected = readFile(golden_path);
   auto result = gcode::parse(input);
   auto actual = gcode::format(result);
-  return expectEqual("golden " + input_path.filename().string(), actual, expected,
-                     failures);
+  return expectEqual("golden " + input_path.filename().string(), actual,
+                     expected, failures);
 }
 
 } // namespace
@@ -55,8 +56,8 @@ int main() {
 
   runGolden(testdata / "g1_samples.ngc", testdata / "g1_samples.golden.txt",
             failures);
-  runGolden(testdata / "g2g3_samples.ngc",
-            testdata / "g2g3_samples.golden.txt", failures);
+  runGolden(testdata / "g2g3_samples.ngc", testdata / "g2g3_samples.golden.txt",
+            failures);
   runGolden(testdata / "sample1.ngc", testdata / "sample1.golden.txt",
             failures);
 

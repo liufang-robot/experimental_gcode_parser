@@ -22,8 +22,9 @@ Location locationFromToken(const antlr4::Token *token) {
 }
 
 std::string toUpper(std::string value) {
-  std::transform(value.begin(), value.end(), value.begin(),
-                 [](unsigned char c) { return static_cast<char>(std::toupper(c)); });
+  std::transform(
+      value.begin(), value.end(), value.begin(),
+      [](unsigned char c) { return static_cast<char>(std::toupper(c)); });
   return value;
 }
 
@@ -46,8 +47,8 @@ WordParts splitWordText(const std::string &text) {
   }
 
   auto is_value_char = [](char c) {
-    return std::isdigit(static_cast<unsigned char>(c)) || c == '+' || c == '-' ||
-           c == '.';
+    return std::isdigit(static_cast<unsigned char>(c)) || c == '+' ||
+           c == '-' || c == '.';
   };
 
   for (size_t i = 1; i < text.size(); ++i) {
@@ -64,8 +65,7 @@ WordParts splitWordText(const std::string &text) {
 
 class DiagnosticErrorListener : public antlr4::BaseErrorListener {
 public:
-  explicit DiagnosticErrorListener(std::vector<Diagnostic> *out)
-      : out_(out) {}
+  explicit DiagnosticErrorListener(std::vector<Diagnostic> *out) : out_(out) {}
 
   void syntaxError(antlr4::Recognizer * /*recognizer*/,
                    antlr4::Token * /*offendingSymbol*/, size_t line,
@@ -168,11 +168,9 @@ private:
     }
     if (!line.items.empty()) {
       if (std::holds_alternative<Word>(line.items.front())) {
-        line.line_index =
-            std::get<Word>(line.items.front()).location.line;
+        line.line_index = std::get<Word>(line.items.front()).location.line;
       } else {
-        line.line_index =
-            std::get<Comment>(line.items.front()).location.line;
+        line.line_index = std::get<Comment>(line.items.front()).location.line;
       }
     } else if (line.line_number.has_value()) {
       line.line_index = line.line_number->location.line;
