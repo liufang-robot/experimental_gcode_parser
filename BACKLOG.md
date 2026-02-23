@@ -13,15 +13,6 @@
 
 ## Ready Queue
 
-### T-001 (P0) Add parser fuzz smoke test target
-Why:
-- SPEC requires crash/hang resilience.
-Acceptance criteria:
-- Add fuzz/property test executable under `test/`.
-- Add deterministic smoke input corpus under `testdata/`.
-- Integrate smoke run in `./dev/check.sh` and CI.
-- Document known limits and runtime budget.
-
 ### T-002 (P1) Regression-test protocol for parser bugs
 Why:
 - Every bug should become a failing test first.
@@ -142,8 +133,9 @@ Use this template for new backlog items:
 
 ## In Progress
 (List tasks currently being worked on; only one assignee/task per PR)
-- T-001 (feature/t001-fuzz-smoke)
+- T-002 (feature/t002-regression-protocol)
 
 ## Done
 (Move completed tasks here with PR link)
+- T-001 (PR #8)
 - T-011 (PR #6)

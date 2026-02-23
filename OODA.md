@@ -67,6 +67,7 @@ A task is done only when:
 - Implementation merged to `main`.
 - Tests proving behavior exist and pass.
 - Regression test added for every bug fixed.
+- PR links bug/issue identifier to regression test name(s).
 - `BACKLOG.md` updated (task moved/marked done).
 - `ROADMAP.md` updated if milestone status changed.
 

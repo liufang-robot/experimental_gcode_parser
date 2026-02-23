@@ -191,3 +191,25 @@ How to reproduce locally (commands):
 - `cmake --build build -j`
 - `ctest --test-dir build --output-on-failure -R FuzzSmokeTest`
 - `./dev/check.sh`
+
+## 2026-02-23 (T-002 regression-test protocol)
+- Added `test/regression_tests.cpp` with a concrete regression case:
+  `Regression_MixedCartesianAndPolar_G1ReportsError`.
+- Added regression test target wiring in CMake (`regression_tests`).
+- Documented regression naming convention in `README.md`.
+- Updated `OODA.md` Definition of Done to require bug/issue -> regression test linkage.
+
+SPEC sections / tests:
+- SPEC: Section 7 (regression test expectation)
+- Tests: `RegressionTest.Regression_MixedCartesianAndPolar_G1ReportsError`,
+  `./dev/check.sh`
+
+Known limitations:
+- Regression suite currently has one seed case; additional fixed bugs should
+  extend this suite over time.
+
+How to reproduce locally (commands):
+- `cmake -S . -B build`
+- `cmake --build build -j`
+- `ctest --test-dir build --output-on-failure -R RegressionTest`
+- `./dev/check.sh`
