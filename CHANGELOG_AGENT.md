@@ -31,3 +31,22 @@ Known limitations:
 
 How to reproduce locally (commands):
 - `./dev/check.sh`
+
+## 2026-02-22 (ooda governance docs)
+- Added `ROADMAP.md` with milestone-based direction and exit criteria.
+- Added `BACKLOG.md` with prioritized tasks, acceptance criteria, and task template.
+- Added `OODA.md` with loop rules, merge policy, and definition of done.
+- Updated `AGENTS.md` to require agent use of `BACKLOG.md`, `ROADMAP.md`, and `OODA.md` before implementation starts.
+
+SPEC sections / tests:
+- SPEC: Section 6 (Testing Expectations) alignment and process enforcement
+- Tests: no code-path change; governance/documentation-only update
+
+Known limitations:
+- Backlog items are initial and will need regular reprioritization as CI/runtime data evolves.
+
+How to reproduce locally (commands):
+- `git checkout feature/ooda-repo-loop`
+- `sed -n '1,220p' ROADMAP.md`
+- `sed -n '1,260p' BACKLOG.md`
+- `sed -n '1,260p' OODA.md`
