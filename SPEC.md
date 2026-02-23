@@ -117,9 +117,7 @@ G2 CT X10 Y5 Z0
 - Error-line emission policy (v0):
   - If a line has error diagnostics, do not emit motion message for that line;
     the line is reported in `rejected_lines` with reasons.
-  - Error handling policy is configurable:
-    - `Continue`: reject only bad lines and continue lowering later lines.
-    - `StopAtFirstError`: stop lowering when first error line is encountered.
+  - Lowering is fail-fast: stop lowering when the first error line is encountered.
 
 ## 7. Testing Expectations
 - Golden tests for all examples in `SPEC.md`.

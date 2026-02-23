@@ -76,9 +76,8 @@ How to reproduce locally (commands):
 ## 2026-02-23 (message lowering explicit rejection policy)
 - Added explicit `rejected_lines` reporting in message lowering results so
   library users can detect invalid non-emitted lines and reasons directly.
-- Added configurable error policy in lowering options:
-  `Continue` vs `StopAtFirstError`.
-- Added/updated tests to assert continue-mode and fail-fast-mode behavior.
+- Enforced fail-fast lowering behavior: stop at first error line.
+- Added/updated tests to assert explicit rejection reporting and fail-fast behavior.
 - Updated SPEC testing requirement to standardize on GoogleTest for new unit tests.
 
 SPEC sections / tests:

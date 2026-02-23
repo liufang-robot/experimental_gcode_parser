@@ -71,57 +71,12 @@ void testG1Extraction(std::vector<Failure> &failures) {
           "expected F=100", failures);
 }
 
-void testContinueOnErrorLine(std::vector<Failure> &failures) {
-  const std::string input = "G1 X10\nG1 G2 X10\nG1 X20\n";
-  gcode::LowerOptions options;
-  options.on_error = gcode::LowerOptions::OnError::Continue;
-  const auto result = gcode::parseAndLower(input, options);
-
-  require(result.messages.size() == 2,
-          "expected two emitted G1 messages when middle line has error",
-          failures);
-  require(!result.diagnostics.empty(),
-          "expected diagnostics for mixed motion line", failures);
-  require(result.rejected_lines.size() == 1,
-          "expected one explicitly rejected error line", failures);
-  if (!result.rejected_lines.empty()) {
-    require(result.rejected_lines[0].source.line == 2,
-            "expected rejected line to be line 2", failures);
-    require(!result.rejected_lines[0].reasons.empty(),
-            "expected rejected line to carry reason diagnostics", failures);
-  }
-
-  if (result.messages.size() == 2) {
-    const auto *first = asG1(result.messages[0]);
-    const auto *second = asG1(result.messages[1]);
-    require(first != nullptr && second != nullptr,
-            "expected both messages to be G1", failures);
-    if (first) {
-      require(first->source.line == 1, "expected first message on line 1",
-              failures);
-      require(first->target_pose.x.has_value() &&
-                  closeEnough(*first->target_pose.x, 10.0),
-              "expected first X=10", failures);
-    }
-    if (second) {
-      require(second->source.line == 3, "expected second message on line 3",
-              failures);
-      require(second->target_pose.x.has_value() &&
-                  closeEnough(*second->target_pose.x, 20.0),
-              "expected second X=20", failures);
-    }
-  }
-}
-
 void testStopAtFirstError(std::vector<Failure> &failures) {
   const std::string input = "G1 X10\nG1 G2 X10\nG1 X20\n";
-  gcode::LowerOptions options;
-  options.on_error = gcode::LowerOptions::OnError::StopAtFirstError;
-  const auto result = gcode::parseAndLower(input, options);
+  const auto result = gcode::parseAndLower(input);
 
   require(result.messages.size() == 1,
-          "expected one message when configured to stop at first error",
-          failures);
+          "expected one message when lowering stops at first error", failures);
   require(result.rejected_lines.size() == 1,
           "expected one rejected line in stop mode", failures);
   if (!result.rejected_lines.empty()) {
@@ -144,7 +99,6 @@ void testStopAtFirstError(std::vector<Failure> &failures) {
 int main() {
   std::vector<Failure> failures;
   testG1Extraction(failures);
-  testContinueOnErrorLine(failures);
   testStopAtFirstError(failures);
 
   if (failures.empty()) {

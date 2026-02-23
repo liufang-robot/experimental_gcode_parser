@@ -34,13 +34,7 @@ struct G1Message {
 using ParsedMessage = std::variant<G1Message>;
 
 struct LowerOptions {
-  enum class OnError {
-    Continue,
-    StopAtFirstError,
-  };
-
   std::optional<std::string> filename;
-  OnError on_error = OnError::Continue;
 };
 
 struct MessageResult {

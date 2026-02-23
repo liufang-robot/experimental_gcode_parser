@@ -74,10 +74,7 @@ MessageResult lowerToMessages(const Program &program,
       }
       rejected.reasons = collectLineErrors(result.diagnostics, line.line_index);
       result.rejected_lines.push_back(std::move(rejected));
-      if (options.on_error == LowerOptions::OnError::StopAtFirstError) {
-        break;
-      }
-      continue;
+      break;
     }
 
     int found_motion = 0;
