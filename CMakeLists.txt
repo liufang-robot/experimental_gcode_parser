@@ -115,3 +115,12 @@ target_include_directories(messages_json_tests
 target_compile_definitions(messages_json_tests PRIVATE
                            GCODE_SOURCE_DIR="${CMAKE_CURRENT_SOURCE_DIR}")
 gtest_discover_tests(messages_json_tests DISCOVERY_MODE PRE_TEST)
+
+add_executable(fuzz_smoke_tests test/fuzz_smoke_tests.cpp)
+target_link_libraries(fuzz_smoke_tests PRIVATE gcode_parser)
+target_link_libraries(fuzz_smoke_tests PRIVATE GTest::gtest_main)
+target_include_directories(fuzz_smoke_tests
+                           PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
+target_compile_definitions(fuzz_smoke_tests PRIVATE
+                           GCODE_SOURCE_DIR="${CMAKE_CURRENT_SOURCE_DIR}")
+gtest_discover_tests(fuzz_smoke_tests DISCOVERY_MODE PRE_TEST)

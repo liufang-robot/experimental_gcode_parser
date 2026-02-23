@@ -1,0 +1,3 @@
+; full line comment
+N10 (inline comment) G1 X1.0
+G2 CIP X10 Y5 Z0 I1=AC(1) J1=AC(2) K1=AC(3)

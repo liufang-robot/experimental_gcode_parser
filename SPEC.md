@@ -132,4 +132,8 @@ G2 CT X10 Y5 Z0
   unit tests.
 - Add message-output JSON golden tests for representative queue outputs.
 - Property/fuzz testing: parser must never crash, hang, or use unbounded memory.
+  - Minimum smoke gate: deterministic corpus + fixed-seed generated inputs in
+    `test/fuzz_smoke_tests.cpp`, bounded to max input length 256 and 3000
+    generated cases.
+  - Runtime budget for CI smoke gate: under 5 seconds per test invocation.
 - Regression tests: every fixed bug must get a test that fails first, then passes.
