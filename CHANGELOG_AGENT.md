@@ -123,3 +123,20 @@ Known limitations:
 
 How to reproduce locally (commands):
 - `./dev/check.sh`
+
+## 2026-02-23 (message JSON serialization with nlohmann/json)
+- Added `src/messages_json.h` + `src/messages_json.cpp` with message result
+  JSON serialization/deserialization APIs.
+- Added `nlohmann/json` dependency integration in CMake and CI.
+- Added JSON tests: round-trip, invalid-JSON diagnostic, and asset-based
+  golden message output validation under `testdata/messages/`.
+
+SPEC sections / tests:
+- SPEC: Section 2.2, Section 6 (JSON schema notes), Section 7 (message JSON goldens)
+- Tests: `messages_json_tests`, `messages_tests`, `parser_tests`, and `./dev/check.sh`
+
+Known limitations:
+- `fromJson` currently reconstructs supported message types (`G1`) only.
+
+How to reproduce locally (commands):
+- `./dev/check.sh`
