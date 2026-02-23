@@ -15,7 +15,9 @@ TEST(RegressionTest, Regression_MixedCartesianAndPolar_G1ReportsError) {
   EXPECT_EQ(diag.severity, gcode::Diagnostic::Severity::Error);
   EXPECT_EQ(diag.location.line, 1);
   EXPECT_EQ(diag.location.column, 12);
-  EXPECT_EQ(diag.message, "mixed cartesian and polar words in G1 line");
+  EXPECT_EQ(diag.message,
+            "mixed cartesian (X/Y/Z/A) and polar (AP/RP) words in G1 line; "
+            "choose one coordinate mode");
 }
 
 } // namespace

@@ -213,3 +213,23 @@ How to reproduce locally (commands):
 - `cmake --build build -j`
 - `ctest --test-dir build --output-on-failure -R RegressionTest`
 - `./dev/check.sh`
+
+## 2026-02-23 (T-003 actionable diagnostics)
+- Improved parser diagnostics text to be actionable:
+  - syntax diagnostics now use `syntax error:` prefix plus context hints
+  - semantic diagnostics include correction guidance for motion conflicts and
+    G1 cartesian/polar mixing
+- Added parser unit coverage for actionable syntax + semantic diagnostics.
+- Refreshed affected golden outputs and message JSON goldens for updated text.
+
+SPEC sections / tests:
+- SPEC: Section 5 (Diagnostics), Section 7 (testing)
+- Tests: `ParserDiagnosticsTest.ActionableSyntaxAndSemanticMessages`,
+  parser golden tests, message JSON golden test, `./dev/check.sh`
+
+Known limitations:
+- Syntax hinting currently pattern-matches common ANTLR/lexer messages and may
+  remain generic for uncommon parser errors.
+
+How to reproduce locally (commands):
+- `./dev/check.sh`

@@ -95,4 +95,4 @@ line 13
   word Y=5 raw=Y5 at 13:11
   word Z=0 raw=Z0 at 13:14
 diagnostics
-  error at 6:8: mixed cartesian and polar words in G1 line
+  error at 6:8: mixed cartesian (X/Y/Z/A) and polar (AP/RP) words in G1 line; choose one coordinate mode
