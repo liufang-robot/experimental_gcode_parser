@@ -28,8 +28,11 @@ Optional downstream stage:
 - Message results support JSON conversion (`toJson`/`fromJson`) for transport,
   fixtures, and debugging.
 
-The `gcode_parse` CLI prints a stable, line-oriented debug format of the AST
-followed by diagnostics. This format is used by golden tests.
+The `gcode_parse` CLI supports:
+- `--format debug` (default): stable, line-oriented debug format used by
+  parser golden tests.
+- `--format json`: machine-readable JSON with top-level keys:
+  `schema_version`, `program`, and `diagnostics`.
 
 AST shape (v0.1):
 - Program: ordered list of `Line`

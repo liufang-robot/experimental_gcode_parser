@@ -233,3 +233,26 @@ Known limitations:
 
 How to reproduce locally (commands):
 - `./dev/check.sh`
+
+## 2026-02-23 (T-004 CLI JSON/debug output mode)
+- Added CLI option `--format json|debug` to `gcode_parse` (default: `debug`).
+- Added parse-result JSON formatter with stable top-level keys:
+  `schema_version`, `program`, and `diagnostics`.
+- Added CLI tests validating debug-mode golden compatibility and JSON output schema.
+- Updated README examples and SPEC CLI output notes.
+
+SPEC sections / tests:
+- SPEC: Section 2.2 (CLI output modes), Section 7 (testing)
+- Tests: `CliFormatTest.DebugFormatMatchesExistingGoldenOutput`,
+  `CliFormatTest.JsonFormatOutputsStableSchema`, `./dev/check.sh`
+
+Known limitations:
+- JSON mode currently targets parse/diagnostic output only; message-lowering
+  JSON remains in separate message serialization APIs.
+
+How to reproduce locally (commands):
+- `cmake -S . -B build`
+- `cmake --build build -j`
+- `ctest --test-dir build --output-on-failure -R CliFormatTest`
+- `./build/gcode_parse --format json testdata/g2g3_samples.ngc`
+- `./dev/check.sh`

@@ -1,5 +1,7 @@
 #include "ast_printer.h"
 
+#include <nlohmann/json.hpp>
+
 #include <sstream>
 
 namespace gcode {
@@ -7,6 +9,61 @@ namespace {
 
 void writeLocation(std::ostringstream &out, const Location &loc) {
   out << loc.line << ":" << loc.column;
+}
+
+nlohmann::json locationToJson(const Location &loc) {
+  nlohmann::json j;
+  j["line"] = loc.line;
+  j["column"] = loc.column;
+  return j;
+}
+
+nlohmann::json lineToJson(const Line &line) {
+  nlohmann::json j;
+  j["line_index"] = line.line_index;
+  j["block_delete"] = line.block_delete;
+  if (line.block_delete_location.has_value()) {
+    j["block_delete_location"] = locationToJson(*line.block_delete_location);
+  } else {
+    j["block_delete_location"] = nullptr;
+  }
+
+  if (line.line_number.has_value()) {
+    nlohmann::json line_number;
+    line_number["value"] = line.line_number->value;
+    line_number["location"] = locationToJson(line.line_number->location);
+    j["line_number"] = line_number;
+  } else {
+    j["line_number"] = nullptr;
+  }
+
+  j["items"] = nlohmann::json::array();
+  for (const auto &item : line.items) {
+    if (std::holds_alternative<Word>(item)) {
+      const auto &word = std::get<Word>(item);
+      nlohmann::json ji;
+      ji["kind"] = "word";
+      ji["raw"] = word.text;
+      ji["head"] = word.head;
+      if (word.value.has_value()) {
+        ji["value"] = *word.value;
+      } else {
+        ji["value"] = nullptr;
+      }
+      ji["has_equal"] = word.has_equal;
+      ji["location"] = locationToJson(word.location);
+      j["items"].push_back(ji);
+    } else {
+      const auto &comment = std::get<Comment>(item);
+      nlohmann::json ji;
+      ji["kind"] = "comment";
+      ji["raw"] = comment.text;
+      ji["location"] = locationToJson(comment.location);
+      j["items"].push_back(ji);
+    }
+  }
+
+  return j;
 }
 
 } // namespace
@@ -60,6 +117,28 @@ std::string format(const ParseResult &result) {
     }
   }
   return out.str();
+}
+
+std::string formatJson(const ParseResult &result, bool pretty) {
+  nlohmann::json j;
+  j["schema_version"] = 1;
+  j["program"] = nlohmann::json::object();
+  j["program"]["lines"] = nlohmann::json::array();
+  for (const auto &line : result.program.lines) {
+    j["program"]["lines"].push_back(lineToJson(line));
+  }
+
+  j["diagnostics"] = nlohmann::json::array();
+  for (const auto &diag : result.diagnostics) {
+    nlohmann::json jd;
+    jd["severity"] =
+        diag.severity == Diagnostic::Severity::Error ? "error" : "warning";
+    jd["message"] = diag.message;
+    jd["location"] = locationToJson(diag.location);
+    j["diagnostics"].push_back(jd);
+  }
+
+  return pretty ? j.dump(2) + "\n" : j.dump();
 }
 
 } // namespace gcode
