@@ -93,6 +93,14 @@ Acceptance criteria:
 - Define and implement policy (skip/partial message emission) in SPEC + code.
 - Add tests that validate diagnostic severity and emission policy.
 
+### T-011 (P1) Message JSON serialization/deserialization
+Why:
+- Need stable machine-readable message payloads for queue fixtures, transport, and tooling.
+Acceptance criteria:
+- Add `toJson`/`fromJson` support for `MessageResult`/`G1Message`.
+- Add schema versioning in serialized output.
+- Add round-trip tests and data-asset golden tests for message JSON output.
+
 ## Icebox
 - Performance benchmarking harness.
 - Coverage threshold policy and badge.
@@ -113,8 +121,7 @@ Use this template for new backlog items:
 
 ## In Progress
 (List tasks currently being worked on; only one assignee/task per PR)
-- T-006 (feature/message-lowering-g1)
-- T-007 (feature/message-lowering-g1)
+- T-011 (feature/messages-json-serialization)
 
 ## Done
 (Move completed tasks here with PR link)

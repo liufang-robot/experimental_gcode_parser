@@ -1,0 +1,51 @@
+{
+  "schema_version": 1,
+  "messages": [
+    {
+      "type": "G1",
+      "source": {
+        "filename": "lowering_failfast.ngc",
+        "line": 1,
+        "line_number": 1
+      },
+      "target_pose": {
+        "x": 10.0,
+        "y": null,
+        "z": null,
+        "a": null,
+        "b": null,
+        "c": null
+      },
+      "feed": 100.0
+    }
+  ],
+  "diagnostics": [
+    {
+      "severity": "error",
+      "message": "multiple motion commands in a single line",
+      "location": {
+        "line": 2,
+        "column": 7
+      }
+    }
+  ],
+  "rejected_lines": [
+    {
+      "source": {
+        "filename": "lowering_failfast.ngc",
+        "line": 2,
+        "line_number": 2
+      },
+      "reasons": [
+        {
+          "severity": "error",
+          "message": "multiple motion commands in a single line",
+          "location": {
+            "line": 2,
+            "column": 7
+          }
+        }
+      ]
+    }
+  ]
+}

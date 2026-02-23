@@ -7,6 +7,7 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 find_package(GTest REQUIRED)
 include(GoogleTest)
+find_package(nlohmann_json REQUIRED)
 
 if(NOT ANTLR4_EXECUTABLE AND DEFINED ENV{ANTLR4_EXECUTABLE})
   set(ANTLR4_EXECUTABLE "$ENV{ANTLR4_EXECUTABLE}")
@@ -80,10 +81,11 @@ target_include_directories(gcode_antlr PUBLIC ${ANTLR4_RUNTIME_INCLUDE_DIR})
 target_link_libraries(gcode_antlr PUBLIC ${ANTLR4_RUNTIME_LIB})
 
 add_library(gcode_parser STATIC src/gcode_parser.cpp src/ast_printer.cpp
-                              src/messages.cpp)
+                              src/messages.cpp src/messages_json.cpp)
 target_include_directories(gcode_parser PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/src
                                             ${GENERATED_DIR})
 target_link_libraries(gcode_parser PUBLIC gcode_antlr)
+target_link_libraries(gcode_parser PRIVATE nlohmann_json::nlohmann_json)
 
 add_executable(gcode_parse src/main.cpp)
 target_link_libraries(gcode_parse PRIVATE gcode_parser)
@@ -104,3 +106,12 @@ target_link_libraries(messages_tests PRIVATE gcode_parser)
 target_link_libraries(messages_tests PRIVATE GTest::gtest_main)
 target_include_directories(messages_tests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
 gtest_discover_tests(messages_tests DISCOVERY_MODE PRE_TEST)
+
+add_executable(messages_json_tests test/messages_json_tests.cpp)
+target_link_libraries(messages_json_tests PRIVATE gcode_parser)
+target_link_libraries(messages_json_tests PRIVATE GTest::gtest_main)
+target_include_directories(messages_json_tests
+                           PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
+target_compile_definitions(messages_json_tests PRIVATE
+                           GCODE_SOURCE_DIR="${CMAKE_CURRENT_SOURCE_DIR}")
+gtest_discover_tests(messages_json_tests DISCOVERY_MODE PRE_TEST)

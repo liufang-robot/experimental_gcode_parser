@@ -25,6 +25,8 @@ The parser returns:
 Optional downstream stage:
 - AST can be lowered into typed queue messages.
 - v0 supports `G1Message` emission.
+- Message results support JSON conversion (`toJson`/`fromJson`) for transport,
+  fixtures, and debugging.
 
 The `gcode_parse` CLI prints a stable, line-oriented debug format of the AST
 followed by diagnostics. This format is used by golden tests.
@@ -119,10 +121,15 @@ G2 CT X10 Y5 Z0
   - If a line has error diagnostics, do not emit motion message for that line;
     the line is reported in `rejected_lines` with reasons.
   - Lowering is fail-fast: stop lowering when the first error line is encountered.
+- JSON schema notes:
+  - Include top-level `schema_version` (current value: `1`).
+  - Include `messages`, `diagnostics`, and `rejected_lines`.
+  - `G1Message` JSON carries `type`, `source`, `target_pose`, and `feed`.
 
 ## 7. Testing Expectations
 - Golden tests for all examples in `SPEC.md`.
 - Unit test framework: GoogleTest (`gtest`) is the required framework for new
   unit tests.
+- Add message-output JSON golden tests for representative queue outputs.
 - Property/fuzz testing: parser must never crash, hang, or use unbounded memory.
 - Regression tests: every fixed bug must get a test that fails first, then passes.
