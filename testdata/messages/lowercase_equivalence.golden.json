@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "messages": [
+    {
+      "type": "G1",
+      "source": {
+        "filename": "lowercase_equivalence.ngc",
+        "line": 1,
+        "line_number": 7
+      },
+      "target_pose": {
+        "x": 1.5,
+        "y": 2.0,
+        "z": 3.0,
+        "a": 4.0,
+        "b": 5.0,
+        "c": 6.0
+      },
+      "feed": 7.0
+    }
+  ],
+  "diagnostics": [],
+  "rejected_lines": []
+}

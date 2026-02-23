@@ -1,0 +1,5 @@
+; comment only
+
+N5 G1 X5
+(hello)
+G1 Z6 F7

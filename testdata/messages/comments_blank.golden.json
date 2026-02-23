@@ -1,0 +1,41 @@
+{
+  "schema_version": 1,
+  "messages": [
+    {
+      "type": "G1",
+      "source": {
+        "filename": "comments_blank.ngc",
+        "line": 3,
+        "line_number": 5
+      },
+      "target_pose": {
+        "x": 5.0,
+        "y": null,
+        "z": null,
+        "a": null,
+        "b": null,
+        "c": null
+      },
+      "feed": null
+    },
+    {
+      "type": "G1",
+      "source": {
+        "filename": "comments_blank.ngc",
+        "line": 5,
+        "line_number": null
+      },
+      "target_pose": {
+        "x": null,
+        "y": null,
+        "z": 6.0,
+        "a": null,
+        "b": null,
+        "c": null
+      },
+      "feed": 7.0
+    }
+  ],
+  "diagnostics": [],
+  "rejected_lines": []
+}

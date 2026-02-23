@@ -1,0 +1,41 @@
+{
+  "schema_version": 1,
+  "messages": [
+    {
+      "type": "G1",
+      "source": {
+        "filename": null,
+        "line": 1,
+        "line_number": 10
+      },
+      "target_pose": {
+        "x": 10.0,
+        "y": null,
+        "z": null,
+        "a": null,
+        "b": null,
+        "c": null
+      },
+      "feed": null
+    },
+    {
+      "type": "G1",
+      "source": {
+        "filename": null,
+        "line": 2,
+        "line_number": null
+      },
+      "target_pose": {
+        "x": null,
+        "y": 20.0,
+        "z": null,
+        "a": null,
+        "b": null,
+        "c": null
+      },
+      "feed": null
+    }
+  ],
+  "diagnostics": [],
+  "rejected_lines": []
+}

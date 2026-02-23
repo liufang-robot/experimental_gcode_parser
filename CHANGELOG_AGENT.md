@@ -299,3 +299,23 @@ How to reproduce locally (commands):
 - `cmake --build build -j`
 - `ctest --test-dir build --output-on-failure -R \"MessagesTest|MessagesJsonTest\"`
 - `./dev/check.sh`
+
+## 2026-02-23 (T-013 message golden matrix expansion)
+- Expanded `testdata/messages` with additional representative fixtures:
+  valid multi-line G1, lowercase equivalence, no-filename source case, and
+  comments/blank-lines handling.
+- Refactored message JSON golden test to table-driven fixture discovery over
+  `testdata/messages/*.ngc` with `<name>.golden.json` pairing.
+- Documented message fixture naming convention in SPEC Section 7.
+
+SPEC sections / tests:
+- SPEC: Section 7 (message fixture naming convention)
+- Tests: `MessagesJsonTest.GoldenMessageOutput`, `./dev/check.sh`
+
+Known limitations:
+- Table-driven golden runner currently supports one special naming override:
+  `nofilename_` fixtures run with `LowerOptions.filename` unset.
+
+How to reproduce locally (commands):
+- `ctest --test-dir build --output-on-failure -R MessagesJsonTest.GoldenMessageOutput`
+- `./dev/check.sh`
