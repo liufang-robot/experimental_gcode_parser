@@ -54,6 +54,51 @@ int motionCode(const Word &word) {
   }
 }
 
+SourceInfo sourceFromLine(const Line &line, const LowerOptions &options) {
+  SourceInfo source;
+  source.filename = options.filename;
+  source.line = line.line_index;
+  if (line.line_number.has_value()) {
+    source.line_number = line.line_number->value;
+  }
+  return source;
+}
+
+void fillPoseAndFeed(const Line &line, Pose6 *pose, std::optional<double> *feed,
+                     ArcParams *arc) {
+  for (const auto &item : line.items) {
+    if (!isWord(item)) {
+      continue;
+    }
+    const auto &word = std::get<Word>(item);
+    double parsed = 0.0;
+    if (word.head == "X" && parseDouble(word.value, &parsed)) {
+      pose->x = parsed;
+    } else if (word.head == "Y" && parseDouble(word.value, &parsed)) {
+      pose->y = parsed;
+    } else if (word.head == "Z" && parseDouble(word.value, &parsed)) {
+      pose->z = parsed;
+    } else if (word.head == "A" && parseDouble(word.value, &parsed)) {
+      pose->a = parsed;
+    } else if (word.head == "B" && parseDouble(word.value, &parsed)) {
+      pose->b = parsed;
+    } else if (word.head == "C" && parseDouble(word.value, &parsed)) {
+      pose->c = parsed;
+    } else if (word.head == "F" && parseDouble(word.value, &parsed)) {
+      *feed = parsed;
+    } else if (arc && word.head == "I" && parseDouble(word.value, &parsed)) {
+      arc->i = parsed;
+    } else if (arc && word.head == "J" && parseDouble(word.value, &parsed)) {
+      arc->j = parsed;
+    } else if (arc && word.head == "K" && parseDouble(word.value, &parsed)) {
+      arc->k = parsed;
+    } else if (arc && (word.head == "R" || word.head == "CR") &&
+               parseDouble(word.value, &parsed)) {
+      arc->r = parsed;
+    }
+  }
+}
+
 } // namespace
 
 MessageResult lowerToMessages(const Program &program,
@@ -93,41 +138,26 @@ MessageResult lowerToMessages(const Program &program,
       }
     }
 
-    if (found_motion != 1) {
+    if (found_motion == 0) {
       continue;
     }
 
-    G1Message message;
-    message.source.filename = options.filename;
-    message.source.line = line.line_index;
-    if (line.line_number.has_value()) {
-      message.source.line_number = line.line_number->value;
+    if (found_motion == 1) {
+      G1Message message;
+      message.source = sourceFromLine(line, options);
+      fillPoseAndFeed(line, &message.target_pose, &message.feed, nullptr);
+      result.messages.emplace_back(std::move(message));
+    } else if (found_motion == 2) {
+      G2Message message;
+      message.source = sourceFromLine(line, options);
+      fillPoseAndFeed(line, &message.target_pose, &message.feed, &message.arc);
+      result.messages.emplace_back(std::move(message));
+    } else if (found_motion == 3) {
+      G3Message message;
+      message.source = sourceFromLine(line, options);
+      fillPoseAndFeed(line, &message.target_pose, &message.feed, &message.arc);
+      result.messages.emplace_back(std::move(message));
     }
-
-    for (const auto &item : line.items) {
-      if (!isWord(item)) {
-        continue;
-      }
-      const auto &word = std::get<Word>(item);
-      double parsed = 0.0;
-      if (word.head == "X" && parseDouble(word.value, &parsed)) {
-        message.target_pose.x = parsed;
-      } else if (word.head == "Y" && parseDouble(word.value, &parsed)) {
-        message.target_pose.y = parsed;
-      } else if (word.head == "Z" && parseDouble(word.value, &parsed)) {
-        message.target_pose.z = parsed;
-      } else if (word.head == "A" && parseDouble(word.value, &parsed)) {
-        message.target_pose.a = parsed;
-      } else if (word.head == "B" && parseDouble(word.value, &parsed)) {
-        message.target_pose.b = parsed;
-      } else if (word.head == "C" && parseDouble(word.value, &parsed)) {
-        message.target_pose.c = parsed;
-      } else if (word.head == "F" && parseDouble(word.value, &parsed)) {
-        message.feed = parsed;
-      }
-    }
-
-    result.messages.emplace_back(std::move(message));
   }
 
   return result;

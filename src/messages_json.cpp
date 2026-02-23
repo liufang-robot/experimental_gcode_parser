@@ -87,6 +87,24 @@ Pose6 poseFromJson(const nlohmann::json &j) {
   return pose;
 }
 
+nlohmann::json arcToJson(const ArcParams &arc) {
+  nlohmann::json j;
+  j["i"] = optionalDoubleToJson(arc.i);
+  j["j"] = optionalDoubleToJson(arc.j);
+  j["k"] = optionalDoubleToJson(arc.k);
+  j["r"] = optionalDoubleToJson(arc.r);
+  return j;
+}
+
+ArcParams arcFromJson(const nlohmann::json &j) {
+  ArcParams arc;
+  arc.i = optionalDoubleFromJson(j, "i");
+  arc.j = optionalDoubleFromJson(j, "j");
+  arc.k = optionalDoubleFromJson(j, "k");
+  arc.r = optionalDoubleFromJson(j, "r");
+  return arc;
+}
+
 nlohmann::json diagnosticToJson(const Diagnostic &diag) {
   nlohmann::json j;
   j["severity"] = severityToString(diag.severity);
@@ -113,6 +131,20 @@ nlohmann::json messageToJson(const ParsedMessage &message) {
     j["source"] = sourceToJson(g1.source);
     j["target_pose"] = poseToJson(g1.target_pose);
     j["feed"] = optionalDoubleToJson(g1.feed);
+  } else if (std::holds_alternative<G2Message>(message)) {
+    const auto &g2 = std::get<G2Message>(message);
+    j["type"] = "G2";
+    j["source"] = sourceToJson(g2.source);
+    j["target_pose"] = poseToJson(g2.target_pose);
+    j["arc"] = arcToJson(g2.arc);
+    j["feed"] = optionalDoubleToJson(g2.feed);
+  } else if (std::holds_alternative<G3Message>(message)) {
+    const auto &g3 = std::get<G3Message>(message);
+    j["type"] = "G3";
+    j["source"] = sourceToJson(g3.source);
+    j["target_pose"] = poseToJson(g3.target_pose);
+    j["arc"] = arcToJson(g3.arc);
+    j["feed"] = optionalDoubleToJson(g3.feed);
   }
   return j;
 }
@@ -129,6 +161,32 @@ ParsedMessage messageFromJson(const nlohmann::json &j) {
     }
     g1.feed = optionalDoubleFromJson(j, "feed");
     return g1;
+  } else if (type == "G2") {
+    G2Message g2;
+    if (j.contains("source")) {
+      g2.source = sourceFromJson(j["source"]);
+    }
+    if (j.contains("target_pose")) {
+      g2.target_pose = poseFromJson(j["target_pose"]);
+    }
+    if (j.contains("arc")) {
+      g2.arc = arcFromJson(j["arc"]);
+    }
+    g2.feed = optionalDoubleFromJson(j, "feed");
+    return g2;
+  } else if (type == "G3") {
+    G3Message g3;
+    if (j.contains("source")) {
+      g3.source = sourceFromJson(j["source"]);
+    }
+    if (j.contains("target_pose")) {
+      g3.target_pose = poseFromJson(j["target_pose"]);
+    }
+    if (j.contains("arc")) {
+      g3.arc = arcFromJson(j["arc"]);
+    }
+    g3.feed = optionalDoubleFromJson(j, "feed");
+    return g3;
   }
   return G1Message{};
 }

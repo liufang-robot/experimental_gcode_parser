@@ -31,7 +31,28 @@ struct G1Message {
   std::optional<double> feed;
 };
 
-using ParsedMessage = std::variant<G1Message>;
+struct ArcParams {
+  std::optional<double> i;
+  std::optional<double> j;
+  std::optional<double> k;
+  std::optional<double> r;
+};
+
+struct G2Message {
+  SourceInfo source;
+  Pose6 target_pose;
+  ArcParams arc;
+  std::optional<double> feed;
+};
+
+struct G3Message {
+  SourceInfo source;
+  Pose6 target_pose;
+  ArcParams arc;
+  std::optional<double> feed;
+};
+
+using ParsedMessage = std::variant<G1Message, G2Message, G3Message>;
 
 struct LowerOptions {
   std::optional<std::string> filename;

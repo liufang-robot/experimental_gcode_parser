@@ -15,6 +15,20 @@ const gcode::G1Message *asG1(const gcode::ParsedMessage &msg) {
   return &std::get<gcode::G1Message>(msg);
 }
 
+const gcode::G2Message *asG2(const gcode::ParsedMessage &msg) {
+  if (!std::holds_alternative<gcode::G2Message>(msg)) {
+    return nullptr;
+  }
+  return &std::get<gcode::G2Message>(msg);
+}
+
+const gcode::G3Message *asG3(const gcode::ParsedMessage &msg) {
+  if (!std::holds_alternative<gcode::G3Message>(msg)) {
+    return nullptr;
+  }
+  return &std::get<gcode::G3Message>(msg);
+}
+
 TEST(MessagesTest, G1Extraction) {
   const std::string input = "N10 G1 X10 Y20 Z30 A40 B50 C60 F100\n";
   gcode::LowerOptions options;
@@ -94,6 +108,58 @@ TEST(MessagesTest, StopAtFirstError) {
   const auto *first = asG1(result.messages[0]);
   ASSERT_NE(first, nullptr);
   EXPECT_EQ(first->source.line, 1);
+}
+
+TEST(MessagesTest, G2G3Extraction) {
+  const std::string input =
+      "N20 G2 X10 Y20 I1 J2 K3 CR=40 F100\nN21 G3 X30 Y40 I4 J5 K6 R50 F200\n";
+  gcode::LowerOptions options;
+  options.filename = "arc.ngc";
+  const auto result = gcode::parseAndLower(input, options);
+
+  EXPECT_TRUE(result.diagnostics.empty());
+  EXPECT_TRUE(result.rejected_lines.empty());
+  ASSERT_EQ(result.messages.size(), 2u);
+
+  const auto *g2 = asG2(result.messages[0]);
+  ASSERT_NE(g2, nullptr);
+  EXPECT_EQ(g2->source.line, 1);
+  ASSERT_TRUE(g2->source.line_number.has_value());
+  EXPECT_EQ(*g2->source.line_number, 20);
+  ASSERT_TRUE(g2->target_pose.x.has_value());
+  EXPECT_TRUE(closeEnough(*g2->target_pose.x, 10.0));
+  ASSERT_TRUE(g2->target_pose.y.has_value());
+  EXPECT_TRUE(closeEnough(*g2->target_pose.y, 20.0));
+  ASSERT_TRUE(g2->arc.i.has_value());
+  EXPECT_TRUE(closeEnough(*g2->arc.i, 1.0));
+  ASSERT_TRUE(g2->arc.j.has_value());
+  EXPECT_TRUE(closeEnough(*g2->arc.j, 2.0));
+  ASSERT_TRUE(g2->arc.k.has_value());
+  EXPECT_TRUE(closeEnough(*g2->arc.k, 3.0));
+  ASSERT_TRUE(g2->arc.r.has_value());
+  EXPECT_TRUE(closeEnough(*g2->arc.r, 40.0));
+  ASSERT_TRUE(g2->feed.has_value());
+  EXPECT_TRUE(closeEnough(*g2->feed, 100.0));
+
+  const auto *g3 = asG3(result.messages[1]);
+  ASSERT_NE(g3, nullptr);
+  EXPECT_EQ(g3->source.line, 2);
+  ASSERT_TRUE(g3->source.line_number.has_value());
+  EXPECT_EQ(*g3->source.line_number, 21);
+  ASSERT_TRUE(g3->target_pose.x.has_value());
+  EXPECT_TRUE(closeEnough(*g3->target_pose.x, 30.0));
+  ASSERT_TRUE(g3->target_pose.y.has_value());
+  EXPECT_TRUE(closeEnough(*g3->target_pose.y, 40.0));
+  ASSERT_TRUE(g3->arc.i.has_value());
+  EXPECT_TRUE(closeEnough(*g3->arc.i, 4.0));
+  ASSERT_TRUE(g3->arc.j.has_value());
+  EXPECT_TRUE(closeEnough(*g3->arc.j, 5.0));
+  ASSERT_TRUE(g3->arc.k.has_value());
+  EXPECT_TRUE(closeEnough(*g3->arc.k, 6.0));
+  ASSERT_TRUE(g3->arc.r.has_value());
+  EXPECT_TRUE(closeEnough(*g3->arc.r, 50.0));
+  ASSERT_TRUE(g3->feed.has_value());
+  EXPECT_TRUE(closeEnough(*g3->feed, 200.0));
 }
 
 } // namespace
