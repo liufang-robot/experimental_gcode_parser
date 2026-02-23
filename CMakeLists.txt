@@ -5,6 +5,9 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
+find_package(GTest REQUIRED)
+include(GoogleTest)
+
 if(NOT ANTLR4_EXECUTABLE AND DEFINED ENV{ANTLR4_EXECUTABLE})
   set(ANTLR4_EXECUTABLE "$ENV{ANTLR4_EXECUTABLE}")
 endif()
@@ -90,12 +93,14 @@ enable_testing()
 
 add_executable(parser_tests test/parser_tests.cpp)
 target_link_libraries(parser_tests PRIVATE gcode_parser)
+target_link_libraries(parser_tests PRIVATE GTest::gtest_main)
 target_include_directories(parser_tests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
 target_compile_definitions(parser_tests PRIVATE
                            GCODE_SOURCE_DIR="${CMAKE_CURRENT_SOURCE_DIR}")
-add_test(NAME parser_tests COMMAND parser_tests)
+gtest_discover_tests(parser_tests DISCOVERY_MODE PRE_TEST)
 
 add_executable(messages_tests test/messages_tests.cpp)
 target_link_libraries(messages_tests PRIVATE gcode_parser)
+target_link_libraries(messages_tests PRIVATE GTest::gtest_main)
 target_include_directories(messages_tests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
-add_test(NAME messages_tests COMMAND messages_tests)
+gtest_discover_tests(messages_tests DISCOVERY_MODE PRE_TEST)
