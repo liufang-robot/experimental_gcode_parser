@@ -155,3 +155,18 @@ Known limitations:
 How to reproduce locally (commands):
 - `sed -n '1,260p' BACKLOG.md`
 - `sed -n '1,320p' CHANGELOG_AGENT.md`
+
+## 2026-02-23 (backlog task for message golden matrix)
+- Added backlog task `T-013` to expand `testdata/messages` beyond a single fail-fast fixture.
+- Defined acceptance criteria for a table-driven golden suite covering valid, mixed, and case-equivalence scenarios.
+
+SPEC sections / tests:
+- SPEC: planned coverage target in Section 7 (testing)
+- Tests: no code-path change in this update
+
+Known limitations:
+- Planning update only; fixture expansion is not implemented in this change.
+
+How to reproduce locally (commands):
+- `sed -n '1,260p' BACKLOG.md`
+- `sed -n '1,360p' CHANGELOG_AGENT.md`

@@ -112,6 +112,16 @@ Acceptance criteria:
 - Add golden message-output JSON assets that include valid `G2`/`G3` and one invalid mixed-motion line.
 - No regressions in existing parser/message tests.
 
+### T-013 (P1) Expand message golden test matrix
+Why:
+- Current `testdata/messages` has only a fail-fast fixture; coverage should include representative valid and mixed inputs.
+Acceptance criteria:
+- Add message goldens for: valid multi-line `G1`, lowercase/uppercase equivalence, optional filename/line-number presence, comments/blank lines, and mixed valid+invalid lines.
+- Keep one golden explicitly validating fail-fast stop behavior and `rejected_lines`.
+- Update `test/messages_json_tests.cpp` to run all fixtures from `testdata/messages/` as a table-driven golden suite.
+- Document fixture naming conventions in test code comments or SPEC testing section.
+- No regressions in parser/message unit tests and existing goldens.
+
 ## Icebox
 - Performance benchmarking harness.
 - Coverage threshold policy and badge.
