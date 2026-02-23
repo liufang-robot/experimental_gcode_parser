@@ -256,3 +256,21 @@ How to reproduce locally (commands):
 - `ctest --test-dir build --output-on-failure -R CliFormatTest`
 - `./build/gcode_parse --format json testdata/g2g3_samples.ngc`
 - `./dev/check.sh`
+
+## 2026-02-23 (T-005 grammar nullable-tail warning cleanup)
+- Updated `line_no_eol` grammar alternatives to disallow an empty match.
+- Removed ANTLR warning about optional block matching empty string in `program`.
+- Kept parser behavior stable for existing fixtures and tests.
+
+SPEC sections / tests:
+- SPEC: no behavior change
+- Tests: parser goldens, message tests, CLI tests, and `./dev/check.sh`
+
+Known limitations:
+- Grammar still accepts broad word/value forms by design in v0; this change
+  only addresses nullable-tail warning cleanup.
+
+How to reproduce locally (commands):
+- `cmake -S . -B build`
+- `cmake --build build -j`
+- `./dev/check.sh`

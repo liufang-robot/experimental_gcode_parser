@@ -13,14 +13,6 @@
 
 ## Ready Queue
 
-### T-004 (P2) JSON output mode for CLI
-Why:
-- Easier machine integration than debug-text format.
-Acceptance criteria:
-- Add `--format json|debug` with stable JSON schema.
-- Keep existing debug format for golden tests.
-- Add tests for both output modes.
-
 ### T-005 (P2) Grammar cleanup for optional empty tail warning
 Why:
 - ANTLR warning indicates nullable optional rule in grammar.
@@ -117,10 +109,11 @@ Use this template for new backlog items:
 
 ## In Progress
 (List tasks currently being worked on; only one assignee/task per PR)
-- T-004 (feature/t004-cli-json-format)
+- T-005 (feature/t005-grammar-warning-cleanup)
 
 ## Done
 (Move completed tasks here with PR link)
+- T-004 (PR #11)
 - T-003 (PR #10)
 - T-002 (PR #9)
 - T-001 (PR #8)

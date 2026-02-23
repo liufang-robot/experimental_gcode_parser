@@ -10,7 +10,9 @@ line
     ;
 
 line_no_eol
-    : block_delete? line_number? item*
+    : block_delete? line_number? item+
+    | block_delete line_number?
+    | line_number
     ;
 
 block_delete
