@@ -22,6 +22,10 @@ The parser returns:
 - AST (program → lines → items)
 - Diagnostics with line/column (1-based)
 
+Optional downstream stage:
+- AST can be lowered into typed queue messages.
+- v0 supports `G1Message` emission.
+
 The `gcode_parse` CLI prints a stable, line-oriented debug format of the AST
 followed by diagnostics. This format is used by golden tests.
 
@@ -45,6 +49,7 @@ AST shape (v0.1):
 - Optional block delete: `/`
 - Optional line number: `N` + integer
 - One motion command per line (GGroup1)
+- Word letters are case-insensitive (`x` == `X`, `g1` == `G1`).
 
 ### 3.2 Numbers
 - Integers: `0`, `10`, `-3`, `+7`
@@ -103,7 +108,21 @@ G2 CT X10 Y5 Z0
   - Mixed Cartesian (`X/Y/Z/A`) + polar (`AP/RP`) words in a `G1` line.
   - Multiple motion commands (`G1/G2/G3`) in a single line.
 
-## 6. Testing Expectations
+## 6. Message Lowering (v0.1)
+- Standalone lowering stage: AST + parser diagnostics -> queue-ready messages +
+  diagnostics.
+- `G1Message` fields:
+  - Source: optional filename, physical line, optional `N` line number
+  - Target pose: `X/Y/Z/A/B/C` (optional numeric fields)
+  - Feed: `F` (optional numeric field)
+- Error-line emission policy (v0):
+  - If a line has error diagnostics, do not emit motion message for that line;
+    the line is reported in `rejected_lines` with reasons.
+  - Lowering is fail-fast: stop lowering when the first error line is encountered.
+
+## 7. Testing Expectations
 - Golden tests for all examples in `SPEC.md`.
+- Unit test framework: GoogleTest (`gtest`) is the required framework for new
+  unit tests.
 - Property/fuzz testing: parser must never crash, hang, or use unbounded memory.
 - Regression tests: every fixed bug must get a test that fails first, then passes.

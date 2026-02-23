@@ -76,7 +76,8 @@ endif()
 target_include_directories(gcode_antlr PUBLIC ${ANTLR4_RUNTIME_INCLUDE_DIR})
 target_link_libraries(gcode_antlr PUBLIC ${ANTLR4_RUNTIME_LIB})
 
-add_library(gcode_parser STATIC src/gcode_parser.cpp src/ast_printer.cpp)
+add_library(gcode_parser STATIC src/gcode_parser.cpp src/ast_printer.cpp
+                              src/messages.cpp)
 target_include_directories(gcode_parser PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/src
                                             ${GENERATED_DIR})
 target_link_libraries(gcode_parser PUBLIC gcode_antlr)
@@ -93,3 +94,8 @@ target_include_directories(parser_tests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
 target_compile_definitions(parser_tests PRIVATE
                            GCODE_SOURCE_DIR="${CMAKE_CURRENT_SOURCE_DIR}")
 add_test(NAME parser_tests COMMAND parser_tests)
+
+add_executable(messages_tests test/messages_tests.cpp)
+target_link_libraries(messages_tests PRIVATE gcode_parser)
+target_include_directories(messages_tests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
+add_test(NAME messages_tests COMMAND messages_tests)

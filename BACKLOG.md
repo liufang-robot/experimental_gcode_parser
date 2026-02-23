@@ -53,6 +53,46 @@ Acceptance criteria:
 - Remove warning during parser generation without behavior regression.
 - Golden tests unchanged unless behavior intentionally changes.
 
+### T-006 (P1) Add polymorphic queue message model (start with G1)
+Why:
+- Product output should be typed messages, not only generic AST.
+Acceptance criteria:
+- Add message model with polymorphism for queue payloads.
+- Add `G1Message` containing source info, line number, pose (`xyzabc`), and feed.
+- Source info supports optional filename and line.
+- No behavior regression in existing parse/golden tests.
+
+### T-007 (P1) Add AST-to-message lowering pipeline (G1)
+Why:
+- Need standalone conversion from parsed AST into queue-ready messages.
+Acceptance criteria:
+- Add lowering API that maps AST lines into message list and diagnostics.
+- Error lines (for example `G1 G2 X10`) do not emit motion message.
+- Valid later lines still emit messages (resume-style behavior).
+- Add tests for basic G1 extraction and skip-error-line behavior.
+
+### T-008 (P1) Incremental resume-from-line session API
+Why:
+- Product needs practical re-entry after user edits near error lines.
+Acceptance criteria:
+- Add session API to reparse from changed line and rebuild affected messages.
+- Preserve stable source line mapping and deterministic message ordering.
+- Add tests for edit-and-resume flow.
+
+### T-009 (P2) Queue diff/apply API
+Why:
+- Downstream consumers need incremental updates, not full queue rebuild each edit.
+Acceptance criteria:
+- Add diff result with added/updated/removed messages keyed by source line.
+- Add tests for line edit insert/delete/update scenarios.
+
+### T-010 (P2) Message diagnostics policy and severity mapping
+Why:
+- Need explicit policy for parser/lowering errors at message stage.
+Acceptance criteria:
+- Define and implement policy (skip/partial message emission) in SPEC + code.
+- Add tests that validate diagnostic severity and emission policy.
+
 ## Icebox
 - Performance benchmarking harness.
 - Coverage threshold policy and badge.
@@ -70,3 +110,11 @@ Use this template for new backlog items:
 - `Out of Scope`:
 - `SPEC Sections`:
 - `Tests To Add/Update`:
+
+## In Progress
+(List tasks currently being worked on; only one assignee/task per PR)
+- T-006 (feature/message-lowering-g1)
+- T-007 (feature/message-lowering-g1)
+
+## Done
+(Move completed tasks here with PR link)
