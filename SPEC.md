@@ -24,7 +24,7 @@ The parser returns:
 
 Optional downstream stage:
 - AST can be lowered into typed queue messages.
-- v0 supports `G1Message` emission.
+- v0 supports `G1Message`, `G2Message`, and `G3Message` emission.
 - Message results support JSON conversion (`toJson`/`fromJson`) for transport,
   fixtures, and debugging.
 
@@ -123,6 +123,11 @@ G2 CT X10 Y5 Z0
   - Source: optional filename, physical line, optional `N` line number
   - Target pose: `X/Y/Z/A/B/C` (optional numeric fields)
   - Feed: `F` (optional numeric field)
+- `G2Message` / `G3Message` fields:
+  - Source: optional filename, physical line, optional `N` line number
+  - Target pose: `X/Y/Z/A/B/C` (optional numeric fields)
+  - Arc parameters: `I/J/K/R` (optional numeric fields; `CR` maps to `R`)
+  - Feed: `F` (optional numeric field)
 - Error-line emission policy (v0):
   - If a line has error diagnostics, do not emit motion message for that line;
     the line is reported in `rejected_lines` with reasons.
@@ -131,6 +136,8 @@ G2 CT X10 Y5 Z0
   - Include top-level `schema_version` (current value: `1`).
   - Include `messages`, `diagnostics`, and `rejected_lines`.
   - `G1Message` JSON carries `type`, `source`, `target_pose`, and `feed`.
+  - `G2Message` / `G3Message` JSON additionally carry `arc` with
+    `i/j/k/r` optional numeric fields.
 
 ## 7. Testing Expectations
 - Golden tests for all examples in `SPEC.md`.

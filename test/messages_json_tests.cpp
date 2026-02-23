@@ -33,22 +33,42 @@ TEST(MessagesJsonTest, RoundTripPreservesResult) {
 TEST(MessagesJsonTest, GoldenMessageOutput) {
   const std::filesystem::path source_dir(GCODE_SOURCE_DIR);
   const auto testdata = source_dir / "testdata" / "messages";
-  const auto input_path = testdata / "lowering_failfast.ngc";
-  const auto golden_path = testdata / "lowering_failfast.golden.json";
 
-  gcode::LowerOptions options;
-  options.filename = input_path.filename().string();
-  const auto result = gcode::parseAndLower(readFile(input_path), options);
+  auto expectGolden = [&](const std::string &input_name,
+                          const std::string &golden_name) {
+    const auto input_path = testdata / input_name;
+    const auto golden_path = testdata / golden_name;
 
-  const auto actual = nlohmann::json::parse(gcode::toJsonString(result));
-  const auto expected = nlohmann::json::parse(readFile(golden_path));
-  EXPECT_EQ(actual, expected);
+    gcode::LowerOptions options;
+    options.filename = input_path.filename().string();
+    const auto result = gcode::parseAndLower(readFile(input_path), options);
+
+    const auto actual = nlohmann::json::parse(gcode::toJsonString(result));
+    const auto expected = nlohmann::json::parse(readFile(golden_path));
+    EXPECT_EQ(actual, expected);
+  };
+
+  expectGolden("lowering_failfast.ngc", "lowering_failfast.golden.json");
+  expectGolden("lowering_g2g3_failfast.ngc",
+               "lowering_g2g3_failfast.golden.json");
 }
 
 TEST(MessagesJsonTest, InvalidJsonReturnsDiagnostic) {
   const auto result = gcode::fromJsonString("{not-json");
   ASSERT_FALSE(result.diagnostics.empty());
   EXPECT_EQ(result.diagnostics[0].severity, gcode::Diagnostic::Severity::Error);
+}
+
+TEST(MessagesJsonTest, RoundTripWithG2G3PreservesResult) {
+  const std::string input = "N1 G2 X10 Y20 I1 J2 K3 R4 F5\nN2 G3 X30 Y40 I6 J7 "
+                            "K8 CR=9 F10\n";
+  gcode::LowerOptions options;
+  options.filename = "arc_roundtrip.ngc";
+  const auto result = gcode::parseAndLower(input, options);
+
+  const auto json = gcode::toJsonString(result);
+  const auto roundtrip = gcode::fromJsonString(json);
+  EXPECT_EQ(gcode::toJsonString(roundtrip), json);
 }
 
 } // namespace

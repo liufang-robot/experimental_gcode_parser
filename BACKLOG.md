@@ -13,13 +13,6 @@
 
 ## Ready Queue
 
-### T-005 (P2) Grammar cleanup for optional empty tail warning
-Why:
-- ANTLR warning indicates nullable optional rule in grammar.
-Acceptance criteria:
-- Remove warning during parser generation without behavior regression.
-- Golden tests unchanged unless behavior intentionally changes.
-
 ### T-006 (P1) Add polymorphic queue message model (start with G1)
 Why:
 - Product output should be typed messages, not only generic AST.
@@ -109,10 +102,11 @@ Use this template for new backlog items:
 
 ## In Progress
 (List tasks currently being worked on; only one assignee/task per PR)
-- T-005 (feature/t005-grammar-warning-cleanup)
+- T-012 (feature/t012-g2-g3-lowering)
 
 ## Done
 (Move completed tasks here with PR link)
+- T-005 (PR #12)
 - T-004 (PR #11)
 - T-003 (PR #10)
 - T-002 (PR #9)

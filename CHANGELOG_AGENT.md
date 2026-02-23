@@ -274,3 +274,28 @@ How to reproduce locally (commands):
 - `cmake -S . -B build`
 - `cmake --build build -j`
 - `./dev/check.sh`
+
+## 2026-02-23 (T-012 G2/G3 message lowering)
+- Added typed `G2Message` and `G3Message` queue payloads with source info,
+  target pose, arc params (`I/J/K/R`), and optional feed.
+- Extended AST-to-message lowering to emit `G2`/`G3` messages and map `CR` to
+  arc radius field `r`.
+- Extended message JSON serialization/deserialization for `G2`/`G3` and `arc`.
+- Added tests for G2/G3 extraction and G2/G3 message JSON round-trip/golden output.
+
+SPEC sections / tests:
+- SPEC: Section 2.2 (typed message support), Section 6 (message lowering schema),
+  Section 7 (testing)
+- Tests: `MessagesTest.G2G3Extraction`,
+  `MessagesJsonTest.RoundTripWithG2G3PreservesResult`,
+  `MessagesJsonTest.GoldenMessageOutput`, `./dev/check.sh`
+
+Known limitations:
+- Arc lowering currently captures `I/J/K/R` only; other arc forms (for example
+  `AR`, `CIP`, `CT`) are parsed in AST but not lowered into dedicated fields.
+
+How to reproduce locally (commands):
+- `cmake -S . -B build`
+- `cmake --build build -j`
+- `ctest --test-dir build --output-on-failure -R \"MessagesTest|MessagesJsonTest\"`
+- `./dev/check.sh`
