@@ -49,6 +49,7 @@ AST shape (v0.1):
 - Optional block delete: `/`
 - Optional line number: `N` + integer
 - One motion command per line (GGroup1)
+- Word letters are case-insensitive (`x` == `X`, `g1` == `G1`).
 
 ### 3.2 Numbers
 - Integers: `0`, `10`, `-3`, `+7`

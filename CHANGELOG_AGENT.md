@@ -78,6 +78,7 @@ How to reproduce locally (commands):
   library users can detect invalid non-emitted lines and reasons directly.
 - Enforced fail-fast lowering behavior: stop at first error line.
 - Added/updated tests to assert explicit rejection reporting and fail-fast behavior.
+- Added lowercase-equivalence coverage (`x`/`X`, `g1`/`G1`) in message-lowering tests.
 - Updated SPEC testing requirement to standardize on GoogleTest for new unit tests.
 
 SPEC sections / tests:
