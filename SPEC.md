@@ -137,3 +137,5 @@ G2 CT X10 Y5 Z0
     generated cases.
   - Runtime budget for CI smoke gate: under 5 seconds per test invocation.
 - Regression tests: every fixed bug must get a test that fails first, then passes.
+  - Regression test naming convention:
+    `Regression_<bug_or_issue_id>_<short_behavior>`.

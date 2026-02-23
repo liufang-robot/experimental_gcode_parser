@@ -35,3 +35,16 @@ cmake --build build
 ./build/gcode_parse testdata/g1_samples.ngc
 ./build/gcode_parse testdata/g1_samples.ngc --line 3
 ```
+
+## Tests
+
+```bash
+./dev/check.sh
+```
+
+Regression tests policy:
+- Every fixed bug must add one regression test first (failing before the fix).
+- Regression test names must use:
+  - `Regression_<bug_or_issue_id>_<short_behavior>`
+- Keep regression tests in `test/regression_tests.cpp` unless a dedicated suite
+  is required for scale.

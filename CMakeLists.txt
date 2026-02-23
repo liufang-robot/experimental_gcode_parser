@@ -124,3 +124,10 @@ target_include_directories(fuzz_smoke_tests
 target_compile_definitions(fuzz_smoke_tests PRIVATE
                            GCODE_SOURCE_DIR="${CMAKE_CURRENT_SOURCE_DIR}")
 gtest_discover_tests(fuzz_smoke_tests DISCOVERY_MODE PRE_TEST)
+
+add_executable(regression_tests test/regression_tests.cpp)
+target_link_libraries(regression_tests PRIVATE gcode_parser)
+target_link_libraries(regression_tests PRIVATE GTest::gtest_main)
+target_include_directories(regression_tests
+                           PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
+gtest_discover_tests(regression_tests DISCOVERY_MODE PRE_TEST)
