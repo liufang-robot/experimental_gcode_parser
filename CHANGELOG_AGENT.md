@@ -90,3 +90,20 @@ Known limitations:
 
 How to reproduce locally (commands):
 - `./dev/check.sh`
+
+## 2026-02-23 (agent policy and PR template)
+- Updated `AGENTS.md` with explicit single-command quality gate (`./dev/check.sh`)
+  and tooling config pointers.
+- Added `.github/pull_request_template.md` with OODA sections:
+  Observe/Orient/Decide/Act, evidence, and follow-ups.
+
+SPEC sections / tests:
+- SPEC: no behavior change
+- Tests: process/docs-only change; validated with `./dev/check.sh`
+
+Known limitations:
+- PR template quality depends on maintainers filling each section with concrete evidence.
+
+How to reproduce locally (commands):
+- `sed -n '1,260p' AGENTS.md`
+- `sed -n '1,260p' .github/pull_request_template.md`
