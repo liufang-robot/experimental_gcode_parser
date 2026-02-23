@@ -35,6 +35,9 @@ done
 echo "==> ctest"
 ctest --test-dir "$ROOT_DIR/build" --output-on-failure
 
+echo "==> ctest fuzz smoke"
+ctest --test-dir "$ROOT_DIR/build" --output-on-failure -R FuzzSmokeTest
+
 echo "==> cmake configure (sanitizers)"
 cmake -S "$ROOT_DIR" -B "$ROOT_DIR/build-sanitize" \
   -DCMAKE_BUILD_TYPE=RelWithDebInfo \
@@ -46,3 +49,6 @@ cmake --build "$ROOT_DIR/build-sanitize" -j
 
 echo "==> ctest (sanitizers)"
 ASAN_OPTIONS=detect_leaks=0 ctest --test-dir "$ROOT_DIR/build-sanitize" --output-on-failure
+
+echo "==> ctest fuzz smoke (sanitizers)"
+ASAN_OPTIONS=detect_leaks=0 ctest --test-dir "$ROOT_DIR/build-sanitize" --output-on-failure -R FuzzSmokeTest

@@ -142,7 +142,7 @@ Use this template for new backlog items:
 
 ## In Progress
 (List tasks currently being worked on; only one assignee/task per PR)
-- None
+- T-001 (feature/t001-fuzz-smoke)
 
 ## Done
 (Move completed tasks here with PR link)

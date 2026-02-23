@@ -170,3 +170,24 @@ Known limitations:
 How to reproduce locally (commands):
 - `sed -n '1,260p' BACKLOG.md`
 - `sed -n '1,360p' CHANGELOG_AGENT.md`
+
+## 2026-02-23 (T-001 parser fuzz smoke gate)
+- Added `fuzz_smoke_tests` GoogleTest target that runs parser/lowering smoke
+  checks over deterministic corpus files and fixed-seed generated inputs.
+- Added deterministic corpus assets under `testdata/fuzz/corpus/`.
+- Integrated fuzz smoke execution into `./dev/check.sh` (normal + sanitizer runs).
+
+SPEC sections / tests:
+- SPEC: Section 7 (property/fuzz testing + runtime budget)
+- Tests: `FuzzSmokeTest.CorpusAndGeneratedInputsDoNotCrashOrHang`,
+  `./dev/check.sh`, CI `build-test`
+
+Known limitations:
+- This is a smoke gate, not coverage-guided fuzzing; it improves crash/hang
+  detection but does not prove complete memory-boundedness.
+
+How to reproduce locally (commands):
+- `cmake -S . -B build`
+- `cmake --build build -j`
+- `ctest --test-dir build --output-on-failure -R FuzzSmokeTest`
+- `./dev/check.sh`
