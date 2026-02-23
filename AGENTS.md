@@ -3,12 +3,21 @@
 ## Goal
 Implement a C++ library that parses G-code text/file into an AST + diagnostics.
 
-## Build Commands
-- Configure/build: `cmake -S . -B build`
-- Build: `cmake --build build -j`
+## Single Command Gate (authoritative)
+- Run: `./dev/check.sh`
+This script MUST run:
+- configure/build
+- unit tests + golden tests
+- clang-format check
+- clang-tidy (or a fast subset)
+- sanitizer run (ASan/UBSan) if supported
 
-## Test Commands
-- Test: `ctest --test-dir build --output-on-failure`
+If `./dev/check.sh` is green, CI should be green.
+
+## Tooling Config
+- clang-format config: `.clang-format`
+- clang-tidy config: `.clang-tidy`
+- compile database: `build/compile_commands.json` (CMake must export it)
 
 ## Code Style
 - Use `clang-tidy` to check code style.
