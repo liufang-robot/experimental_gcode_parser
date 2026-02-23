@@ -107,3 +107,19 @@ Known limitations:
 How to reproduce locally (commands):
 - `sed -n '1,260p' AGENTS.md`
 - `sed -n '1,260p' .github/pull_request_template.md`
+
+## 2026-02-23 (migrate tests to GoogleTest)
+- Refactored `test/parser_tests.cpp` from custom harness to GoogleTest cases.
+- Refactored `test/messages_tests.cpp` from custom harness to GoogleTest cases.
+- Updated CMake test registration to `gtest_discover_tests` and CI dependencies
+  to include `libgtest-dev`.
+
+SPEC sections / tests:
+- SPEC: Section 7 (Testing Expectations, GoogleTest requirement)
+- Tests: parser and message test suites now run through GoogleTest via `ctest`
+
+Known limitations:
+- Existing golden snapshots remain plain text; only harness changed.
+
+How to reproduce locally (commands):
+- `./dev/check.sh`
