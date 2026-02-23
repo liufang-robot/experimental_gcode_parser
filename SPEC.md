@@ -115,10 +115,15 @@ G2 CT X10 Y5 Z0
   - Target pose: `X/Y/Z/A/B/C` (optional numeric fields)
   - Feed: `F` (optional numeric field)
 - Error-line emission policy (v0):
-  - If a line has error diagnostics, do not emit motion message for that line.
-  - Later valid lines still emit messages.
+  - If a line has error diagnostics, do not emit motion message for that line;
+    the line is reported in `rejected_lines` with reasons.
+  - Error handling policy is configurable:
+    - `Continue`: reject only bad lines and continue lowering later lines.
+    - `StopAtFirstError`: stop lowering when first error line is encountered.
 
 ## 7. Testing Expectations
 - Golden tests for all examples in `SPEC.md`.
+- Unit test framework: GoogleTest (`gtest`) is the required framework for new
+  unit tests.
 - Property/fuzz testing: parser must never crash, hang, or use unbounded memory.
 - Regression tests: every fixed bug must get a test that fails first, then passes.

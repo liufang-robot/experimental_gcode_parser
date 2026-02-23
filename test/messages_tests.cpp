@@ -71,15 +71,25 @@ void testG1Extraction(std::vector<Failure> &failures) {
           "expected F=100", failures);
 }
 
-void testSkipErrorLineAndResume(std::vector<Failure> &failures) {
+void testContinueOnErrorLine(std::vector<Failure> &failures) {
   const std::string input = "G1 X10\nG1 G2 X10\nG1 X20\n";
-  const auto result = gcode::parseAndLower(input);
+  gcode::LowerOptions options;
+  options.on_error = gcode::LowerOptions::OnError::Continue;
+  const auto result = gcode::parseAndLower(input, options);
 
   require(result.messages.size() == 2,
           "expected two emitted G1 messages when middle line has error",
           failures);
   require(!result.diagnostics.empty(),
           "expected diagnostics for mixed motion line", failures);
+  require(result.rejected_lines.size() == 1,
+          "expected one explicitly rejected error line", failures);
+  if (!result.rejected_lines.empty()) {
+    require(result.rejected_lines[0].source.line == 2,
+            "expected rejected line to be line 2", failures);
+    require(!result.rejected_lines[0].reasons.empty(),
+            "expected rejected line to carry reason diagnostics", failures);
+  }
 
   if (result.messages.size() == 2) {
     const auto *first = asG1(result.messages[0]);
@@ -103,12 +113,39 @@ void testSkipErrorLineAndResume(std::vector<Failure> &failures) {
   }
 }
 
+void testStopAtFirstError(std::vector<Failure> &failures) {
+  const std::string input = "G1 X10\nG1 G2 X10\nG1 X20\n";
+  gcode::LowerOptions options;
+  options.on_error = gcode::LowerOptions::OnError::StopAtFirstError;
+  const auto result = gcode::parseAndLower(input, options);
+
+  require(result.messages.size() == 1,
+          "expected one message when configured to stop at first error",
+          failures);
+  require(result.rejected_lines.size() == 1,
+          "expected one rejected line in stop mode", failures);
+  if (!result.rejected_lines.empty()) {
+    require(result.rejected_lines[0].source.line == 2,
+            "expected rejected line to be line 2 in stop mode", failures);
+  }
+  if (!result.messages.empty()) {
+    const auto *first = asG1(result.messages[0]);
+    require(first != nullptr, "expected first message to be G1 in stop mode",
+            failures);
+    if (first) {
+      require(first->source.line == 1,
+              "expected only first line message in stop mode", failures);
+    }
+  }
+}
+
 } // namespace
 
 int main() {
   std::vector<Failure> failures;
   testG1Extraction(failures);
-  testSkipErrorLineAndResume(failures);
+  testContinueOnErrorLine(failures);
+  testStopAtFirstError(failures);
 
   if (failures.empty()) {
     return 0;

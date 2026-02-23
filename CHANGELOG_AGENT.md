@@ -72,3 +72,21 @@ How to reproduce locally (commands):
 - `cmake --build build -j`
 - `ctest --test-dir build --output-on-failure`
 - `./dev/check.sh`
+
+## 2026-02-23 (message lowering explicit rejection policy)
+- Added explicit `rejected_lines` reporting in message lowering results so
+  library users can detect invalid non-emitted lines and reasons directly.
+- Added configurable error policy in lowering options:
+  `Continue` vs `StopAtFirstError`.
+- Added/updated tests to assert continue-mode and fail-fast-mode behavior.
+- Updated SPEC testing requirement to standardize on GoogleTest for new unit tests.
+
+SPEC sections / tests:
+- SPEC: Section 6 (Message Lowering), Section 7 (Testing Expectations)
+- Tests: `messages_tests`, `./dev/check.sh`
+
+Known limitations:
+- Existing tests currently include a custom harness; migration to GoogleTest is pending.
+
+How to reproduce locally (commands):
+- `./dev/check.sh`

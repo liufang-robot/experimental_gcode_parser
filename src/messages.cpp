@@ -29,6 +29,18 @@ bool lineHasError(const std::vector<Diagnostic> &diagnostics, int line) {
   return false;
 }
 
+std::vector<Diagnostic>
+collectLineErrors(const std::vector<Diagnostic> &diagnostics, int line) {
+  std::vector<Diagnostic> errors;
+  for (const auto &diag : diagnostics) {
+    if (diag.severity == Diagnostic::Severity::Error &&
+        diag.location.line == line) {
+      errors.push_back(diag);
+    }
+  }
+  return errors;
+}
+
 bool isWord(const LineItem &item) { return std::holds_alternative<Word>(item); }
 
 int motionCode(const Word &word) {
@@ -51,8 +63,20 @@ MessageResult lowerToMessages(const Program &program,
   result.diagnostics = parse_diagnostics;
 
   for (const auto &line : program.lines) {
-    if (options.skip_error_lines &&
-        lineHasError(result.diagnostics, line.line_index)) {
+    const bool has_line_error =
+        lineHasError(result.diagnostics, line.line_index);
+    if (has_line_error) {
+      MessageResult::RejectedLine rejected;
+      rejected.source.filename = options.filename;
+      rejected.source.line = line.line_index;
+      if (line.line_number.has_value()) {
+        rejected.source.line_number = line.line_number->value;
+      }
+      rejected.reasons = collectLineErrors(result.diagnostics, line.line_index);
+      result.rejected_lines.push_back(std::move(rejected));
+      if (options.on_error == LowerOptions::OnError::StopAtFirstError) {
+        break;
+      }
       continue;
     }
 
