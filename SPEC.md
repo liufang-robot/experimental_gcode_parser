@@ -106,9 +106,12 @@ G2 CT X10 Y5 Z0
 
 ## 5. Diagnostics (v0.1)
 - Syntax errors reported by the lexer/parser with line/column.
+  - Messages should be actionable and prefixed with `syntax error:`.
 - Semantic errors:
   - Mixed Cartesian (`X/Y/Z/A`) + polar (`AP/RP`) words in a `G1` line.
   - Multiple motion commands (`G1/G2/G3`) in a single line.
+  - Semantic messages should include an explicit correction hint (for example,
+    "choose one coordinate mode" or "choose only one of G1/G2/G3").
 
 ## 6. Message Lowering (v0.1)
 - Standalone lowering stage: AST + parser diagnostics -> queue-ready messages +

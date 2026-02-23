@@ -13,14 +13,6 @@
 
 ## Ready Queue
 
-### T-002 (P1) Regression-test protocol for parser bugs
-Why:
-- Every bug should become a failing test first.
-Acceptance criteria:
-- Add regression test naming convention to test docs.
-- Add at least one concrete regression example test.
-- Update `OODA.md` Definition of Done to require bug-test linkage.
-
 ### T-003 (P1) Improve diagnostic messages
 Why:
 - Current diagnostics are structurally correct but terse.
@@ -133,9 +125,10 @@ Use this template for new backlog items:
 
 ## In Progress
 (List tasks currently being worked on; only one assignee/task per PR)
-- T-002 (feature/t002-regression-protocol)
+- T-003 (feature/t003-diagnostics)
 
 ## Done
 (Move completed tasks here with PR link)
+- T-002 (PR #9)
 - T-001 (PR #8)
 - T-011 (PR #6)

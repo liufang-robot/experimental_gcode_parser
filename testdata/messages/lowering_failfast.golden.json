@@ -22,7 +22,7 @@
   "diagnostics": [
     {
       "severity": "error",
-      "message": "multiple motion commands in a single line",
+      "message": "multiple motion commands in one line; choose only one of G1/G2/G3",
       "location": {
         "line": 2,
         "column": 7
@@ -39,7 +39,7 @@
       "reasons": [
         {
           "severity": "error",
-          "message": "multiple motion commands in a single line",
+          "message": "multiple motion commands in one line; choose only one of G1/G2/G3",
           "location": {
             "line": 2,
             "column": 7

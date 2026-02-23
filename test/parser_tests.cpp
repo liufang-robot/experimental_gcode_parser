@@ -45,4 +45,22 @@ TEST(ParserGoldenTest, CombinedSamples) {
   expectGolden(testdata / "sample1.ngc", testdata / "sample1.golden.txt");
 }
 
+TEST(ParserDiagnosticsTest, ActionableSyntaxAndSemanticMessages) {
+  {
+    const auto result = gcode::parse("G1 @\n");
+    ASSERT_EQ(result.diagnostics.size(), 1u);
+    EXPECT_NE(result.diagnostics[0].message.find("syntax error:"),
+              std::string::npos);
+    EXPECT_NE(result.diagnostics[0].message.find("unsupported characters"),
+              std::string::npos);
+  }
+
+  {
+    const auto result = gcode::parse("G1 X10 AP=90 RP=10\n");
+    ASSERT_EQ(result.diagnostics.size(), 1u);
+    EXPECT_NE(result.diagnostics[0].message.find("choose one coordinate mode"),
+              std::string::npos);
+  }
+}
+
 } // namespace

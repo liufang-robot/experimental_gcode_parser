@@ -76,13 +76,23 @@ public:
     }
     Diagnostic diag;
     diag.severity = Diagnostic::Severity::Error;
-    diag.message = msg;
+    diag.message = buildSyntaxMessage(msg);
     diag.location = {static_cast<int>(line),
                      static_cast<int>(charPositionInLine) + 1};
     out_->push_back(std::move(diag));
   }
 
 private:
+  std::string buildSyntaxMessage(const std::string &raw) const {
+    std::string message = "syntax error: " + raw;
+    if (raw.find("token recognition error") != std::string::npos) {
+      message += " (check for unsupported characters or malformed comments)";
+    } else if (raw.find("mismatched input") != std::string::npos) {
+      message += " (check token order for this line)";
+    }
+    return message;
+  }
+
   std::vector<Diagnostic> *out_;
 };
 
@@ -235,7 +245,8 @@ void addSemanticDiagnostics(ParseResult &result) {
       if (isMotionWord(word, &code)) {
         if (has_motion && code != motion_code) {
           addDiagnostic(result.diagnostics, word.location,
-                        "multiple motion commands in a single line");
+                        "multiple motion commands in one line; choose only "
+                        "one of G1/G2/G3");
           break;
         }
         has_motion = true;
@@ -249,13 +260,15 @@ void addSemanticDiagnostics(ParseResult &result) {
         has_polar = true;
         if (has_cartesian && has_motion && motion_code == 1) {
           addDiagnostic(result.diagnostics, word.location,
-                        "mixed cartesian and polar words in G1 line");
+                        "mixed cartesian (X/Y/Z/A) and polar (AP/RP) words in "
+                        "G1 line; choose one coordinate mode");
           break;
         }
       }
       if (has_cartesian && has_polar && has_motion && motion_code == 1) {
         addDiagnostic(result.diagnostics, word.location,
-                      "mixed cartesian and polar words in G1 line");
+                      "mixed cartesian (X/Y/Z/A) and polar (AP/RP) words in "
+                      "G1 line; choose one coordinate mode");
         break;
       }
     }
