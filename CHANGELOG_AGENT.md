@@ -140,3 +140,33 @@ Known limitations:
 
 How to reproduce locally (commands):
 - `./dev/check.sh`
+
+## 2026-02-23 (backlog task for G2/G3 lowering)
+- Added backlog task `T-012` for implementing typed `G2`/`G3` message lowering.
+- Updated backlog tracking to mark `T-011` done and clear in-progress slot.
+
+SPEC sections / tests:
+- SPEC: planned coverage target in Section 6 (message lowering) and Section 7 (tests)
+- Tests: no code-path change in this update
+
+Known limitations:
+- This is planning/governance only; no `G2/G3` lowering implementation included yet.
+
+How to reproduce locally (commands):
+- `sed -n '1,260p' BACKLOG.md`
+- `sed -n '1,320p' CHANGELOG_AGENT.md`
+
+## 2026-02-23 (backlog task for message golden matrix)
+- Added backlog task `T-013` to expand `testdata/messages` beyond a single fail-fast fixture.
+- Defined acceptance criteria for a table-driven golden suite covering valid, mixed, and case-equivalence scenarios.
+
+SPEC sections / tests:
+- SPEC: planned coverage target in Section 7 (testing)
+- Tests: no code-path change in this update
+
+Known limitations:
+- Planning update only; fixture expansion is not implemented in this change.
+
+How to reproduce locally (commands):
+- `sed -n '1,260p' BACKLOG.md`
+- `sed -n '1,360p' CHANGELOG_AGENT.md`
