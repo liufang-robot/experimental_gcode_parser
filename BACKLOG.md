@@ -102,10 +102,11 @@ Use this template for new backlog items:
 
 ## In Progress
 (List tasks currently being worked on; only one assignee/task per PR)
-- T-012 (feature/t012-g2-g3-lowering)
+- T-013 (feature/t013-message-golden-matrix)
 
 ## Done
 (Move completed tasks here with PR link)
+- T-012 (PR #13)
 - T-005 (PR #12)
 - T-004 (PR #11)
 - T-003 (PR #10)

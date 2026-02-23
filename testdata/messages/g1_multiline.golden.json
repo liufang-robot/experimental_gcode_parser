@@ -1,0 +1,41 @@
+{
+  "schema_version": 1,
+  "messages": [
+    {
+      "type": "G1",
+      "source": {
+        "filename": "g1_multiline.ngc",
+        "line": 1,
+        "line_number": 1
+      },
+      "target_pose": {
+        "x": 1.0,
+        "y": 2.0,
+        "z": null,
+        "a": null,
+        "b": null,
+        "c": null
+      },
+      "feed": 3.0
+    },
+    {
+      "type": "G1",
+      "source": {
+        "filename": "g1_multiline.ngc",
+        "line": 3,
+        "line_number": null
+      },
+      "target_pose": {
+        "x": null,
+        "y": null,
+        "z": 4.0,
+        "a": null,
+        "b": null,
+        "c": null
+      },
+      "feed": null
+    }
+  ],
+  "diagnostics": [],
+  "rejected_lines": []
+}
