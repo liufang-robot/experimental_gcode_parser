@@ -101,6 +101,17 @@ Acceptance criteria:
 - Add schema versioning in serialized output.
 - Add round-trip tests and data-asset golden tests for message JSON output.
 
+### T-012 (P1) Implement G2/G3 message lowering (arc moves)
+Why:
+- Motion queue needs typed arc commands, not only linear `G1`.
+Acceptance criteria:
+- Add `G2Message` and `G3Message` typed payloads with source info and optional feed.
+- Lower AST lines containing `G2`/`G3` into arc messages with target pose (`xyzabc`) and arc parameters (`I`,`J`,`K`,`R`) per current SPEC scope.
+- Keep motion-family exclusivity: multiple motion commands on one line stay diagnostics errors and emit no message for that line.
+- Preserve fail-fast behavior (`StopAtFirstError`) and rejected-line reporting.
+- Add golden message-output JSON assets that include valid `G2`/`G3` and one invalid mixed-motion line.
+- No regressions in existing parser/message tests.
+
 ## Icebox
 - Performance benchmarking harness.
 - Coverage threshold policy and badge.
@@ -121,7 +132,8 @@ Use this template for new backlog items:
 
 ## In Progress
 (List tasks currently being worked on; only one assignee/task per PR)
-- T-011 (feature/messages-json-serialization)
+- None
 
 ## Done
 (Move completed tasks here with PR link)
+- T-011 (PR #6)
