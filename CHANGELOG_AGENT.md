@@ -342,3 +342,26 @@ How to reproduce locally (commands):
 - `cmake --build build -j`
 - `ctest --test-dir build --output-on-failure -R SessionTest`
 - `./dev/check.sh`
+
+## 2026-02-23 (T-009 queue diff/apply API)
+- Added line-keyed queue diff API in `src/message_diff.h/.cpp`:
+  `diffMessagesByLine(before, after)` with `added`, `updated`, and `removed_lines`.
+- Added queue apply helper `applyMessageDiff(current, diff)` that reconstructs
+  deterministic line-ordered message list.
+- Added `message_diff_tests` coverage for update/insert/delete edit scenarios.
+
+SPEC sections / tests:
+- SPEC: Section 6 (queue diff/apply API notes), Section 7 (testing)
+- Tests: `MessageDiffTest.UpdateLineProducesUpdatedEntry`,
+  `MessageDiffTest.InsertLineProducesAddedEntry`,
+  `MessageDiffTest.DeleteLineProducesRemovedEntry`, `./dev/check.sh`
+
+Known limitations:
+- Diff/apply keys messages by source line only; future modal/state-aware
+  semantics may require richer identity keys.
+
+How to reproduce locally (commands):
+- `cmake -S . -B build`
+- `cmake --build build -j`
+- `ctest --test-dir build --output-on-failure -R MessageDiffTest`
+- `./dev/check.sh`

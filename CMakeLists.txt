@@ -82,7 +82,7 @@ target_link_libraries(gcode_antlr PUBLIC ${ANTLR4_RUNTIME_LIB})
 
 add_library(gcode_parser STATIC src/gcode_parser.cpp src/ast_printer.cpp
                               src/messages.cpp src/messages_json.cpp
-                              src/session.cpp)
+                              src/session.cpp src/message_diff.cpp)
 target_include_directories(gcode_parser PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/src
                                             ${GENERATED_DIR})
 target_link_libraries(gcode_parser PUBLIC gcode_antlr)
@@ -145,3 +145,10 @@ target_link_libraries(session_tests PRIVATE gcode_parser)
 target_link_libraries(session_tests PRIVATE GTest::gtest_main)
 target_include_directories(session_tests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
 gtest_discover_tests(session_tests DISCOVERY_MODE PRE_TEST)
+
+add_executable(message_diff_tests test/message_diff_tests.cpp)
+target_link_libraries(message_diff_tests PRIVATE gcode_parser)
+target_link_libraries(message_diff_tests PRIVATE GTest::gtest_main)
+target_include_directories(message_diff_tests
+                           PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
+gtest_discover_tests(message_diff_tests DISCOVERY_MODE PRE_TEST)

@@ -13,32 +13,6 @@
 
 ## Ready Queue
 
-### T-006 (P1) Add polymorphic queue message model (start with G1)
-Why:
-- Product output should be typed messages, not only generic AST.
-Acceptance criteria:
-- Add message model with polymorphism for queue payloads.
-- Add `G1Message` containing source info, line number, pose (`xyzabc`), and feed.
-- Source info supports optional filename and line.
-- No behavior regression in existing parse/golden tests.
-
-### T-007 (P1) Add AST-to-message lowering pipeline (G1)
-Why:
-- Need standalone conversion from parsed AST into queue-ready messages.
-Acceptance criteria:
-- Add lowering API that maps AST lines into message list and diagnostics.
-- Error lines (for example `G1 G2 X10`) do not emit motion message.
-- Valid later lines still emit messages (resume-style behavior).
-- Add tests for basic G1 extraction and skip-error-line behavior.
-
-### T-008 (P1) Incremental resume-from-line session API
-Why:
-- Product needs practical re-entry after user edits near error lines.
-Acceptance criteria:
-- Add session API to reparse from changed line and rebuild affected messages.
-- Preserve stable source line mapping and deterministic message ordering.
-- Add tests for edit-and-resume flow.
-
 ### T-009 (P2) Queue diff/apply API
 Why:
 - Downstream consumers need incremental updates, not full queue rebuild each edit.
@@ -52,25 +26,6 @@ Why:
 Acceptance criteria:
 - Define and implement policy (skip/partial message emission) in SPEC + code.
 - Add tests that validate diagnostic severity and emission policy.
-
-### T-011 (P1) Message JSON serialization/deserialization
-Why:
-- Need stable machine-readable message payloads for queue fixtures, transport, and tooling.
-Acceptance criteria:
-- Add `toJson`/`fromJson` support for `MessageResult`/`G1Message`.
-- Add schema versioning in serialized output.
-- Add round-trip tests and data-asset golden tests for message JSON output.
-
-### T-012 (P1) Implement G2/G3 message lowering (arc moves)
-Why:
-- Motion queue needs typed arc commands, not only linear `G1`.
-Acceptance criteria:
-- Add `G2Message` and `G3Message` typed payloads with source info and optional feed.
-- Lower AST lines containing `G2`/`G3` into arc messages with target pose (`xyzabc`) and arc parameters (`I`,`J`,`K`,`R`) per current SPEC scope.
-- Keep motion-family exclusivity: multiple motion commands on one line stay diagnostics errors and emit no message for that line.
-- Preserve fail-fast behavior (`StopAtFirstError`) and rejected-line reporting.
-- Add golden message-output JSON assets that include valid `G2`/`G3` and one invalid mixed-motion line.
-- No regressions in existing parser/message tests.
 
 ## Icebox
 - Performance benchmarking harness.
@@ -92,12 +47,15 @@ Use this template for new backlog items:
 
 ## In Progress
 (List tasks currently being worked on; only one assignee/task per PR)
-- T-008 (feature/t008-resume-session)
+- T-009 (feature/t009-queue-diff-apply)
 
 ## Done
 (Move completed tasks here with PR link)
+- T-008 (PR #15)
 - T-013 (PR #14)
 - T-012 (PR #13)
+- T-007 (PR #3)
+- T-006 (PR #3)
 - T-005 (PR #12)
 - T-004 (PR #11)
 - T-003 (PR #10)

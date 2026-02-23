@@ -136,6 +136,11 @@ G2 CT X10 Y5 Z0
   - Provide session-level edit + resume from line API for interactive workflows.
   - After line edit, reparsing preserves deterministic message ordering and
     stable source line mapping.
+- Queue diff/apply API (v0):
+  - Provide line-keyed message diff with `added`, `updated`, and
+    `removed_lines`.
+  - Provide apply helper that applies a diff to an existing message queue and
+    preserves deterministic line order.
 - JSON schema notes:
   - Include top-level `schema_version` (current value: `1`).
   - Include `messages`, `diagnostics`, and `rejected_lines`.
