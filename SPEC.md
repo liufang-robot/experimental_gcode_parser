@@ -132,6 +132,10 @@ G2 CT X10 Y5 Z0
   - If a line has error diagnostics, do not emit motion message for that line;
     the line is reported in `rejected_lines` with reasons.
   - Lowering is fail-fast: stop lowering when the first error line is encountered.
+- Resume session API (v0):
+  - Provide session-level edit + resume from line API for interactive workflows.
+  - After line edit, reparsing preserves deterministic message ordering and
+    stable source line mapping.
 - JSON schema notes:
   - Include top-level `schema_version` (current value: `1`).
   - Include `messages`, `diagnostics`, and `rejected_lines`.

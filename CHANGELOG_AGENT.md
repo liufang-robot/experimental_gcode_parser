@@ -319,3 +319,26 @@ Known limitations:
 How to reproduce locally (commands):
 - `ctest --test-dir build --output-on-failure -R MessagesJsonTest.GoldenMessageOutput`
 - `./dev/check.sh`
+
+## 2026-02-23 (T-008 resume-from-line session API)
+- Added `ParseSession` API (`src/session.h/.cpp`) to support line edits and
+  resume-style reparsing from a requested line index.
+- Added `SessionTest` coverage for edit-and-resume flow after fixing an error
+  line and deterministic message ordering after edits.
+- Wired new `session_tests` target into CMake and test discovery.
+
+SPEC sections / tests:
+- SPEC: Section 6 (resume session API notes), Section 7 (testing)
+- Tests: `SessionTest.EditAndResumeFromErrorLine`,
+  `SessionTest.MessageOrderingIsDeterministicAfterEdit`, `./dev/check.sh`
+
+Known limitations:
+- Current implementation reparses full text internally while exposing
+  resume-from-line API semantics; targeted incremental diff/apply remains a
+  separate backlog item.
+
+How to reproduce locally (commands):
+- `cmake -S . -B build`
+- `cmake --build build -j`
+- `ctest --test-dir build --output-on-failure -R SessionTest`
+- `./dev/check.sh`
