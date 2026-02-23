@@ -33,7 +33,8 @@ cmake --build build
 
 ```bash
 ./build/gcode_parse testdata/g1_samples.ngc
-./build/gcode_parse testdata/g1_samples.ngc --line 3
+./build/gcode_parse --format debug testdata/g1_samples.ngc
+./build/gcode_parse --format json testdata/g1_samples.ngc
 ```
 
 ## Tests

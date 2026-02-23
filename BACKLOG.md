@@ -13,14 +13,6 @@
 
 ## Ready Queue
 
-### T-003 (P1) Improve diagnostic messages
-Why:
-- Current diagnostics are structurally correct but terse.
-Acceptance criteria:
-- Diagnostics include actionable text for syntax and semantic errors.
-- Add/refresh golden outputs where message text changed.
-- Update SPEC diagnostics section if behavior changes.
-
 ### T-004 (P2) JSON output mode for CLI
 Why:
 - Easier machine integration than debug-text format.
@@ -125,10 +117,11 @@ Use this template for new backlog items:
 
 ## In Progress
 (List tasks currently being worked on; only one assignee/task per PR)
-- T-003 (feature/t003-diagnostics)
+- T-004 (feature/t004-cli-json-format)
 
 ## Done
 (Move completed tasks here with PR link)
+- T-003 (PR #10)
 - T-002 (PR #9)
 - T-001 (PR #8)
 - T-011 (PR #6)

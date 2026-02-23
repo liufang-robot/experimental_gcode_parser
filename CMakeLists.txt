@@ -131,3 +131,10 @@ target_link_libraries(regression_tests PRIVATE GTest::gtest_main)
 target_include_directories(regression_tests
                            PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
 gtest_discover_tests(regression_tests DISCOVERY_MODE PRE_TEST)
+
+add_executable(cli_tests test/cli_tests.cpp)
+target_link_libraries(cli_tests PRIVATE GTest::gtest_main)
+target_compile_definitions(cli_tests PRIVATE
+                           GCODE_SOURCE_DIR="${CMAKE_CURRENT_SOURCE_DIR}"
+                           GCODE_PARSE_BIN="$<TARGET_FILE:gcode_parse>")
+gtest_discover_tests(cli_tests DISCOVERY_MODE PRE_TEST)
