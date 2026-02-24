@@ -12,22 +12,39 @@
 - `P3`: optional/enhancement
 
 ## Ready Queue
-### T-017 (P2) Add long-input stress smoke test for parser/lowering
+### T-018 (P1) Add G4 dwell support (`F` seconds / `S` spindle revolutions)
 Why:
-- ROADMAP M1/M4 call for stronger resilience checks under larger inputs.
+- Dwell is a core NC operation and currently unsupported in lowering output.
+- Product requirements need explicit queue messages for dwell with stable
+  source metadata.
 Scope:
-- Add a deterministic stress-smoke test for large valid input and basic
-  resource-envelope assertions.
+- Add syntax + lowering support for `G4` in its own NC block.
+- Support dwell time words:
+  - `G4 F...` where `F` is dwell time in seconds
+  - `G4 S...` where `S` is dwell time in master-spindle revolutions
+- Add typed queue message for dwell with source info and dwell mode/value.
 Acceptance criteria:
-- Add stress test covering parse + lower on large multi-line program input.
-- Assert no crash/hang and stable expected output shape for that input.
+- `G4 F...` lowers to one dwell message with mode=`seconds`.
+- `G4 S...` lowers to one dwell message with mode=`revolutions`.
+- `G4` must be programmed in a separate NC block; violations produce explicit
+  error diagnostics with line/column.
+- Existing feed (`F`) and spindle speed (`S`) semantics for adjacent non-`G4`
+  blocks remain unchanged (no modal overwrite by dwell message).
+- JSON conversion (`toJson`/`fromJson`) supports dwell messages.
+- Golden tests and unit tests added for valid/invalid dwell examples.
 - `./dev/check.sh` passes.
 Out of scope:
-- Grammar/semantic behavior changes.
+- Time-to-real-seconds conversion from spindle RPM/override runtime state.
+- Controller execution semantics beyond parse/lower output contracts.
 SPEC Sections:
-- Section 7 (Testing Strategy)
+- Section 3 (Supported Syntax), Section 5 (Diagnostics), Section 6 (Message
+  Lowering), Section 7 (Testing Strategy), Section 8 (architecture split).
 Tests To Add/Update:
-- `test/fuzz_smoke_tests.cpp`
+- `test/parser_tests.cpp`
+- `test/messages_tests.cpp`
+- `test/messages_json_tests.cpp`
+- `test/regression_tests.cpp`
+- `testdata/messages/*g4*`
 
 ## Icebox
 - Performance benchmarking harness.
@@ -69,4 +86,4 @@ Use this template for new backlog items:
 - T-014 (PR #20)
 - T-015 (PR #21)
 - T-016 (PR #22)
-- T-017 (feature/t017-long-input-stress, pending PR)
+- T-017 (PR #23)

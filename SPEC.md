@@ -2,7 +2,7 @@
 
 ## 1. Purpose
 Parse G-code text (string or file) into a simple, syntax-level JSON model
-focused on G1 (linear) and G2/G3 (circular) motion commands.
+focused on G1 (linear), G2/G3 (circular), and G4 (dwell) commands.
 
 v0.1 is **syntax-only** (no execution, no full modal semantics).
 
@@ -24,7 +24,7 @@ The parser returns:
 
 Optional downstream stage:
 - AST can be lowered into typed queue messages.
-- v0 supports `G1Message`, `G2Message`, and `G3Message` emission.
+- v0 supports `G1Message`, `G2Message`, `G3Message`, and `G4Message` emission.
 - Message results support JSON conversion (`toJson`/`fromJson`) for transport,
   fixtures, and debugging.
 
@@ -101,6 +101,24 @@ G2 CIP X10 Y5 Z0 I1=AC(1) J1=AC(2) K1=AC(3)
 G2 CT X10 Y5 Z0
 ```
 
+### 3.5 G4 (dwell)
+- Motion/control word: `G4`
+- Dwell time words:
+  - `F...` time in seconds
+  - `S...` time in revolutions of master spindle
+- `G4` must be programmed in a separate NC block.
+- Any previously programmed feed (`F`) and spindle speed (`S`) remain valid
+  after dwell.
+
+Examples:
+```
+N10 G1 F200 Z-5 S300 M3
+N20 G4 F3
+N30 X40 Y10
+N40 G4 S30
+N50 X60
+```
+
 ## 4. Non-goals (v0.1)
 - Full modal group validation beyond GGroup1 single-motion rule
 - Units/distance-mode state
@@ -113,8 +131,11 @@ G2 CT X10 Y5 Z0
 - Semantic errors:
   - Mixed Cartesian (`X/Y/Z/A`) + polar (`AP/RP`) words in a `G1` line.
   - Multiple motion commands (`G1/G2/G3`) in a single line.
+  - `G4` combined with other words in the same block when a separate block is
+    required.
   - Semantic messages should include an explicit correction hint (for example,
-    "choose one coordinate mode" or "choose only one of G1/G2/G3").
+    "choose one coordinate mode", "choose only one of G1/G2/G3", or
+    "program G4 in a separate block").
 
 ## 6. Message Lowering (v0.1)
 - Standalone lowering stage: AST + parser diagnostics -> queue-ready messages +
@@ -128,6 +149,10 @@ G2 CT X10 Y5 Z0
   - Target pose: `X/Y/Z/A/B/C` (optional numeric fields)
   - Arc parameters: `I/J/K/R` (optional numeric fields; `CR` maps to `R`)
   - Feed: `F` (optional numeric field)
+- `G4Message` fields:
+  - Source: optional filename, physical line, optional `N` line number
+  - Dwell mode: `seconds` (from `F`) or `revolutions` (from `S`)
+  - Dwell value: numeric duration/revolution count
 - Error-line emission policy (v0):
   - If a line has error diagnostics, do not emit motion message for that line;
     the line is reported in `rejected_lines` with reasons.
@@ -151,6 +176,8 @@ G2 CT X10 Y5 Z0
   - `G1Message` JSON carries `type`, `source`, `target_pose`, and `feed`.
   - `G2Message` / `G3Message` JSON additionally carry `arc` with
     `i/j/k/r` optional numeric fields.
+  - `G4Message` JSON carries `type`, `source`, `dwell_mode`, and
+    `dwell_value`.
 
 ## 7. Testing Expectations
 - Golden tests for all examples in `SPEC.md`.
@@ -178,3 +205,31 @@ G2 CT X10 Y5 Z0
   source file.
 - New function families must be added as new modules rather than extending one
   large file with long branching chains.
+
+## 9. Program Reference Manual Policy
+To keep product-facing behavior documentation aligned with code, maintain a
+separate implementation reference manual at:
+- `PROGRAM_REFERENCE.md`
+
+Requirements:
+- The manual must describe the currently implemented parser/lowering behavior,
+  not only planned behavior.
+- Every documented command/function must include a status:
+  - `Implemented`
+  - `Partial`
+  - `Planned`
+- The manual must include, per command/function:
+  - accepted syntax forms
+  - emitted message shape/fields (if any)
+  - diagnostics/rejections rules
+  - at least one example
+  - test references (unit/golden/regression names or files)
+- If code behavior changes, the same PR must update `PROGRAM_REFERENCE.md`.
+- If `SPEC.md` adds planned behavior not yet implemented, the manual must mark
+  it as `Planned` until code/tests are merged.
+
+PR gate expectation:
+- Feature PR description must list:
+  - updated sections in `SPEC.md`
+  - updated sections in `PROGRAM_REFERENCE.md`
+  - tests proving the documented behavior

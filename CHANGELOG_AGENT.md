@@ -514,3 +514,64 @@ How to reproduce locally (commands):
 - `cmake --build build -j`
 - `ctest --test-dir build --output-on-failure -R FuzzSmokeTest`
 - `./dev/check.sh`
+
+## 2026-02-24 (backlog task added: T-018 G4 dwell support)
+- Added new backlog task `T-018` to implement `G4` dwell support with
+  `G4 F...` (seconds) and `G4 S...` (spindle revolutions) syntax.
+- Defined acceptance criteria for parser/lowering behavior, diagnostics,
+  message JSON support, and test coverage expectations.
+- Updated stale backlog status for `T-017` to `PR #23`.
+
+SPEC sections / tests:
+- SPEC impact planned by task: Sections 3, 5, 6, 7, 8
+- Tests planned by task: parser/messages/messages_json/regression + message
+  goldens for G4
+
+Known limitations:
+- This change is planning-only; no parser or lowering behavior changed yet.
+
+How to reproduce locally (commands):
+- `sed -n '1,240p' BACKLOG.md`
+- `sed -n '1,520p' CHANGELOG_AGENT.md`
+
+## 2026-02-24 (SPEC update for planned G4 dwell support)
+- Updated `SPEC.md` to include `G4` dwell syntax with `G4 F...` (seconds) and
+  `G4 S...` (master-spindle revolutions).
+- Added diagnostics requirement that `G4` be programmed in a separate NC block
+  with explicit correction-hint messaging.
+- Extended message-lowering and JSON schema sections to define `G4Message`
+  fields (`dwell_mode`, `dwell_value`, source metadata).
+
+SPEC sections / tests:
+- SPEC: Sections 1, 2, 3.5, 5, and 6
+- Tests: planned under task `T-018` (no code/test behavior change in this docs-only commit)
+
+Known limitations:
+- This is a spec-definition update only; parser/lowering implementation for
+  `G4Message` remains pending in `T-018`.
+
+How to reproduce locally (commands):
+- `sed -n '1,320p' SPEC.md`
+- `sed -n '480,620p' CHANGELOG_AGENT.md`
+
+## 2026-02-24 (program reference manual policy + initial manual)
+- Added `SPEC.md` Section 9 defining a program-reference maintenance policy,
+  including status labels (`Implemented`/`Partial`/`Planned`) and PR update
+  requirements.
+- Added `PROGRAM_REFERENCE.md` as the implementation snapshot manual for command
+  syntax, lowering output, diagnostics, examples, and test references.
+- Documented `G4` explicitly as `Planned` in the reference manual so product
+  docs track current code behavior vs planned SPEC behavior.
+
+SPEC sections / tests:
+- SPEC: Section 9 (Program Reference Manual Policy)
+- Tests: not applicable (docs-only change)
+
+Known limitations:
+- Manual is intentionally hand-maintained; no automatic doc generation from
+  parser grammar/tests yet.
+
+How to reproduce locally (commands):
+- `sed -n '1,380p' SPEC.md`
+- `sed -n '1,320p' PROGRAM_REFERENCE.md`
+- `sed -n '520,700p' CHANGELOG_AGENT.md`
