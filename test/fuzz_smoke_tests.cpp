@@ -49,6 +49,17 @@ std::string generateInput(std::mt19937 &rng) {
   return text;
 }
 
+std::string generateLargeProgram(size_t line_count) {
+  std::string text;
+  text.reserve(line_count * 20);
+  for (size_t i = 0; i < line_count; ++i) {
+    text += "N";
+    text += std::to_string(i + 1);
+    text += " G1 X1 Y2 F3\n";
+  }
+  return text;
+}
+
 void parseSmoke(const std::string &input) {
   const auto parsed = gcode::parse(input);
   const auto lowered = gcode::parseAndLower(input);
@@ -80,6 +91,24 @@ TEST(FuzzSmokeTest, CorpusAndGeneratedInputsDoNotCrashOrHang) {
                               std::chrono::steady_clock::now() - start)
                               .count();
   EXPECT_LT(elapsed_ms, 5000);
+}
+
+TEST(FuzzSmokeTest, LongProgramInputDoesNotCrashOrHang) {
+  static constexpr size_t kLineCount = 20000;
+  const std::string input = generateLargeProgram(kLineCount);
+
+  const auto start = std::chrono::steady_clock::now();
+  const auto parsed = gcode::parse(input);
+  const auto lowered = gcode::parseAndLower(input);
+  const auto elapsed_ms = std::chrono::duration_cast<std::chrono::milliseconds>(
+                              std::chrono::steady_clock::now() - start)
+                              .count();
+
+  EXPECT_TRUE(parsed.diagnostics.empty());
+  EXPECT_TRUE(lowered.diagnostics.empty());
+  EXPECT_TRUE(lowered.rejected_lines.empty());
+  EXPECT_EQ(lowered.messages.size(), kLineCount);
+  EXPECT_LT(elapsed_ms, 15000);
 }
 
 } // namespace
