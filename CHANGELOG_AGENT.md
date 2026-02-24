@@ -402,3 +402,21 @@ Known limitations:
 
 How to reproduce locally (commands):
 - `sed -n '1,220p' BACKLOG.md`
+
+## 2026-02-24 (SPEC architecture rule for OO per-family modules)
+- Added SPEC architecture requirement to avoid monolithic parser/lowering files.
+- Added explicit requirement for per-family module/class structure (`G1`,
+  `G2/G3`, and future families) in SPEC Section 8.
+- Added backlog task `T-014` to track refactor work toward this architecture.
+
+SPEC sections / tests:
+- SPEC: Section 8 (Code Architecture Requirements)
+- Tests: no behavior change (docs/backlog update only)
+
+Known limitations:
+- This change defines architecture policy only; full source refactor is tracked
+  separately as `T-014`.
+
+How to reproduce locally (commands):
+- `sed -n '1,320p' SPEC.md`
+- `sed -n '1,220p' BACKLOG.md`
