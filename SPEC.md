@@ -169,3 +169,12 @@ G2 CT X10 Y5 Z0
 - Regression tests: every fixed bug must get a test that fails first, then passes.
   - Regression test naming convention:
     `Regression_<bug_or_issue_id>_<short_behavior>`.
+
+## 8. Code Architecture Requirements
+- Use object-oriented module design for parser/lowering function families.
+- Each major function family (`G1`, `G2/G3`, and future families) must be
+  implemented in separate classes/files.
+- Do not implement all parser/lowering family behavior in a single monolithic
+  source file.
+- New function families must be added as new modules rather than extending one
+  large file with long branching chains.

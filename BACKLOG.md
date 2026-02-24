@@ -13,6 +13,16 @@
 
 ## Ready Queue
 
+### T-014 (P2) Refactor parser/lowering into per-family OO modules
+Why:
+- SPEC now requires non-monolithic OO design per function family.
+Acceptance criteria:
+- Split family-specific parsing/lowering behavior into separate classes/files
+  (at minimum: `G1`, `G2/G3`).
+- Keep existing public APIs stable unless explicitly approved.
+- Preserve all current tests/goldens and `./dev/check.sh` pass.
+- Update architecture notes if module boundaries change.
+
 ## Icebox
 - Performance benchmarking harness.
 - Coverage threshold policy and badge.
