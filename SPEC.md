@@ -205,3 +205,31 @@ N50 X60
   source file.
 - New function families must be added as new modules rather than extending one
   large file with long branching chains.
+
+## 9. Program Reference Manual Policy
+To keep product-facing behavior documentation aligned with code, maintain a
+separate implementation reference manual at:
+- `PROGRAM_REFERENCE.md`
+
+Requirements:
+- The manual must describe the currently implemented parser/lowering behavior,
+  not only planned behavior.
+- Every documented command/function must include a status:
+  - `Implemented`
+  - `Partial`
+  - `Planned`
+- The manual must include, per command/function:
+  - accepted syntax forms
+  - emitted message shape/fields (if any)
+  - diagnostics/rejections rules
+  - at least one example
+  - test references (unit/golden/regression names or files)
+- If code behavior changes, the same PR must update `PROGRAM_REFERENCE.md`.
+- If `SPEC.md` adds planned behavior not yet implemented, the manual must mark
+  it as `Planned` until code/tests are merged.
+
+PR gate expectation:
+- Feature PR description must list:
+  - updated sections in `SPEC.md`
+  - updated sections in `PROGRAM_REFERENCE.md`
+  - tests proving the documented behavior

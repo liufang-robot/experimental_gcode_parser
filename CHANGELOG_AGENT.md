@@ -553,3 +553,25 @@ Known limitations:
 How to reproduce locally (commands):
 - `sed -n '1,320p' SPEC.md`
 - `sed -n '480,620p' CHANGELOG_AGENT.md`
+
+## 2026-02-24 (program reference manual policy + initial manual)
+- Added `SPEC.md` Section 9 defining a program-reference maintenance policy,
+  including status labels (`Implemented`/`Partial`/`Planned`) and PR update
+  requirements.
+- Added `PROGRAM_REFERENCE.md` as the implementation snapshot manual for command
+  syntax, lowering output, diagnostics, examples, and test references.
+- Documented `G4` explicitly as `Planned` in the reference manual so product
+  docs track current code behavior vs planned SPEC behavior.
+
+SPEC sections / tests:
+- SPEC: Section 9 (Program Reference Manual Policy)
+- Tests: not applicable (docs-only change)
+
+Known limitations:
+- Manual is intentionally hand-maintained; no automatic doc generation from
+  parser grammar/tests yet.
+
+How to reproduce locally (commands):
+- `sed -n '1,380p' SPEC.md`
+- `sed -n '1,320p' PROGRAM_REFERENCE.md`
+- `sed -n '520,700p' CHANGELOG_AGENT.md`
