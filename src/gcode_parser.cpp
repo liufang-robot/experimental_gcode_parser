@@ -9,6 +9,7 @@
 #include "GCodeLexer.h"
 #include "GCodeParser.h"
 #include "antlr4-runtime.h"
+#include "semantic_rules.h"
 
 namespace gcode {
 namespace {
@@ -192,88 +193,6 @@ private:
     return line;
   }
 };
-
-bool isMotionWord(const Word &word, int *out_code) {
-  if (word.head != "G" || !word.value.has_value()) {
-    return false;
-  }
-  try {
-    int code = std::stoi(*word.value);
-    if (code == 1 || code == 2 || code == 3) {
-      if (out_code) {
-        *out_code = code;
-      }
-      return true;
-    }
-  } catch (...) {
-    return false;
-  }
-  return false;
-}
-
-bool isCartesianWord(const Word &word) {
-  return word.head == "X" || word.head == "Y" || word.head == "Z" ||
-         word.head == "A";
-}
-
-bool isPolarWord(const Word &word) {
-  return word.head == "AP" || word.head == "RP";
-}
-
-void addDiagnostic(std::vector<Diagnostic> &diags, const Location &loc,
-                   const std::string &message) {
-  Diagnostic diag;
-  diag.severity = Diagnostic::Severity::Error;
-  diag.message = message;
-  diag.location = loc;
-  diags.push_back(std::move(diag));
-}
-
-void addSemanticDiagnostics(ParseResult &result) {
-  for (auto &line : result.program.lines) {
-    int motion_code = 0;
-    bool has_motion = false;
-    bool has_cartesian = false;
-    bool has_polar = false;
-
-    for (const auto &item : line.items) {
-      if (!std::holds_alternative<Word>(item)) {
-        continue;
-      }
-      const auto &word = std::get<Word>(item);
-      int code = 0;
-      if (isMotionWord(word, &code)) {
-        if (has_motion && code != motion_code) {
-          addDiagnostic(result.diagnostics, word.location,
-                        "multiple motion commands in one line; choose only "
-                        "one of G1/G2/G3");
-          break;
-        }
-        has_motion = true;
-        motion_code = code;
-        continue;
-      }
-      if (isCartesianWord(word)) {
-        has_cartesian = true;
-      }
-      if (isPolarWord(word)) {
-        has_polar = true;
-        if (has_cartesian && has_motion && motion_code == 1) {
-          addDiagnostic(result.diagnostics, word.location,
-                        "mixed cartesian (X/Y/Z/A) and polar (AP/RP) words in "
-                        "G1 line; choose one coordinate mode");
-          break;
-        }
-      }
-      if (has_cartesian && has_polar && has_motion && motion_code == 1) {
-        addDiagnostic(result.diagnostics, word.location,
-                      "mixed cartesian (X/Y/Z/A) and polar (AP/RP) words in "
-                      "G1 line; choose one coordinate mode");
-        break;
-      }
-    }
-  }
-}
 
 } // namespace
 
