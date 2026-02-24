@@ -575,3 +575,36 @@ How to reproduce locally (commands):
 - `sed -n '1,380p' SPEC.md`
 - `sed -n '1,320p' PROGRAM_REFERENCE.md`
 - `sed -n '520,700p' CHANGELOG_AGENT.md`
+
+## 2026-02-24 (T-018 G4 dwell support)
+- Implemented `G4` dwell support end-to-end with new `G4Message` type, OO
+  lowerer module (`src/lowering_family_g4.h/.cpp`), and motion-family factory
+  registration.
+- Added semantic diagnostics for G4 block rules: separate-block enforcement,
+  exactly-one dwell mode (`F` xor `S`), and numeric dwell value validation.
+- Extended message JSON and diff/apply paths for `G4Message`, and added G4
+  tests + golden fixtures (`testdata/messages/g4_*.ngc/.golden.json`).
+
+SPEC sections / tests:
+- SPEC: Section 3.5 (G4 syntax), Section 5 (diagnostics), Section 6 (message
+  lowering/JSON), Section 7 (testing)
+- Tests: `MessagesTest.G4ExtractionSecondsAndRevolutions`,
+  `MessagesTest.G4MustBeSeparateBlockAndFailFast`,
+  `MessagesJsonTest.RoundTripWithG4PreservesResult`,
+  `SemanticRulesTest.ReportsG4NotSeparateBlock`,
+  `SemanticRulesTest.ReportsG4RequiresExactlyOneModeWord`,
+  `G4LowererTest.*`, `MessageDiffTest.G4LineUpdateIsTrackedAsUpdatedEntry`,
+  `RegressionTest.Regression_G4RequiresSeparateBlock`,
+  `MessagesJsonTest.GoldenMessageOutput` (new `g4_*` fixtures),
+  `./dev/check.sh`
+
+Known limitations:
+- Dwell runtime conversion (e.g. spindle-revolution time conversion using
+  spindle RPM/override state) is intentionally out of scope for parser/lowering
+  v0 and not computed here.
+
+How to reproduce locally (commands):
+- `cmake -S . -B build`
+- `cmake --build build -j`
+- `ctest --test-dir build --output-on-failure -R "(G4LowererTest|MessagesTest.G4|MessagesJsonTest.RoundTripWithG4|SemanticRulesTest.ReportsG4|RegressionTest.Regression_G4|MessageDiffTest.G4|MessagesJsonTest.GoldenMessageOutput)"`
+- `./dev/check.sh`

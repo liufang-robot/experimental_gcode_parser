@@ -3,6 +3,8 @@
 #include <memory>
 #include <vector>
 
+#include "lowering_family_common.h"
+
 namespace gcode {
 namespace {
 
@@ -19,7 +21,7 @@ bool isMotionWord(const Word &word, int *out_code) {
   }
   try {
     int code = std::stoi(*word.value);
-    if (code == 1 || code == 2 || code == 3) {
+    if (code == 1 || code == 2 || code == 3 || code == 4) {
       if (out_code) {
         *out_code = code;
       }
@@ -64,6 +66,9 @@ public:
       if (!isMotionWord(word, &code)) {
         continue;
       }
+      if (code == 4) {
+        continue;
+      }
       if (has_motion && code != motion_code) {
         addDiagnostic(
             diagnostics, word.location,
@@ -73,6 +78,83 @@ public:
       }
       has_motion = true;
       motion_code = code;
+    }
+  }
+};
+
+class G4BlockRule final : public LineSemanticRule {
+public:
+  void apply(const Line &line,
+             std::vector<Diagnostic> *diagnostics) const override {
+    const Word *g4_word = nullptr;
+    const Word *f_word = nullptr;
+    const Word *s_word = nullptr;
+    const Word *first_other_word = nullptr;
+
+    for (const auto &item : line.items) {
+      if (!std::holds_alternative<Word>(item)) {
+        continue;
+      }
+      const auto &word = std::get<Word>(item);
+      int code = 0;
+      if (isMotionWord(word, &code) && code == 4) {
+        if (!g4_word) {
+          g4_word = &word;
+        } else if (!first_other_word) {
+          first_other_word = &word;
+        }
+        continue;
+      }
+      if (word.head == "F") {
+        if (!f_word) {
+          f_word = &word;
+        } else if (!first_other_word) {
+          first_other_word = &word;
+        }
+        continue;
+      }
+      if (word.head == "S") {
+        if (!s_word) {
+          s_word = &word;
+        } else if (!first_other_word) {
+          first_other_word = &word;
+        }
+        continue;
+      }
+      if (!first_other_word) {
+        first_other_word = &word;
+      }
+    }
+
+    if (!g4_word) {
+      return;
+    }
+
+    if (first_other_word) {
+      addDiagnostic(diagnostics, first_other_word->location,
+                    "program G4 in a separate block; use only G4 with one of "
+                    "F (seconds) or S (revolutions)");
+      return;
+    }
+
+    if (!f_word && !s_word) {
+      addDiagnostic(diagnostics, g4_word->location,
+                    "G4 dwell requires F (seconds) or S (revolutions)");
+      return;
+    }
+
+    if (f_word && s_word) {
+      addDiagnostic(diagnostics, s_word->location,
+                    "G4 dwell must use either F (seconds) or S "
+                    "(revolutions), not both");
+      return;
+    }
+
+    const Word *dwell_word = f_word ? f_word : s_word;
+    double parsed_value = 0.0;
+    if (!parseDoubleText(dwell_word->value, &parsed_value)) {
+      addDiagnostic(diagnostics, dwell_word->location,
+                    "G4 dwell value must be numeric");
     }
   }
 };
@@ -117,6 +199,7 @@ public:
 
 std::vector<std::unique_ptr<LineSemanticRule>> makeRules() {
   std::vector<std::unique_ptr<LineSemanticRule>> rules;
+  rules.push_back(std::make_unique<G4BlockRule>());
   rules.push_back(std::make_unique<MotionExclusivityRule>());
   rules.push_back(std::make_unique<G1CoordinateModeRule>());
   return rules;

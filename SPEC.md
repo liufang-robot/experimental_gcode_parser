@@ -107,6 +107,7 @@ G2 CT X10 Y5 Z0
   - `F...` time in seconds
   - `S...` time in revolutions of master spindle
 - `G4` must be programmed in a separate NC block.
+- Exactly one dwell mode word must be provided (`F` xor `S`).
 - Any previously programmed feed (`F`) and spindle speed (`S`) remain valid
   after dwell.
 
@@ -133,6 +134,8 @@ N50 X60
   - Multiple motion commands (`G1/G2/G3`) in a single line.
   - `G4` combined with other words in the same block when a separate block is
     required.
+  - `G4` with both `F` and `S`, with neither `F` nor `S`, or with non-numeric
+    dwell values.
   - Semantic messages should include an explicit correction hint (for example,
     "choose one coordinate mode", "choose only one of G1/G2/G3", or
     "program G4 in a separate block").

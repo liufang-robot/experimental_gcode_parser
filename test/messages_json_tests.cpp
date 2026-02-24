@@ -94,4 +94,15 @@ TEST(MessagesJsonTest, RoundTripWithG2G3PreservesResult) {
   EXPECT_EQ(gcode::toJsonString(roundtrip), json);
 }
 
+TEST(MessagesJsonTest, RoundTripWithG4PreservesResult) {
+  const std::string input = "N1 G4 F3\nN2 G4 S30\n";
+  gcode::LowerOptions options;
+  options.filename = "dwell_roundtrip.ngc";
+  const auto result = gcode::parseAndLower(input, options);
+
+  const auto json = gcode::toJsonString(result);
+  const auto roundtrip = gcode::fromJsonString(json);
+  EXPECT_EQ(gcode::toJsonString(roundtrip), json);
+}
+
 } // namespace

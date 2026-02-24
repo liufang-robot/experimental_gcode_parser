@@ -12,39 +12,7 @@
 - `P3`: optional/enhancement
 
 ## Ready Queue
-### T-018 (P1) Add G4 dwell support (`F` seconds / `S` spindle revolutions)
-Why:
-- Dwell is a core NC operation and currently unsupported in lowering output.
-- Product requirements need explicit queue messages for dwell with stable
-  source metadata.
-Scope:
-- Add syntax + lowering support for `G4` in its own NC block.
-- Support dwell time words:
-  - `G4 F...` where `F` is dwell time in seconds
-  - `G4 S...` where `S` is dwell time in master-spindle revolutions
-- Add typed queue message for dwell with source info and dwell mode/value.
-Acceptance criteria:
-- `G4 F...` lowers to one dwell message with mode=`seconds`.
-- `G4 S...` lowers to one dwell message with mode=`revolutions`.
-- `G4` must be programmed in a separate NC block; violations produce explicit
-  error diagnostics with line/column.
-- Existing feed (`F`) and spindle speed (`S`) semantics for adjacent non-`G4`
-  blocks remain unchanged (no modal overwrite by dwell message).
-- JSON conversion (`toJson`/`fromJson`) supports dwell messages.
-- Golden tests and unit tests added for valid/invalid dwell examples.
-- `./dev/check.sh` passes.
-Out of scope:
-- Time-to-real-seconds conversion from spindle RPM/override runtime state.
-- Controller execution semantics beyond parse/lower output contracts.
-SPEC Sections:
-- Section 3 (Supported Syntax), Section 5 (Diagnostics), Section 6 (Message
-  Lowering), Section 7 (Testing Strategy), Section 8 (architecture split).
-Tests To Add/Update:
-- `test/parser_tests.cpp`
-- `test/messages_tests.cpp`
-- `test/messages_json_tests.cpp`
-- `test/regression_tests.cpp`
-- `testdata/messages/*g4*`
+- None.
 
 ## Icebox
 - Performance benchmarking harness.
@@ -87,3 +55,4 @@ Use this template for new backlog items:
 - T-015 (PR #21)
 - T-016 (PR #22)
 - T-017 (PR #23)
+- T-018 (feature/t018-g4-dwell-support, pending PR)

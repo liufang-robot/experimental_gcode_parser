@@ -52,7 +52,15 @@ struct G3Message {
   std::optional<double> feed;
 };
 
-using ParsedMessage = std::variant<G1Message, G2Message, G3Message>;
+enum class DwellMode { Seconds, Revolutions };
+
+struct G4Message {
+  SourceInfo source;
+  DwellMode dwell_mode = DwellMode::Seconds;
+  double dwell_value = 0.0;
+};
+
+using ParsedMessage = std::variant<G1Message, G2Message, G3Message, G4Message>;
 
 struct LowerOptions {
   std::optional<std::string> filename;

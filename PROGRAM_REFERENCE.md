@@ -15,7 +15,7 @@ Version scope:
 | `G1` linear | Implemented | Lowers to `G1Message` with pose/feed. |
 | `G2` arc CW | Implemented | Lowers to `G2Message` with pose/arc/feed. |
 | `G3` arc CCW | Implemented | Lowers to `G3Message` with pose/arc/feed. |
-| `G4` dwell | Planned | Spec drafted; lowering not implemented yet. |
+| `G4` dwell | Implemented | Lowers to `G4Message` with mode/value. |
 
 ## `G1` Linear Interpolation
 
@@ -81,19 +81,30 @@ Test references:
 ## `G4` Dwell
 
 Status:
-- `Planned`
+- `Implemented`
 
-Planned syntax (from SPEC):
+Syntax:
 - `G4 F...` (seconds)
 - `G4 S...` (master spindle revolutions)
 - Program in separate NC block.
 
-Planned output:
+Lowering output:
 - `G4Message` with `dwell_mode` and `dwell_value`.
 
-Current behavior:
-- `G4` does not produce a typed motion message in lowering.
+Diagnostics:
+- Error if `G4` is not in a separate block.
+- Error if both `F` and `S` are present.
+- Error if neither `F` nor `S` is present.
 
-Planned tests:
-- Parser/message/message-json + golden fixtures for valid/invalid `G4` blocks
-  (tracked by backlog task `T-018`).
+Examples:
+- `G4 F3`
+- `G4 S30`
+
+Test references:
+- `test/messages_tests.cpp`
+- `test/messages_json_tests.cpp`
+- `test/semantic_rules_tests.cpp`
+- `test/regression_tests.cpp`
+- `test/lowering_family_g4_tests.cpp`
+- `testdata/messages/g4_dwell.ngc`
+- `testdata/messages/g4_failfast.ngc`

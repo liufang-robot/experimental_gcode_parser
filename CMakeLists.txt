@@ -85,7 +85,8 @@ add_library(
                       src/ast_printer.cpp src/messages.cpp
                       src/lowering_family_factory.cpp src/lowering_family_g1.cpp
                       src/lowering_family_g2.cpp src/lowering_family_g3.cpp
-                      src/messages_json.cpp src/session.cpp src/message_diff.cpp)
+                      src/lowering_family_g4.cpp src/messages_json.cpp
+                      src/session.cpp src/message_diff.cpp)
 target_include_directories(gcode_parser PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/src
                                             ${GENERATED_DIR})
 target_link_libraries(gcode_parser PUBLIC gcode_antlr)
@@ -190,3 +191,10 @@ target_link_libraries(lowering_family_g3_tests PRIVATE GTest::gtest_main)
 target_include_directories(lowering_family_g3_tests
                            PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
 gtest_discover_tests(lowering_family_g3_tests DISCOVERY_MODE PRE_TEST)
+
+add_executable(lowering_family_g4_tests test/lowering_family_g4_tests.cpp)
+target_link_libraries(lowering_family_g4_tests PRIVATE gcode_parser)
+target_link_libraries(lowering_family_g4_tests PRIVATE GTest::gtest_main)
+target_include_directories(lowering_family_g4_tests
+                           PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
+gtest_discover_tests(lowering_family_g4_tests DISCOVERY_MODE PRE_TEST)

@@ -57,6 +57,17 @@ nlohmann::json optionalDoubleToJson(const std::optional<double> &value) {
   return value.has_value() ? nlohmann::json(*value) : nlohmann::json(nullptr);
 }
 
+std::string dwellModeToString(DwellMode mode) {
+  return mode == DwellMode::Revolutions ? "revolutions" : "seconds";
+}
+
+DwellMode dwellModeFromString(const std::string &mode) {
+  if (mode == "revolutions") {
+    return DwellMode::Revolutions;
+  }
+  return DwellMode::Seconds;
+}
+
 std::optional<double> optionalDoubleFromJson(const nlohmann::json &j,
                                              const char *key) {
   if (!j.contains(key) || j[key].is_null()) {
@@ -145,6 +156,12 @@ nlohmann::json messageToJson(const ParsedMessage &message) {
     j["target_pose"] = poseToJson(g3.target_pose);
     j["arc"] = arcToJson(g3.arc);
     j["feed"] = optionalDoubleToJson(g3.feed);
+  } else if (std::holds_alternative<G4Message>(message)) {
+    const auto &g4 = std::get<G4Message>(message);
+    j["type"] = "G4";
+    j["source"] = sourceToJson(g4.source);
+    j["dwell_mode"] = dwellModeToString(g4.dwell_mode);
+    j["dwell_value"] = g4.dwell_value;
   }
   return j;
 }
@@ -187,6 +204,14 @@ ParsedMessage messageFromJson(const nlohmann::json &j) {
     }
     g3.feed = optionalDoubleFromJson(j, "feed");
     return g3;
+  } else if (type == "G4") {
+    G4Message g4;
+    if (j.contains("source")) {
+      g4.source = sourceFromJson(j["source"]);
+    }
+    g4.dwell_mode = dwellModeFromString(j.value("dwell_mode", "seconds"));
+    g4.dwell_value = j.value("dwell_value", 0.0);
+    return g4;
   }
   return G1Message{};
 }
