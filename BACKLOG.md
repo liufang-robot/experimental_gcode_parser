@@ -49,7 +49,7 @@ Use this template for new backlog items:
 
 ## In Progress
 (List tasks currently being worked on; only one assignee/task per PR)
-- T-016 (feature/t016-regression-edge-cases)
+- None.
 
 ## Done
 (Move completed tasks here with PR link)
@@ -68,3 +68,4 @@ Use this template for new backlog items:
 - T-011 (PR #6)
 - T-014 (PR #20)
 - T-015 (PR #21)
+- T-016 (feature/t016-regression-edge-cases, pending PR)
