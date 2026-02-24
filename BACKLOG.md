@@ -12,7 +12,22 @@
 - `P3`: optional/enhancement
 
 ## Ready Queue
-- None.
+### T-016 (P2) Add targeted parser/lowering regression tests for edge cases
+Why:
+- ROADMAP M1 calls for stronger regression coverage on parser edge behavior.
+Scope:
+- Add regression tests for edge cases in diagnostics and message lowering
+  behavior without changing parser semantics.
+Acceptance criteria:
+- Add at least 3 regression tests that capture edge-case behavior.
+- Keep existing parse/lower behavior unchanged (tests-only or equivalent).
+- `./dev/check.sh` passes.
+Out of scope:
+- Grammar feature additions or semantic rule changes.
+SPEC Sections:
+- Section 7 (Testing Strategy)
+Tests To Add/Update:
+- `test/regression_tests.cpp`
 
 ## Icebox
 - Performance benchmarking harness.
@@ -52,4 +67,5 @@ Use this template for new backlog items:
 - T-001 (PR #8)
 - T-011 (PR #6)
 - T-014 (PR #20)
-- T-015 (feature/t015-per-class-unit-tests, pending PR)
+- T-015 (PR #21)
+- T-016 (feature/t016-regression-edge-cases, pending PR)
