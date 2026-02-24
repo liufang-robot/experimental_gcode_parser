@@ -533,3 +533,23 @@ Known limitations:
 How to reproduce locally (commands):
 - `sed -n '1,240p' BACKLOG.md`
 - `sed -n '1,520p' CHANGELOG_AGENT.md`
+
+## 2026-02-24 (SPEC update for planned G4 dwell support)
+- Updated `SPEC.md` to include `G4` dwell syntax with `G4 F...` (seconds) and
+  `G4 S...` (master-spindle revolutions).
+- Added diagnostics requirement that `G4` be programmed in a separate NC block
+  with explicit correction-hint messaging.
+- Extended message-lowering and JSON schema sections to define `G4Message`
+  fields (`dwell_mode`, `dwell_value`, source metadata).
+
+SPEC sections / tests:
+- SPEC: Sections 1, 2, 3.5, 5, and 6
+- Tests: planned under task `T-018` (no code/test behavior change in this docs-only commit)
+
+Known limitations:
+- This is a spec-definition update only; parser/lowering implementation for
+  `G4Message` remains pending in `T-018`.
+
+How to reproduce locally (commands):
+- `sed -n '1,320p' SPEC.md`
+- `sed -n '480,620p' CHANGELOG_AGENT.md`
