@@ -162,4 +162,28 @@ TEST(MessagesTest, G2G3Extraction) {
   EXPECT_TRUE(closeEnough(*g3->feed, 200.0));
 }
 
+TEST(MessagesTest, ArcUnsupportedWordsEmitWarningsButKeepMessage) {
+  const std::string input = "G2 AP=90 RP=10 AR=30 X10 Y20 F100\n";
+  const auto result = gcode::parseAndLower(input);
+
+  ASSERT_EQ(result.messages.size(), 1u);
+  EXPECT_TRUE(result.rejected_lines.empty());
+
+  const auto *g2 = asG2(result.messages[0]);
+  ASSERT_NE(g2, nullptr);
+  ASSERT_TRUE(g2->target_pose.x.has_value());
+  ASSERT_TRUE(g2->target_pose.y.has_value());
+  EXPECT_TRUE(closeEnough(*g2->target_pose.x, 10.0));
+  EXPECT_TRUE(closeEnough(*g2->target_pose.y, 20.0));
+  ASSERT_TRUE(g2->feed.has_value());
+  EXPECT_TRUE(closeEnough(*g2->feed, 100.0));
+
+  ASSERT_EQ(result.diagnostics.size(), 3u);
+  for (const auto &diag : result.diagnostics) {
+    EXPECT_EQ(diag.severity, gcode::Diagnostic::Severity::Warning);
+    EXPECT_NE(diag.message.find("ignored unsupported arc word"),
+              std::string::npos);
+  }
+}
+
 } // namespace

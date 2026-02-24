@@ -365,3 +365,27 @@ How to reproduce locally (commands):
 - `cmake --build build -j`
 - `ctest --test-dir build --output-on-failure -R MessageDiffTest`
 - `./dev/check.sh`
+
+## 2026-02-23 (T-010 diagnostics policy + severity mapping)
+- Defined and implemented severity mapping at lowering stage:
+  - `error` for fail-fast rejecting diagnostics
+  - `warning` for non-fatal unsupported arc-word lowering limits
+- Added arc-lowering warning diagnostics for unsupported words
+  (`AR`, `AP`, `RP`, `CIP`, `CT`, `I1`, `J1`, `K1`) while still emitting
+  supported `G2/G3` message fields.
+- Added test coverage validating warning severity and partial emission behavior.
+
+SPEC sections / tests:
+- SPEC: Section 6 (severity mapping policy), Section 7 (testing)
+- Tests: `MessagesTest.ArcUnsupportedWordsEmitWarningsButKeepMessage`,
+  `./dev/check.sh`
+
+Known limitations:
+- Warning list is currently rule-based and explicit; future parser/lowering
+  extensions may adjust which words are considered supported.
+
+How to reproduce locally (commands):
+- `cmake -S . -B build`
+- `cmake --build build -j`
+- `ctest --test-dir build --output-on-failure -R ArcUnsupportedWordsEmitWarningsButKeepMessage`
+- `./dev/check.sh`
