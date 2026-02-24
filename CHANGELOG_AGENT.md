@@ -420,3 +420,24 @@ Known limitations:
 How to reproduce locally (commands):
 - `sed -n '1,320p' SPEC.md`
 - `sed -n '1,220p' BACKLOG.md`
+
+## 2026-02-24 (T-014 OO per-family module refactor)
+- Refactored parser semantic validation into rule classes in
+  `src/semantic_rules.cpp` (motion exclusivity + G1 coordinate mode rules).
+- Refactored message lowering into per-family lowerer classes/files:
+  `G1Lowerer`, `G2Lowerer`, `G3Lowerer`, with factory wiring and common helpers.
+- Kept public parse/lowering APIs stable while removing monolithic family logic
+  from `src/gcode_parser.cpp` and `src/messages.cpp`.
+
+SPEC sections / tests:
+- SPEC: Section 8 (Code Architecture Requirements)
+- Tests: full suite via `./dev/check.sh`
+
+Known limitations:
+- Refactor focuses on parser semantic rules + message lowering family modules;
+  full AST builder extraction from `src/gcode_parser.cpp` can be a future step.
+
+How to reproduce locally (commands):
+- `cmake -S . -B build`
+- `cmake --build build -j`
+- `./dev/check.sh`

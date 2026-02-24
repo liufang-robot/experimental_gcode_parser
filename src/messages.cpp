@@ -1,24 +1,12 @@
 #include "messages.h"
 
-#include <cctype>
-#include <set>
+#include <unordered_map>
 
 #include "gcode_parser.h"
+#include "lowering_family.h"
 
 namespace gcode {
 namespace {
-
-bool parseDouble(const std::optional<std::string> &text, double *value) {
-  if (!text.has_value()) {
-    return false;
-  }
-  try {
-    *value = std::stod(*text);
-    return true;
-  } catch (...) {
-    return false;
-  }
-}
 
 bool lineHasError(const std::vector<Diagnostic> &diagnostics, int line) {
   for (const auto &diag : diagnostics) {
@@ -55,76 +43,13 @@ int motionCode(const Word &word) {
   }
 }
 
-void addWarningDiagnostic(std::vector<Diagnostic> &diagnostics,
-                          const Location &location,
-                          const std::string &message) {
-  Diagnostic diag;
-  diag.severity = Diagnostic::Severity::Warning;
-  diag.message = message;
-  diag.location = location;
-  diagnostics.push_back(std::move(diag));
-}
-
-SourceInfo sourceFromLine(const Line &line, const LowerOptions &options) {
-  SourceInfo source;
-  source.filename = options.filename;
-  source.line = line.line_index;
-  if (line.line_number.has_value()) {
-    source.line_number = line.line_number->value;
+std::unordered_map<int, const MotionFamilyLowerer *> indexLowerers(
+    const std::vector<std::unique_ptr<MotionFamilyLowerer>> &lowerers) {
+  std::unordered_map<int, const MotionFamilyLowerer *> indexed;
+  for (const auto &lowerer : lowerers) {
+    indexed[lowerer->motionCode()] = lowerer.get();
   }
-  return source;
-}
-
-void fillPoseAndFeed(const Line &line, Pose6 *pose, std::optional<double> *feed,
-                     ArcParams *arc) {
-  for (const auto &item : line.items) {
-    if (!isWord(item)) {
-      continue;
-    }
-    const auto &word = std::get<Word>(item);
-    double parsed = 0.0;
-    if (word.head == "X" && parseDouble(word.value, &parsed)) {
-      pose->x = parsed;
-    } else if (word.head == "Y" && parseDouble(word.value, &parsed)) {
-      pose->y = parsed;
-    } else if (word.head == "Z" && parseDouble(word.value, &parsed)) {
-      pose->z = parsed;
-    } else if (word.head == "A" && parseDouble(word.value, &parsed)) {
-      pose->a = parsed;
-    } else if (word.head == "B" && parseDouble(word.value, &parsed)) {
-      pose->b = parsed;
-    } else if (word.head == "C" && parseDouble(word.value, &parsed)) {
-      pose->c = parsed;
-    } else if (word.head == "F" && parseDouble(word.value, &parsed)) {
-      *feed = parsed;
-    } else if (arc && word.head == "I" && parseDouble(word.value, &parsed)) {
-      arc->i = parsed;
-    } else if (arc && word.head == "J" && parseDouble(word.value, &parsed)) {
-      arc->j = parsed;
-    } else if (arc && word.head == "K" && parseDouble(word.value, &parsed)) {
-      arc->k = parsed;
-    } else if (arc && (word.head == "R" || word.head == "CR") &&
-               parseDouble(word.value, &parsed)) {
-      arc->r = parsed;
-    }
-  }
-}
-
-void addArcLoweringWarnings(const Line &line,
-                            std::vector<Diagnostic> *diagnostics) {
-  static const std::set<std::string> unsupported_heads = {
-      "AR", "AP", "RP", "CIP", "CT", "I1", "J1", "K1"};
-  for (const auto &item : line.items) {
-    if (!isWord(item)) {
-      continue;
-    }
-    const auto &word = std::get<Word>(item);
-    if (unsupported_heads.find(word.head) != unsupported_heads.end()) {
-      addWarningDiagnostic(*diagnostics, word.location,
-                           "lowering ignored unsupported arc word: " +
-                               word.head);
-    }
-  }
+  return indexed;
 }
 
 } // namespace
@@ -134,6 +59,8 @@ MessageResult lowerToMessages(const Program &program,
                               const LowerOptions &options) {
   MessageResult result;
   result.diagnostics = parse_diagnostics;
+  const auto lowerers = createMotionFamilyLowerers();
+  const auto indexed_lowerers = indexLowerers(lowerers);
 
   for (const auto &line : program.lines) {
     const bool has_line_error =
@@ -170,24 +97,12 @@ MessageResult lowerToMessages(const Program &program,
       continue;
     }
 
-    if (found_motion == 1) {
-      G1Message message;
-      message.source = sourceFromLine(line, options);
-      fillPoseAndFeed(line, &message.target_pose, &message.feed, nullptr);
-      result.messages.emplace_back(std::move(message));
-    } else if (found_motion == 2) {
-      G2Message message;
-      message.source = sourceFromLine(line, options);
-      fillPoseAndFeed(line, &message.target_pose, &message.feed, &message.arc);
-      result.messages.emplace_back(std::move(message));
-      addArcLoweringWarnings(line, &result.diagnostics);
-    } else if (found_motion == 3) {
-      G3Message message;
-      message.source = sourceFromLine(line, options);
-      fillPoseAndFeed(line, &message.target_pose, &message.feed, &message.arc);
-      result.messages.emplace_back(std::move(message));
-      addArcLoweringWarnings(line, &result.diagnostics);
+    const auto found = indexed_lowerers.find(found_motion);
+    if (found == indexed_lowerers.end()) {
+      continue;
     }
+    result.messages.push_back(
+        found->second->lower(line, options, &result.diagnostics));
   }
 
   return result;
