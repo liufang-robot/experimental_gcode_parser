@@ -13,13 +13,6 @@
 
 ## Ready Queue
 
-### T-010 (P2) Message diagnostics policy and severity mapping
-Why:
-- Need explicit policy for parser/lowering errors at message stage.
-Acceptance criteria:
-- Define and implement policy (skip/partial message emission) in SPEC + code.
-- Add tests that validate diagnostic severity and emission policy.
-
 ## Icebox
 - Performance benchmarking harness.
 - Coverage threshold policy and badge.
@@ -40,10 +33,11 @@ Use this template for new backlog items:
 
 ## In Progress
 (List tasks currently being worked on; only one assignee/task per PR)
-- T-010 (feature/t010-diagnostics-policy)
+- None
 
 ## Done
 (Move completed tasks here with PR link)
+- T-010 (PR #17)
 - T-009 (PR #16)
 - T-008 (PR #15)
 - T-013 (PR #14)
