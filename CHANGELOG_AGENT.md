@@ -467,3 +467,28 @@ How to reproduce locally (commands):
 - `cmake --build build -j`
 - `ctest --test-dir build --output-on-failure -R "(SemanticRulesTest|MotionFamilyFactoryTest|G1LowererTest|G2LowererTest|G3LowererTest)"`
 - `./dev/check.sh`
+
+## 2026-02-24 (T-016 targeted regression edge-case tests)
+- Added targeted regression coverage for duplicate same-motion words in one line
+  (`G1 G1 X...`) to ensure no false exclusivity error and successful lowering.
+- Added regression coverage for syntax-error location reporting on unsupported
+  characters (line/column assertion).
+- Added regression coverage confirming non-motion G-codes (e.g., `G4`) do not
+  emit motion queue messages in v0.
+
+SPEC sections / tests:
+- SPEC: Section 7 (Testing Strategy)
+- Tests: `RegressionTest.Regression_DuplicateSameMotionWord_NoExclusiveError`,
+  `RegressionTest.Regression_UnsupportedChars_HasAccurateLocation`,
+  `RegressionTest.Regression_NonMotionGCode_DoesNotEmitMessage`,
+  `./dev/check.sh`
+
+Known limitations:
+- These tests lock current v0 behavior; future motion-family expansion may
+  intentionally change non-motion lowering expectations.
+
+How to reproduce locally (commands):
+- `cmake -S . -B build`
+- `cmake --build build -j`
+- `ctest --test-dir build --output-on-failure -R RegressionTest`
+- `./dev/check.sh`
