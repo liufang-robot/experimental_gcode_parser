@@ -441,3 +441,29 @@ How to reproduce locally (commands):
 - `cmake -S . -B build`
 - `cmake --build build -j`
 - `./dev/check.sh`
+
+## 2026-02-24 (T-015 per-class unit tests for OO family modules)
+- Added dedicated GoogleTest targets for OO module files: `semantic_rules`,
+  `lowering_family_factory`, `lowering_family_g1`, `lowering_family_g2`, and
+  `lowering_family_g3`.
+- Added focused unit tests per class/module file under `test/` validating
+  motion code mapping, field lowering, semantic diagnostics, and warning
+  behavior.
+- Updated `BACKLOG.md` status bookkeeping: `T-014` moved to Done and `T-015`
+  tracked as In Progress on this branch.
+
+SPEC sections / tests:
+- SPEC: Section 7 (Testing Strategy), Section 8 (Code Architecture Requirements)
+- Tests: `SemanticRulesTest.*`, `MotionFamilyFactoryTest.*`, `G1LowererTest.*`,
+  `G2LowererTest.*`, `G3LowererTest.*`, plus `./dev/check.sh`
+
+Known limitations:
+- Per-class coverage is focused on family lowerers and semantic rules introduced
+  by the OO split; AST/parser internals remain covered primarily by existing
+  parser/message/golden tests.
+
+How to reproduce locally (commands):
+- `cmake -S . -B build`
+- `cmake --build build -j`
+- `ctest --test-dir build --output-on-failure -R "(SemanticRulesTest|MotionFamilyFactoryTest|G1LowererTest|G2LowererTest|G3LowererTest)"`
+- `./dev/check.sh`

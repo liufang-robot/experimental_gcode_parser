@@ -12,16 +12,7 @@
 - `P3`: optional/enhancement
 
 ## Ready Queue
-
-### T-014 (P2) Refactor parser/lowering into per-family OO modules
-Why:
-- SPEC now requires non-monolithic OO design per function family.
-Acceptance criteria:
-- Split family-specific parsing/lowering behavior into separate classes/files
-  (at minimum: `G1`, `G2/G3`).
-- Keep existing public APIs stable unless explicitly approved.
-- Preserve all current tests/goldens and `./dev/check.sh` pass.
-- Update architecture notes if module boundaries change.
+- None.
 
 ## Icebox
 - Performance benchmarking harness.
@@ -43,7 +34,7 @@ Use this template for new backlog items:
 
 ## In Progress
 (List tasks currently being worked on; only one assignee/task per PR)
-- T-014 (feature/t014-oo-family-modules)
+- None.
 
 ## Done
 (Move completed tasks here with PR link)
@@ -60,3 +51,5 @@ Use this template for new backlog items:
 - T-002 (PR #9)
 - T-001 (PR #8)
 - T-011 (PR #6)
+- T-014 (PR #20)
+- T-015 (feature/t015-per-class-unit-tests, pending PR)
