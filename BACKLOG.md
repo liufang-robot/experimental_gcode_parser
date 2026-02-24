@@ -49,7 +49,7 @@ Use this template for new backlog items:
 
 ## In Progress
 (List tasks currently being worked on; only one assignee/task per PR)
-- T-017 (feature/t017-long-input-stress)
+- None.
 
 ## Done
 (Move completed tasks here with PR link)
@@ -69,3 +69,4 @@ Use this template for new backlog items:
 - T-014 (PR #20)
 - T-015 (PR #21)
 - T-016 (PR #22)
+- T-017 (feature/t017-long-input-stress, pending PR)
