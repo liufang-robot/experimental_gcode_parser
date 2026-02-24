@@ -13,13 +13,6 @@
 
 ## Ready Queue
 
-### T-009 (P2) Queue diff/apply API
-Why:
-- Downstream consumers need incremental updates, not full queue rebuild each edit.
-Acceptance criteria:
-- Add diff result with added/updated/removed messages keyed by source line.
-- Add tests for line edit insert/delete/update scenarios.
-
 ### T-010 (P2) Message diagnostics policy and severity mapping
 Why:
 - Need explicit policy for parser/lowering errors at message stage.
@@ -47,10 +40,11 @@ Use this template for new backlog items:
 
 ## In Progress
 (List tasks currently being worked on; only one assignee/task per PR)
-- T-009 (feature/t009-queue-diff-apply)
+- T-010 (feature/t010-diagnostics-policy)
 
 ## Done
 (Move completed tasks here with PR link)
+- T-009 (PR #16)
 - T-008 (PR #15)
 - T-013 (PR #14)
 - T-012 (PR #13)

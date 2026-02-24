@@ -1,6 +1,7 @@
 #include "messages.h"
 
 #include <cctype>
+#include <set>
 
 #include "gcode_parser.h"
 
@@ -54,6 +55,16 @@ int motionCode(const Word &word) {
   }
 }
 
+void addWarningDiagnostic(std::vector<Diagnostic> &diagnostics,
+                          const Location &location,
+                          const std::string &message) {
+  Diagnostic diag;
+  diag.severity = Diagnostic::Severity::Warning;
+  diag.message = message;
+  diag.location = location;
+  diagnostics.push_back(std::move(diag));
+}
+
 SourceInfo sourceFromLine(const Line &line, const LowerOptions &options) {
   SourceInfo source;
   source.filename = options.filename;
@@ -95,6 +106,23 @@ void fillPoseAndFeed(const Line &line, Pose6 *pose, std::optional<double> *feed,
     } else if (arc && (word.head == "R" || word.head == "CR") &&
                parseDouble(word.value, &parsed)) {
       arc->r = parsed;
+    }
+  }
+}
+
+void addArcLoweringWarnings(const Line &line,
+                            std::vector<Diagnostic> *diagnostics) {
+  static const std::set<std::string> unsupported_heads = {
+      "AR", "AP", "RP", "CIP", "CT", "I1", "J1", "K1"};
+  for (const auto &item : line.items) {
+    if (!isWord(item)) {
+      continue;
+    }
+    const auto &word = std::get<Word>(item);
+    if (unsupported_heads.find(word.head) != unsupported_heads.end()) {
+      addWarningDiagnostic(*diagnostics, word.location,
+                           "lowering ignored unsupported arc word: " +
+                               word.head);
     }
   }
 }
@@ -152,11 +180,13 @@ MessageResult lowerToMessages(const Program &program,
       message.source = sourceFromLine(line, options);
       fillPoseAndFeed(line, &message.target_pose, &message.feed, &message.arc);
       result.messages.emplace_back(std::move(message));
+      addArcLoweringWarnings(line, &result.diagnostics);
     } else if (found_motion == 3) {
       G3Message message;
       message.source = sourceFromLine(line, options);
       fillPoseAndFeed(line, &message.target_pose, &message.feed, &message.arc);
       result.messages.emplace_back(std::move(message));
+      addArcLoweringWarnings(line, &result.diagnostics);
     }
   }
 

@@ -132,6 +132,10 @@ G2 CT X10 Y5 Z0
   - If a line has error diagnostics, do not emit motion message for that line;
     the line is reported in `rejected_lines` with reasons.
   - Lowering is fail-fast: stop lowering when the first error line is encountered.
+- Severity mapping policy (v0):
+  - `error`: syntax/semantic violations that reject a line and trigger fail-fast stop.
+  - `warning`: non-fatal lowering limits (for example unsupported arc words);
+    the message is still emitted from supported fields.
 - Resume session API (v0):
   - Provide session-level edit + resume from line API for interactive workflows.
   - After line edit, reparsing preserves deterministic message ordering and
