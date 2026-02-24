@@ -155,3 +155,38 @@ target_link_libraries(message_diff_tests PRIVATE GTest::gtest_main)
 target_include_directories(message_diff_tests
                            PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
 gtest_discover_tests(message_diff_tests DISCOVERY_MODE PRE_TEST)
+
+add_executable(semantic_rules_tests test/semantic_rules_tests.cpp)
+target_link_libraries(semantic_rules_tests PRIVATE gcode_parser)
+target_link_libraries(semantic_rules_tests PRIVATE GTest::gtest_main)
+target_include_directories(semantic_rules_tests
+                           PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
+gtest_discover_tests(semantic_rules_tests DISCOVERY_MODE PRE_TEST)
+
+add_executable(lowering_family_factory_tests test/lowering_family_factory_tests.cpp)
+target_link_libraries(lowering_family_factory_tests PRIVATE gcode_parser)
+target_link_libraries(lowering_family_factory_tests PRIVATE GTest::gtest_main)
+target_include_directories(lowering_family_factory_tests
+                           PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
+gtest_discover_tests(lowering_family_factory_tests DISCOVERY_MODE PRE_TEST)
+
+add_executable(lowering_family_g1_tests test/lowering_family_g1_tests.cpp)
+target_link_libraries(lowering_family_g1_tests PRIVATE gcode_parser)
+target_link_libraries(lowering_family_g1_tests PRIVATE GTest::gtest_main)
+target_include_directories(lowering_family_g1_tests
+                           PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
+gtest_discover_tests(lowering_family_g1_tests DISCOVERY_MODE PRE_TEST)
+
+add_executable(lowering_family_g2_tests test/lowering_family_g2_tests.cpp)
+target_link_libraries(lowering_family_g2_tests PRIVATE gcode_parser)
+target_link_libraries(lowering_family_g2_tests PRIVATE GTest::gtest_main)
+target_include_directories(lowering_family_g2_tests
+                           PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
+gtest_discover_tests(lowering_family_g2_tests DISCOVERY_MODE PRE_TEST)
+
+add_executable(lowering_family_g3_tests test/lowering_family_g3_tests.cpp)
+target_link_libraries(lowering_family_g3_tests PRIVATE gcode_parser)
+target_link_libraries(lowering_family_g3_tests PRIVATE GTest::gtest_main)
+target_include_directories(lowering_family_g3_tests
+                           PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
+gtest_discover_tests(lowering_family_g3_tests DISCOVERY_MODE PRE_TEST)
