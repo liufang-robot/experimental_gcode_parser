@@ -389,3 +389,16 @@ How to reproduce locally (commands):
 - `cmake --build build -j`
 - `ctest --test-dir build --output-on-failure -R ArcUnsupportedWordsEmitWarningsButKeepMessage`
 - `./dev/check.sh`
+
+## 2026-02-23 (backlog status finalize)
+- Updated `BACKLOG.md` status only: moved `T-010` to Done and cleared In Progress.
+
+SPEC sections / tests:
+- SPEC: no behavior change
+- Tests: not applicable (docs-only)
+
+Known limitations:
+- None (status bookkeeping update only).
+
+How to reproduce locally (commands):
+- `sed -n '1,220p' BACKLOG.md`
