@@ -514,3 +514,22 @@ How to reproduce locally (commands):
 - `cmake --build build -j`
 - `ctest --test-dir build --output-on-failure -R FuzzSmokeTest`
 - `./dev/check.sh`
+
+## 2026-02-24 (backlog task added: T-018 G4 dwell support)
+- Added new backlog task `T-018` to implement `G4` dwell support with
+  `G4 F...` (seconds) and `G4 S...` (spindle revolutions) syntax.
+- Defined acceptance criteria for parser/lowering behavior, diagnostics,
+  message JSON support, and test coverage expectations.
+- Updated stale backlog status for `T-017` to `PR #23`.
+
+SPEC sections / tests:
+- SPEC impact planned by task: Sections 3, 5, 6, 7, 8
+- Tests planned by task: parser/messages/messages_json/regression + message
+  goldens for G4
+
+Known limitations:
+- This change is planning-only; no parser or lowering behavior changed yet.
+
+How to reproduce locally (commands):
+- `sed -n '1,240p' BACKLOG.md`
+- `sed -n '1,520p' CHANGELOG_AGENT.md`
