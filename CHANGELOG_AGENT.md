@@ -492,3 +492,25 @@ How to reproduce locally (commands):
 - `cmake --build build -j`
 - `ctest --test-dir build --output-on-failure -R RegressionTest`
 - `./dev/check.sh`
+
+## 2026-02-24 (T-017 long-input stress smoke test)
+- Added deterministic long-input stress smoke test in
+  `test/fuzz_smoke_tests.cpp` that parses and lowers a large valid program.
+- Added assertions for no diagnostics/rejections, expected message count, and
+  execution-time envelope to catch crash/hang regressions.
+- Updated backlog status: marked `T-016` done and tracked `T-017` in progress.
+
+SPEC sections / tests:
+- SPEC: Section 7 (Testing Strategy)
+- Tests: `FuzzSmokeTest.LongProgramInputDoesNotCrashOrHang`,
+  `./dev/check.sh`
+
+Known limitations:
+- Stress threshold is a smoke-level guard, not a formal benchmark budget;
+  absolute timing may vary by machine.
+
+How to reproduce locally (commands):
+- `cmake -S . -B build`
+- `cmake --build build -j`
+- `ctest --test-dir build --output-on-failure -R FuzzSmokeTest`
+- `./dev/check.sh`

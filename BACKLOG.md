@@ -12,22 +12,22 @@
 - `P3`: optional/enhancement
 
 ## Ready Queue
-### T-016 (P2) Add targeted parser/lowering regression tests for edge cases
+### T-017 (P2) Add long-input stress smoke test for parser/lowering
 Why:
-- ROADMAP M1 calls for stronger regression coverage on parser edge behavior.
+- ROADMAP M1/M4 call for stronger resilience checks under larger inputs.
 Scope:
-- Add regression tests for edge cases in diagnostics and message lowering
-  behavior without changing parser semantics.
+- Add a deterministic stress-smoke test for large valid input and basic
+  resource-envelope assertions.
 Acceptance criteria:
-- Add at least 3 regression tests that capture edge-case behavior.
-- Keep existing parse/lower behavior unchanged (tests-only or equivalent).
+- Add stress test covering parse + lower on large multi-line program input.
+- Assert no crash/hang and stable expected output shape for that input.
 - `./dev/check.sh` passes.
 Out of scope:
-- Grammar feature additions or semantic rule changes.
+- Grammar/semantic behavior changes.
 SPEC Sections:
 - Section 7 (Testing Strategy)
 Tests To Add/Update:
-- `test/regression_tests.cpp`
+- `test/fuzz_smoke_tests.cpp`
 
 ## Icebox
 - Performance benchmarking harness.
@@ -68,4 +68,5 @@ Use this template for new backlog items:
 - T-011 (PR #6)
 - T-014 (PR #20)
 - T-015 (PR #21)
-- T-016 (feature/t016-regression-edge-cases, pending PR)
+- T-016 (PR #22)
+- T-017 (feature/t017-long-input-stress, pending PR)
