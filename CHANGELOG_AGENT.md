@@ -700,3 +700,24 @@ How to reproduce locally (commands):
 - `cmake --build build -j`
 - `ctest --test-dir build --output-on-failure -R BenchmarkSmoke`
 - `./dev/bench.sh`
+
+## 2026-02-27 (T-021 detailed streaming callback message assertions)
+- Added streaming unit test that captures callback-emitted messages into a
+  vector and validates detailed field content for `G4` and `G1` payloads.
+- Updated SPEC testing expectations to require field-level validation for
+  streaming callback tests (not just count-based assertions).
+- Updated backlog bookkeeping: `T-020` marked done and `T-021` tracked in progress.
+
+SPEC sections / tests:
+- SPEC: Section 7 (Testing Expectations)
+- Tests: `StreamingTest.CallbackCanCaptureAndValidateDetailedMessages`,
+  `./dev/check.sh`
+
+Known limitations:
+- This change strengthens tests only; no streaming API behavior changes.
+
+How to reproduce locally (commands):
+- `cmake -S . -B build`
+- `cmake --build build -j`
+- `ctest --test-dir build --output-on-failure -R StreamingTest`
+- `./dev/check.sh`

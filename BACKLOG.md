@@ -12,26 +12,25 @@
 - `P3`: optional/enhancement
 
 ## Ready Queue
-### T-020 (P1) Add benchmark harness and 10k-line performance baseline
+### T-021 (P2) Strengthen streaming callback tests with message field assertions
 Why:
-- Need measurable parsing efficiency data and regression visibility.
+- Streaming tests currently validate counts/flow but should also validate
+  detailed message payload correctness.
 Scope:
-- Add benchmark executable/scripts for parser and lowering throughput.
-- Measure parse-only and parse+lower on deterministic corpora.
+- Add streaming unit test that captures callback messages and asserts
+  message variant + source + payload fields.
 Acceptance criteria:
-- Benchmark command is documented and runnable locally.
-- Includes baseline scenario for 10k lines and reports at least:
-  total time, lines/sec, bytes/sec.
-- Produces stable machine-readable output artifact under `output/bench/`.
-- CI can run a lightweight benchmark smoke (non-gating or soft-gating).
+- Add at least one streaming test that validates detailed fields for multiple
+  message types (for example `G4` and `G1`).
+- Update SPEC testing expectations to require field-level assertions for
+  streaming callback tests.
 - `./dev/check.sh` passes.
 Out of scope:
-- Hardware-specific CPU cycle accounting as a hard CI gate.
+- Streaming API behavior changes.
 SPEC Sections:
-- Section 7 (Testing), quality/performance notes.
+- Section 7 (Testing).
 Tests To Add/Update:
-- `bench/` harness and smoke check entry
-- optional CI benchmark job/update
+- `test/streaming_tests.cpp`
 
 ## Icebox
 - Performance benchmarking harness.
@@ -53,7 +52,7 @@ Use this template for new backlog items:
 
 ## In Progress
 (List tasks currently being worked on; only one assignee/task per PR)
-- None.
+- T-021 (feature/t021-streaming-detailed-message-tests)
 
 ## Done
 (Move completed tasks here with PR link)
@@ -76,4 +75,4 @@ Use this template for new backlog items:
 - T-017 (PR #23)
 - T-018 (PR #25)
 - T-019 (PR #26)
-- T-020 (feature/t020-benchmark-harness, pending PR)
+- T-020 (PR #27)
