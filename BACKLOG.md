@@ -56,7 +56,7 @@ Use this template for new backlog items:
 
 ## In Progress
 (List tasks currently being worked on; only one assignee/task per PR)
-- None.
+- T-023 (feature/t023-readme-rewrite)
 
 ## Done
 (Move completed tasks here with PR link)
