@@ -12,28 +12,30 @@
 - `P3`: optional/enhancement
 
 ## Ready Queue
-### T-022 (P2) mdBook documentation + GitHub Pages publishing
+### T-023 (P1) Rewrite README for accurate and comprehensive project guide
 Why:
-- Keep developer and program reference docs structured, versioned, and always
-  aligned with implementation.
+- Current `README.md` is outdated and does not fully reflect implemented
+  parser/lowering APIs, docs flow, and CI/dev workflow.
 Scope:
-- Add `docs/` mdBook source tree with at least:
-  - development reference
-  - program reference
-- Ignore generated mdBook HTML output in git.
-- Build docs in CI and publish docs to GitHub Pages from `main`.
-- Update `SPEC.md` with mdBook documentation maintenance policy.
+- Rewrite `README.md` to cover:
+  - project purpose and current feature status (`G1/G2/G3/G4`, diagnostics,
+    AST/lowering, streaming)
+  - build/runtime prerequisites (ANTLR runtime/tool, CMake, gtest, json lib)
+  - local build/test/benchmark/docs commands
+  - library usage entry points (batch + streaming)
+  - links to `SPEC.md`, `PRD.md`, and mdBook docs
+- Keep examples aligned with currently implemented behavior.
 Acceptance criteria:
-- `docs/book.toml` and `docs/src/*` exist with the required two sections.
-- `.gitignore` excludes generated docs output directory.
-- CI includes mdBook build step and Pages deployment flow.
-- `SPEC.md` explicitly requires docs update on behavior/API changes.
+- `README.md` sections are consistent with implementation and `SPEC.md`.
+- Includes at least one parse/lower usage snippet and one streaming snippet.
+- Includes mdBook docs build/serve instructions.
+- `./dev/check.sh` passes after README update.
 Out of scope:
-- Full rewrite of all existing markdown docs into mdBook pages.
+- API behavior changes or new parser features.
 SPEC Sections:
-- Section 9 (Program/Documentation reference policy), Section 7 (CI/testing if needed).
+- Section 9 (Documentation Policy), Section 6 (Message Lowering summary references).
 Tests To Add/Update:
-- CI docs build job (`mdbook build docs`).
+- No new unit tests (docs task); verify by running `./dev/check.sh`.
 
 ## Icebox
 - Coverage threshold policy and badge.
@@ -54,7 +56,7 @@ Use this template for new backlog items:
 
 ## In Progress
 (List tasks currently being worked on; only one assignee/task per PR)
-- T-022 (feature/t022-mdbook-docs-and-pages)
+- None.
 
 ## Done
 (Move completed tasks here with PR link)
@@ -79,3 +81,4 @@ Use this template for new backlog items:
 - T-019 (PR #26)
 - T-020 (PR #27)
 - T-021 (PR #28)
+- T-022 (PR #31)
