@@ -8,7 +8,7 @@ namespace {
 
 TEST(MotionFamilyFactoryTest, RegistersExpectedFamilies) {
   const auto lowerers = gcode::createMotionFamilyLowerers();
-  ASSERT_EQ(lowerers.size(), 3u);
+  ASSERT_EQ(lowerers.size(), 4u);
 
   std::set<int> codes;
   for (const auto &lowerer : lowerers) {
@@ -16,7 +16,7 @@ TEST(MotionFamilyFactoryTest, RegistersExpectedFamilies) {
     codes.insert(lowerer->motionCode());
   }
 
-  EXPECT_EQ(codes, (std::set<int>{1, 2, 3}));
+  EXPECT_EQ(codes, (std::set<int>{1, 2, 3, 4}));
 }
 
 } // namespace

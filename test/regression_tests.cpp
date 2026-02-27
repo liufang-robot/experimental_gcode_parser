@@ -43,12 +43,25 @@ TEST(RegressionTest, Regression_UnsupportedChars_HasAccurateLocation) {
 }
 
 TEST(RegressionTest, Regression_NonMotionGCode_DoesNotEmitMessage) {
-  const std::string input = "G4 P100\n";
+  const std::string input = "G0 X10\n";
   const auto result = gcode::parseAndLower(input);
 
   EXPECT_TRUE(result.diagnostics.empty());
   EXPECT_TRUE(result.messages.empty());
   EXPECT_TRUE(result.rejected_lines.empty());
+}
+
+TEST(RegressionTest, Regression_G4RequiresSeparateBlock) {
+  const std::string input = "N1 G4 F3 X10\n";
+  const auto result = gcode::parseAndLower(input);
+
+  ASSERT_EQ(result.messages.size(), 0u);
+  ASSERT_EQ(result.rejected_lines.size(), 1u);
+  ASSERT_FALSE(result.diagnostics.empty());
+  EXPECT_EQ(result.diagnostics[0].severity, gcode::Diagnostic::Severity::Error);
+  EXPECT_EQ(result.diagnostics[0].location.line, 1);
+  EXPECT_NE(result.diagnostics[0].message.find("separate block"),
+            std::string::npos);
 }
 
 } // namespace

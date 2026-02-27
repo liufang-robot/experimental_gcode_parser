@@ -5,6 +5,7 @@
 #include "lowering_family_g1.h"
 #include "lowering_family_g2.h"
 #include "lowering_family_g3.h"
+#include "lowering_family_g4.h"
 
 namespace gcode {
 
@@ -13,6 +14,7 @@ std::vector<std::unique_ptr<MotionFamilyLowerer>> createMotionFamilyLowerers() {
   lowerers.push_back(std::make_unique<G1Lowerer>());
   lowerers.push_back(std::make_unique<G2Lowerer>());
   lowerers.push_back(std::make_unique<G3Lowerer>());
+  lowerers.push_back(std::make_unique<G4Lowerer>());
   return lowerers;
 }
 

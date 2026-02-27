@@ -27,6 +27,8 @@ Optional downstream stage:
 - v0 supports `G1Message`, `G2Message`, `G3Message`, and `G4Message` emission.
 - Message results support JSON conversion (`toJson`/`fromJson`) for transport,
   fixtures, and debugging.
+- Planned additive API: streaming parse/lower output mode for large-file
+  workflows (callbacks/events instead of full-result buffering).
 
 The `gcode_parse` CLI supports:
 - `--format debug` (default): stable, line-oriented debug format used by
@@ -107,6 +109,7 @@ G2 CT X10 Y5 Z0
   - `F...` time in seconds
   - `S...` time in revolutions of master spindle
 - `G4` must be programmed in a separate NC block.
+- Exactly one dwell mode word must be provided (`F` xor `S`).
 - Any previously programmed feed (`F`) and spindle speed (`S`) remain valid
   after dwell.
 
@@ -133,6 +136,8 @@ N50 X60
   - Multiple motion commands (`G1/G2/G3`) in a single line.
   - `G4` combined with other words in the same block when a separate block is
     required.
+  - `G4` with both `F` and `S`, with neither `F` nor `S`, or with non-numeric
+    dwell values.
   - Semantic messages should include an explicit correction hint (for example,
     "choose one coordinate mode", "choose only one of G1/G2/G3", or
     "program G4 in a separate block").
@@ -196,6 +201,10 @@ N50 X60
 - Regression tests: every fixed bug must get a test that fails first, then passes.
   - Regression test naming convention:
     `Regression_<bug_or_issue_id>_<short_behavior>`.
+- Performance benchmarking:
+  - Maintain a benchmark harness for deterministic corpora.
+  - Include at least one 10k-line baseline scenario.
+  - Report parse and parse+lower throughput metrics (time, lines/sec, bytes/sec).
 
 ## 8. Code Architecture Requirements
 - Use object-oriented module design for parser/lowering function families.
@@ -210,6 +219,8 @@ N50 X60
 To keep product-facing behavior documentation aligned with code, maintain a
 separate implementation reference manual at:
 - `PROGRAM_REFERENCE.md`
+- Product-level goals, scope, and public API expectations are maintained in
+  `PRD.md`.
 
 Requirements:
 - The manual must describe the currently implemented parser/lowering behavior,

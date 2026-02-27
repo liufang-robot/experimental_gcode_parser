@@ -29,6 +29,13 @@ const gcode::G3Message *asG3(const gcode::ParsedMessage &msg) {
   return &std::get<gcode::G3Message>(msg);
 }
 
+const gcode::G4Message *asG4(const gcode::ParsedMessage &msg) {
+  if (!std::holds_alternative<gcode::G4Message>(msg)) {
+    return nullptr;
+  }
+  return &std::get<gcode::G4Message>(msg);
+}
+
 TEST(MessagesTest, G1Extraction) {
   const std::string input = "N10 G1 X10 Y20 Z30 A40 B50 C60 F100\n";
   gcode::LowerOptions options;
@@ -184,6 +191,45 @@ TEST(MessagesTest, ArcUnsupportedWordsEmitWarningsButKeepMessage) {
     EXPECT_NE(diag.message.find("ignored unsupported arc word"),
               std::string::npos);
   }
+}
+
+TEST(MessagesTest, G4ExtractionSecondsAndRevolutions) {
+  const std::string input = "N10 G1 X1 F200 S300\nN20 G4 F3\nN30 G4 S30\n";
+  gcode::LowerOptions options;
+  options.filename = "dwell.ngc";
+  const auto result = gcode::parseAndLower(input, options);
+
+  EXPECT_TRUE(result.diagnostics.empty());
+  EXPECT_TRUE(result.rejected_lines.empty());
+  ASSERT_EQ(result.messages.size(), 3u);
+
+  const auto *g4_seconds = asG4(result.messages[1]);
+  ASSERT_NE(g4_seconds, nullptr);
+  EXPECT_EQ(g4_seconds->source.line, 2);
+  ASSERT_TRUE(g4_seconds->source.line_number.has_value());
+  EXPECT_EQ(*g4_seconds->source.line_number, 20);
+  EXPECT_EQ(g4_seconds->dwell_mode, gcode::DwellMode::Seconds);
+  EXPECT_TRUE(closeEnough(g4_seconds->dwell_value, 3.0));
+
+  const auto *g4_revs = asG4(result.messages[2]);
+  ASSERT_NE(g4_revs, nullptr);
+  EXPECT_EQ(g4_revs->source.line, 3);
+  ASSERT_TRUE(g4_revs->source.line_number.has_value());
+  EXPECT_EQ(*g4_revs->source.line_number, 30);
+  EXPECT_EQ(g4_revs->dwell_mode, gcode::DwellMode::Revolutions);
+  EXPECT_TRUE(closeEnough(g4_revs->dwell_value, 30.0));
+}
+
+TEST(MessagesTest, G4MustBeSeparateBlockAndFailFast) {
+  const std::string input = "N1 G1 X10 F100\nN2 G4 F3 X20\nN3 G4 S30\n";
+  const auto result = gcode::parseAndLower(input);
+
+  ASSERT_EQ(result.messages.size(), 1u);
+  ASSERT_EQ(result.rejected_lines.size(), 1u);
+  EXPECT_EQ(result.rejected_lines[0].source.line, 2);
+  ASSERT_FALSE(result.rejected_lines[0].reasons.empty());
+  EXPECT_NE(result.rejected_lines[0].reasons[0].message.find("separate block"),
+            std::string::npos);
 }
 
 } // namespace

@@ -12,39 +12,51 @@
 - `P3`: optional/enhancement
 
 ## Ready Queue
-### T-018 (P1) Add G4 dwell support (`F` seconds / `S` spindle revolutions)
+### T-019 (P1) Add streaming parse/lower API for large input safety
 Why:
-- Dwell is a core NC operation and currently unsupported in lowering output.
-- Product requirements need explicit queue messages for dwell with stable
-  source metadata.
+- Current APIs return full in-memory results, which is less suitable for very
+  large files and long-running parse sessions.
+- Product requirement needs controlled processing with cancellation/limits.
 Scope:
-- Add syntax + lowering support for `G4` in its own NC block.
-- Support dwell time words:
-  - `G4 F...` where `F` is dwell time in seconds
-  - `G4 S...` where `S` is dwell time in master-spindle revolutions
-- Add typed queue message for dwell with source info and dwell mode/value.
+- Add additive streaming API for parse/lower output delivery.
+- Support event/callback-style delivery for diagnostics and messages.
+- Add safety controls (for example: max lines/diagnostics and cancel hook).
 Acceptance criteria:
-- `G4 F...` lowers to one dwell message with mode=`seconds`.
-- `G4 S...` lowers to one dwell message with mode=`revolutions`.
-- `G4` must be programmed in a separate NC block; violations produce explicit
-  error diagnostics with line/column.
-- Existing feed (`F`) and spindle speed (`S`) semantics for adjacent non-`G4`
-  blocks remain unchanged (no modal overwrite by dwell message).
-- JSON conversion (`toJson`/`fromJson`) supports dwell messages.
-- Golden tests and unit tests added for valid/invalid dwell examples.
+- Existing non-streaming APIs remain backward compatible.
+- Streaming API can process at least a 10k-line file without accumulating all
+  output in memory by default.
+- Streaming API exposes diagnostics and message outputs with source location.
+- Unit/integration tests cover normal flow and early-stop/cancel behavior.
 - `./dev/check.sh` passes.
 Out of scope:
-- Time-to-real-seconds conversion from spindle RPM/override runtime state.
-- Controller execution semantics beyond parse/lower output contracts.
+- Full incremental parsing engine rewrite.
+- ABI freeze beyond current project policy.
 SPEC Sections:
-- Section 3 (Supported Syntax), Section 5 (Diagnostics), Section 6 (Message
-  Lowering), Section 7 (Testing Strategy), Section 8 (architecture split).
+- Section 2 (Input/Output), Section 6 (Message Lowering), Section 7 (Testing).
 Tests To Add/Update:
-- `test/parser_tests.cpp`
-- `test/messages_tests.cpp`
-- `test/messages_json_tests.cpp`
-- `test/regression_tests.cpp`
-- `testdata/messages/*g4*`
+- `test/` streaming API tests
+- large-input fixture in `testdata/`
+
+### T-020 (P1) Add benchmark harness and 10k-line performance baseline
+Why:
+- Need measurable parsing efficiency data and regression visibility.
+Scope:
+- Add benchmark executable/scripts for parser and lowering throughput.
+- Measure parse-only and parse+lower on deterministic corpora.
+Acceptance criteria:
+- Benchmark command is documented and runnable locally.
+- Includes baseline scenario for 10k lines and reports at least:
+  total time, lines/sec, bytes/sec.
+- Produces stable machine-readable output artifact under `output/bench/`.
+- CI can run a lightweight benchmark smoke (non-gating or soft-gating).
+- `./dev/check.sh` passes.
+Out of scope:
+- Hardware-specific CPU cycle accounting as a hard CI gate.
+SPEC Sections:
+- Section 7 (Testing), quality/performance notes.
+Tests To Add/Update:
+- `bench/` harness and smoke check entry
+- optional CI benchmark job/update
 
 ## Icebox
 - Performance benchmarking harness.
@@ -87,3 +99,4 @@ Use this template for new backlog items:
 - T-015 (PR #21)
 - T-016 (PR #22)
 - T-017 (PR #23)
+- T-018 (feature/t018-g4-dwell-support, pending PR)

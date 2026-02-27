@@ -61,6 +61,13 @@ TEST(ParserDiagnosticsTest, ActionableSyntaxAndSemanticMessages) {
     EXPECT_NE(result.diagnostics[0].message.find("choose one coordinate mode"),
               std::string::npos);
   }
+
+  {
+    const auto result = gcode::parse("G4 F3 X10\n");
+    ASSERT_EQ(result.diagnostics.size(), 1u);
+    EXPECT_NE(result.diagnostics[0].message.find("separate block"),
+              std::string::npos);
+  }
 }
 
 } // namespace

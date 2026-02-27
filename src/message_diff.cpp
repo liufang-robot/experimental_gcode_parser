@@ -61,11 +61,17 @@ bool messageEqual(const ParsedMessage &lhs, const ParsedMessage &rhs) {
            poseEqual(a.target_pose, b.target_pose) && arcEqual(a.arc, b.arc) &&
            optionalDoubleEqual(a.feed, b.feed);
   }
-  const auto &a = std::get<G3Message>(lhs);
-  const auto &b = std::get<G3Message>(rhs);
-  return sourceEqual(a.source, b.source) &&
-         poseEqual(a.target_pose, b.target_pose) && arcEqual(a.arc, b.arc) &&
-         optionalDoubleEqual(a.feed, b.feed);
+  if (std::holds_alternative<G3Message>(lhs)) {
+    const auto &a = std::get<G3Message>(lhs);
+    const auto &b = std::get<G3Message>(rhs);
+    return sourceEqual(a.source, b.source) &&
+           poseEqual(a.target_pose, b.target_pose) && arcEqual(a.arc, b.arc) &&
+           optionalDoubleEqual(a.feed, b.feed);
+  }
+  const auto &a = std::get<G4Message>(lhs);
+  const auto &b = std::get<G4Message>(rhs);
+  return sourceEqual(a.source, b.source) && a.dwell_mode == b.dwell_mode &&
+         closeEnough(a.dwell_value, b.dwell_value);
 }
 
 std::map<int, ParsedMessage>

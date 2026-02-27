@@ -84,7 +84,7 @@ MessageResult lowerToMessages(const Program &program,
       }
       const auto &word = std::get<Word>(item);
       const int code = motionCode(word);
-      if (code == 1 || code == 2 || code == 3) {
+      if (code == 1 || code == 2 || code == 3 || code == 4) {
         if (found_motion != 0 && code != found_motion) {
           found_motion = -1;
           break;

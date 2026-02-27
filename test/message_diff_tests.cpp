@@ -72,4 +72,15 @@ TEST(MessageDiffTest, DeleteLineProducesRemovedEntry) {
   EXPECT_EQ(second->source.line, 3);
 }
 
+TEST(MessageDiffTest, G4LineUpdateIsTrackedAsUpdatedEntry) {
+  const auto before = gcode::parseAndLower("N1 G4 F3\n");
+  const auto after = gcode::parseAndLower("N1 G4 S30\n");
+
+  const auto diff = gcode::diffMessagesByLine(before, after);
+  EXPECT_TRUE(diff.added.empty());
+  EXPECT_TRUE(diff.removed_lines.empty());
+  ASSERT_EQ(diff.updated.size(), 1u);
+  EXPECT_EQ(diff.updated[0].line, 1);
+}
+
 } // namespace
