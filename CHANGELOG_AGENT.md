@@ -652,3 +652,25 @@ How to reproduce locally (commands):
 - `sed -n '1,260p' BACKLOG.md`
 - `sed -n '1,260p' PRD.md`
 - `sed -n '1,360p' SPEC.md`
+
+## 2026-02-24 (T-019 streaming parse/lower API)
+- Added callback-based streaming APIs: `lowerToMessagesStream`,
+  `parseAndLowerStream`, and `parseAndLowerFileStream` in `src/messages.h/.cpp`.
+- Added stream controls (`StreamOptions`) for early stop via max lines/messages/
+  diagnostics and cancel hook.
+- Added streaming tests (`test/streaming_tests.cpp`) covering 10k-line streaming,
+  cancel behavior, rejected-line signaling, and file-based streaming input.
+
+SPEC sections / tests:
+- SPEC: Section 2.2 (streaming output mode), Section 6 (streaming API)
+- Tests: `StreamingTest.*`, `./dev/check.sh`
+
+Known limitations:
+- Current streaming API still parses full input into AST before lowering stream;
+  true incremental parsing is not part of this slice.
+
+How to reproduce locally (commands):
+- `cmake -S . -B build`
+- `cmake --build build -j`
+- `ctest --test-dir build --output-on-failure -R StreamingTest`
+- `./dev/check.sh`

@@ -1,5 +1,7 @@
 #pragma once
 
+#include <cstddef>
+#include <functional>
 #include <optional>
 #include <string>
 #include <string_view>
@@ -77,11 +79,40 @@ struct MessageResult {
   std::vector<RejectedLine> rejected_lines;
 };
 
+struct StreamCallbacks {
+  std::function<void(const ParsedMessage &message)> on_message;
+  std::function<void(const Diagnostic &diagnostic)> on_diagnostic;
+  std::function<void(const MessageResult::RejectedLine &rejected_line)>
+      on_rejected_line;
+};
+
+struct StreamOptions {
+  std::optional<size_t> max_lines;
+  std::optional<size_t> max_messages;
+  std::optional<size_t> max_diagnostics;
+  std::function<bool()> should_cancel;
+};
+
 MessageResult lowerToMessages(const Program &program,
                               const std::vector<Diagnostic> &parse_diagnostics,
                               const LowerOptions &options = {});
 
 MessageResult parseAndLower(std::string_view input,
                             const LowerOptions &options = {});
+
+bool lowerToMessagesStream(const Program &program,
+                           const std::vector<Diagnostic> &parse_diagnostics,
+                           const LowerOptions &options,
+                           const StreamCallbacks &callbacks,
+                           const StreamOptions &stream_options = {});
+
+bool parseAndLowerStream(std::string_view input, const LowerOptions &options,
+                         const StreamCallbacks &callbacks,
+                         const StreamOptions &stream_options = {});
+
+bool parseAndLowerFileStream(const std::string &path,
+                             const LowerOptions &options,
+                             const StreamCallbacks &callbacks,
+                             const StreamOptions &stream_options = {});
 
 } // namespace gcode
