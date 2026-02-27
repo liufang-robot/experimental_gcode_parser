@@ -96,6 +96,11 @@ add_executable(gcode_parse src/main.cpp)
 target_link_libraries(gcode_parse PRIVATE gcode_parser)
 target_include_directories(gcode_parse PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
 
+add_executable(gcode_bench bench/gcode_bench.cpp)
+target_link_libraries(gcode_bench PRIVATE gcode_parser)
+target_link_libraries(gcode_bench PRIVATE nlohmann_json::nlohmann_json)
+target_include_directories(gcode_bench PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
+
 enable_testing()
 
 add_executable(parser_tests test/parser_tests.cpp)
@@ -204,3 +209,8 @@ target_link_libraries(lowering_family_g4_tests PRIVATE GTest::gtest_main)
 target_include_directories(lowering_family_g4_tests
                            PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
 gtest_discover_tests(lowering_family_g4_tests DISCOVERY_MODE PRE_TEST)
+
+add_test(
+  NAME BenchmarkSmoke
+  COMMAND gcode_bench --iterations 1 --lines 10000 --output
+          ${CMAKE_CURRENT_BINARY_DIR}/bench_smoke.json)

@@ -29,3 +29,31 @@ jobs:
           ANTLR4_RUNTIME_LIB: /usr/lib/x86_64-linux-gnu/libantlr4-runtime.so
         run: |
           ./dev/check.sh
+
+  benchmark-smoke:
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y curl default-jre-headless cmake ninja-build libantlr4-runtime-dev libgtest-dev nlohmann-json3-dev
+
+      - name: Install ANTLR tool (4.10.1)
+        run: |
+          mkdir -p .tools
+          curl -fsSL -o .tools/antlr-4.10.1-complete.jar https://www.antlr.org/download/antlr-4.10.1-complete.jar
+
+      - name: Benchmark smoke
+        env:
+          ANTLR4_EXECUTABLE: ${{ github.workspace }}/dev/antlr4.sh
+          ANTLR4_JAR: ${{ github.workspace }}/.tools/antlr-4.10.1-complete.jar
+          ANTLR4_RUNTIME_INCLUDE_DIR: /usr/include/antlr4-runtime
+          ANTLR4_RUNTIME_LIB: /usr/lib/x86_64-linux-gnu/libantlr4-runtime.so
+        run: |
+          cmake -S . -B build
+          cmake --build build -j
+          ./build/gcode_bench --iterations 1 --lines 10000 --output output/bench/ci-smoke.json
