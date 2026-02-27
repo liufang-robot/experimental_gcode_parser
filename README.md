@@ -43,6 +43,25 @@ cmake --build build
 ./dev/check.sh
 ```
 
+## Documentation (mdBook)
+
+Build docs locally:
+
+```bash
+mdbook build docs
+```
+
+Serve docs locally:
+
+```bash
+mdbook serve docs --open
+```
+
+Source files:
+
+- `docs/src/development_reference.md`
+- `docs/src/program_reference.md`
+
 ## Benchmark
 
 Run the benchmark harness with 10k-line baseline:

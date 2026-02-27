@@ -12,7 +12,28 @@
 - `P3`: optional/enhancement
 
 ## Ready Queue
-- None.
+### T-022 (P2) mdBook documentation + GitHub Pages publishing
+Why:
+- Keep developer and program reference docs structured, versioned, and always
+  aligned with implementation.
+Scope:
+- Add `docs/` mdBook source tree with at least:
+  - development reference
+  - program reference
+- Ignore generated mdBook HTML output in git.
+- Build docs in CI and publish docs to GitHub Pages from `main`.
+- Update `SPEC.md` with mdBook documentation maintenance policy.
+Acceptance criteria:
+- `docs/book.toml` and `docs/src/*` exist with the required two sections.
+- `.gitignore` excludes generated docs output directory.
+- CI includes mdBook build step and Pages deployment flow.
+- `SPEC.md` explicitly requires docs update on behavior/API changes.
+Out of scope:
+- Full rewrite of all existing markdown docs into mdBook pages.
+SPEC Sections:
+- Section 9 (Program/Documentation reference policy), Section 7 (CI/testing if needed).
+Tests To Add/Update:
+- CI docs build job (`mdbook build docs`).
 
 ## Icebox
 - Coverage threshold policy and badge.
@@ -33,7 +54,7 @@ Use this template for new backlog items:
 
 ## In Progress
 (List tasks currently being worked on; only one assignee/task per PR)
-- None.
+- T-022 (feature/t022-mdbook-docs-and-pages)
 
 ## Done
 (Move completed tasks here with PR link)

@@ -1,5 +1,28 @@
 # CHANGELOG_AGENT
 
+## 2026-02-27 (T-022 mdBook docs + Pages pipeline)
+- Added mdBook documentation source tree under `docs/` with:
+  - `docs/src/development_reference.md`
+  - `docs/src/program_reference.md`
+- Added CI docs build job and GitHub Pages deploy job from `main` in
+  `.github/workflows/ci.yml`.
+- Updated `SPEC.md` documentation policy to require mdBook updates on code/API
+  behavior changes.
+- Added generated docs output ignore rule (`docs/book`) in `.gitignore`.
+
+SPEC sections / tests:
+- SPEC: Section 9 (Documentation Policy), Section 7 (CI/testing expectations reference)
+- Tests: CI docs build step (`mdbook build docs`)
+
+Known limitations:
+- This change establishes mdBook structure and publishing pipeline; it does not
+  fully migrate all legacy markdown docs into mdBook in one pass.
+
+How to reproduce locally (commands):
+- `mdbook build docs`
+- `mdbook serve docs --open`
+- `./dev/check.sh`
+
 ## 2026-02-27 (CI dependency: gcovr)
 - Added `gcovr` to CI apt dependency installation for both `build-test` and
   `benchmark-smoke` jobs in `.github/workflows/ci.yml`.
