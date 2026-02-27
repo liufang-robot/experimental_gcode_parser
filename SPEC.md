@@ -223,15 +223,17 @@ N50 X60
 - New function families must be added as new modules rather than extending one
   large file with long branching chains.
 
-## 9. Program Reference Manual Policy
-To keep product-facing behavior documentation aligned with code, maintain a
-separate implementation reference manual at:
-- `PROGRAM_REFERENCE.md`
-- Product-level goals, scope, and public API expectations are maintained in
-  `PRD.md`.
+## 9. Documentation Policy (mdBook + Reference Manual)
+To keep product-facing behavior documentation aligned with code, maintain
+mdBook documentation under:
+- `docs/book.toml`
+- `docs/src/`
+- Program reference content in `docs/src/program_reference.md`
+- Development reference content in `docs/src/development_reference.md`
+- Product-level goals, scope, and public API expectations in `PRD.md`.
 
 Requirements:
-- The manual must describe the currently implemented parser/lowering behavior,
+- The program reference must describe currently implemented parser/lowering behavior,
   not only planned behavior.
 - Every documented command/function must include a status:
   - `Implemented`
@@ -243,12 +245,16 @@ Requirements:
   - diagnostics/rejections rules
   - at least one example
   - test references (unit/golden/regression names or files)
-- If code behavior changes, the same PR must update `PROGRAM_REFERENCE.md`.
-- If `SPEC.md` adds planned behavior not yet implemented, the manual must mark
+- If code/API/function behavior changes, the same PR must update mdBook docs
+  (`docs/src/program_reference.md` and/or `docs/src/development_reference.md`
+  as appropriate).
+- If `SPEC.md` adds planned behavior not yet implemented, docs must mark
   it as `Planned` until code/tests are merged.
+- CI must build mdBook documentation and publish Pages content from `main`.
 
 PR gate expectation:
 - Feature PR description must list:
   - updated sections in `SPEC.md`
-  - updated sections in `PROGRAM_REFERENCE.md`
+  - updated sections in `docs/src/program_reference.md` and/or
+    `docs/src/development_reference.md`
   - tests proving the documented behavior

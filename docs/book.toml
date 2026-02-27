@@ -1,0 +1,12 @@
+[book]
+authors = ["optcnc contributors"]
+language = "en"
+src = "src"
+title = "Experimental G-code Parser"
+
+[build]
+build-dir = "book"
+
+[output.html]
+default-theme = "light"
+preferred-dark-theme = "ayu"

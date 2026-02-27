@@ -4,3 +4,4 @@ openspec
 build-sanitize
 cmake-build-*
 output/bench
+docs/book

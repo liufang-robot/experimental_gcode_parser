@@ -1,5 +1,9 @@
 # Program Reference Manual (Implementation Snapshot)
 
+Note:
+- Canonical maintained program reference is now `docs/src/program_reference.md`
+  (mdBook source). This file is retained as a compatibility snapshot.
+
 This document is the implementation-facing reference for parser/lowering
 behavior currently available in code. It must be updated in the same PR as any
 behavior change.
