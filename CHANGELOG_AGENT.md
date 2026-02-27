@@ -1,5 +1,23 @@
 # CHANGELOG_AGENT
 
+## 2026-02-27 (backlog status sync after merged T-021)
+- Updated `BACKLOG.md` to mark `T-021` as done (`PR #28`) and clear stale
+  `Ready Queue` / `In Progress` references.
+- Removed the stale "Performance benchmarking harness" item from Icebox because
+  it was completed in `T-020`.
+
+SPEC sections / tests:
+- SPEC: no behavior change
+- Tests: not applicable (documentation/backlog status update only)
+
+Known limitations:
+- Icebox still contains larger roadmap items (`coverage policy`, `multi-file include`)
+  that need separate scoped tasks before implementation.
+
+How to reproduce locally (commands):
+- `sed -n '1,260p' BACKLOG.md`
+- `sed -n '1,120p' CHANGELOG_AGENT.md`
+
 ## 2026-02-22
 - Added `./dev/check.sh` to run format checks, build, tests, and sanitizer tests.
 - Added CI workflow to run the same checks.
