@@ -12,7 +12,30 @@
 - `P3`: optional/enhancement
 
 ## Ready Queue
-- None.
+### T-023 (P1) Rewrite README for accurate and comprehensive project guide
+Why:
+- Current `README.md` is outdated and does not fully reflect implemented
+  parser/lowering APIs, docs flow, and CI/dev workflow.
+Scope:
+- Rewrite `README.md` to cover:
+  - project purpose and current feature status (`G1/G2/G3/G4`, diagnostics,
+    AST/lowering, streaming)
+  - build/runtime prerequisites (ANTLR runtime/tool, CMake, gtest, json lib)
+  - local build/test/benchmark/docs commands
+  - library usage entry points (batch + streaming)
+  - links to `SPEC.md`, `PRD.md`, and mdBook docs
+- Keep examples aligned with currently implemented behavior.
+Acceptance criteria:
+- `README.md` sections are consistent with implementation and `SPEC.md`.
+- Includes at least one parse/lower usage snippet and one streaming snippet.
+- Includes mdBook docs build/serve instructions.
+- `./dev/check.sh` passes after README update.
+Out of scope:
+- API behavior changes or new parser features.
+SPEC Sections:
+- Section 9 (Documentation Policy), Section 6 (Message Lowering summary references).
+Tests To Add/Update:
+- No new unit tests (docs task); verify by running `./dev/check.sh`.
 
 ## Icebox
 - Coverage threshold policy and badge.

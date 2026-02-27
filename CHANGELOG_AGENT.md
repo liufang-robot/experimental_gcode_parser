@@ -1,5 +1,20 @@
 # CHANGELOG_AGENT
 
+## 2026-02-27 (backlog: add README rewrite task T-023)
+- Added backlog task `T-023` in Ready Queue to rewrite `README.md` as a
+  comprehensive, implementation-aligned guide.
+
+SPEC sections / tests:
+- SPEC: planning target references Section 9 and Section 6
+- Tests: no code-path change (backlog planning update only)
+
+Known limitations:
+- This adds planning/task definition only; README rewrite implementation is not
+  included in this change.
+
+How to reproduce locally (commands):
+- `sed -n '1,260p' BACKLOG.md`
+
 ## 2026-02-27 (backlog sync after T-022 merge)
 - Updated `BACKLOG.md` to move `T-022` out of Ready/In Progress and into Done
   with `PR #31`.
