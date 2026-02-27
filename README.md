@@ -1,84 +1,155 @@
-# G1 Parser (C++ / ANTLR4)
+# Experimental G-code Parser (C++ / ANTLR4)
 
-This directory contains a minimal G1-focused grammar and a small example
-executable that parses a test file and prints the parse tree.
+ANTLR-based parser/lowering library for CNC G-code with:
 
-## Generate C++ sources
+- AST + line/column diagnostics
+- queue-oriented typed messages (`G1`, `G2`, `G3`, `G4`)
+- batch and streaming APIs
+- JSON serialization for lowered message results
 
-The build will run `antlr4` automatically. You can also generate manually:
+Current source-of-truth docs:
 
-```bash
-export ANTLR4_TOOLS_ANTLR_VERSION=4.13.2
-antlr4 -Dlanguage=Cpp -visitor -listener -o build/generated grammar/GCode.g4
-```
+- `SPEC.md` (behavior/spec contract)
+- `PRD.md` (product requirements and API expectations)
+- `docs/` mdBook sources (developer and program reference)
 
-## Build (requires ANTLR4 C++ runtime)
+## Implemented Status
 
-You need the ANTLR4 C++ runtime built or installed. Provide these variables if
-the runtime isn't in a system path:
+- Parser: words/comments/line numbers and syntax diagnostics.
+- Semantic rules: motion-family exclusivity, `G1` mode mixing, `G4` constraints.
+- Lowering:
+  - `G1Message` (pose + feed)
+  - `G2Message` / `G3Message` (pose + arc + feed)
+  - `G4Message` (dwell mode + value)
+- Streaming callbacks:
+  - `parseAndLowerStream(...)`
+  - `parseAndLowerFileStream(...)`
+- Session/edit flow:
+  - `ParseSession::applyLineEdit(...)`
+  - `ParseSession::reparseFromLine(...)`
+- Queue diff/apply helpers:
+  - `diffMessagesByLine(...)`
+  - `applyMessageDiff(...)`
+
+## Prerequisites
+
+- C++17 toolchain
+- `cmake`
+- `antlr4` tool + ANTLR4 C++ runtime
+- `clang-format`, `clang-tidy`
+- `gtest`
+- `nlohmann/json`
+- `mdbook` (for docs)
+
+If ANTLR runtime is not in a default system path, set:
 
 - `ANTLR4_RUNTIME_INCLUDE_DIR`
 - `ANTLR4_RUNTIME_LIB`
 
-Example (runtime installed under `/home/liufang/optcnc/install/`):
+For deterministic ANTLR tool version, CI uses `dev/antlr4.sh` with an explicit
+jar path via `ANTLR4_EXECUTABLE` and `ANTLR4_JAR`.
+
+## Build
 
 ```bash
 cmake -S . -B build \
-  -DANTLR4_RUNTIME_INCLUDE_DIR=/home/liufang/optcnc/install/include/antlr4-runtime \
-  -DANTLR4_RUNTIME_LIB=/home/liufang/optcnc/install/lib/libantlr4-runtime.a
-cmake --build build
+  -DANTLR4_RUNTIME_INCLUDE_DIR=/usr/include/antlr4-runtime \
+  -DANTLR4_RUNTIME_LIB=/usr/lib/x86_64-linux-gnu/libantlr4-runtime.so
+cmake --build build -j
 ```
 
-## Run example
+## CLI Usage
 
 ```bash
-./build/gcode_parse testdata/g1_samples.ngc
-./build/gcode_parse --format debug testdata/g1_samples.ngc
-./build/gcode_parse --format json testdata/g1_samples.ngc
+./build/gcode_parse testdata/combined_samples.ngc
+./build/gcode_parse --format debug testdata/combined_samples.ngc
+./build/gcode_parse --format json testdata/combined_samples.ngc
 ```
 
-## Tests
+## Library Usage
+
+Batch parse+lower:
+
+```cpp
+#include "messages.h"
+
+gcode::LowerOptions options;
+options.filename = "job.ngc";
+
+const auto result = gcode::parseAndLower("N10 G1 X10 Y20 F100\n", options);
+// result.messages, result.diagnostics, result.rejected_lines
+```
+
+Streaming parse+lower:
+
+```cpp
+#include "messages.h"
+
+gcode::StreamCallbacks callbacks;
+callbacks.on_message = [](const gcode::ParsedMessage& msg) {
+  // process message incrementally
+};
+callbacks.on_diagnostic = [](const gcode::Diagnostic& d) {
+  // record line/column diagnostics
+};
+
+gcode::LowerOptions options;
+options.filename = "job.ngc";
+gcode::parseAndLowerStream("G1 X10\nG4 F2\n", options, callbacks);
+```
+
+JSON conversion helpers:
+
+```cpp
+#include "messages_json.h"
+
+std::string json = gcode::toJsonString(result, true);
+gcode::MessageResult round_trip = gcode::fromJsonString(json);
+```
+
+## Quality Gate
+
+Single-command gate:
 
 ```bash
 ./dev/check.sh
 ```
 
-## Documentation (mdBook)
+This runs format-check, configure/build, tests (including golden/regression/
+fuzz-smoke), tidy, and sanitizer tests.
 
-Build docs locally:
+## Benchmark
+
+```bash
+./dev/bench.sh
+./build/gcode_bench --iterations 5 --lines 10000 --output output/bench/latest.json
+```
+
+## Documentation (mdBook)
 
 ```bash
 mdbook build docs
-```
-
-Serve docs locally:
-
-```bash
 mdbook serve docs --open
 ```
 
-Source files:
+Main pages:
 
 - `docs/src/development_reference.md`
 - `docs/src/program_reference.md`
 
-## Benchmark
+GitHub Pages publishes `docs/book` on pushes to `main`.
 
-Run the benchmark harness with 10k-line baseline:
+## Project Layout
 
-```bash
-./dev/bench.sh
-```
+- `src/` implementation
+- `test/` GoogleTest suites
+- `testdata/` golden/assets
+- `docs/` mdBook sources
+- `dev/` local scripts
 
-Direct invocation:
+## Contribution Notes
 
-```bash
-./build/gcode_bench --iterations 5 --lines 10000 --output output/bench/latest.json
-```
-
-Regression tests policy:
-- Every fixed bug must add one regression test first (failing before the fix).
-- Regression test names must use:
-  - `Regression_<bug_or_issue_id>_<short_behavior>`
-- Keep regression tests in `test/regression_tests.cpp` unless a dedicated suite
-  is required for scale.
+- Follow OODA flow using `ROADMAP.md`, `BACKLOG.md`, and `OODA.md`.
+- Every change must update `CHANGELOG_AGENT.md`.
+- Behavior/API changes must update `SPEC.md` and relevant mdBook pages in the
+  same PR.

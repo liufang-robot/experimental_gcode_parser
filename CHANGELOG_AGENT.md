@@ -1,5 +1,25 @@
 # CHANGELOG_AGENT
 
+## 2026-02-27 (T-023 README rewrite)
+- Rewrote `README.md` into a comprehensive, implementation-aligned guide:
+  feature status, prerequisites, build/test/benchmark/docs workflow, and API
+  entry points.
+- Added concrete usage snippets for batch parse/lower, streaming callbacks, and
+  JSON conversion helpers.
+- Added contribution/documentation alignment notes linking `SPEC.md`, `PRD.md`,
+  and mdBook policy.
+
+SPEC sections / tests:
+- SPEC: Section 6 (Message Lowering summary references), Section 9 (Documentation Policy)
+- Tests: `./dev/check.sh`
+
+Known limitations:
+- README examples are intentionally minimal and are not compiled as doctests.
+
+How to reproduce locally (commands):
+- `./dev/check.sh`
+- `sed -n '1,260p' README.md`
+
 ## 2026-02-27 (backlog: add README rewrite task T-023)
 - Added backlog task `T-023` in Ready Queue to rewrite `README.md` as a
   comprehensive, implementation-aligned guide.
