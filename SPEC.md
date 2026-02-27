@@ -27,8 +27,9 @@ Optional downstream stage:
 - v0 supports `G1Message`, `G2Message`, `G3Message`, and `G4Message` emission.
 - Message results support JSON conversion (`toJson`/`fromJson`) for transport,
   fixtures, and debugging.
-- Planned additive API: streaming parse/lower output mode for large-file
-  workflows (callbacks/events instead of full-result buffering).
+- Additive API: streaming parse/lower output mode for large-file workflows
+  (callbacks/events instead of full-result buffering), with cancel/limit
+  controls.
 
 The `gcode_parse` CLI supports:
 - `--format debug` (default): stable, line-oriented debug format used by
@@ -175,6 +176,11 @@ N50 X60
     `removed_lines`.
   - Provide apply helper that applies a diff to an existing message queue and
     preserves deterministic line order.
+- Streaming API (v0):
+  - Provide callback-based streaming variants for parse/lower output.
+  - Stream diagnostics/messages/rejected-lines without requiring message-vector
+    accumulation by default.
+  - Support early-stop controls (max lines/messages/diagnostics, cancel hook).
 - JSON schema notes:
   - Include top-level `schema_version` (current value: `1`).
   - Include `messages`, `diagnostics`, and `rejected_lines`.

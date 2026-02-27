@@ -1,5 +1,7 @@
 #include "messages.h"
 
+#include <fstream>
+#include <sstream>
 #include <unordered_map>
 
 #include "gcode_parser.h"
@@ -50,6 +52,42 @@ std::unordered_map<int, const MotionFamilyLowerer *> indexLowerers(
     indexed[lowerer->motionCode()] = lowerer.get();
   }
   return indexed;
+}
+
+bool shouldStop(const StreamOptions &stream_options, size_t lines_seen,
+                size_t messages_seen, size_t diagnostics_seen) {
+  if (stream_options.max_lines.has_value() &&
+      lines_seen > *stream_options.max_lines) {
+    return true;
+  }
+  if (stream_options.max_messages.has_value() &&
+      messages_seen > *stream_options.max_messages) {
+    return true;
+  }
+  if (stream_options.max_diagnostics.has_value() &&
+      diagnostics_seen > *stream_options.max_diagnostics) {
+    return true;
+  }
+  if (stream_options.should_cancel && stream_options.should_cancel()) {
+    return true;
+  }
+  return false;
+}
+
+void emitParseDiagnostics(const std::vector<Diagnostic> &diagnostics,
+                          const StreamCallbacks &callbacks,
+                          const StreamOptions &stream_options,
+                          size_t *diagnostics_seen, bool *stopped) {
+  for (const auto &diag : diagnostics) {
+    if (callbacks.on_diagnostic) {
+      callbacks.on_diagnostic(diag);
+    }
+    ++(*diagnostics_seen);
+    if (shouldStop(stream_options, 0, 0, *diagnostics_seen)) {
+      *stopped = true;
+      return;
+    }
+  }
 }
 
 } // namespace
@@ -112,6 +150,131 @@ MessageResult parseAndLower(std::string_view input,
                             const LowerOptions &options) {
   const ParseResult parsed = parse(input);
   return lowerToMessages(parsed.program, parsed.diagnostics, options);
+}
+
+bool lowerToMessagesStream(const Program &program,
+                           const std::vector<Diagnostic> &parse_diagnostics,
+                           const LowerOptions &options,
+                           const StreamCallbacks &callbacks,
+                           const StreamOptions &stream_options) {
+  const auto lowerers = createMotionFamilyLowerers();
+  const auto indexed_lowerers = indexLowerers(lowerers);
+
+  size_t lines_seen = 0;
+  size_t messages_seen = 0;
+  size_t diagnostics_seen = 0;
+  bool stopped = false;
+  emitParseDiagnostics(parse_diagnostics, callbacks, stream_options,
+                       &diagnostics_seen, &stopped);
+  if (stopped) {
+    return false;
+  }
+
+  for (const auto &line : program.lines) {
+    ++lines_seen;
+    if (shouldStop(stream_options, lines_seen, messages_seen,
+                   diagnostics_seen)) {
+      return false;
+    }
+
+    const bool has_line_error =
+        lineHasError(parse_diagnostics, line.line_index);
+    if (has_line_error) {
+      MessageResult::RejectedLine rejected;
+      rejected.source.filename = options.filename;
+      rejected.source.line = line.line_index;
+      if (line.line_number.has_value()) {
+        rejected.source.line_number = line.line_number->value;
+      }
+      rejected.reasons = collectLineErrors(parse_diagnostics, line.line_index);
+      if (callbacks.on_rejected_line) {
+        callbacks.on_rejected_line(rejected);
+      }
+      return false;
+    }
+
+    int found_motion = 0;
+    for (const auto &item : line.items) {
+      if (!isWord(item)) {
+        continue;
+      }
+      const auto &word = std::get<Word>(item);
+      const int code = motionCode(word);
+      if (code == 1 || code == 2 || code == 3 || code == 4) {
+        if (found_motion != 0 && code != found_motion) {
+          found_motion = -1;
+          break;
+        }
+        found_motion = code;
+      }
+    }
+
+    if (found_motion == 0) {
+      continue;
+    }
+    const auto found = indexed_lowerers.find(found_motion);
+    if (found == indexed_lowerers.end()) {
+      continue;
+    }
+
+    std::vector<Diagnostic> lowering_diags;
+    auto message = found->second->lower(line, options, &lowering_diags);
+    if (callbacks.on_message) {
+      callbacks.on_message(message);
+    }
+    ++messages_seen;
+    if (shouldStop(stream_options, lines_seen, messages_seen,
+                   diagnostics_seen)) {
+      return false;
+    }
+
+    for (const auto &diag : lowering_diags) {
+      if (callbacks.on_diagnostic) {
+        callbacks.on_diagnostic(diag);
+      }
+      ++diagnostics_seen;
+      if (shouldStop(stream_options, lines_seen, messages_seen,
+                     diagnostics_seen)) {
+        return false;
+      }
+    }
+  }
+
+  return true;
+}
+
+bool parseAndLowerStream(std::string_view input, const LowerOptions &options,
+                         const StreamCallbacks &callbacks,
+                         const StreamOptions &stream_options) {
+  const ParseResult parsed = parse(input);
+  return lowerToMessagesStream(parsed.program, parsed.diagnostics, options,
+                               callbacks, stream_options);
+}
+
+bool parseAndLowerFileStream(const std::string &path,
+                             const LowerOptions &options,
+                             const StreamCallbacks &callbacks,
+                             const StreamOptions &stream_options) {
+  std::ifstream input(path, std::ios::in);
+  if (!input.is_open()) {
+    if (callbacks.on_diagnostic) {
+      Diagnostic diag;
+      diag.severity = Diagnostic::Severity::Error;
+      diag.message = "failed to open file: " + path;
+      diag.location = {0, 0};
+      callbacks.on_diagnostic(diag);
+    }
+    return false;
+  }
+
+  std::stringstream buffer;
+  buffer << input.rdbuf();
+  LowerOptions file_options = options;
+  if (!file_options.filename.has_value()) {
+    file_options.filename = path;
+  }
+  return parseAndLowerStream(buffer.str(), file_options, callbacks,
+                             stream_options);
 }
 
 } // namespace gcode

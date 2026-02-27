@@ -157,6 +157,12 @@ target_include_directories(message_diff_tests
                            PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
 gtest_discover_tests(message_diff_tests DISCOVERY_MODE PRE_TEST)
 
+add_executable(streaming_tests test/streaming_tests.cpp)
+target_link_libraries(streaming_tests PRIVATE gcode_parser)
+target_link_libraries(streaming_tests PRIVATE GTest::gtest_main)
+target_include_directories(streaming_tests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
+gtest_discover_tests(streaming_tests DISCOVERY_MODE PRE_TEST)
+
 add_executable(semantic_rules_tests test/semantic_rules_tests.cpp)
 target_link_libraries(semantic_rules_tests PRIVATE gcode_parser)
 target_link_libraries(semantic_rules_tests PRIVATE GTest::gtest_main)

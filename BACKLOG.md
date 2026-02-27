@@ -12,31 +12,6 @@
 - `P3`: optional/enhancement
 
 ## Ready Queue
-### T-019 (P1) Add streaming parse/lower API for large input safety
-Why:
-- Current APIs return full in-memory results, which is less suitable for very
-  large files and long-running parse sessions.
-- Product requirement needs controlled processing with cancellation/limits.
-Scope:
-- Add additive streaming API for parse/lower output delivery.
-- Support event/callback-style delivery for diagnostics and messages.
-- Add safety controls (for example: max lines/diagnostics and cancel hook).
-Acceptance criteria:
-- Existing non-streaming APIs remain backward compatible.
-- Streaming API can process at least a 10k-line file without accumulating all
-  output in memory by default.
-- Streaming API exposes diagnostics and message outputs with source location.
-- Unit/integration tests cover normal flow and early-stop/cancel behavior.
-- `./dev/check.sh` passes.
-Out of scope:
-- Full incremental parsing engine rewrite.
-- ABI freeze beyond current project policy.
-SPEC Sections:
-- Section 2 (Input/Output), Section 6 (Message Lowering), Section 7 (Testing).
-Tests To Add/Update:
-- `test/` streaming API tests
-- large-input fixture in `testdata/`
-
 ### T-020 (P1) Add benchmark harness and 10k-line performance baseline
 Why:
 - Need measurable parsing efficiency data and regression visibility.
@@ -99,4 +74,5 @@ Use this template for new backlog items:
 - T-015 (PR #21)
 - T-016 (PR #22)
 - T-017 (PR #23)
-- T-018 (feature/t018-g4-dwell-support, pending PR)
+- T-018 (PR #25)
+- T-019 (feature/t019-streaming-api, pending PR)

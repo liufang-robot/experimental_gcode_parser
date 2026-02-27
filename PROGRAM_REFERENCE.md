@@ -8,6 +8,14 @@ Version scope:
 - Parser library: current `main`
 - Status legend: `Implemented`, `Partial`, `Planned`
 
+## Output Access
+
+Implemented API paths:
+- batch output: `parseAndLower(...)` returns `MessageResult`
+- streaming output: `parseAndLowerStream(...)` /
+  `parseAndLowerFileStream(...)` emit callbacks for messages, diagnostics, and
+  rejected lines
+
 ## Command Matrix
 
 | Command | Status | Notes |
