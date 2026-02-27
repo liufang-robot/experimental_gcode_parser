@@ -1,5 +1,20 @@
 # CHANGELOG_AGENT
 
+## 2026-02-27 (backlog sync after T-022 merge)
+- Updated `BACKLOG.md` to move `T-022` out of Ready/In Progress and into Done
+  with `PR #31`.
+
+SPEC sections / tests:
+- SPEC: no behavior change
+- Tests: not applicable (backlog state sync only)
+
+Known limitations:
+- Remaining backlog items (`coverage threshold policy`, `multi-file include`)
+  are still pending future scoped PRs.
+
+How to reproduce locally (commands):
+- `sed -n '1,260p' BACKLOG.md`
+
 ## 2026-02-27 (T-022 mdBook docs + Pages pipeline)
 - Added mdBook documentation source tree under `docs/` with:
   - `docs/src/development_reference.md`
