@@ -631,3 +631,24 @@ How to reproduce locally (commands):
 - `sed -n '200,360p' SPEC.md`
 - `sed -n '1,260p' src/gcode_parser.h`
 - `sed -n '1,260p' src/messages.h`
+
+## 2026-02-24 (plan streaming API + benchmark baseline requirements)
+- Added backlog tasks `T-019` (streaming parse/lower API) and `T-020`
+  (benchmark harness + 10k-line baseline) with acceptance criteria.
+- Updated `PRD.md` API/quality requirements to include streaming output support,
+  cancellation/limits, and benchmark throughput visibility.
+- Updated `SPEC.md` to document planned streaming output mode and benchmark
+  expectations in testing requirements.
+
+SPEC sections / tests:
+- SPEC: Section 2.2 (planned streaming output mode), Section 7 (benchmark expectations)
+- Tests: planning-only (implementation tracked by T-019/T-020)
+
+Known limitations:
+- No streaming runtime API or benchmark executable is implemented in this
+  change; this is planning/spec alignment only.
+
+How to reproduce locally (commands):
+- `sed -n '1,260p' BACKLOG.md`
+- `sed -n '1,260p' PRD.md`
+- `sed -n '1,360p' SPEC.md`

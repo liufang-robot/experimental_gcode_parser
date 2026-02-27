@@ -33,6 +33,9 @@ Required facade (target shape):
   - `ParseResult parseFile(const std::string& path, const ParseOptions&)`
   - `MessageResult parseAndLowerText(std::string_view input, const LowerOptions&)`
   - `MessageResult parseAndLowerFile(const std::string& path, const LowerOptions&)`
+  - streaming variants for large input (callback/event or pull API):
+    - `parseAndLowerStream(...)` with diagnostic/message callbacks
+    - cancellation/early-stop support
 
 Compatibility policy:
 - Existing free APIs remain supported unless a major-version change is approved.
@@ -84,6 +87,11 @@ Output access points:
 - Must keep diagnostics and queue ordering deterministic.
 - Must pass `./dev/check.sh` for merge.
 - Must include regression tests for every bug fix.
+- Must support large-input workflows through streaming APIs without requiring
+  full output buffering in memory.
+- Must provide benchmark visibility:
+  - baseline scenario includes 10k-line input
+  - report total parse/parse+lower time and throughput (lines/sec, bytes/sec)
 
 ## 8. Documentation and Traceability
 - `PRD.md`: product goals, scope, API contract, prioritization.

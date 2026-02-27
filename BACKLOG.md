@@ -12,7 +12,51 @@
 - `P3`: optional/enhancement
 
 ## Ready Queue
-- None.
+### T-019 (P1) Add streaming parse/lower API for large input safety
+Why:
+- Current APIs return full in-memory results, which is less suitable for very
+  large files and long-running parse sessions.
+- Product requirement needs controlled processing with cancellation/limits.
+Scope:
+- Add additive streaming API for parse/lower output delivery.
+- Support event/callback-style delivery for diagnostics and messages.
+- Add safety controls (for example: max lines/diagnostics and cancel hook).
+Acceptance criteria:
+- Existing non-streaming APIs remain backward compatible.
+- Streaming API can process at least a 10k-line file without accumulating all
+  output in memory by default.
+- Streaming API exposes diagnostics and message outputs with source location.
+- Unit/integration tests cover normal flow and early-stop/cancel behavior.
+- `./dev/check.sh` passes.
+Out of scope:
+- Full incremental parsing engine rewrite.
+- ABI freeze beyond current project policy.
+SPEC Sections:
+- Section 2 (Input/Output), Section 6 (Message Lowering), Section 7 (Testing).
+Tests To Add/Update:
+- `test/` streaming API tests
+- large-input fixture in `testdata/`
+
+### T-020 (P1) Add benchmark harness and 10k-line performance baseline
+Why:
+- Need measurable parsing efficiency data and regression visibility.
+Scope:
+- Add benchmark executable/scripts for parser and lowering throughput.
+- Measure parse-only and parse+lower on deterministic corpora.
+Acceptance criteria:
+- Benchmark command is documented and runnable locally.
+- Includes baseline scenario for 10k lines and reports at least:
+  total time, lines/sec, bytes/sec.
+- Produces stable machine-readable output artifact under `output/bench/`.
+- CI can run a lightweight benchmark smoke (non-gating or soft-gating).
+- `./dev/check.sh` passes.
+Out of scope:
+- Hardware-specific CPU cycle accounting as a hard CI gate.
+SPEC Sections:
+- Section 7 (Testing), quality/performance notes.
+Tests To Add/Update:
+- `bench/` harness and smoke check entry
+- optional CI benchmark job/update
 
 ## Icebox
 - Performance benchmarking harness.

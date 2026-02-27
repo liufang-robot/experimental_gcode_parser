@@ -27,6 +27,8 @@ Optional downstream stage:
 - v0 supports `G1Message`, `G2Message`, `G3Message`, and `G4Message` emission.
 - Message results support JSON conversion (`toJson`/`fromJson`) for transport,
   fixtures, and debugging.
+- Planned additive API: streaming parse/lower output mode for large-file
+  workflows (callbacks/events instead of full-result buffering).
 
 The `gcode_parse` CLI supports:
 - `--format debug` (default): stable, line-oriented debug format used by
@@ -199,6 +201,10 @@ N50 X60
 - Regression tests: every fixed bug must get a test that fails first, then passes.
   - Regression test naming convention:
     `Regression_<bug_or_issue_id>_<short_behavior>`.
+- Performance benchmarking:
+  - Maintain a benchmark harness for deterministic corpora.
+  - Include at least one 10k-line baseline scenario.
+  - Report parse and parse+lower throughput metrics (time, lines/sec, bytes/sec).
 
 ## 8. Code Architecture Requirements
 - Use object-oriented module design for parser/lowering function families.
