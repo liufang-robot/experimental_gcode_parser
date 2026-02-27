@@ -207,6 +207,8 @@ N50 X60
 - Regression tests: every fixed bug must get a test that fails first, then passes.
   - Regression test naming convention:
     `Regression_<bug_or_issue_id>_<short_behavior>`.
+- Streaming callback tests must validate message field content (type/source/
+  payload), not only event counts.
 - Performance benchmarking:
   - Maintain a benchmark harness for deterministic corpora.
   - Include at least one 10k-line baseline scenario.
