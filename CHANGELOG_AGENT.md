@@ -674,3 +674,29 @@ How to reproduce locally (commands):
 - `cmake --build build -j`
 - `ctest --test-dir build --output-on-failure -R StreamingTest`
 - `./dev/check.sh`
+
+## 2026-02-24 (T-020 benchmark harness + 10k-line baseline)
+- Added benchmark executable `gcode_bench` (`bench/gcode_bench.cpp`) to measure
+  parse-only and parse+lower performance on deterministic input.
+- Added `dev/bench.sh` and benchmark output artifact path
+  `output/bench/latest.json` with machine-readable metrics (time, lines/sec,
+  bytes/sec).
+- Added CI benchmark smoke job (`benchmark-smoke`) as soft-gating
+  (`continue-on-error: true`) and integrated local benchmark smoke via ctest
+  (`BenchmarkSmoke`).
+
+SPEC sections / tests:
+- SPEC: Section 7 (Performance benchmarking expectations)
+- Tests: `BenchmarkSmoke`, `./dev/check.sh`, `./dev/bench.sh`
+
+Known limitations:
+- Benchmark currently uses a deterministic synthetic G1 corpus; broader mixed
+  real-world corpora can be added in follow-up work.
+- Metrics are wall-clock throughput; hardware-specific CPU cycles are not used
+  as CI gating criteria.
+
+How to reproduce locally (commands):
+- `cmake -S . -B build`
+- `cmake --build build -j`
+- `ctest --test-dir build --output-on-failure -R BenchmarkSmoke`
+- `./dev/bench.sh`

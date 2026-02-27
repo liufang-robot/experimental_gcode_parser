@@ -43,6 +43,20 @@ cmake --build build
 ./dev/check.sh
 ```
 
+## Benchmark
+
+Run the benchmark harness with 10k-line baseline:
+
+```bash
+./dev/bench.sh
+```
+
+Direct invocation:
+
+```bash
+./build/gcode_bench --iterations 5 --lines 10000 --output output/bench/latest.json
+```
+
 Regression tests policy:
 - Every fixed bug must add one regression test first (failing before the fix).
 - Regression test names must use:
