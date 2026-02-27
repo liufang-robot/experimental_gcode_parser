@@ -12,28 +12,9 @@
 - `P3`: optional/enhancement
 
 ## Ready Queue
-### T-021 (P2) Strengthen streaming callback tests with message field assertions
-Why:
-- Streaming tests currently validate counts/flow but should also validate
-  detailed message payload correctness.
-Scope:
-- Add streaming unit test that captures callback messages and asserts
-  message variant + source + payload fields.
-Acceptance criteria:
-- Add at least one streaming test that validates detailed fields for multiple
-  message types (for example `G4` and `G1`).
-- Update SPEC testing expectations to require field-level assertions for
-  streaming callback tests.
-- `./dev/check.sh` passes.
-Out of scope:
-- Streaming API behavior changes.
-SPEC Sections:
-- Section 7 (Testing).
-Tests To Add/Update:
-- `test/streaming_tests.cpp`
+- None.
 
 ## Icebox
-- Performance benchmarking harness.
 - Coverage threshold policy and badge.
 - Multi-file include/subprogram parsing (future SPEC).
 
@@ -52,7 +33,7 @@ Use this template for new backlog items:
 
 ## In Progress
 (List tasks currently being worked on; only one assignee/task per PR)
-- T-021 (feature/t021-streaming-detailed-message-tests)
+- None.
 
 ## Done
 (Move completed tasks here with PR link)
@@ -76,3 +57,4 @@ Use this template for new backlog items:
 - T-018 (PR #25)
 - T-019 (PR #26)
 - T-020 (PR #27)
+- T-021 (PR #28)
