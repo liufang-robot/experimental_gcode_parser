@@ -1,5 +1,19 @@
 # CHANGELOG_AGENT
 
+## 2026-02-27 (backlog sync after T-023 merge)
+- Updated `BACKLOG.md` to mark `T-023` done (`PR #33`) and clear stale Ready
+  Queue / In Progress entries.
+
+SPEC sections / tests:
+- SPEC: no behavior change
+- Tests: not applicable (backlog state sync only)
+
+Known limitations:
+- Remaining backlog work is currently in Icebox only.
+
+How to reproduce locally (commands):
+- `sed -n '1,260p' BACKLOG.md`
+
 ## 2026-02-27 (T-023 README rewrite)
 - Rewrote `README.md` into a comprehensive, implementation-aligned guide:
   feature status, prerequisites, build/test/benchmark/docs workflow, and API
