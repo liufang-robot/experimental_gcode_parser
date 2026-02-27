@@ -608,3 +608,26 @@ How to reproduce locally (commands):
 - `cmake --build build -j`
 - `ctest --test-dir build --output-on-failure -R "(G4LowererTest|MessagesTest.G4|MessagesJsonTest.RoundTripWithG4|SemanticRulesTest.ReportsG4|RegressionTest.Regression_G4|MessageDiffTest.G4|MessagesJsonTest.GoldenMessageOutput)"`
 - `./dev/check.sh`
+
+## 2026-02-24 (add PRD for product/API requirements)
+- Added `PRD.md` to define product goals, non-goals, command-family policy,
+  quality gates, and release acceptance criteria for the parser library.
+- Added explicit product API requirements, including recommended class facade,
+  file-based parse/lower APIs, and output contracts (`ParseResult`/
+  `MessageResult`).
+- Linked SPEC documentation policy to `PRD.md` as the product-level source,
+  while keeping syntax/behavior details in `SPEC.md`.
+
+SPEC sections / tests:
+- SPEC: Section 9 documentation policy note
+- Tests: not applicable (docs-only)
+
+Known limitations:
+- PRD defines target API direction; class-facade/file-API implementation still
+  requires a dedicated backlog task and code changes.
+
+How to reproduce locally (commands):
+- `sed -n '1,260p' PRD.md`
+- `sed -n '200,360p' SPEC.md`
+- `sed -n '1,260p' src/gcode_parser.h`
+- `sed -n '1,260p' src/messages.h`

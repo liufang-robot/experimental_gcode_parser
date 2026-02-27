@@ -213,6 +213,8 @@ N50 X60
 To keep product-facing behavior documentation aligned with code, maintain a
 separate implementation reference manual at:
 - `PROGRAM_REFERENCE.md`
+- Product-level goals, scope, and public API expectations are maintained in
+  `PRD.md`.
 
 Requirements:
 - The manual must describe the currently implemented parser/lowering behavior,
