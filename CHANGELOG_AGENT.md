@@ -1,5 +1,21 @@
 # CHANGELOG_AGENT
 
+## 2026-02-27 (CI dependency: gcovr)
+- Added `gcovr` to CI apt dependency installation for both `build-test` and
+  `benchmark-smoke` jobs in `.github/workflows/ci.yml`.
+
+SPEC sections / tests:
+- SPEC: no behavior change
+- Tests: not applicable (CI environment dependency update only)
+
+Known limitations:
+- Coverage thresholds/report publishing are not enabled yet; this change only
+  prepares CI tooling availability.
+
+How to reproduce locally (commands):
+- `sudo apt-get update && sudo apt-get install -y gcovr`
+- `gcovr --version`
+
 ## 2026-02-27 (backlog status sync after merged T-021)
 - Updated `BACKLOG.md` to mark `T-021` as done (`PR #28`) and clear stale
   `Ready Queue` / `In Progress` references.
