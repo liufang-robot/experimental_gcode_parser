@@ -9,6 +9,19 @@ This section documents currently implemented parser/lowering behavior.
   - `parseAndLowerStream(...)`
   - `parseAndLowerFileStream(...)`
 
+## Modal Metadata
+
+Every emitted message includes `modal` metadata:
+
+- `group`: `GGroup1` (modal motion) or `GGroup2` (non-modal dwell)
+- `code`: emitted function code (`G1`, `G2`, `G3`, `G4`)
+- `updates_state`: whether this message updates modal state
+
+Current Siemens-aligned baseline for supported functions:
+
+- `G1/G2/G3` -> `GGroup1`, `updates_state=true`
+- `G4` -> `GGroup2`, `updates_state=false`
+
 ## Command Status Matrix
 
 | Command | Status | Notes |
@@ -33,6 +46,7 @@ Rules:
 Output fields:
 
 - source: filename/line/line_number
+- modal: `group=GGroup1`, `code=G1`, `updates_state=true`
 - target_pose: optional `x/y/z/a/b/c`
 - feed: optional `F`
 
@@ -46,6 +60,7 @@ Syntax examples:
 Output fields:
 
 - source: filename/line/line_number
+- modal: `group=GGroup1`, `code=G2|G3`, `updates_state=true`
 - target_pose: optional `x/y/z/a/b/c`
 - arc: optional `i/j/k/r`
 - feed: optional `F`
@@ -65,6 +80,7 @@ Rules:
 Output fields:
 
 - source: filename/line/line_number
+- modal: `group=GGroup2`, `code=G4`, `updates_state=false`
 - dwell_mode: `Seconds` (F) or `SpindleRevolutions` (S)
 - dwell_value: numeric value
 

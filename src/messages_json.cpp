@@ -76,6 +76,33 @@ std::optional<double> optionalDoubleFromJson(const nlohmann::json &j,
   return j[key].get<double>();
 }
 
+std::string modalGroupToString(ModalGroupId group) {
+  return group == ModalGroupId::Motion ? "GGroup1" : "GGroup2";
+}
+
+ModalGroupId modalGroupFromString(const std::string &group) {
+  if (group == "GGroup2") {
+    return ModalGroupId::NonModal;
+  }
+  return ModalGroupId::Motion;
+}
+
+nlohmann::json modalToJson(const ModalState &modal) {
+  nlohmann::json j;
+  j["group"] = modalGroupToString(modal.group);
+  j["code"] = modal.code;
+  j["updates_state"] = modal.updates_state;
+  return j;
+}
+
+ModalState modalFromJson(const nlohmann::json &j) {
+  ModalState modal;
+  modal.group = modalGroupFromString(j.value("group", "GGroup1"));
+  modal.code = j.value("code", "");
+  modal.updates_state = j.value("updates_state", false);
+  return modal;
+}
+
 nlohmann::json poseToJson(const Pose6 &pose) {
   nlohmann::json j;
   j["x"] = optionalDoubleToJson(pose.x);
@@ -140,12 +167,14 @@ nlohmann::json messageToJson(const ParsedMessage &message) {
     const auto &g1 = std::get<G1Message>(message);
     j["type"] = "G1";
     j["source"] = sourceToJson(g1.source);
+    j["modal"] = modalToJson(g1.modal);
     j["target_pose"] = poseToJson(g1.target_pose);
     j["feed"] = optionalDoubleToJson(g1.feed);
   } else if (std::holds_alternative<G2Message>(message)) {
     const auto &g2 = std::get<G2Message>(message);
     j["type"] = "G2";
     j["source"] = sourceToJson(g2.source);
+    j["modal"] = modalToJson(g2.modal);
     j["target_pose"] = poseToJson(g2.target_pose);
     j["arc"] = arcToJson(g2.arc);
     j["feed"] = optionalDoubleToJson(g2.feed);
@@ -153,6 +182,7 @@ nlohmann::json messageToJson(const ParsedMessage &message) {
     const auto &g3 = std::get<G3Message>(message);
     j["type"] = "G3";
     j["source"] = sourceToJson(g3.source);
+    j["modal"] = modalToJson(g3.modal);
     j["target_pose"] = poseToJson(g3.target_pose);
     j["arc"] = arcToJson(g3.arc);
     j["feed"] = optionalDoubleToJson(g3.feed);
@@ -160,6 +190,7 @@ nlohmann::json messageToJson(const ParsedMessage &message) {
     const auto &g4 = std::get<G4Message>(message);
     j["type"] = "G4";
     j["source"] = sourceToJson(g4.source);
+    j["modal"] = modalToJson(g4.modal);
     j["dwell_mode"] = dwellModeToString(g4.dwell_mode);
     j["dwell_value"] = g4.dwell_value;
   }
@@ -176,6 +207,9 @@ ParsedMessage messageFromJson(const nlohmann::json &j) {
     if (j.contains("target_pose")) {
       g1.target_pose = poseFromJson(j["target_pose"]);
     }
+    if (j.contains("modal")) {
+      g1.modal = modalFromJson(j["modal"]);
+    }
     g1.feed = optionalDoubleFromJson(j, "feed");
     return g1;
   } else if (type == "G2") {
@@ -188,6 +222,9 @@ ParsedMessage messageFromJson(const nlohmann::json &j) {
     }
     if (j.contains("arc")) {
       g2.arc = arcFromJson(j["arc"]);
+    }
+    if (j.contains("modal")) {
+      g2.modal = modalFromJson(j["modal"]);
     }
     g2.feed = optionalDoubleFromJson(j, "feed");
     return g2;
@@ -202,12 +239,18 @@ ParsedMessage messageFromJson(const nlohmann::json &j) {
     if (j.contains("arc")) {
       g3.arc = arcFromJson(j["arc"]);
     }
+    if (j.contains("modal")) {
+      g3.modal = modalFromJson(j["modal"]);
+    }
     g3.feed = optionalDoubleFromJson(j, "feed");
     return g3;
   } else if (type == "G4") {
     G4Message g4;
     if (j.contains("source")) {
       g4.source = sourceFromJson(j["source"]);
+    }
+    if (j.contains("modal")) {
+      g4.modal = modalFromJson(j["modal"]);
     }
     g4.dwell_mode = dwellModeFromString(j.value("dwell_mode", "seconds"));
     g4.dwell_value = j.value("dwell_value", 0.0);

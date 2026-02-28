@@ -4,7 +4,8 @@
 Parse G-code text (string or file) into a simple, syntax-level JSON model
 focused on G1 (linear), G2/G3 (circular), and G4 (dwell) commands.
 
-v0.1 is **syntax-only** (no execution, no full modal semantics).
+v0.1 is **syntax-focused** (no execution, no full multi-group modal
+validation). It includes message-level modal metadata for supported functions.
 
 ## 2. Input / Output
 
@@ -157,8 +158,18 @@ N50 X60
   - Feed: `F` (optional numeric field)
 - `G4Message` fields:
   - Source: optional filename, physical line, optional `N` line number
+  - Modal metadata:
+    - `group`: `GGroup2`
+    - `code`: `G4`
+    - `updates_state`: `false` (non-modal one-shot)
   - Dwell mode: `seconds` (from `F`) or `revolutions` (from `S`)
   - Dwell value: numeric duration/revolution count
+- Modal metadata policy (Siemens-preferred baseline for supported set):
+  - `G1` / `G2` / `G3` belong to `GGroup1` (modal motion group) and set
+    `updates_state=true` with `code` equal to the emitted motion code.
+  - `G4` belongs to `GGroup2` and sets `updates_state=false`.
+  - This metadata is informational in v0.1; full modal-group conflict
+    validation across all groups is out of scope.
 - Error-line emission policy (v0):
   - If a line has error diagnostics, do not emit motion message for that line;
     the line is reported in `rejected_lines` with reasons.
@@ -184,6 +195,10 @@ N50 X60
 - JSON schema notes:
   - Include top-level `schema_version` (current value: `1`).
   - Include `messages`, `diagnostics`, and `rejected_lines`.
+  - All message JSON objects carry `modal` with:
+    - `group` (`GGroup1` or `GGroup2`)
+    - `code` (`G1`/`G2`/`G3`/`G4`)
+    - `updates_state` (boolean)
   - `G1Message` JSON carries `type`, `source`, `target_pose`, and `feed`.
   - `G2Message` / `G3Message` JSON additionally carry `arc` with
     `i/j/k/r` optional numeric fields.

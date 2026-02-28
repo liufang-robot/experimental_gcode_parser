@@ -42,6 +42,9 @@ TEST(G3LowererTest, LowersArcAndSupportsCREqualsAlias) {
   EXPECT_TRUE(closeEnough(*msg.target_pose.x, 8.0));
   ASSERT_TRUE(msg.arc.r.has_value());
   EXPECT_TRUE(closeEnough(*msg.arc.r, 9.0));
+  EXPECT_EQ(msg.modal.group, gcode::ModalGroupId::Motion);
+  EXPECT_EQ(msg.modal.code, "G3");
+  EXPECT_TRUE(msg.modal.updates_state);
   EXPECT_TRUE(diagnostics.empty());
 }
 

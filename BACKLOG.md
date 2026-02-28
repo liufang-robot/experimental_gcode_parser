@@ -12,7 +12,37 @@
 - `P3`: optional/enhancement
 
 ## Ready Queue
-- None.
+### T-024 (P1) Add modal-group metadata to lowered messages
+Why:
+- Downstream queue consumers need explicit modal-group metadata per emitted
+  message.
+- We want Siemens-preferred modal semantics for current supported functions.
+Scope:
+- Add modal metadata fields to `G1/G2/G3/G4` message models.
+- Populate lowering output:
+  - `G1/G2/G3` -> group 1 (`GGroup1`), updates modal state.
+  - `G4` -> group 2 (`GGroup2`), non-modal one-shot (does not update state).
+- Include modal metadata in JSON serialization/deserialization.
+- Add/adjust tests and JSON goldens for the new fields.
+- Update SPEC + program reference docs.
+Acceptance criteria:
+- Every emitted message includes modal metadata in memory and JSON output.
+- Tests validate modal metadata for message families and streaming callbacks.
+- Message JSON golden fixtures include modal metadata.
+- `./dev/check.sh` passes.
+Out of scope:
+- Full multi-group modal validation or machine-configuration-specific behavior.
+SPEC Sections:
+- Section 6 (Message Lowering), Section 9 (Documentation Policy).
+Tests To Add/Update:
+- `test/messages_tests.cpp`
+- `test/streaming_tests.cpp`
+- `test/lowering_family_g1_tests.cpp`
+- `test/lowering_family_g2_tests.cpp`
+- `test/lowering_family_g3_tests.cpp`
+- `test/lowering_family_g4_tests.cpp`
+- `test/messages_json_tests.cpp`
+- `testdata/messages/*.golden.json`
 
 ## Icebox
 - Coverage threshold policy and badge.
@@ -33,7 +63,7 @@ Use this template for new backlog items:
 
 ## In Progress
 (List tasks currently being worked on; only one assignee/task per PR)
-- None.
+- T-024 (feature/t024-modal-group-metadata)
 
 ## Done
 (Move completed tasks here with PR link)

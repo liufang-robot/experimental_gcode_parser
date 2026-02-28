@@ -16,7 +16,12 @@
         "b": null,
         "c": null
       },
-      "feed": 200.0
+      "feed": 200.0,
+      "modal": {
+        "group": "GGroup1",
+        "code": "G1",
+        "updates_state": true
+      }
     },
     {
       "type": "G4",
@@ -26,7 +31,12 @@
         "line_number": 20
       },
       "dwell_mode": "seconds",
-      "dwell_value": 3.0
+      "dwell_value": 3.0,
+      "modal": {
+        "group": "GGroup2",
+        "code": "G4",
+        "updates_state": false
+      }
     },
     {
       "type": "G4",
@@ -36,7 +46,12 @@
         "line_number": 40
       },
       "dwell_mode": "revolutions",
-      "dwell_value": 30.0
+      "dwell_value": 30.0,
+      "modal": {
+        "group": "GGroup2",
+        "code": "G4",
+        "updates_state": false
+      }
     }
   ],
   "diagnostics": [],

@@ -4,6 +4,7 @@ ANTLR-based parser/lowering library for CNC G-code with:
 
 - AST + line/column diagnostics
 - queue-oriented typed messages (`G1`, `G2`, `G3`, `G4`)
+- per-message modal metadata (`group`, `code`, `updates_state`)
 - batch and streaming APIs
 - JSON serialization for lowered message results
 

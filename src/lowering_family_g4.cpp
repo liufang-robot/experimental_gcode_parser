@@ -11,6 +11,9 @@ G4Lowerer::lower(const Line &line, const LowerOptions &options,
                  std::vector<Diagnostic> * /*diagnostics*/) const {
   G4Message message;
   message.source = sourceFromLine(line, options);
+  message.modal.group = ModalGroupId::NonModal;
+  message.modal.code = "G4";
+  message.modal.updates_state = false;
 
   for (const auto &item : line.items) {
     if (!isWordItem(item)) {

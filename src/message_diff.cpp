@@ -43,6 +43,11 @@ bool arcEqual(const ArcParams &lhs, const ArcParams &rhs) {
          optionalDoubleEqual(lhs.k, rhs.k) && optionalDoubleEqual(lhs.r, rhs.r);
 }
 
+bool modalEqual(const ModalState &lhs, const ModalState &rhs) {
+  return lhs.group == rhs.group && lhs.code == rhs.code &&
+         lhs.updates_state == rhs.updates_state;
+}
+
 bool messageEqual(const ParsedMessage &lhs, const ParsedMessage &rhs) {
   if (lhs.index() != rhs.index()) {
     return false;
@@ -50,27 +55,28 @@ bool messageEqual(const ParsedMessage &lhs, const ParsedMessage &rhs) {
   if (std::holds_alternative<G1Message>(lhs)) {
     const auto &a = std::get<G1Message>(lhs);
     const auto &b = std::get<G1Message>(rhs);
-    return sourceEqual(a.source, b.source) &&
+    return sourceEqual(a.source, b.source) && modalEqual(a.modal, b.modal) &&
            poseEqual(a.target_pose, b.target_pose) &&
            optionalDoubleEqual(a.feed, b.feed);
   }
   if (std::holds_alternative<G2Message>(lhs)) {
     const auto &a = std::get<G2Message>(lhs);
     const auto &b = std::get<G2Message>(rhs);
-    return sourceEqual(a.source, b.source) &&
+    return sourceEqual(a.source, b.source) && modalEqual(a.modal, b.modal) &&
            poseEqual(a.target_pose, b.target_pose) && arcEqual(a.arc, b.arc) &&
            optionalDoubleEqual(a.feed, b.feed);
   }
   if (std::holds_alternative<G3Message>(lhs)) {
     const auto &a = std::get<G3Message>(lhs);
     const auto &b = std::get<G3Message>(rhs);
-    return sourceEqual(a.source, b.source) &&
+    return sourceEqual(a.source, b.source) && modalEqual(a.modal, b.modal) &&
            poseEqual(a.target_pose, b.target_pose) && arcEqual(a.arc, b.arc) &&
            optionalDoubleEqual(a.feed, b.feed);
   }
   const auto &a = std::get<G4Message>(lhs);
   const auto &b = std::get<G4Message>(rhs);
-  return sourceEqual(a.source, b.source) && a.dwell_mode == b.dwell_mode &&
+  return sourceEqual(a.source, b.source) && modalEqual(a.modal, b.modal) &&
+         a.dwell_mode == b.dwell_mode &&
          closeEnough(a.dwell_value, b.dwell_value);
 }
 

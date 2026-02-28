@@ -115,6 +115,9 @@ TEST(StreamingTest, CallbackCanCaptureAndValidateDetailedMessages) {
   EXPECT_EQ(first.source.line, 1);
   EXPECT_EQ(first.dwell_mode, gcode::DwellMode::Seconds);
   EXPECT_TRUE(closeEnough(first.dwell_value, 3.0));
+  EXPECT_EQ(first.modal.group, gcode::ModalGroupId::NonModal);
+  EXPECT_EQ(first.modal.code, "G4");
+  EXPECT_FALSE(first.modal.updates_state);
 
   ASSERT_TRUE(std::holds_alternative<gcode::G1Message>(messages[1]));
   const auto &second = std::get<gcode::G1Message>(messages[1]);
@@ -125,12 +128,18 @@ TEST(StreamingTest, CallbackCanCaptureAndValidateDetailedMessages) {
   EXPECT_TRUE(closeEnough(*second.target_pose.x, 10.0));
   EXPECT_TRUE(closeEnough(*second.target_pose.y, 20.0));
   EXPECT_TRUE(closeEnough(*second.feed, 30.0));
+  EXPECT_EQ(second.modal.group, gcode::ModalGroupId::Motion);
+  EXPECT_EQ(second.modal.code, "G1");
+  EXPECT_TRUE(second.modal.updates_state);
 
   ASSERT_TRUE(std::holds_alternative<gcode::G4Message>(messages[2]));
   const auto &third = std::get<gcode::G4Message>(messages[2]);
   EXPECT_EQ(third.source.line, 3);
   EXPECT_EQ(third.dwell_mode, gcode::DwellMode::Revolutions);
   EXPECT_TRUE(closeEnough(third.dwell_value, 40.0));
+  EXPECT_EQ(third.modal.group, gcode::ModalGroupId::NonModal);
+  EXPECT_EQ(third.modal.code, "G4");
+  EXPECT_FALSE(third.modal.updates_state);
 }
 
 } // namespace

@@ -105,4 +105,25 @@ TEST(MessagesJsonTest, RoundTripWithG4PreservesResult) {
   EXPECT_EQ(gcode::toJsonString(roundtrip), json);
 }
 
+TEST(MessagesJsonTest, SerializedMessagesIncludeModalMetadata) {
+  const std::string input = "G1 X10\nG2 X20 I1 J2\nG4 F3\n";
+  const auto result = gcode::parseAndLower(input);
+  const auto json = nlohmann::json::parse(gcode::toJsonString(result));
+
+  ASSERT_TRUE(json.contains("messages"));
+  ASSERT_EQ(json["messages"].size(), 3u);
+
+  EXPECT_EQ(json["messages"][0]["modal"]["group"], "GGroup1");
+  EXPECT_EQ(json["messages"][0]["modal"]["code"], "G1");
+  EXPECT_EQ(json["messages"][0]["modal"]["updates_state"], true);
+
+  EXPECT_EQ(json["messages"][1]["modal"]["group"], "GGroup1");
+  EXPECT_EQ(json["messages"][1]["modal"]["code"], "G2");
+  EXPECT_EQ(json["messages"][1]["modal"]["updates_state"], true);
+
+  EXPECT_EQ(json["messages"][2]["modal"]["group"], "GGroup2");
+  EXPECT_EQ(json["messages"][2]["modal"]["code"], "G4");
+  EXPECT_EQ(json["messages"][2]["modal"]["updates_state"], false);
+}
+
 } // namespace

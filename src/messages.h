@@ -27,8 +27,20 @@ struct Pose6 {
   std::optional<double> c;
 };
 
+enum class ModalGroupId {
+  Motion = 1,
+  NonModal = 2,
+};
+
+struct ModalState {
+  ModalGroupId group = ModalGroupId::Motion;
+  std::string code;
+  bool updates_state = false;
+};
+
 struct G1Message {
   SourceInfo source;
+  ModalState modal;
   Pose6 target_pose;
   std::optional<double> feed;
 };
@@ -42,6 +54,7 @@ struct ArcParams {
 
 struct G2Message {
   SourceInfo source;
+  ModalState modal;
   Pose6 target_pose;
   ArcParams arc;
   std::optional<double> feed;
@@ -49,6 +62,7 @@ struct G2Message {
 
 struct G3Message {
   SourceInfo source;
+  ModalState modal;
   Pose6 target_pose;
   ArcParams arc;
   std::optional<double> feed;
@@ -58,6 +72,7 @@ enum class DwellMode { Seconds, Revolutions };
 
 struct G4Message {
   SourceInfo source;
+  ModalState modal;
   DwellMode dwell_mode = DwellMode::Seconds;
   double dwell_value = 0.0;
 };

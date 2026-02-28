@@ -16,7 +16,12 @@
         "b": null,
         "c": null
       },
-      "feed": null
+      "feed": null,
+      "modal": {
+        "group": "GGroup1",
+        "code": "G1",
+        "updates_state": true
+      }
     },
     {
       "type": "G1",
@@ -33,7 +38,12 @@
         "b": null,
         "c": null
       },
-      "feed": 7.0
+      "feed": 7.0,
+      "modal": {
+        "group": "GGroup1",
+        "code": "G1",
+        "updates_state": true
+      }
     }
   ],
   "diagnostics": [],
