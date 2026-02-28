@@ -277,6 +277,11 @@ R1 = $P_ACT_X + 2*R2
     - input: `<name>.ngc`
     - golden: `<name>.golden.json`
     - for no-filename cases, use `nofilename_<name>.ngc`.
+- Add AIL-output JSON golden tests for representative AIL outputs.
+  - AIL fixture naming convention:
+    - input: `<name>.ngc`
+    - golden: `<name>.golden.json`
+    - for no-filename cases, use `nofilename_<name>.ngc`.
 - Property/fuzz testing: parser must never crash, hang, or use unbounded memory.
   - Minimum smoke gate: deterministic corpus + fixed-seed generated inputs in
     `test/fuzz_smoke_tests.cpp`, bounded to max input length 256 and 3000
