@@ -16,7 +16,12 @@
         "b": null,
         "c": null
       },
-      "feed": 100.0
+      "feed": 100.0,
+      "modal": {
+        "group": "GGroup1",
+        "code": "G1",
+        "updates_state": true
+      }
     }
   ],
   "diagnostics": [

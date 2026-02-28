@@ -39,6 +39,9 @@ TEST(G4LowererTest, LowersSecondsFromFWord) {
   const auto &msg = std::get<gcode::G4Message>(lowered);
   EXPECT_EQ(msg.dwell_mode, gcode::DwellMode::Seconds);
   EXPECT_TRUE(closeEnough(msg.dwell_value, 3.5));
+  EXPECT_EQ(msg.modal.group, gcode::ModalGroupId::NonModal);
+  EXPECT_EQ(msg.modal.code, "G4");
+  EXPECT_FALSE(msg.modal.updates_state);
   EXPECT_TRUE(diagnostics.empty());
 }
 
@@ -57,6 +60,9 @@ TEST(G4LowererTest, LowersRevolutionsFromSWord) {
   const auto &msg = std::get<gcode::G4Message>(lowered);
   EXPECT_EQ(msg.dwell_mode, gcode::DwellMode::Revolutions);
   EXPECT_TRUE(closeEnough(msg.dwell_value, 30.0));
+  EXPECT_EQ(msg.modal.group, gcode::ModalGroupId::NonModal);
+  EXPECT_EQ(msg.modal.code, "G4");
+  EXPECT_FALSE(msg.modal.updates_state);
   EXPECT_TRUE(diagnostics.empty());
 }
 

@@ -59,6 +59,9 @@ TEST(G2LowererTest, LowersArcAndAddsWarningsForUnsupportedArcWords) {
   EXPECT_TRUE(closeEnough(*msg.arc.r, 6.5));
   ASSERT_TRUE(msg.feed.has_value());
   EXPECT_TRUE(closeEnough(*msg.feed, 120.0));
+  EXPECT_EQ(msg.modal.group, gcode::ModalGroupId::Motion);
+  EXPECT_EQ(msg.modal.code, "G2");
+  EXPECT_TRUE(msg.modal.updates_state);
 
   ASSERT_EQ(diagnostics.size(), 1u);
   EXPECT_EQ(diagnostics[0].severity, gcode::Diagnostic::Severity::Warning);

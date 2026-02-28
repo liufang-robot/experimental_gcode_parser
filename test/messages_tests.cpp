@@ -67,6 +67,9 @@ TEST(MessagesTest, G1Extraction) {
   EXPECT_TRUE(closeEnough(*g1->target_pose.c, 60.0));
   ASSERT_TRUE(g1->feed.has_value());
   EXPECT_TRUE(closeEnough(*g1->feed, 100.0));
+  EXPECT_EQ(g1->modal.group, gcode::ModalGroupId::Motion);
+  EXPECT_EQ(g1->modal.code, "G1");
+  EXPECT_TRUE(g1->modal.updates_state);
 }
 
 TEST(MessagesTest, LowercaseWordsEquivalent) {
@@ -101,6 +104,9 @@ TEST(MessagesTest, LowercaseWordsEquivalent) {
   EXPECT_TRUE(closeEnough(*g1->target_pose.c, 6.0));
   ASSERT_TRUE(g1->feed.has_value());
   EXPECT_TRUE(closeEnough(*g1->feed, 7.0));
+  EXPECT_EQ(g1->modal.group, gcode::ModalGroupId::Motion);
+  EXPECT_EQ(g1->modal.code, "G1");
+  EXPECT_TRUE(g1->modal.updates_state);
 }
 
 TEST(MessagesTest, StopAtFirstError) {
@@ -147,6 +153,9 @@ TEST(MessagesTest, G2G3Extraction) {
   EXPECT_TRUE(closeEnough(*g2->arc.r, 40.0));
   ASSERT_TRUE(g2->feed.has_value());
   EXPECT_TRUE(closeEnough(*g2->feed, 100.0));
+  EXPECT_EQ(g2->modal.group, gcode::ModalGroupId::Motion);
+  EXPECT_EQ(g2->modal.code, "G2");
+  EXPECT_TRUE(g2->modal.updates_state);
 
   const auto *g3 = asG3(result.messages[1]);
   ASSERT_NE(g3, nullptr);
@@ -167,6 +176,9 @@ TEST(MessagesTest, G2G3Extraction) {
   EXPECT_TRUE(closeEnough(*g3->arc.r, 50.0));
   ASSERT_TRUE(g3->feed.has_value());
   EXPECT_TRUE(closeEnough(*g3->feed, 200.0));
+  EXPECT_EQ(g3->modal.group, gcode::ModalGroupId::Motion);
+  EXPECT_EQ(g3->modal.code, "G3");
+  EXPECT_TRUE(g3->modal.updates_state);
 }
 
 TEST(MessagesTest, ArcUnsupportedWordsEmitWarningsButKeepMessage) {
@@ -210,6 +222,9 @@ TEST(MessagesTest, G4ExtractionSecondsAndRevolutions) {
   EXPECT_EQ(*g4_seconds->source.line_number, 20);
   EXPECT_EQ(g4_seconds->dwell_mode, gcode::DwellMode::Seconds);
   EXPECT_TRUE(closeEnough(g4_seconds->dwell_value, 3.0));
+  EXPECT_EQ(g4_seconds->modal.group, gcode::ModalGroupId::NonModal);
+  EXPECT_EQ(g4_seconds->modal.code, "G4");
+  EXPECT_FALSE(g4_seconds->modal.updates_state);
 
   const auto *g4_revs = asG4(result.messages[2]);
   ASSERT_NE(g4_revs, nullptr);
@@ -218,6 +233,9 @@ TEST(MessagesTest, G4ExtractionSecondsAndRevolutions) {
   EXPECT_EQ(*g4_revs->source.line_number, 30);
   EXPECT_EQ(g4_revs->dwell_mode, gcode::DwellMode::Revolutions);
   EXPECT_TRUE(closeEnough(g4_revs->dwell_value, 30.0));
+  EXPECT_EQ(g4_revs->modal.group, gcode::ModalGroupId::NonModal);
+  EXPECT_EQ(g4_revs->modal.code, "G4");
+  EXPECT_FALSE(g4_revs->modal.updates_state);
 }
 
 TEST(MessagesTest, G4MustBeSeparateBlockAndFailFast) {
@@ -230,6 +248,25 @@ TEST(MessagesTest, G4MustBeSeparateBlockAndFailFast) {
   ASSERT_FALSE(result.rejected_lines[0].reasons.empty());
   EXPECT_NE(result.rejected_lines[0].reasons[0].message.find("separate block"),
             std::string::npos);
+}
+
+TEST(MessagesTest, MotionModalGroupTracksG1ThenG2) {
+  const std::string input = "G1 X10\nG2 X20 I1 J2\n";
+  const auto result = gcode::parseAndLower(input);
+
+  ASSERT_EQ(result.messages.size(), 2u);
+  ASSERT_TRUE(std::holds_alternative<gcode::G1Message>(result.messages[0]));
+  ASSERT_TRUE(std::holds_alternative<gcode::G2Message>(result.messages[1]));
+
+  const auto &g1 = std::get<gcode::G1Message>(result.messages[0]);
+  EXPECT_EQ(g1.modal.group, gcode::ModalGroupId::Motion);
+  EXPECT_EQ(g1.modal.code, "G1");
+  EXPECT_TRUE(g1.modal.updates_state);
+
+  const auto &g2 = std::get<gcode::G2Message>(result.messages[1]);
+  EXPECT_EQ(g2.modal.group, gcode::ModalGroupId::Motion);
+  EXPECT_EQ(g2.modal.code, "G2");
+  EXPECT_TRUE(g2.modal.updates_state);
 }
 
 } // namespace

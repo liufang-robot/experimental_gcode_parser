@@ -62,6 +62,9 @@ TEST(G1LowererTest, LowersPoseAndFeedAndSourceInfo) {
   EXPECT_TRUE(closeEnough(*msg.target_pose.y, 20.0));
   ASSERT_TRUE(msg.feed.has_value());
   EXPECT_TRUE(closeEnough(*msg.feed, 150.0));
+  EXPECT_EQ(msg.modal.group, gcode::ModalGroupId::Motion);
+  EXPECT_EQ(msg.modal.code, "G1");
+  EXPECT_TRUE(msg.modal.updates_state);
   EXPECT_TRUE(diagnostics.empty());
 }
 

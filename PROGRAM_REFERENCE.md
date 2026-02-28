@@ -20,6 +20,13 @@ Implemented API paths:
   `parseAndLowerFileStream(...)` emit callbacks for messages, diagnostics, and
   rejected lines
 
+## Modal Metadata
+
+All emitted messages include:
+- `modal.group`: `GGroup1` for `G1/G2/G3`, `GGroup2` for `G4`
+- `modal.code`: `G1`/`G2`/`G3`/`G4`
+- `modal.updates_state`: `true` for `G1/G2/G3`, `false` for `G4`
+
 ## Command Matrix
 
 | Command | Status | Notes |
@@ -42,6 +49,7 @@ Syntax:
 Lowering output:
 - `G1Message`
   - `source`: filename/line/line_number
+  - `modal`: `group=GGroup1`, `code=G1`, `updates_state=true`
   - `target_pose`: optional `x/y/z/a/b/c`
   - `feed`: optional `F`
 
@@ -73,6 +81,7 @@ Syntax:
 Lowering output:
 - `G2Message` / `G3Message`
   - `source`: filename/line/line_number
+  - `modal`: `group=GGroup1`, `code=G2|G3`, `updates_state=true`
   - `target_pose`: optional `x/y/z/a/b/c`
   - `arc`: optional `i/j/k/r`
   - `feed`: optional `F`
@@ -102,6 +111,7 @@ Syntax:
 
 Lowering output:
 - `G4Message` with `dwell_mode` and `dwell_value`.
+- `G4Message.modal`: `group=GGroup2`, `code=G4`, `updates_state=false`.
 
 Diagnostics:
 - Error if `G4` is not in a separate block.

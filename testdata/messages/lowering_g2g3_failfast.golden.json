@@ -22,7 +22,12 @@
         "k": 3.0,
         "r": 40.0
       },
-      "feed": 100.0
+      "feed": 100.0,
+      "modal": {
+        "group": "GGroup1",
+        "code": "G2",
+        "updates_state": true
+      }
     },
     {
       "type": "G3",
@@ -45,7 +50,12 @@
         "k": 6.0,
         "r": 50.0
       },
-      "feed": 200.0
+      "feed": 200.0,
+      "modal": {
+        "group": "GGroup1",
+        "code": "G3",
+        "updates_state": true
+      }
     }
   ],
   "diagnostics": [

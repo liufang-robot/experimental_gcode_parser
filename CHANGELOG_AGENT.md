@@ -1,5 +1,30 @@
 # CHANGELOG_AGENT
 
+## 2026-02-28 (T-024 modal-group metadata on messages)
+- Added modal metadata to all lowered message types (`G1/G2/G3/G4`):
+  `modal.group`, `modal.code`, and `modal.updates_state`.
+- Implemented Siemens-preferred baseline mapping for supported functions:
+  `G1/G2/G3 -> GGroup1 (updates_state=true)`, `G4 -> GGroup2 (updates_state=false)`.
+- Extended JSON serialization/deserialization and message JSON goldens to
+  include modal metadata.
+- Added/updated unit tests for lowering families, message extraction,
+  streaming callbacks, and JSON modal fields.
+
+SPEC sections / tests:
+- SPEC: Section 6 (Message Lowering modal metadata + JSON schema notes),
+  Section 9 (reference docs alignment)
+- Tests: `messages_tests`, `streaming_tests`, `messages_json_tests`,
+  `lowering_family_g{1,2,3,4}_tests`, message JSON goldens, `./dev/check.sh`
+
+Known limitations:
+- v0.1 provides modal metadata for supported functions only; it does not
+  implement full multi-group modal conflict validation or machine-specific
+  modal behavior beyond this baseline mapping.
+
+How to reproduce locally (commands):
+- `./dev/check.sh`
+- `ctest --test-dir build --output-on-failure -R \"MessagesJsonTest|MessagesTest|StreamingTest|G[1-4]LowererTest\"`
+
 ## 2026-02-27 (backlog sync after T-023 merge)
 - Updated `BACKLOG.md` to mark `T-023` done (`PR #33`) and clear stale Ready
   Queue / In Progress entries.
