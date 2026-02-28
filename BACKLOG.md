@@ -12,31 +12,102 @@
 - `P3`: optional/enhancement
 
 ## Ready Queue
-### T-025 (P1) Add CLI lower mode for emitted messages
+### T-026 (P1) Introduce AIL intermediate representation layer
 Why:
-- Current CLI only exposes parse output; users cannot directly inspect lowered
-  queue messages from a file.
+- Current pipeline is parse -> message lowering; we need a stable semantic IR
+  between syntax and runtime packets.
 Scope:
-- Extend `gcode_parse` with `--mode parse|lower` (default `parse`).
-- Implement `--mode lower --format json` output via `parseAndLower(...)`.
-- Implement `--mode lower --format debug` as human-readable lowered summary:
-  emitted message lines, rejections, diagnostics, and totals.
-- Keep existing `--mode parse` behavior and output compatibility.
-- Add CLI tests for lower mode outputs and argument validation.
+- Add `AIL` instruction model (motion + assignment + sync placeholder types).
+- Add source mapping, diagnostics passthrough, and JSON serialization.
+- Keep existing message lowering APIs working during transition.
 Acceptance criteria:
-- `gcode_parse --mode lower --format json <file>` outputs `MessageResult`
-  JSON (`schema_version`, `messages`, `diagnostics`, `rejected_lines`).
-- `gcode_parse --mode lower --format debug <file>` prints stable summary lines
-  that include message type, source, modal metadata, and key payload fields.
-- Existing parse mode tests remain green.
+- New IR types compile and can be produced from current motion AST subset.
+- IR JSON schema is documented and unit-tested.
+- No regression in existing parse/lower tests.
 - `./dev/check.sh` passes.
 Out of scope:
-- Streaming CLI mode and full modal-state simulation engine.
+- Full expression evaluation runtime.
 SPEC Sections:
-- Section 2.2 (CLI output modes), Section 6 (Message Lowering), Section 7 (testing).
+- Section 2.2 (pipeline modes), Section 6 (lowering architecture).
 Tests To Add/Update:
-- `test/cli_tests.cpp` (new lower-mode coverage)
-- Optional golden assets for lower debug output (if formatter is fixed text)
+- New `test/ail_tests.cpp`
+- CLI tests for `--mode ail --format json` (once mode is wired)
+
+### T-027 (P1) Add AST -> AIL lowering for G1/G2/G3/G4
+Why:
+- Need deterministic semantic instructions before packetization.
+Scope:
+- Map supported motion commands to AIL instruction variants.
+- Preserve source line/N-line mapping and modal metadata.
+Acceptance criteria:
+- Existing supported motion commands lower to AIL with expected fields.
+- Golden fixtures for representative AIL output.
+- `./dev/check.sh` passes.
+Out of scope:
+- Packet transport/execution.
+SPEC Sections:
+- Section 3 (syntax), Section 6 (lowering), Section 7 (goldens).
+Tests To Add/Update:
+- `test/ail_lowering_tests.cpp`
+- `testdata/ail/*.golden.json`
+
+### T-028 (P1) Add AIL -> MotionPacket conversion
+Why:
+- Runtime and replay need packetized execution payloads.
+Scope:
+- Define `MotionPacket` envelope (`packet_id`, type, payload, source).
+- Convert AIL motion instructions into packets.
+- Add packet JSON serializer.
+Acceptance criteria:
+- Packet output is deterministic and stable for same input.
+- Packet JSON goldens exist for core samples.
+- `./dev/check.sh` passes.
+Out of scope:
+- Path planner execution.
+SPEC Sections:
+- Section 2.2 (output modes), Section 6 (packet stage).
+Tests To Add/Update:
+- `test/packet_tests.cpp`
+- `testdata/packets/*.golden.json`
+
+### T-029 (P1) Add expression/assignment AST + AIL instructions
+Why:
+- Need non-motion semantic instructions, e.g. `R1 = $P_ACT_X`.
+Scope:
+- Extend grammar/AST for assignment expressions.
+- Lower to AIL assignment instruction nodes.
+- Support system-variable references as symbolic operands.
+Acceptance criteria:
+- Parser accepts representative assignment syntax and reports diagnostics with
+  line/column on invalid expressions.
+- AIL output includes assignment instructions with source mapping.
+- `./dev/check.sh` passes.
+Out of scope:
+- Runtime evaluation against live machine values.
+SPEC Sections:
+- Section 3 (syntax), Section 5 (diagnostics), Section 6 (AIL).
+Tests To Add/Update:
+- `test/parser_tests.cpp` (assignment coverage)
+- `test/ail_lowering_tests.cpp` (assignment lowering)
+
+### T-030 (P2) Add stage-by-stage CLI modes and artifacts
+Why:
+- Users need visibility into each pipeline stage.
+Scope:
+- Extend CLI to support `--mode parse|ail|packet|lower`.
+- Add stable debug/json output per stage.
+- Add stage-specific golden tests.
+Acceptance criteria:
+- Each mode produces output for same file with deterministic schema/text.
+- Existing parse/lower compatibility maintained.
+- `./dev/check.sh` passes.
+Out of scope:
+- Streaming packet emit mode.
+SPEC Sections:
+- Section 2.2 (CLI), Section 7 (testing).
+Tests To Add/Update:
+- `test/cli_tests.cpp`
+- `testdata/cli/*.golden.txt` and/or json fixtures
 
 ## Icebox
 - Coverage threshold policy and badge.
@@ -57,7 +128,7 @@ Use this template for new backlog items:
 
 ## In Progress
 (List tasks currently being worked on; only one assignee/task per PR)
-- T-025 (feature/t025-cli-lower-mode)
+- T-026 (feature/t026-ail-pipeline-planning)
 
 ## Done
 (Move completed tasks here with PR link)
@@ -85,3 +156,4 @@ Use this template for new backlog items:
 - T-022 (PR #31)
 - T-023 (PR #33)
 - T-024 (PR #35)
+- T-025 (PR #36)

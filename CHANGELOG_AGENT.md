@@ -1,5 +1,22 @@
 # CHANGELOG_AGENT
 
+## 2026-02-28 (pipeline roadmap backlog: AIL -> packets)
+- Updated `BACKLOG.md` after `T-025` merge (`PR #36`).
+- Added new queued tasks `T-026` to `T-030` to evolve architecture toward:
+  `Source G-code -> parse -> AIL -> MotionPacket`.
+- Marked `T-026` as current in-progress planning/implementation slice.
+
+SPEC sections / tests:
+- SPEC: planning targets for Section 2.2, Section 3, Section 5, Section 6, Section 7
+- Tests: no code-path change (planning/backlog update only)
+
+Known limitations:
+- This update defines the work plan only; AIL/packet implementation is not part
+  of this change.
+
+How to reproduce locally (commands):
+- `sed -n '1,320p' BACKLOG.md`
+
 ## 2026-02-28 (T-025 CLI lower mode)
 - Extended `gcode_parse` with `--mode parse|lower` (default `parse`).
 - Added lower mode outputs:
