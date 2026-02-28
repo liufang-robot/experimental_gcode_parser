@@ -30,25 +30,6 @@ Tests To Add/Update:
 - `test/ail_lowering_tests.cpp`
 - `testdata/ail/*.golden.json`
 
-### T-028 (P1) Add AIL -> MotionPacket conversion
-Why:
-- Runtime and replay need packetized execution payloads.
-Scope:
-- Define `MotionPacket` envelope (`packet_id`, type, payload, source).
-- Convert AIL motion instructions into packets.
-- Add packet JSON serializer.
-Acceptance criteria:
-- Packet output is deterministic and stable for same input.
-- Packet JSON goldens exist for core samples.
-- `./dev/check.sh` passes.
-Out of scope:
-- Path planner execution.
-SPEC Sections:
-- Section 2.2 (output modes), Section 6 (packet stage).
-Tests To Add/Update:
-- `test/packet_tests.cpp`
-- `testdata/packets/*.golden.json`
-
 ### T-030 (P2) Add stage-by-stage CLI modes and artifacts
 Why:
 - Users need visibility into each pipeline stage.
@@ -87,7 +68,7 @@ Use this template for new backlog items:
 
 ## In Progress
 (List tasks currently being worked on; only one assignee/task per PR)
-- T-028 (feature/t028-ail-motion-packets)
+- T-030 (feature/t030-cli-stage-goldens)
 
 ## Done
 (Move completed tasks here with PR link)
@@ -118,3 +99,4 @@ Use this template for new backlog items:
 - T-025 (PR #36)
 - T-026 (PR #37)
 - T-029 (PR #38)
+- T-028 (PR #39)

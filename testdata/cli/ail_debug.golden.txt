@@ -1,0 +1,4 @@
+AIL line=1 n=10 kind=motion_linear opcode=G1 group=GGroup1 code=G1 updates=true z=-5 feed=200
+AIL line=2 n=20 kind=dwell opcode=G4 group=GGroup2 code=G4 updates=false dwell_mode=seconds dwell=3
+AIL line=4 n=40 kind=dwell opcode=G4 group=GGroup2 code=G4 updates=false dwell_mode=revolutions dwell=30
+SUMMARY instructions=3 rejected=0 diagnostics=0

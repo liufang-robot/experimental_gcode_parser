@@ -1,0 +1,4 @@
+PACKET id=1 line=1 n=10 group=GGroup1 code=G1 updates=true type=linear_move z=-5 feed=200
+PACKET id=2 line=2 n=20 group=GGroup2 code=G4 updates=false type=dwell dwell_mode=seconds dwell=3
+PACKET id=3 line=4 n=40 group=GGroup2 code=G4 updates=false type=dwell dwell_mode=revolutions dwell=30
+SUMMARY packets=3 rejected=0 diagnostics=0

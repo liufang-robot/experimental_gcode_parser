@@ -1,0 +1,59 @@
+{
+  "diagnostics": [],
+  "messages": [
+    {
+      "feed": 200.0,
+      "modal": {
+        "code": "G1",
+        "group": "GGroup1",
+        "updates_state": true
+      },
+      "source": {
+        "filename": "testdata/messages/g4_dwell.ngc",
+        "line": 1,
+        "line_number": 10
+      },
+      "target_pose": {
+        "a": null,
+        "b": null,
+        "c": null,
+        "x": null,
+        "y": null,
+        "z": -5.0
+      },
+      "type": "G1"
+    },
+    {
+      "dwell_mode": "seconds",
+      "dwell_value": 3.0,
+      "modal": {
+        "code": "G4",
+        "group": "GGroup2",
+        "updates_state": false
+      },
+      "source": {
+        "filename": "testdata/messages/g4_dwell.ngc",
+        "line": 2,
+        "line_number": 20
+      },
+      "type": "G4"
+    },
+    {
+      "dwell_mode": "revolutions",
+      "dwell_value": 30.0,
+      "modal": {
+        "code": "G4",
+        "group": "GGroup2",
+        "updates_state": false
+      },
+      "source": {
+        "filename": "testdata/messages/g4_dwell.ngc",
+        "line": 4,
+        "line_number": 40
+      },
+      "type": "G4"
+    }
+  ],
+  "rejected_lines": [],
+  "schema_version": 1
+}

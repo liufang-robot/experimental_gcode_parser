@@ -1,5 +1,25 @@
 # CHANGELOG_AGENT
 
+## 2026-02-28 (T-030 CLI stage-output goldens)
+- Added stage-level CLI golden fixtures under `testdata/cli/` covering
+  `parse|ail|packet|lower` in both `debug` and `json` formats.
+- Added `CliFormatTest.StageOutputsMatchGoldens` to lock deterministic CLI
+  outputs against those fixtures.
+- Synced backlog state to mark T-028 done (PR #39) and set T-030 in progress.
+
+SPEC sections / tests:
+- SPEC: Section 7 (CLI stage golden fixture policy)
+- Tests: `test/cli_tests.cpp`, `testdata/cli/*`, `./dev/check.sh`
+
+Known limitations:
+- Golden fixtures currently use one representative input file
+  (`testdata/messages/g4_dwell.ngc`); broader CLI fixture coverage can be
+  expanded incrementally.
+
+How to reproduce locally (commands):
+- `ctest --test-dir build --output-on-failure -R \"CliFormatTest.StageOutputsMatchGoldens|CliFormatTest\"`
+- `./dev/check.sh`
+
 ## 2026-02-28 (T-028 AIL to MotionPacket stage)
 - Added packet model + conversion stage (`parseLowerAndPacketize`) from AIL
   into deterministic motion packets with 1-based `packet_id`.

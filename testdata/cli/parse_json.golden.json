@@ -1,0 +1,215 @@
+{
+  "diagnostics": [],
+  "program": {
+    "lines": [
+      {
+        "assignment": null,
+        "block_delete": false,
+        "block_delete_location": null,
+        "items": [
+          {
+            "has_equal": false,
+            "head": "G",
+            "kind": "word",
+            "location": {
+              "column": 5,
+              "line": 1
+            },
+            "raw": "G1",
+            "value": "1"
+          },
+          {
+            "has_equal": false,
+            "head": "F",
+            "kind": "word",
+            "location": {
+              "column": 8,
+              "line": 1
+            },
+            "raw": "F200",
+            "value": "200"
+          },
+          {
+            "has_equal": false,
+            "head": "Z",
+            "kind": "word",
+            "location": {
+              "column": 13,
+              "line": 1
+            },
+            "raw": "Z-5",
+            "value": "-5"
+          },
+          {
+            "has_equal": false,
+            "head": "S",
+            "kind": "word",
+            "location": {
+              "column": 17,
+              "line": 1
+            },
+            "raw": "S300",
+            "value": "300"
+          },
+          {
+            "has_equal": false,
+            "head": "M",
+            "kind": "word",
+            "location": {
+              "column": 22,
+              "line": 1
+            },
+            "raw": "M3",
+            "value": "3"
+          }
+        ],
+        "line_index": 1,
+        "line_number": {
+          "location": {
+            "column": 1,
+            "line": 1
+          },
+          "value": 10
+        }
+      },
+      {
+        "assignment": null,
+        "block_delete": false,
+        "block_delete_location": null,
+        "items": [
+          {
+            "has_equal": false,
+            "head": "G",
+            "kind": "word",
+            "location": {
+              "column": 5,
+              "line": 2
+            },
+            "raw": "G4",
+            "value": "4"
+          },
+          {
+            "has_equal": false,
+            "head": "F",
+            "kind": "word",
+            "location": {
+              "column": 8,
+              "line": 2
+            },
+            "raw": "F3",
+            "value": "3"
+          }
+        ],
+        "line_index": 2,
+        "line_number": {
+          "location": {
+            "column": 1,
+            "line": 2
+          },
+          "value": 20
+        }
+      },
+      {
+        "assignment": null,
+        "block_delete": false,
+        "block_delete_location": null,
+        "items": [
+          {
+            "has_equal": false,
+            "head": "X",
+            "kind": "word",
+            "location": {
+              "column": 5,
+              "line": 3
+            },
+            "raw": "X40",
+            "value": "40"
+          },
+          {
+            "has_equal": false,
+            "head": "Y",
+            "kind": "word",
+            "location": {
+              "column": 9,
+              "line": 3
+            },
+            "raw": "Y10",
+            "value": "10"
+          }
+        ],
+        "line_index": 3,
+        "line_number": {
+          "location": {
+            "column": 1,
+            "line": 3
+          },
+          "value": 30
+        }
+      },
+      {
+        "assignment": null,
+        "block_delete": false,
+        "block_delete_location": null,
+        "items": [
+          {
+            "has_equal": false,
+            "head": "G",
+            "kind": "word",
+            "location": {
+              "column": 5,
+              "line": 4
+            },
+            "raw": "G4",
+            "value": "4"
+          },
+          {
+            "has_equal": false,
+            "head": "S",
+            "kind": "word",
+            "location": {
+              "column": 8,
+              "line": 4
+            },
+            "raw": "S30",
+            "value": "30"
+          }
+        ],
+        "line_index": 4,
+        "line_number": {
+          "location": {
+            "column": 1,
+            "line": 4
+          },
+          "value": 40
+        }
+      },
+      {
+        "assignment": null,
+        "block_delete": false,
+        "block_delete_location": null,
+        "items": [
+          {
+            "has_equal": false,
+            "head": "X",
+            "kind": "word",
+            "location": {
+              "column": 5,
+              "line": 5
+            },
+            "raw": "X60",
+            "value": "60"
+          }
+        ],
+        "line_index": 5,
+        "line_number": {
+          "location": {
+            "column": 1,
+            "line": 5
+          },
+          "value": 50
+        }
+      }
+    ]
+  },
+  "schema_version": 1
+}

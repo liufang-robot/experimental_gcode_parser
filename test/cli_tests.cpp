@@ -3,6 +3,7 @@
 #include <fstream>
 #include <sstream>
 #include <string>
+#include <vector>
 
 #include <nlohmann/json.hpp>
 
@@ -50,6 +51,13 @@ CommandResult runCommand(const std::string &command) {
   result.stdout_text = readFile(stdout_path);
   result.stderr_text = readFile(stderr_path);
   return result;
+}
+
+CommandResult runCommandInDir(const std::filesystem::path &dir,
+                              const std::string &command) {
+  const std::string full_command =
+      std::string("cd \"") + dir.string() + "\" && " + command;
+  return runCommand(full_command);
 }
 
 TEST(CliFormatTest, DebugFormatMatchesExistingGoldenOutput) {
@@ -248,6 +256,42 @@ TEST(CliFormatTest, UnsupportedModeReturnsUsageError) {
   EXPECT_EQ(result.exit_code, 2);
   EXPECT_TRUE(result.stdout_text.empty());
   EXPECT_NE(result.stderr_text.find("Unsupported mode"), std::string::npos);
+}
+
+TEST(CliFormatTest, StageOutputsMatchGoldens) {
+  const std::filesystem::path source_dir(GCODE_SOURCE_DIR);
+  const auto golden_dir = source_dir / "testdata" / "cli";
+
+  struct Case {
+    std::string mode;
+    std::string format;
+    std::string golden_file;
+  };
+
+  const std::vector<Case> cases = {
+      {"parse", "debug", "parse_debug.golden.txt"},
+      {"parse", "json", "parse_json.golden.json"},
+      {"ail", "debug", "ail_debug.golden.txt"},
+      {"ail", "json", "ail_json.golden.json"},
+      {"packet", "debug", "packet_debug.golden.txt"},
+      {"packet", "json", "packet_json.golden.json"},
+      {"lower", "debug", "lower_debug.golden.txt"},
+      {"lower", "json", "lower_json.golden.json"},
+  };
+
+  for (const auto &tc : cases) {
+    const std::string command = std::string("\"") + GCODE_PARSE_BIN +
+                                "\" --mode " + tc.mode + " --format " +
+                                tc.format + " testdata/messages/g4_dwell.ngc";
+    const auto result = runCommandInDir(source_dir, command);
+    EXPECT_EQ(result.exit_code, 0)
+        << "mode=" << tc.mode << " format=" << tc.format;
+    EXPECT_TRUE(result.stderr_text.empty());
+
+    const auto golden = readFile(golden_dir / tc.golden_file);
+    EXPECT_EQ(result.stdout_text, golden)
+        << "golden mismatch for mode=" << tc.mode << " format=" << tc.format;
+  }
 }
 
 } // namespace
