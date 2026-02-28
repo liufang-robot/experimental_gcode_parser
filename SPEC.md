@@ -263,6 +263,8 @@ R1 = $P_ACT_X + 2*R2
 - Golden tests for all examples in `SPEC.md`.
 - CLI tests must cover parse mode and lower mode (`json` + `debug` formats).
 - CLI tests must cover parse/ail/packet/lower modes (`json` + `debug` formats).
+- Maintain stage-output CLI golden fixtures in `testdata/cli/` for
+  parse/ail/packet/lower deterministic output checks.
 - Unit test framework: GoogleTest (`gtest`) is the required framework for new
   unit tests.
 - Add message-output JSON golden tests for representative queue outputs.

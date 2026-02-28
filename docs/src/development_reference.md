@@ -34,6 +34,8 @@ sanitizer tests.
 - `--mode ail` for intermediate AIL instruction output (`json` or debug summary)
 - `--mode packet` for AIL->packet output (`json` or debug summary)
 - `--mode lower` for lowered message output (`json` or debug summary)
+- CLI stage goldens are stored in `testdata/cli/` and should be updated in the
+  same PR when stage output intentionally changes.
 
 ## OODA Development Loop
 

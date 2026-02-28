@@ -1,0 +1,30 @@
+program
+line 1
+  block_delete: false
+  line_number: 10 at 1:1
+  word G=1 raw=G1 at 1:5
+  word F=200 raw=F200 at 1:8
+  word Z=-5 raw=Z-5 at 1:13
+  word S=300 raw=S300 at 1:17
+  word M=3 raw=M3 at 1:22
+line 2
+  block_delete: false
+  line_number: 20 at 2:1
+  word G=4 raw=G4 at 2:5
+  word F=3 raw=F3 at 2:8
+line 3
+  block_delete: false
+  line_number: 30 at 3:1
+  word X=40 raw=X40 at 3:5
+  word Y=10 raw=Y10 at 3:9
+line 4
+  block_delete: false
+  line_number: 40 at 4:1
+  word G=4 raw=G4 at 4:5
+  word S=30 raw=S30 at 4:8
+line 5
+  block_delete: false
+  line_number: 50 at 5:1
+  word X=60 raw=X60 at 5:5
+diagnostics
+  none

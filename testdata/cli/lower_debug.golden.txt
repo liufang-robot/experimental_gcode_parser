@@ -1,0 +1,4 @@
+MSG line=1 n=10 group=GGroup1 code=G1 updates=true type=G1 z=-5 feed=200
+MSG line=2 n=20 group=GGroup2 code=G4 updates=false type=G4 dwell_mode=seconds dwell=3
+MSG line=4 n=40 group=GGroup2 code=G4 updates=false type=G4 dwell_mode=revolutions dwell=30
+SUMMARY messages=3 rejected=0 diagnostics=0
