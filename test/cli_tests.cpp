@@ -90,4 +90,60 @@ TEST(CliFormatTest, JsonFormatOutputsStableSchema) {
   EXPECT_TRUE(parsed["diagnostics"].empty());
 }
 
+TEST(CliFormatTest, LowerJsonOutputsMessageResultSchema) {
+  const std::filesystem::path source_dir(GCODE_SOURCE_DIR);
+  const auto input_path = source_dir / "testdata" / "messages" / "g4_dwell.ngc";
+
+  const std::string command = std::string("\"") + GCODE_PARSE_BIN +
+                              "\" --mode lower --format json \"" +
+                              input_path.string() + "\"";
+  const auto result = runCommand(command);
+
+  EXPECT_EQ(result.exit_code, 0);
+  EXPECT_TRUE(result.stderr_text.empty());
+
+  const auto parsed = nlohmann::json::parse(result.stdout_text);
+  EXPECT_EQ(parsed.value("schema_version", 0), 1);
+  ASSERT_TRUE(parsed.contains("messages"));
+  ASSERT_TRUE(parsed["messages"].is_array());
+  EXPECT_EQ(parsed["messages"].size(), 3u);
+  ASSERT_TRUE(parsed["messages"][0].contains("modal"));
+  EXPECT_EQ(parsed["messages"][0]["modal"]["group"], "GGroup1");
+  ASSERT_TRUE(parsed.contains("rejected_lines"));
+  EXPECT_TRUE(parsed["rejected_lines"].is_array());
+}
+
+TEST(CliFormatTest, LowerDebugOutputsSummaryLines) {
+  const std::filesystem::path source_dir(GCODE_SOURCE_DIR);
+  const auto input_path = source_dir / "testdata" / "messages" / "g4_dwell.ngc";
+
+  const std::string command = std::string("\"") + GCODE_PARSE_BIN +
+                              "\" --mode lower --format debug \"" +
+                              input_path.string() + "\"";
+  const auto result = runCommand(command);
+
+  EXPECT_EQ(result.exit_code, 0);
+  EXPECT_TRUE(result.stderr_text.empty());
+  EXPECT_NE(result.stdout_text.find("MSG line=1 n=10"), std::string::npos);
+  EXPECT_NE(result.stdout_text.find("type=G1"), std::string::npos);
+  EXPECT_NE(result.stdout_text.find("group=GGroup1"), std::string::npos);
+  EXPECT_NE(result.stdout_text.find("type=G4"), std::string::npos);
+  EXPECT_NE(result.stdout_text.find("group=GGroup2"), std::string::npos);
+  EXPECT_NE(result.stdout_text.find("SUMMARY messages=3 rejected=0"),
+            std::string::npos);
+}
+
+TEST(CliFormatTest, UnsupportedModeReturnsUsageError) {
+  const std::filesystem::path source_dir(GCODE_SOURCE_DIR);
+  const auto input_path = source_dir / "testdata" / "g1_samples.ngc";
+
+  const std::string command = std::string("\"") + GCODE_PARSE_BIN +
+                              "\" --mode nope \"" + input_path.string() + "\"";
+  const auto result = runCommand(command);
+
+  EXPECT_EQ(result.exit_code, 2);
+  EXPECT_TRUE(result.stdout_text.empty());
+  EXPECT_NE(result.stderr_text.find("Unsupported mode"), std::string::npos);
+}
+
 } // namespace

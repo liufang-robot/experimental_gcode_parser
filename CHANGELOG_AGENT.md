@@ -1,5 +1,42 @@
 # CHANGELOG_AGENT
 
+## 2026-02-28 (T-025 CLI lower mode)
+- Extended `gcode_parse` with `--mode parse|lower` (default `parse`).
+- Added lower mode outputs:
+  - `--mode lower --format json` emits lowered `MessageResult` JSON.
+  - `--mode lower --format debug` emits stable human-readable summary lines.
+- Added CLI tests for lower mode JSON/debug outputs and unsupported-mode error.
+- Updated `SPEC.md`, README, and development docs for the new CLI behavior.
+
+SPEC sections / tests:
+- SPEC: Section 2.2 (CLI modes/formats), Section 7 (CLI test expectation)
+- Tests: `test/cli_tests.cpp`, `./dev/check.sh`
+
+Known limitations:
+- Lower debug output is line-oriented summary text, not a formal schema.
+- No streaming CLI mode yet.
+
+How to reproduce locally (commands):
+- `./build/gcode_parse --mode lower --format json testdata/messages/g4_dwell.ngc`
+- `./build/gcode_parse --mode lower --format debug testdata/messages/g4_dwell.ngc`
+- `ctest --test-dir build --output-on-failure -R CliFormatTest`
+- `./dev/check.sh`
+
+## 2026-02-28 (backlog: add T-025 CLI lower mode task)
+- Added backlog task `T-025` to implement CLI lower mode
+  (`--mode lower --format json|debug`) for file-to-message output.
+- Synced backlog state to mark `T-024` done (`PR #35`).
+
+SPEC sections / tests:
+- SPEC: planning target references Section 2.2, Section 6, and Section 7
+- Tests: no code-path change (backlog planning/sync only)
+
+Known limitations:
+- This is planning only; CLI lower mode is not implemented in this change.
+
+How to reproduce locally (commands):
+- `sed -n '1,280p' BACKLOG.md`
+
 ## 2026-02-28 (T-024 modal-group metadata on messages)
 - Added modal metadata to all lowered message types (`G1/G2/G3/G4`):
   `modal.group`, `modal.code`, and `modal.updates_state`.
