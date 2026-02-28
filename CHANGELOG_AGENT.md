@@ -1,5 +1,20 @@
 # CHANGELOG_AGENT
 
+## 2026-02-28 (chore ignore generated output directory)
+- Updated `.gitignore` to ignore the full `output/` directory (not just
+  `output/bench`) so generated artifacts do not pollute working tree status.
+
+SPEC sections / tests:
+- SPEC: no behavior change
+- Tests: not applicable (ignore rule update only)
+
+Known limitations:
+- Existing untracked files remain on local disk until manually removed.
+
+How to reproduce locally (commands):
+- `git status --short`
+- `cat .gitignore`
+
 ## 2026-02-28 (chore remove irrelevant reference/hello)
 - Removed `reference/hello/` sample assets (ANTLR hello example and related
   prompt scaffolding) because they are not used by this project.
