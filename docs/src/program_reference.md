@@ -6,6 +6,8 @@ This section documents currently implemented parser/lowering behavior.
 
 - Intermediate IR:
   - `parseAndLowerAil(...)` -> `AilResult`
+- Packet stage:
+  - `parseLowerAndPacketize(...)` -> `PacketResult`
 - Batch: `parseAndLower(...)` -> `MessageResult`
 - Streaming callbacks:
   - `parseAndLowerStream(...)`
@@ -33,6 +35,26 @@ Current Siemens-aligned baseline for supported functions:
 | `G3` arc CCW | Implemented | Emits `G3Message` with endpoint + arc fields + feed. |
 | `G4` dwell | Implemented | Emits `G4Message` with dwell mode/value. |
 | `R... = expr` assignment | Partial | Parsed into AIL assignment instruction; not yet evaluated/runtime-applied. |
+
+## Motion Packets
+
+Status:
+- `Implemented` (motion subset)
+
+Rules:
+- Packetization consumes AIL and emits packets for `G1/G2/G3/G4`.
+- `packet_id` is 1-based and deterministic per result order.
+- Non-motion AIL instructions (for example `assign`) are skipped with a
+  warning diagnostic.
+
+Output fields:
+- packet: `packet_id`, `type`, `source`, `modal`, `payload`
+- packet types: `linear_move`, `arc_move`, `dwell`
+
+Test references:
+- `test/packet_tests.cpp`
+- `test/cli_tests.cpp`
+- `testdata/packets/*.ngc`
 
 ## G1
 

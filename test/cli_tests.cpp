@@ -198,6 +198,45 @@ TEST(CliFormatTest, AilModeHandlesAssignmentExpression) {
   EXPECT_EQ(parsed["instructions"][0]["lhs"], "R1");
 }
 
+TEST(CliFormatTest, PacketJsonOutputsPacketSchema) {
+  const std::filesystem::path source_dir(GCODE_SOURCE_DIR);
+  const auto input_path = source_dir / "testdata" / "messages" / "g4_dwell.ngc";
+
+  const std::string command = std::string("\"") + GCODE_PARSE_BIN +
+                              "\" --mode packet --format json \"" +
+                              input_path.string() + "\"";
+  const auto result = runCommand(command);
+
+  EXPECT_EQ(result.exit_code, 0);
+  EXPECT_TRUE(result.stderr_text.empty());
+
+  const auto parsed = nlohmann::json::parse(result.stdout_text);
+  EXPECT_EQ(parsed.value("schema_version", 0), 1);
+  ASSERT_TRUE(parsed.contains("packets"));
+  ASSERT_TRUE(parsed["packets"].is_array());
+  ASSERT_EQ(parsed["packets"].size(), 3u);
+  EXPECT_EQ(parsed["packets"][0]["type"], "linear_move");
+  EXPECT_EQ(parsed["packets"][1]["type"], "dwell");
+}
+
+TEST(CliFormatTest, PacketDebugOutputsSummaryLines) {
+  const std::filesystem::path source_dir(GCODE_SOURCE_DIR);
+  const auto input_path = source_dir / "testdata" / "messages" / "g4_dwell.ngc";
+
+  const std::string command = std::string("\"") + GCODE_PARSE_BIN +
+                              "\" --mode packet --format debug \"" +
+                              input_path.string() + "\"";
+  const auto result = runCommand(command);
+
+  EXPECT_EQ(result.exit_code, 0);
+  EXPECT_TRUE(result.stderr_text.empty());
+  EXPECT_NE(result.stdout_text.find("PACKET id=1"), std::string::npos);
+  EXPECT_NE(result.stdout_text.find("type=linear_move"), std::string::npos);
+  EXPECT_NE(result.stdout_text.find("type=dwell"), std::string::npos);
+  EXPECT_NE(result.stdout_text.find("SUMMARY packets=3 rejected=0"),
+            std::string::npos);
+}
+
 TEST(CliFormatTest, UnsupportedModeReturnsUsageError) {
   const std::filesystem::path source_dir(GCODE_SOURCE_DIR);
   const auto input_path = source_dir / "testdata" / "g1_samples.ngc";

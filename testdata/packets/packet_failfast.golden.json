@@ -1,0 +1,59 @@
+{
+  "diagnostics": [
+    {
+      "location": {
+        "column": 4,
+        "line": 2
+      },
+      "message": "multiple motion commands in one line; choose only one of G1/G2/G3",
+      "severity": "error"
+    }
+  ],
+  "packets": [
+    {
+      "modal": {
+        "code": "G1",
+        "group": "GGroup1",
+        "updates_state": true
+      },
+      "packet_id": 1,
+      "payload": {
+        "feed": null,
+        "target_pose": {
+          "a": null,
+          "b": null,
+          "c": null,
+          "x": 10.0,
+          "y": null,
+          "z": null
+        }
+      },
+      "source": {
+        "filename": "packet_failfast.ngc",
+        "line": 1,
+        "line_number": null
+      },
+      "type": "linear_move"
+    }
+  ],
+  "rejected_lines": [
+    {
+      "reasons": [
+        {
+          "location": {
+            "column": 4,
+            "line": 2
+          },
+          "message": "multiple motion commands in one line; choose only one of G1/G2/G3",
+          "severity": "error"
+        }
+      ],
+      "source": {
+        "filename": "packet_failfast.ngc",
+        "line": 2,
+        "line_number": null
+      }
+    }
+  ],
+  "schema_version": 1
+}

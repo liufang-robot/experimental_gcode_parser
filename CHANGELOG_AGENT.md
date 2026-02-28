@@ -1,5 +1,29 @@
 # CHANGELOG_AGENT
 
+## 2026-02-28 (T-028 AIL to MotionPacket stage)
+- Added packet model + conversion stage (`parseLowerAndPacketize`) from AIL
+  into deterministic motion packets with 1-based `packet_id`.
+- Added packet JSON serialization (`packetToJsonString`) and packet golden
+  fixtures under `testdata/packets/`.
+- Added CLI packet stage mode: `gcode_parse --mode packet --format json|debug`.
+
+SPEC sections / tests:
+- SPEC: Section 2.2 (CLI output modes), Section 6 (packet stage),
+  Section 7 (packet goldens + CLI coverage)
+- Tests: `test/packet_tests.cpp`, `test/cli_tests.cpp`,
+  `testdata/packets/*.golden.json`, `./dev/check.sh`
+
+Known limitations:
+- v0 packetization only emits motion/dwell packets; non-motion AIL
+  instructions (for example assignment) are skipped with warning diagnostics.
+- Packet JSON currently supports serialization only (no `fromJson` parser yet).
+
+How to reproduce locally (commands):
+- `./build/gcode_parse --mode packet --format json testdata/packets/core_motion.ngc`
+- `./build/gcode_parse --mode packet --format debug testdata/packets/assignment_skip.ngc`
+- `ctest --test-dir build --output-on-failure -R \"PacketTest|CliFormatTest\"`
+- `./dev/check.sh`
+
 ## 2026-02-28 (T-029 expression AST for assignments)
 - Extended grammar/parser to support assignment statements with expressions,
   including system-variable operands (example: `R1 = $P_ACT_X + 2*R2`).
