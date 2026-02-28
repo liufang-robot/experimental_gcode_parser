@@ -1,0 +1,82 @@
+{
+  "diagnostics": [],
+  "packets": [
+    {
+      "modal": {
+        "code": "G1",
+        "group": "GGroup1",
+        "updates_state": true
+      },
+      "packet_id": 1,
+      "payload": {
+        "feed": 3.0,
+        "target_pose": {
+          "a": null,
+          "b": null,
+          "c": null,
+          "x": 1.0,
+          "y": 2.0,
+          "z": null
+        }
+      },
+      "source": {
+        "filename": "core_motion.ngc",
+        "line": 1,
+        "line_number": 10
+      },
+      "type": "linear_move"
+    },
+    {
+      "modal": {
+        "code": "G2",
+        "group": "GGroup1",
+        "updates_state": true
+      },
+      "packet_id": 2,
+      "payload": {
+        "arc": {
+          "i": 6.0,
+          "j": 7.0,
+          "k": null,
+          "r": null
+        },
+        "clockwise": true,
+        "feed": 8.0,
+        "target_pose": {
+          "a": null,
+          "b": null,
+          "c": null,
+          "x": 4.0,
+          "y": 5.0,
+          "z": null
+        }
+      },
+      "source": {
+        "filename": "core_motion.ngc",
+        "line": 2,
+        "line_number": 20
+      },
+      "type": "arc_move"
+    },
+    {
+      "modal": {
+        "code": "G4",
+        "group": "GGroup2",
+        "updates_state": false
+      },
+      "packet_id": 3,
+      "payload": {
+        "dwell_mode": "revolutions",
+        "dwell_value": 30.0
+      },
+      "source": {
+        "filename": "core_motion.ngc",
+        "line": 3,
+        "line_number": 30
+      },
+      "type": "dwell"
+    }
+  ],
+  "rejected_lines": [],
+  "schema_version": 1
+}

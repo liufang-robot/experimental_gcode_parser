@@ -1,0 +1,41 @@
+{
+  "diagnostics": [
+    {
+      "location": {
+        "column": 1,
+        "line": 1
+      },
+      "message": "packetization skipped non-motion instruction: assign",
+      "severity": "warning"
+    }
+  ],
+  "packets": [
+    {
+      "modal": {
+        "code": "G1",
+        "group": "GGroup1",
+        "updates_state": true
+      },
+      "packet_id": 1,
+      "payload": {
+        "feed": 5.0,
+        "target_pose": {
+          "a": null,
+          "b": null,
+          "c": null,
+          "x": 20.0,
+          "y": null,
+          "z": null
+        }
+      },
+      "source": {
+        "filename": "assignment_skip.ngc",
+        "line": 2,
+        "line_number": null
+      },
+      "type": "linear_move"
+    }
+  ],
+  "rejected_lines": [],
+  "schema_version": 1
+}

@@ -11,6 +11,8 @@
 #include "gcode_parser.h"
 #include "messages.h"
 #include "messages_json.h"
+#include "packet.h"
+#include "packet_json.h"
 
 namespace {
 
@@ -235,6 +237,84 @@ std::string formatAilDebug(const gcode::AilResult &result) {
   return out.str();
 }
 
+std::string packetTypeText(gcode::PacketType type) {
+  switch (type) {
+  case gcode::PacketType::LinearMove:
+    return "linear_move";
+  case gcode::PacketType::ArcMove:
+    return "arc_move";
+  case gcode::PacketType::Dwell:
+    return "dwell";
+  }
+  return "linear_move";
+}
+
+std::string formatPacketDebug(const gcode::PacketResult &result) {
+  std::ostringstream out;
+  for (const auto &packet : result.packets) {
+    out << "PACKET id=" << packet.packet_id;
+    appendSource(out, packet.source);
+    appendModal(out, packet.modal);
+    out << " type=" << packetTypeText(packet.type);
+
+    std::visit(
+        [&](const auto &payload) {
+          using T = std::decay_t<decltype(payload)>;
+          if constexpr (std::is_same_v<T, gcode::MotionLinearPayload>) {
+            appendOptionalDouble(out, "x", payload.target_pose.x);
+            appendOptionalDouble(out, "y", payload.target_pose.y);
+            appendOptionalDouble(out, "z", payload.target_pose.z);
+            appendOptionalDouble(out, "a", payload.target_pose.a);
+            appendOptionalDouble(out, "b", payload.target_pose.b);
+            appendOptionalDouble(out, "c", payload.target_pose.c);
+            appendOptionalDouble(out, "feed", payload.feed);
+          } else if constexpr (std::is_same_v<T, gcode::MotionArcPayload>) {
+            out << " clockwise=" << boolText(payload.clockwise);
+            appendOptionalDouble(out, "x", payload.target_pose.x);
+            appendOptionalDouble(out, "y", payload.target_pose.y);
+            appendOptionalDouble(out, "z", payload.target_pose.z);
+            appendOptionalDouble(out, "a", payload.target_pose.a);
+            appendOptionalDouble(out, "b", payload.target_pose.b);
+            appendOptionalDouble(out, "c", payload.target_pose.c);
+            appendOptionalDouble(out, "i", payload.arc.i);
+            appendOptionalDouble(out, "j", payload.arc.j);
+            appendOptionalDouble(out, "k", payload.arc.k);
+            appendOptionalDouble(out, "r", payload.arc.r);
+            appendOptionalDouble(out, "feed", payload.feed);
+          } else {
+            out << " dwell_mode="
+                << (payload.dwell_mode == gcode::DwellMode::Revolutions
+                        ? "revolutions"
+                        : "seconds");
+            out << " dwell=" << std::setprecision(12) << payload.dwell_value;
+          }
+        },
+        packet.payload);
+    out << "\n";
+  }
+
+  for (const auto &rejected : result.rejected_lines) {
+    out << "REJECT";
+    appendSource(out, rejected.source);
+    out << " errors=" << rejected.reasons.size();
+    if (!rejected.reasons.empty()) {
+      out << " first=\"" << rejected.reasons.front().message << "\"";
+    }
+    out << "\n";
+  }
+
+  for (const auto &diag : result.diagnostics) {
+    out << "DIAG line=" << diag.location.line << " col=" << diag.location.column
+        << " sev=" << diagnosticSeverityText(diag.severity) << " msg=\""
+        << diag.message << "\"\n";
+  }
+
+  out << "SUMMARY packets=" << result.packets.size()
+      << " rejected=" << result.rejected_lines.size()
+      << " diagnostics=" << result.diagnostics.size() << "\n";
+  return out.str();
+}
+
 } // namespace
 
 int main(int argc, const char **argv) {
@@ -246,13 +326,15 @@ int main(int argc, const char **argv) {
     const std::string arg = argv[i];
     if (arg == "--mode") {
       if (i + 1 >= argc) {
-        std::cerr << "Missing value for --mode (expected parse|ail|lower)\n";
+        std::cerr
+            << "Missing value for --mode (expected parse|ail|packet|lower)\n";
         return 2;
       }
       mode = argv[++i];
-      if (mode != "parse" && mode != "ail" && mode != "lower") {
+      if (mode != "parse" && mode != "ail" && mode != "packet" &&
+          mode != "lower") {
         std::cerr << "Unsupported mode: " << mode
-                  << " (expected parse|ail|lower)\n";
+                  << " (expected parse|ail|packet|lower)\n";
         return 2;
       }
       continue;
@@ -274,16 +356,17 @@ int main(int argc, const char **argv) {
 
     if (!file_path.empty()) {
       std::cerr << "Unexpected extra positional argument. Usage: gcode_parse "
-                   "[--mode parse|ail|lower] [--format debug|json] <file>\n";
+                   "[--mode parse|ail|packet|lower] [--format debug|json] "
+                   "<file>\n";
       return 2;
     }
     file_path = arg;
   }
 
   if (file_path.empty()) {
-    std::cerr
-        << "Usage: gcode_parse [--mode parse|ail|lower] [--format debug|json] "
-           "<file>\n";
+    std::cerr << "Usage: gcode_parse [--mode parse|ail|packet|lower] "
+                 "[--format debug|json] "
+                 "<file>\n";
     return 2;
   }
 
@@ -314,6 +397,18 @@ int main(int argc, const char **argv) {
       std::cout << gcode::ailToJsonString(result);
     } else {
       std::cout << formatAilDebug(result);
+    }
+    return hasErrors(result.diagnostics) ? 1 : 0;
+  }
+
+  if (mode == "packet") {
+    gcode::LowerOptions options;
+    options.filename = file_path;
+    const auto result = gcode::parseLowerAndPacketize(buffer.str(), options);
+    if (format == "json") {
+      std::cout << gcode::packetToJsonString(result);
+    } else {
+      std::cout << formatPacketDebug(result);
     }
     return hasErrors(result.diagnostics) ? 1 : 0;
   }

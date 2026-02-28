@@ -24,8 +24,9 @@ The parser returns:
 - Diagnostics with line/column (1-based)
 
 Optional downstream stage:
-- AST can be lowered into typed AIL instructions and queue messages.
+- AST can be lowered into typed AIL instructions, motion packets, and queue messages.
 - v0 supports `G1Message`, `G2Message`, `G3Message`, and `G4Message` emission.
+- v0 supports motion packet emission from AIL motion instructions (`G1/G2/G3/G4`).
 - Message results support JSON conversion (`toJson`/`fromJson`) for transport,
   fixtures, and debugging.
 - Additive API: streaming parse/lower output mode for large-file workflows
@@ -33,7 +34,7 @@ Optional downstream stage:
   controls.
 
 The `gcode_parse` CLI supports:
-- `--mode parse|ail|lower` (default: `parse`)
+- `--mode parse|ail|packet|lower` (default: `parse`)
 - parse mode:
   - `--format debug` (default): stable, line-oriented parse format used by
     parser golden tests.
@@ -49,6 +50,11 @@ The `gcode_parse` CLI supports:
     `schema_version`, `instructions`, `diagnostics`, and `rejected_lines`.
   - `--format debug`: stable line-oriented AIL summary including instruction
     kind/opcode, source, and totals.
+- packet mode:
+  - `--format json`: machine-readable packet JSON with top-level keys:
+    `schema_version`, `packets`, `diagnostics`, and `rejected_lines`.
+  - `--format debug`: stable line-oriented packet summary including packet id,
+    type, source, and totals.
 
 AST shape (v0.1):
 - Program: ordered list of `Line`
@@ -177,8 +183,8 @@ R1 = $P_ACT_X + 2*R2
 
 ## 6. Message Lowering (v0.1)
 - Pipeline note:
-  - Current supported path is `parse -> AIL -> messages`, where AIL is the
-    semantic intermediate representation for motion subset instructions.
+  - Current supported paths are `parse -> AIL` and `parse -> AIL -> packets`,
+    with `parse -> messages` retained for queue-level compatibility.
 - Standalone lowering stage: AST + parser diagnostics -> queue-ready messages +
   diagnostics.
 - `G1Message` fields:
@@ -238,10 +244,25 @@ R1 = $P_ACT_X + 2*R2
     `i/j/k/r` optional numeric fields.
   - `G4Message` JSON carries `type`, `source`, `dwell_mode`, and
     `dwell_value`.
+- Packet stage (v0):
+  - Packet result shape:
+    - `packets`: ordered `MotionPacket` envelope list
+    - `diagnostics`: parse/semantic diagnostics, plus packetization warnings
+    - `rejected_lines`: fail-fast rejected lines inherited from lowering
+  - `MotionPacket` fields:
+    - `packet_id` (1-based sequential ID within result)
+    - `type`: `linear_move`, `arc_move`, or `dwell`
+    - `source`: filename/line/N-line mapping
+    - `modal`: modal metadata copied from originating instruction
+    - `payload`: type-specific fields
+  - v0 packetization only converts motion/dwell AIL instructions.
+    Non-motion AIL instructions (for example `assign`) are skipped with a
+    warning diagnostic.
 
 ## 7. Testing Expectations
 - Golden tests for all examples in `SPEC.md`.
 - CLI tests must cover parse mode and lower mode (`json` + `debug` formats).
+- CLI tests must cover parse/ail/packet/lower modes (`json` + `debug` formats).
 - Unit test framework: GoogleTest (`gtest`) is the required framework for new
   unit tests.
 - Add message-output JSON golden tests for representative queue outputs.
@@ -249,6 +270,11 @@ R1 = $P_ACT_X + 2*R2
     - input: `<name>.ngc`
     - golden: `<name>.golden.json`
     - for no-filename lowering cases, use `nofilename_<name>.ngc`.
+- Add packet-output JSON golden tests for representative packet outputs.
+  - Packet fixture naming convention mirrors message fixtures:
+    - input: `<name>.ngc`
+    - golden: `<name>.golden.json`
+    - for no-filename cases, use `nofilename_<name>.ngc`.
 - Property/fuzz testing: parser must never crash, hang, or use unbounded memory.
   - Minimum smoke gate: deterministic corpus + fixed-seed generated inputs in
     `test/fuzz_smoke_tests.cpp`, bounded to max input length 256 and 3000

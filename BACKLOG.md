@@ -49,26 +49,6 @@ Tests To Add/Update:
 - `test/packet_tests.cpp`
 - `testdata/packets/*.golden.json`
 
-### T-029 (P1) Add expression/assignment AST + AIL instructions
-Why:
-- Need non-motion semantic instructions, e.g. `R1 = $P_ACT_X`.
-Scope:
-- Extend grammar/AST for assignment expressions.
-- Lower to AIL assignment instruction nodes.
-- Support system-variable references as symbolic operands.
-Acceptance criteria:
-- Parser accepts representative assignment syntax and reports diagnostics with
-  line/column on invalid expressions.
-- AIL output includes assignment instructions with source mapping.
-- `./dev/check.sh` passes.
-Out of scope:
-- Runtime evaluation against live machine values.
-SPEC Sections:
-- Section 3 (syntax), Section 5 (diagnostics), Section 6 (AIL).
-Tests To Add/Update:
-- `test/parser_tests.cpp` (assignment coverage)
-- `test/ail_lowering_tests.cpp` (assignment lowering)
-
 ### T-030 (P2) Add stage-by-stage CLI modes and artifacts
 Why:
 - Users need visibility into each pipeline stage.
@@ -107,7 +87,7 @@ Use this template for new backlog items:
 
 ## In Progress
 (List tasks currently being worked on; only one assignee/task per PR)
-- T-029 (feature/t029-expression-ast)
+- T-028 (feature/t028-ail-motion-packets)
 
 ## Done
 (Move completed tasks here with PR link)
@@ -137,3 +117,4 @@ Use this template for new backlog items:
 - T-024 (PR #35)
 - T-025 (PR #36)
 - T-026 (PR #37)
+- T-029 (PR #38)

@@ -16,6 +16,7 @@ Version scope:
 
 Implemented API paths:
 - intermediate IR: `parseAndLowerAil(...)` returns `AilResult`
+- packet stage: `parseLowerAndPacketize(...)` returns `PacketResult`
 - batch output: `parseAndLower(...)` returns `MessageResult`
 - streaming output: `parseAndLowerStream(...)` /
   `parseAndLowerFileStream(...)` emit callbacks for messages, diagnostics, and
@@ -37,6 +38,26 @@ All emitted messages include:
 | `G3` arc CCW | Implemented | Lowers to `G3Message` with pose/arc/feed. |
 | `G4` dwell | Implemented | Lowers to `G4Message` with mode/value. |
 | `R... = expr` assignment | Partial | Parsed and lowered into AIL `assign` instruction only (no runtime evaluator yet). |
+
+## Motion Packet Stage
+
+Status:
+- `Implemented` (motion subset)
+
+Behavior:
+- Converts motion/dwell AIL instructions into ordered packets.
+- Packet envelope fields:
+  - `packet_id` (1-based sequence)
+  - `type` (`linear_move`, `arc_move`, `dwell`)
+  - `source` + `modal`
+  - type-specific `payload`
+- Non-motion AIL instructions (such as assignment) are not packetized and emit
+  warning diagnostics.
+
+Test references:
+- `test/packet_tests.cpp`
+- `test/cli_tests.cpp`
+- `testdata/packets/*.golden.json`
 
 ## `G1` Linear Interpolation
 
