@@ -63,8 +63,10 @@ cmake --build build -j
 
 ```bash
 ./build/gcode_parse testdata/combined_samples.ngc
+./build/gcode_parse --mode parse --format json testdata/combined_samples.ngc
+./build/gcode_parse --mode lower --format json testdata/messages/g4_dwell.ngc
+./build/gcode_parse --mode lower --format debug testdata/messages/g4_dwell.ngc
 ./build/gcode_parse --format debug testdata/combined_samples.ngc
-./build/gcode_parse --format json testdata/combined_samples.ngc
 ```
 
 ## Library Usage

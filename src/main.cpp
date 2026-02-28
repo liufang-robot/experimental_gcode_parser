@@ -1,26 +1,171 @@
 #include <fstream>
+#include <iomanip>
 #include <iostream>
 #include <sstream>
 #include <string>
+#include <type_traits>
 
 #include "ast_printer.h"
 #include "gcode_parser.h"
+#include "messages.h"
+#include "messages_json.h"
+
+namespace {
+
+std::string boolText(bool value) { return value ? "true" : "false"; }
+
+std::string groupText(gcode::ModalGroupId group) {
+  return group == gcode::ModalGroupId::Motion ? "GGroup1" : "GGroup2";
+}
+
+bool hasErrors(const std::vector<gcode::Diagnostic> &diagnostics) {
+  for (const auto &diag : diagnostics) {
+    if (diag.severity == gcode::Diagnostic::Severity::Error) {
+      return true;
+    }
+  }
+  return false;
+}
+
+std::string diagnosticSeverityText(gcode::Diagnostic::Severity severity) {
+  return severity == gcode::Diagnostic::Severity::Error ? "error" : "warning";
+}
+
+void appendSource(std::ostringstream &out, const gcode::SourceInfo &source) {
+  out << " line=" << source.line;
+  if (source.line_number.has_value()) {
+    out << " n=" << *source.line_number;
+  }
+}
+
+void appendOptionalDouble(std::ostringstream &out, const char *key,
+                          const std::optional<double> &value) {
+  if (!value.has_value()) {
+    return;
+  }
+  out << " " << key << "=" << std::setprecision(12) << *value;
+}
+
+void appendModal(std::ostringstream &out, const gcode::ModalState &modal) {
+  out << " group=" << groupText(modal.group) << " code=" << modal.code
+      << " updates=" << boolText(modal.updates_state);
+}
+
+std::string formatLowerDebug(const gcode::MessageResult &result) {
+  std::ostringstream out;
+
+  for (const auto &message : result.messages) {
+    std::visit(
+        [&](const auto &msg) {
+          out << "MSG";
+          appendSource(out, msg.source);
+          appendModal(out, msg.modal);
+          if constexpr (std::is_same_v<std::decay_t<decltype(msg)>,
+                                       gcode::G1Message>) {
+            out << " type=G1";
+            appendOptionalDouble(out, "x", msg.target_pose.x);
+            appendOptionalDouble(out, "y", msg.target_pose.y);
+            appendOptionalDouble(out, "z", msg.target_pose.z);
+            appendOptionalDouble(out, "a", msg.target_pose.a);
+            appendOptionalDouble(out, "b", msg.target_pose.b);
+            appendOptionalDouble(out, "c", msg.target_pose.c);
+            appendOptionalDouble(out, "feed", msg.feed);
+          } else if constexpr (std::is_same_v<std::decay_t<decltype(msg)>,
+                                              gcode::G2Message>) {
+            out << " type=G2";
+            appendOptionalDouble(out, "x", msg.target_pose.x);
+            appendOptionalDouble(out, "y", msg.target_pose.y);
+            appendOptionalDouble(out, "z", msg.target_pose.z);
+            appendOptionalDouble(out, "a", msg.target_pose.a);
+            appendOptionalDouble(out, "b", msg.target_pose.b);
+            appendOptionalDouble(out, "c", msg.target_pose.c);
+            appendOptionalDouble(out, "i", msg.arc.i);
+            appendOptionalDouble(out, "j", msg.arc.j);
+            appendOptionalDouble(out, "k", msg.arc.k);
+            appendOptionalDouble(out, "r", msg.arc.r);
+            appendOptionalDouble(out, "feed", msg.feed);
+          } else if constexpr (std::is_same_v<std::decay_t<decltype(msg)>,
+                                              gcode::G3Message>) {
+            out << " type=G3";
+            appendOptionalDouble(out, "x", msg.target_pose.x);
+            appendOptionalDouble(out, "y", msg.target_pose.y);
+            appendOptionalDouble(out, "z", msg.target_pose.z);
+            appendOptionalDouble(out, "a", msg.target_pose.a);
+            appendOptionalDouble(out, "b", msg.target_pose.b);
+            appendOptionalDouble(out, "c", msg.target_pose.c);
+            appendOptionalDouble(out, "i", msg.arc.i);
+            appendOptionalDouble(out, "j", msg.arc.j);
+            appendOptionalDouble(out, "k", msg.arc.k);
+            appendOptionalDouble(out, "r", msg.arc.r);
+            appendOptionalDouble(out, "feed", msg.feed);
+          } else if constexpr (std::is_same_v<std::decay_t<decltype(msg)>,
+                                              gcode::G4Message>) {
+            out << " type=G4";
+            out << " dwell_mode="
+                << (msg.dwell_mode == gcode::DwellMode::Revolutions
+                        ? "revolutions"
+                        : "seconds");
+            out << " dwell=" << std::setprecision(12) << msg.dwell_value;
+          }
+          out << "\n";
+        },
+        message);
+  }
+
+  for (const auto &rejected : result.rejected_lines) {
+    out << "REJECT";
+    appendSource(out, rejected.source);
+    out << " errors=" << rejected.reasons.size();
+    if (!rejected.reasons.empty()) {
+      out << " first=\"" << rejected.reasons.front().message << "\"";
+    }
+    out << "\n";
+  }
+
+  for (const auto &diag : result.diagnostics) {
+    out << "DIAG line=" << diag.location.line << " col=" << diag.location.column
+        << " sev=" << diagnosticSeverityText(diag.severity) << " msg=\""
+        << diag.message << "\"\n";
+  }
+
+  out << "SUMMARY messages=" << result.messages.size()
+      << " rejected=" << result.rejected_lines.size()
+      << " diagnostics=" << result.diagnostics.size() << "\n";
+  return out.str();
+}
+
+} // namespace
 
 int main(int argc, const char **argv) {
+  std::string mode = "parse";
   std::string format = "debug";
   std::string file_path;
 
   for (int i = 1; i < argc; ++i) {
     const std::string arg = argv[i];
+    if (arg == "--mode") {
+      if (i + 1 >= argc) {
+        std::cerr << "Missing value for --mode (expected parse|lower)\n";
+        return 2;
+      }
+      mode = argv[++i];
+      if (mode != "parse" && mode != "lower") {
+        std::cerr << "Unsupported mode: " << mode
+                  << " (expected parse|lower)\n";
+        return 2;
+      }
+      continue;
+    }
+
     if (arg == "--format") {
       if (i + 1 >= argc) {
-        std::cerr << "Missing value for --format (expected json|debug)\n";
+        std::cerr << "Missing value for --format (expected debug|json)\n";
         return 2;
       }
       format = argv[++i];
       if (format != "json" && format != "debug") {
         std::cerr << "Unsupported format: " << format
-                  << " (expected json|debug)\n";
+                  << " (expected debug|json)\n";
         return 2;
       }
       continue;
@@ -28,14 +173,16 @@ int main(int argc, const char **argv) {
 
     if (!file_path.empty()) {
       std::cerr << "Unexpected extra positional argument. Usage: gcode_parse "
-                   "[--format json|debug] <file>\n";
+                   "[--mode parse|lower] [--format debug|json] <file>\n";
       return 2;
     }
     file_path = arg;
   }
 
   if (file_path.empty()) {
-    std::cerr << "Usage: gcode_parse [--format json|debug] <file>\n";
+    std::cerr
+        << "Usage: gcode_parse [--mode parse|lower] [--format debug|json] "
+           "<file>\n";
     return 2;
   }
 
@@ -47,11 +194,24 @@ int main(int argc, const char **argv) {
 
   std::stringstream buffer;
   buffer << input_file.rdbuf();
-  auto result = gcode::parse(buffer.str());
-  if (format == "json") {
-    std::cout << gcode::formatJson(result);
-  } else {
-    std::cout << gcode::format(result);
+
+  if (mode == "parse") {
+    const auto result = gcode::parse(buffer.str());
+    if (format == "json") {
+      std::cout << gcode::formatJson(result);
+    } else {
+      std::cout << gcode::format(result);
+    }
+    return hasErrors(result.diagnostics) ? 1 : 0;
   }
-  return result.diagnostics.empty() ? 0 : 1;
+
+  gcode::LowerOptions options;
+  options.filename = file_path;
+  const auto result = gcode::parseAndLower(buffer.str(), options);
+  if (format == "json") {
+    std::cout << gcode::toJsonString(result);
+  } else {
+    std::cout << formatLowerDebug(result);
+  }
+  return hasErrors(result.diagnostics) ? 1 : 0;
 }

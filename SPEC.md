@@ -33,10 +33,17 @@ Optional downstream stage:
   controls.
 
 The `gcode_parse` CLI supports:
-- `--format debug` (default): stable, line-oriented debug format used by
-  parser golden tests.
-- `--format json`: machine-readable JSON with top-level keys:
-  `schema_version`, `program`, and `diagnostics`.
+- `--mode parse|lower` (default: `parse`)
+- parse mode:
+  - `--format debug` (default): stable, line-oriented parse format used by
+    parser golden tests.
+  - `--format json`: machine-readable parse JSON with top-level keys:
+    `schema_version`, `program`, and `diagnostics`.
+- lower mode:
+  - `--format json`: machine-readable lowered-message JSON with top-level keys:
+    `schema_version`, `messages`, `diagnostics`, and `rejected_lines`.
+  - `--format debug`: stable, line-oriented lowered summary including emitted
+    messages, rejections, diagnostics, and totals.
 
 AST shape (v0.1):
 - Program: ordered list of `Line`
@@ -207,6 +214,7 @@ N50 X60
 
 ## 7. Testing Expectations
 - Golden tests for all examples in `SPEC.md`.
+- CLI tests must cover parse mode and lower mode (`json` + `debug` formats).
 - Unit test framework: GoogleTest (`gtest`) is the required framework for new
   unit tests.
 - Add message-output JSON golden tests for representative queue outputs.

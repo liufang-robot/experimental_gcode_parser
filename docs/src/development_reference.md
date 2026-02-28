@@ -26,6 +26,13 @@ cmake --build build -j
 `./dev/check.sh` runs format check, configure/build, tests, tidy checks, and
 sanitizer tests.
 
+### CLI Modes
+
+`gcode_parse` supports:
+
+- `--mode parse` for AST + diagnostics output
+- `--mode lower` for lowered message output (`json` or debug summary)
+
 ## OODA Development Loop
 
 1. Observe current repo + CI state.

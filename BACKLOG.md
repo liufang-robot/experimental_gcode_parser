@@ -12,37 +12,31 @@
 - `P3`: optional/enhancement
 
 ## Ready Queue
-### T-024 (P1) Add modal-group metadata to lowered messages
+### T-025 (P1) Add CLI lower mode for emitted messages
 Why:
-- Downstream queue consumers need explicit modal-group metadata per emitted
-  message.
-- We want Siemens-preferred modal semantics for current supported functions.
+- Current CLI only exposes parse output; users cannot directly inspect lowered
+  queue messages from a file.
 Scope:
-- Add modal metadata fields to `G1/G2/G3/G4` message models.
-- Populate lowering output:
-  - `G1/G2/G3` -> group 1 (`GGroup1`), updates modal state.
-  - `G4` -> group 2 (`GGroup2`), non-modal one-shot (does not update state).
-- Include modal metadata in JSON serialization/deserialization.
-- Add/adjust tests and JSON goldens for the new fields.
-- Update SPEC + program reference docs.
+- Extend `gcode_parse` with `--mode parse|lower` (default `parse`).
+- Implement `--mode lower --format json` output via `parseAndLower(...)`.
+- Implement `--mode lower --format debug` as human-readable lowered summary:
+  emitted message lines, rejections, diagnostics, and totals.
+- Keep existing `--mode parse` behavior and output compatibility.
+- Add CLI tests for lower mode outputs and argument validation.
 Acceptance criteria:
-- Every emitted message includes modal metadata in memory and JSON output.
-- Tests validate modal metadata for message families and streaming callbacks.
-- Message JSON golden fixtures include modal metadata.
+- `gcode_parse --mode lower --format json <file>` outputs `MessageResult`
+  JSON (`schema_version`, `messages`, `diagnostics`, `rejected_lines`).
+- `gcode_parse --mode lower --format debug <file>` prints stable summary lines
+  that include message type, source, modal metadata, and key payload fields.
+- Existing parse mode tests remain green.
 - `./dev/check.sh` passes.
 Out of scope:
-- Full multi-group modal validation or machine-configuration-specific behavior.
+- Streaming CLI mode and full modal-state simulation engine.
 SPEC Sections:
-- Section 6 (Message Lowering), Section 9 (Documentation Policy).
+- Section 2.2 (CLI output modes), Section 6 (Message Lowering), Section 7 (testing).
 Tests To Add/Update:
-- `test/messages_tests.cpp`
-- `test/streaming_tests.cpp`
-- `test/lowering_family_g1_tests.cpp`
-- `test/lowering_family_g2_tests.cpp`
-- `test/lowering_family_g3_tests.cpp`
-- `test/lowering_family_g4_tests.cpp`
-- `test/messages_json_tests.cpp`
-- `testdata/messages/*.golden.json`
+- `test/cli_tests.cpp` (new lower-mode coverage)
+- Optional golden assets for lower debug output (if formatter is fixed text)
 
 ## Icebox
 - Coverage threshold policy and badge.
@@ -63,7 +57,7 @@ Use this template for new backlog items:
 
 ## In Progress
 (List tasks currently being worked on; only one assignee/task per PR)
-- T-024 (feature/t024-modal-group-metadata)
+- T-025 (feature/t025-cli-lower-mode)
 
 ## Done
 (Move completed tasks here with PR link)
@@ -90,3 +84,4 @@ Use this template for new backlog items:
 - T-021 (PR #28)
 - T-022 (PR #31)
 - T-023 (PR #33)
+- T-024 (PR #35)
