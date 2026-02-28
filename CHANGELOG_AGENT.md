@@ -1,5 +1,31 @@
 # CHANGELOG_AGENT
 
+## 2026-02-28 (T-029 expression AST for assignments)
+- Extended grammar/parser to support assignment statements with expressions,
+  including system-variable operands (example: `R1 = $P_ACT_X + 2*R2`).
+- Added typed expression AST nodes (literal, variable/system-variable, unary,
+  binary) and assignment AST storage in `Line`.
+- Added AIL assignment instruction lowering using typed expression AST instead
+  of raw expression strings.
+- Extended AIL JSON/debug output to serialize assignment expression trees.
+- Added parser, AIL, and CLI tests for assignment expression parsing/lowering.
+
+SPEC sections / tests:
+- SPEC: Section 3.6 (assignment syntax), Section 5 (syntax diagnostics),
+  Section 6 (AIL assignment coverage)
+- Tests: `parser_tests`, `ail_tests`, `cli_tests`, `./dev/check.sh`
+
+Known limitations:
+- Parenthesized subexpressions are not supported yet in v0.
+- Expression support currently targets assignment statements only; runtime
+  evaluation/execution is still out of scope.
+
+How to reproduce locally (commands):
+- `./build/gcode_parse --mode ail --format json <file.ngc>`
+- `./build/gcode_parse --mode ail --format debug <file.ngc>`
+- `ctest --test-dir build --output-on-failure -R \"ParserExpressionTest|AilTest|CliFormatTest\"`
+- `./dev/check.sh`
+
 ## 2026-02-28 (T-026 AIL intermediate representation v0)
 - Added AIL IR model (`src/ail.h`, `src/ail.cpp`) with instruction variants:
   linear motion, arc motion, dwell, and placeholders for assignment/sync.

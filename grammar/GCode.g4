@@ -5,18 +5,50 @@ program
     ;
 
 line
-    : block_delete? line_number? item* EOL
+    : block_delete? line_number? statement? EOL
     | block_delete? line_number? EOL
     ;
 
 line_no_eol
-    : block_delete? line_number? item+
+    : block_delete? line_number? statement
     | block_delete line_number?
     | line_number
     ;
 
+statement
+    : assignment_stmt
+    | item+
+    ;
+
+assignment_stmt
+    : WORD ASSIGN expr
+    ;
+
+expr
+    : additive_expr
+    ;
+
+additive_expr
+    : first=multiplicative_expr (ops+=(PLUS | MINUS) rest+=multiplicative_expr)*
+    ;
+
+multiplicative_expr
+    : first=unary_expr (ops+=(STAR | SLASH) rest+=unary_expr)*
+    ;
+
+unary_expr
+    : op=(PLUS | MINUS) unary_expr
+    | primary_expr
+    ;
+
+primary_expr
+    : NUMBER
+    | WORD
+    | SYSTEM_VAR
+    ;
+
 block_delete
-    : BLOCK_DELETE
+    : SLASH
     ;
 
 line_number
@@ -28,7 +60,23 @@ item
     | COMMENT
     ;
 
-BLOCK_DELETE
+ASSIGN
+    : '='
+    ;
+
+PLUS
+    : '+'
+    ;
+
+MINUS
+    : '-'
+    ;
+
+STAR
+    : '*'
+    ;
+
+SLASH
     : '/'
     ;
 
@@ -38,6 +86,15 @@ LINE_NUMBER
 
 WORD
     : WORD_HEAD (EQUAL WORD_VALUE | WORD_VALUE)?
+    ;
+
+SYSTEM_VAR
+    : '$' [A-Za-z_] [A-Za-z0-9_]*
+    ;
+
+NUMBER
+    : UNSIGNED_REAL
+    | UNSIGNED_INTEGER
     ;
 
 COMMENT
@@ -69,6 +126,15 @@ fragment EQUAL
     : '='
     ;
 
+fragment UNSIGNED_REAL
+    : DIGIT+ DECIMAL_POINT DIGIT*
+    | DECIMAL_POINT DIGIT+
+    ;
+
+fragment UNSIGNED_INTEGER
+    : DIGIT+
+    ;
+
 fragment REAL_NUMBER
     : SIGN? DIGIT+ DECIMAL_POINT DIGIT*
     | SIGN? DECIMAL_POINT DIGIT+
@@ -95,3 +161,4 @@ fragment DECIMAL_POINT
 fragment DIGIT
     : [0-9]
     ;
+

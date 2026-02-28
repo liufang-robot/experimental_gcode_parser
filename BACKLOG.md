@@ -12,27 +12,6 @@
 - `P3`: optional/enhancement
 
 ## Ready Queue
-### T-026 (P1) Introduce AIL intermediate representation layer
-Why:
-- Current pipeline is parse -> message lowering; we need a stable semantic IR
-  between syntax and runtime packets.
-Scope:
-- Add `AIL` instruction model (motion + assignment + sync placeholder types).
-- Add source mapping, diagnostics passthrough, and JSON serialization.
-- Keep existing message lowering APIs working during transition.
-Acceptance criteria:
-- New IR types compile and can be produced from current motion AST subset.
-- IR JSON schema is documented and unit-tested.
-- No regression in existing parse/lower tests.
-- `./dev/check.sh` passes.
-Out of scope:
-- Full expression evaluation runtime.
-SPEC Sections:
-- Section 2.2 (pipeline modes), Section 6 (lowering architecture).
-Tests To Add/Update:
-- New `test/ail_tests.cpp`
-- CLI tests for `--mode ail --format json` (once mode is wired)
-
 ### T-027 (P1) Add AST -> AIL lowering for G1/G2/G3/G4
 Why:
 - Need deterministic semantic instructions before packetization.
@@ -128,7 +107,7 @@ Use this template for new backlog items:
 
 ## In Progress
 (List tasks currently being worked on; only one assignee/task per PR)
-- T-026 (feature/t026-ail-pipeline-planning)
+- T-029 (feature/t029-expression-ast)
 
 ## Done
 (Move completed tasks here with PR link)
@@ -157,3 +136,4 @@ Use this template for new backlog items:
 - T-023 (PR #33)
 - T-024 (PR #35)
 - T-025 (PR #36)
+- T-026 (PR #37)

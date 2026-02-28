@@ -53,6 +53,29 @@ void appendModal(std::ostringstream &out, const gcode::ModalState &modal) {
       << " updates=" << boolText(modal.updates_state);
 }
 
+std::string exprToDebugText(const std::shared_ptr<gcode::ExprNode> &expr) {
+  if (!expr) {
+    return "<null>";
+  }
+  return std::visit(
+      [](const auto &node) -> std::string {
+        using T = std::decay_t<decltype(node)>;
+        if constexpr (std::is_same_v<T, gcode::ExprLiteral>) {
+          std::ostringstream out;
+          out << std::setprecision(12) << node.value;
+          return out.str();
+        } else if constexpr (std::is_same_v<T, gcode::ExprVariable>) {
+          return node.name;
+        } else if constexpr (std::is_same_v<T, gcode::ExprUnary>) {
+          return "(" + node.op + exprToDebugText(node.operand) + ")";
+        } else {
+          return "(" + exprToDebugText(node.lhs) + " " + node.op + " " +
+                 exprToDebugText(node.rhs) + ")";
+        }
+      },
+      expr->node);
+}
+
 std::string formatLowerDebug(const gcode::MessageResult &result) {
   std::ostringstream out;
 
@@ -180,8 +203,8 @@ std::string formatAilDebug(const gcode::AilResult &result) {
             out << " dwell=" << std::setprecision(12) << i.dwell_value;
           } else if constexpr (std::is_same_v<std::decay_t<decltype(i)>,
                                               gcode::AilAssignInstruction>) {
-            out << " kind=assign lhs=" << i.lhs << " rhs=\"" << i.rhs_expr
-                << "\"";
+            out << " kind=assign lhs=" << i.lhs << " rhs=\""
+                << exprToDebugText(i.rhs) << "\"";
           } else {
             out << " kind=sync tag=" << i.sync_tag;
           }

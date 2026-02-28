@@ -111,7 +111,7 @@ public:
     }
     if (auto *tail_ctx = ctx->line_no_eol()) {
       if (tail_ctx->block_delete() || tail_ctx->line_number() ||
-          !tail_ctx->item().empty()) {
+          tail_ctx->statement()) {
         auto line_any = visitLine_no_eol(tail_ctx);
         if (auto *line_ptr = std::any_cast<Line>(&line_any)) {
           program.lines.push_back(*line_ptr);
@@ -123,20 +123,103 @@ public:
 
   antlrcpp::Any visitLine(GCodeParser::LineContext *ctx) override {
     return buildLine(ctx->getStart(), ctx->block_delete(), ctx->line_number(),
-                     ctx->item());
+                     ctx->statement());
   }
 
   antlrcpp::Any
   visitLine_no_eol(GCodeParser::Line_no_eolContext *ctx) override {
     return buildLine(ctx->getStart(), ctx->block_delete(), ctx->line_number(),
-                     ctx->item());
+                     ctx->statement());
   }
 
 private:
+  std::shared_ptr<ExprNode> buildExpr(GCodeParser::ExprContext *ctx) {
+    return buildAdditiveExpr(ctx->additive_expr());
+  }
+
+  std::shared_ptr<ExprNode>
+  buildAdditiveExpr(GCodeParser::Additive_exprContext *ctx) {
+    auto node = buildMultiplicativeExpr(ctx->first);
+    const int term_count = static_cast<int>(ctx->rest.size());
+    for (int i = 0; i < term_count; ++i) {
+      const std::string op = ctx->ops[i]->getText();
+      auto rhs = buildMultiplicativeExpr(ctx->rest[i]);
+      auto binary = std::make_shared<ExprNode>();
+      ExprBinary expr;
+      expr.op = op;
+      expr.lhs = node;
+      expr.rhs = rhs;
+      expr.location = locationFromToken(ctx->getStart());
+      binary->node = std::move(expr);
+      node = binary;
+    }
+    return node;
+  }
+
+  std::shared_ptr<ExprNode>
+  buildMultiplicativeExpr(GCodeParser::Multiplicative_exprContext *ctx) {
+    auto node = buildUnaryExpr(ctx->first);
+    const int term_count = static_cast<int>(ctx->rest.size());
+    for (int i = 0; i < term_count; ++i) {
+      const std::string op = ctx->ops[i]->getText();
+      auto rhs = buildUnaryExpr(ctx->rest[i]);
+      auto binary = std::make_shared<ExprNode>();
+      ExprBinary expr;
+      expr.op = op;
+      expr.lhs = node;
+      expr.rhs = rhs;
+      expr.location = locationFromToken(ctx->getStart());
+      binary->node = std::move(expr);
+      node = binary;
+    }
+    return node;
+  }
+
+  std::shared_ptr<ExprNode>
+  buildUnaryExpr(GCodeParser::Unary_exprContext *ctx) {
+    if (ctx->primary_expr()) {
+      return buildPrimaryExpr(ctx->primary_expr());
+    }
+    auto unary = std::make_shared<ExprNode>();
+    ExprUnary expr;
+    expr.op = ctx->op->getText();
+    expr.location = locationFromToken(ctx->getStart());
+    expr.operand = buildUnaryExpr(ctx->unary_expr());
+    unary->node = std::move(expr);
+    return unary;
+  }
+
+  std::shared_ptr<ExprNode>
+  buildPrimaryExpr(GCodeParser::Primary_exprContext *ctx) {
+    auto node = std::make_shared<ExprNode>();
+    if (ctx->NUMBER()) {
+      ExprLiteral literal;
+      literal.location = locationFromToken(ctx->NUMBER()->getSymbol());
+      try {
+        literal.value = std::stod(ctx->NUMBER()->getText());
+      } catch (...) {
+        literal.value = 0.0;
+      }
+      node->node = std::move(literal);
+      return node;
+    }
+
+    ExprVariable variable;
+    variable.location = locationFromToken(ctx->getStart());
+    if (ctx->SYSTEM_VAR()) {
+      variable.name = toUpper(ctx->SYSTEM_VAR()->getText());
+      variable.is_system = true;
+    } else if (ctx->WORD()) {
+      variable.name = toUpper(ctx->WORD()->getText());
+    }
+    node->node = std::move(variable);
+    return node;
+  }
+
   Line buildLine(antlr4::Token *start,
                  GCodeParser::Block_deleteContext *block_ctx,
                  GCodeParser::Line_numberContext *number_ctx,
-                 const std::vector<GCodeParser::ItemContext *> &items) {
+                 GCodeParser::StatementContext *statement_ctx) {
     Line line;
     if (block_ctx) {
       line.block_delete = true;
@@ -156,25 +239,34 @@ private:
       }
       line.line_number = number;
     }
-    for (auto *item_ctx : items) {
-      if (auto *word_node = item_ctx->WORD()) {
-        auto *token = word_node->getSymbol();
-        Word word;
-        word.text = token->getText();
-        word.location = locationFromToken(token);
-        auto parts = splitWordText(word.text);
-        word.head = toUpper(parts.head);
-        word.value = parts.value;
-        word.has_equal = parts.has_equal;
-        line.items.emplace_back(std::move(word));
-        continue;
-      }
-      if (auto *comment_node = item_ctx->COMMENT()) {
-        auto *token = comment_node->getSymbol();
-        Comment comment;
-        comment.text = token->getText();
-        comment.location = locationFromToken(token);
-        line.items.emplace_back(std::move(comment));
+    if (statement_ctx && statement_ctx->assignment_stmt()) {
+      auto *assign_ctx = statement_ctx->assignment_stmt();
+      Assignment assignment;
+      assignment.lhs = toUpper(assign_ctx->WORD()->getText());
+      assignment.location = locationFromToken(assign_ctx->WORD()->getSymbol());
+      assignment.rhs = buildExpr(assign_ctx->expr());
+      line.assignment = std::move(assignment);
+    } else if (statement_ctx) {
+      for (auto *item_ctx : statement_ctx->item()) {
+        if (auto *word_node = item_ctx->WORD()) {
+          auto *token = word_node->getSymbol();
+          Word word;
+          word.text = token->getText();
+          word.location = locationFromToken(token);
+          auto parts = splitWordText(word.text);
+          word.head = toUpper(parts.head);
+          word.value = parts.value;
+          word.has_equal = parts.has_equal;
+          line.items.emplace_back(std::move(word));
+          continue;
+        }
+        if (auto *comment_node = item_ctx->COMMENT()) {
+          auto *token = comment_node->getSymbol();
+          Comment comment;
+          comment.text = token->getText();
+          comment.location = locationFromToken(token);
+          line.items.emplace_back(std::move(comment));
+        }
       }
     }
     if (!line.items.empty()) {
@@ -183,6 +275,8 @@ private:
       } else {
         line.line_index = std::get<Comment>(line.items.front()).location.line;
       }
+    } else if (line.assignment.has_value()) {
+      line.line_index = line.assignment->location.line;
     } else if (line.line_number.has_value()) {
       line.line_index = line.line_number->location.line;
     } else if (line.block_delete_location.has_value()) {

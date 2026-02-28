@@ -1,6 +1,7 @@
 #include "ail.h"
 
 #include <type_traits>
+#include <unordered_map>
 
 #include "gcode_parser.h"
 
@@ -50,6 +51,26 @@ AilInstruction toInstruction(const ParsedMessage &message) {
 
 } // namespace
 
+bool lineHasError(const std::vector<Diagnostic> &diagnostics, int line) {
+  for (const auto &diag : diagnostics) {
+    if (diag.severity == Diagnostic::Severity::Error &&
+        diag.location.line == line) {
+      return true;
+    }
+  }
+  return false;
+}
+
+SourceInfo sourceFromLine(const Line &line, const LowerOptions &options) {
+  SourceInfo source;
+  source.filename = options.filename;
+  source.line = line.line_index;
+  if (line.line_number.has_value()) {
+    source.line_number = line.line_number->value;
+  }
+  return source;
+}
+
 AilResult lowerToAil(const Program &program,
                      const std::vector<Diagnostic> &parse_diagnostics,
                      const LowerOptions &options) {
@@ -58,9 +79,39 @@ AilResult lowerToAil(const Program &program,
   AilResult result;
   result.diagnostics = lowered.diagnostics;
   result.rejected_lines = lowered.rejected_lines;
-  result.instructions.reserve(lowered.messages.size());
+  result.instructions.reserve(lowered.messages.size() + program.lines.size());
+
+  std::unordered_map<int, AilInstruction> message_by_line;
   for (const auto &message : lowered.messages) {
-    result.instructions.push_back(toInstruction(message));
+    const int line =
+        std::visit([](const auto &msg) { return msg.source.line; }, message);
+    message_by_line.emplace(line, toInstruction(message));
+  }
+
+  int stop_line = 0;
+  if (!lowered.rejected_lines.empty()) {
+    stop_line = lowered.rejected_lines.front().source.line;
+  }
+
+  for (const auto &line : program.lines) {
+    if (stop_line != 0 && line.line_index >= stop_line) {
+      break;
+    }
+    if (lineHasError(result.diagnostics, line.line_index)) {
+      continue;
+    }
+    if (line.assignment.has_value()) {
+      AilAssignInstruction inst;
+      inst.source = sourceFromLine(line, options);
+      inst.lhs = line.assignment->lhs;
+      inst.rhs = line.assignment->rhs;
+      result.instructions.push_back(std::move(inst));
+      continue;
+    }
+    const auto found = message_by_line.find(line.line_index);
+    if (found != message_by_line.end()) {
+      result.instructions.push_back(found->second);
+    }
   }
   return result;
 }

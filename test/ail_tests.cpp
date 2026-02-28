@@ -74,4 +74,20 @@ TEST(AilTest, JsonContainsInstructionSchemaAndModal) {
   EXPECT_EQ(j["instructions"][1]["modal"]["group"], "GGroup2");
 }
 
+TEST(AilTest, AssignmentProducesTypedExpressionTree) {
+  const auto result = gcode::parseAndLowerAil("R1 = $P_ACT_X + 2*R2\n");
+  ASSERT_EQ(result.instructions.size(), 1u);
+  ASSERT_TRUE(std::holds_alternative<gcode::AilAssignInstruction>(
+      result.instructions[0]));
+  const auto &assign =
+      std::get<gcode::AilAssignInstruction>(result.instructions[0]);
+  EXPECT_EQ(assign.lhs, "R1");
+  ASSERT_TRUE(assign.rhs != nullptr);
+
+  const auto json = nlohmann::json::parse(gcode::ailToJsonString(result));
+  EXPECT_EQ(json["instructions"][0]["kind"], "assign");
+  EXPECT_EQ(json["instructions"][0]["lhs"], "R1");
+  EXPECT_EQ(json["instructions"][0]["rhs"]["kind"], "binary");
+}
+
 } // namespace

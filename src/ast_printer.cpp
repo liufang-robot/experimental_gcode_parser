@@ -3,6 +3,7 @@
 #include <nlohmann/json.hpp>
 
 #include <sstream>
+#include <type_traits>
 
 namespace gcode {
 namespace {
@@ -16,6 +17,39 @@ nlohmann::json locationToJson(const Location &loc) {
   j["line"] = loc.line;
   j["column"] = loc.column;
   return j;
+}
+
+nlohmann::json exprToJson(const std::shared_ptr<ExprNode> &expr) {
+  if (!expr) {
+    return nullptr;
+  }
+  return std::visit(
+      [](const auto &node) -> nlohmann::json {
+        using T = std::decay_t<decltype(node)>;
+        nlohmann::json j;
+        if constexpr (std::is_same_v<T, ExprLiteral>) {
+          j["kind"] = "literal";
+          j["value"] = node.value;
+          j["location"] = locationToJson(node.location);
+        } else if constexpr (std::is_same_v<T, ExprVariable>) {
+          j["kind"] = node.is_system ? "system_variable" : "variable";
+          j["name"] = node.name;
+          j["location"] = locationToJson(node.location);
+        } else if constexpr (std::is_same_v<T, ExprUnary>) {
+          j["kind"] = "unary";
+          j["op"] = node.op;
+          j["operand"] = exprToJson(node.operand);
+          j["location"] = locationToJson(node.location);
+        } else {
+          j["kind"] = "binary";
+          j["op"] = node.op;
+          j["lhs"] = exprToJson(node.lhs);
+          j["rhs"] = exprToJson(node.rhs);
+          j["location"] = locationToJson(node.location);
+        }
+        return j;
+      },
+      expr->node);
 }
 
 nlohmann::json lineToJson(const Line &line) {
@@ -63,6 +97,16 @@ nlohmann::json lineToJson(const Line &line) {
     }
   }
 
+  if (line.assignment.has_value()) {
+    nlohmann::json assignment;
+    assignment["lhs"] = line.assignment->lhs;
+    assignment["location"] = locationToJson(line.assignment->location);
+    assignment["rhs"] = exprToJson(line.assignment->rhs);
+    j["assignment"] = assignment;
+  } else {
+    j["assignment"] = nullptr;
+  }
+
   return j;
 }
 
@@ -101,6 +145,11 @@ std::string format(const ParseResult &result) {
         writeLocation(out, comment.location);
         out << "\n";
       }
+    }
+    if (line.assignment.has_value()) {
+      out << "  assign " << line.assignment->lhs << " at ";
+      writeLocation(out, line.assignment->location);
+      out << "\n";
     }
   }
   out << "diagnostics\n";

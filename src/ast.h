@@ -1,5 +1,6 @@
 #pragma once
 
+#include <memory>
 #include <optional>
 #include <string>
 #include <variant>
@@ -34,6 +35,42 @@ struct Comment {
 
 using LineItem = std::variant<Word, Comment>;
 
+struct ExprNode;
+
+struct ExprLiteral {
+  double value = 0.0;
+  Location location;
+};
+
+struct ExprVariable {
+  std::string name;
+  bool is_system = false;
+  Location location;
+};
+
+struct ExprUnary {
+  std::string op;
+  std::shared_ptr<ExprNode> operand;
+  Location location;
+};
+
+struct ExprBinary {
+  std::string op;
+  std::shared_ptr<ExprNode> lhs;
+  std::shared_ptr<ExprNode> rhs;
+  Location location;
+};
+
+struct ExprNode {
+  std::variant<ExprLiteral, ExprVariable, ExprUnary, ExprBinary> node;
+};
+
+struct Assignment {
+  std::string lhs;
+  std::shared_ptr<ExprNode> rhs;
+  Location location;
+};
+
 struct LineNumber {
   int value = 0;
   Location location;
@@ -44,6 +81,7 @@ struct Line {
   std::optional<Location> block_delete_location;
   std::optional<LineNumber> line_number;
   std::vector<LineItem> items;
+  std::optional<Assignment> assignment;
   int line_index = 0;
 };
 
