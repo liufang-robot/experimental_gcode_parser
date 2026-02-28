@@ -4,6 +4,8 @@ This section documents currently implemented parser/lowering behavior.
 
 ## Output APIs
 
+- Intermediate IR:
+  - `parseAndLowerAil(...)` -> `AilResult`
 - Batch: `parseAndLower(...)` -> `MessageResult`
 - Streaming callbacks:
   - `parseAndLowerStream(...)`

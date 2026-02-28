@@ -133,6 +133,46 @@ TEST(CliFormatTest, LowerDebugOutputsSummaryLines) {
             std::string::npos);
 }
 
+TEST(CliFormatTest, AilJsonOutputsInstructionSchema) {
+  const std::filesystem::path source_dir(GCODE_SOURCE_DIR);
+  const auto input_path = source_dir / "testdata" / "messages" / "g4_dwell.ngc";
+
+  const std::string command = std::string("\"") + GCODE_PARSE_BIN +
+                              "\" --mode ail --format json \"" +
+                              input_path.string() + "\"";
+  const auto result = runCommand(command);
+
+  EXPECT_EQ(result.exit_code, 0);
+  EXPECT_TRUE(result.stderr_text.empty());
+
+  const auto parsed = nlohmann::json::parse(result.stdout_text);
+  EXPECT_EQ(parsed.value("schema_version", 0), 1);
+  ASSERT_TRUE(parsed.contains("instructions"));
+  ASSERT_TRUE(parsed["instructions"].is_array());
+  ASSERT_EQ(parsed["instructions"].size(), 3u);
+  EXPECT_EQ(parsed["instructions"][0]["kind"], "motion_linear");
+  EXPECT_EQ(parsed["instructions"][0]["modal"]["group"], "GGroup1");
+  EXPECT_EQ(parsed["instructions"][1]["kind"], "dwell");
+}
+
+TEST(CliFormatTest, AilDebugOutputsSummaryLines) {
+  const std::filesystem::path source_dir(GCODE_SOURCE_DIR);
+  const auto input_path = source_dir / "testdata" / "messages" / "g4_dwell.ngc";
+
+  const std::string command = std::string("\"") + GCODE_PARSE_BIN +
+                              "\" --mode ail --format debug \"" +
+                              input_path.string() + "\"";
+  const auto result = runCommand(command);
+
+  EXPECT_EQ(result.exit_code, 0);
+  EXPECT_TRUE(result.stderr_text.empty());
+  EXPECT_NE(result.stdout_text.find("AIL line=1"), std::string::npos);
+  EXPECT_NE(result.stdout_text.find("kind=motion_linear"), std::string::npos);
+  EXPECT_NE(result.stdout_text.find("kind=dwell"), std::string::npos);
+  EXPECT_NE(result.stdout_text.find("SUMMARY instructions=3"),
+            std::string::npos);
+}
+
 TEST(CliFormatTest, UnsupportedModeReturnsUsageError) {
   const std::filesystem::path source_dir(GCODE_SOURCE_DIR);
   const auto input_path = source_dir / "testdata" / "g1_samples.ngc";

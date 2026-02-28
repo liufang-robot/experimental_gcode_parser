@@ -15,6 +15,7 @@ Version scope:
 ## Output Access
 
 Implemented API paths:
+- intermediate IR: `parseAndLowerAil(...)` returns `AilResult`
 - batch output: `parseAndLower(...)` returns `MessageResult`
 - streaming output: `parseAndLowerStream(...)` /
   `parseAndLowerFileStream(...)` emit callbacks for messages, diagnostics, and

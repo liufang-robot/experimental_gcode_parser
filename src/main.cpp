@@ -5,6 +5,8 @@
 #include <string>
 #include <type_traits>
 
+#include "ail.h"
+#include "ail_json.h"
 #include "ast_printer.h"
 #include "gcode_parser.h"
 #include "messages.h"
@@ -134,6 +136,82 @@ std::string formatLowerDebug(const gcode::MessageResult &result) {
   return out.str();
 }
 
+std::string formatAilDebug(const gcode::AilResult &result) {
+  std::ostringstream out;
+  for (const auto &inst : result.instructions) {
+    std::visit(
+        [&](const auto &i) {
+          out << "AIL";
+          appendSource(out, i.source);
+          if constexpr (std::is_same_v<std::decay_t<decltype(i)>,
+                                       gcode::AilLinearMoveInstruction>) {
+            out << " kind=motion_linear opcode=G1";
+            appendModal(out, i.modal);
+            appendOptionalDouble(out, "x", i.target_pose.x);
+            appendOptionalDouble(out, "y", i.target_pose.y);
+            appendOptionalDouble(out, "z", i.target_pose.z);
+            appendOptionalDouble(out, "a", i.target_pose.a);
+            appendOptionalDouble(out, "b", i.target_pose.b);
+            appendOptionalDouble(out, "c", i.target_pose.c);
+            appendOptionalDouble(out, "feed", i.feed);
+          } else if constexpr (std::is_same_v<std::decay_t<decltype(i)>,
+                                              gcode::AilArcMoveInstruction>) {
+            out << " kind=motion_arc opcode=" << (i.clockwise ? "G2" : "G3");
+            appendModal(out, i.modal);
+            appendOptionalDouble(out, "x", i.target_pose.x);
+            appendOptionalDouble(out, "y", i.target_pose.y);
+            appendOptionalDouble(out, "z", i.target_pose.z);
+            appendOptionalDouble(out, "a", i.target_pose.a);
+            appendOptionalDouble(out, "b", i.target_pose.b);
+            appendOptionalDouble(out, "c", i.target_pose.c);
+            appendOptionalDouble(out, "i", i.arc.i);
+            appendOptionalDouble(out, "j", i.arc.j);
+            appendOptionalDouble(out, "k", i.arc.k);
+            appendOptionalDouble(out, "r", i.arc.r);
+            appendOptionalDouble(out, "feed", i.feed);
+          } else if constexpr (std::is_same_v<std::decay_t<decltype(i)>,
+                                              gcode::AilDwellInstruction>) {
+            out << " kind=dwell opcode=G4";
+            appendModal(out, i.modal);
+            out << " dwell_mode="
+                << (i.dwell_mode == gcode::DwellMode::Revolutions
+                        ? "revolutions"
+                        : "seconds");
+            out << " dwell=" << std::setprecision(12) << i.dwell_value;
+          } else if constexpr (std::is_same_v<std::decay_t<decltype(i)>,
+                                              gcode::AilAssignInstruction>) {
+            out << " kind=assign lhs=" << i.lhs << " rhs=\"" << i.rhs_expr
+                << "\"";
+          } else {
+            out << " kind=sync tag=" << i.sync_tag;
+          }
+          out << "\n";
+        },
+        inst);
+  }
+
+  for (const auto &rejected : result.rejected_lines) {
+    out << "REJECT";
+    appendSource(out, rejected.source);
+    out << " errors=" << rejected.reasons.size();
+    if (!rejected.reasons.empty()) {
+      out << " first=\"" << rejected.reasons.front().message << "\"";
+    }
+    out << "\n";
+  }
+
+  for (const auto &diag : result.diagnostics) {
+    out << "DIAG line=" << diag.location.line << " col=" << diag.location.column
+        << " sev=" << diagnosticSeverityText(diag.severity) << " msg=\""
+        << diag.message << "\"\n";
+  }
+
+  out << "SUMMARY instructions=" << result.instructions.size()
+      << " rejected=" << result.rejected_lines.size()
+      << " diagnostics=" << result.diagnostics.size() << "\n";
+  return out.str();
+}
+
 } // namespace
 
 int main(int argc, const char **argv) {
@@ -145,13 +223,13 @@ int main(int argc, const char **argv) {
     const std::string arg = argv[i];
     if (arg == "--mode") {
       if (i + 1 >= argc) {
-        std::cerr << "Missing value for --mode (expected parse|lower)\n";
+        std::cerr << "Missing value for --mode (expected parse|ail|lower)\n";
         return 2;
       }
       mode = argv[++i];
-      if (mode != "parse" && mode != "lower") {
+      if (mode != "parse" && mode != "ail" && mode != "lower") {
         std::cerr << "Unsupported mode: " << mode
-                  << " (expected parse|lower)\n";
+                  << " (expected parse|ail|lower)\n";
         return 2;
       }
       continue;
@@ -173,7 +251,7 @@ int main(int argc, const char **argv) {
 
     if (!file_path.empty()) {
       std::cerr << "Unexpected extra positional argument. Usage: gcode_parse "
-                   "[--mode parse|lower] [--format debug|json] <file>\n";
+                   "[--mode parse|ail|lower] [--format debug|json] <file>\n";
       return 2;
     }
     file_path = arg;
@@ -181,7 +259,7 @@ int main(int argc, const char **argv) {
 
   if (file_path.empty()) {
     std::cerr
-        << "Usage: gcode_parse [--mode parse|lower] [--format debug|json] "
+        << "Usage: gcode_parse [--mode parse|ail|lower] [--format debug|json] "
            "<file>\n";
     return 2;
   }
@@ -201,6 +279,18 @@ int main(int argc, const char **argv) {
       std::cout << gcode::formatJson(result);
     } else {
       std::cout << gcode::format(result);
+    }
+    return hasErrors(result.diagnostics) ? 1 : 0;
+  }
+
+  if (mode == "ail") {
+    gcode::LowerOptions options;
+    options.filename = file_path;
+    const auto result = gcode::parseAndLowerAil(buffer.str(), options);
+    if (format == "json") {
+      std::cout << gcode::ailToJsonString(result);
+    } else {
+      std::cout << formatAilDebug(result);
     }
     return hasErrors(result.diagnostics) ? 1 : 0;
   }

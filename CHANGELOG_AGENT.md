@@ -1,5 +1,46 @@
 # CHANGELOG_AGENT
 
+## 2026-02-28 (T-026 AIL intermediate representation v0)
+- Added AIL IR model (`src/ail.h`, `src/ail.cpp`) with instruction variants:
+  linear motion, arc motion, dwell, and placeholders for assignment/sync.
+- Added AIL JSON export (`src/ail_json.h`, `src/ail_json.cpp`) with stable
+  top-level schema (`schema_version`, `instructions`, `diagnostics`,
+  `rejected_lines`).
+- Extended CLI with `--mode ail --format json|debug` stage visibility.
+- Added AIL unit tests and CLI tests for AIL mode.
+- Updated specs/docs to describe parse -> AIL -> lower visibility.
+
+SPEC sections / tests:
+- SPEC: Section 2.2 (CLI modes), Section 6 (pipeline/lowering notes)
+- Tests: `test/ail_tests.cpp`, `test/cli_tests.cpp`, `./dev/check.sh`
+
+Known limitations:
+- AIL v0 currently covers the existing motion subset derived from message
+  lowering and includes assignment/sync as placeholder instruction types only.
+
+How to reproduce locally (commands):
+- `./build/gcode_parse --mode ail --format json testdata/messages/g4_dwell.ngc`
+- `./build/gcode_parse --mode ail --format debug testdata/messages/g4_dwell.ngc`
+- `ctest --test-dir build --output-on-failure -R \"AilTest|CliFormatTest\"`
+- `./dev/check.sh`
+
+## 2026-02-28 (pipeline roadmap backlog: AIL -> packets)
+- Updated `BACKLOG.md` after `T-025` merge (`PR #36`).
+- Added new queued tasks `T-026` to `T-030` to evolve architecture toward:
+  `Source G-code -> parse -> AIL -> MotionPacket`.
+- Marked `T-026` as current in-progress planning/implementation slice.
+
+SPEC sections / tests:
+- SPEC: planning targets for Section 2.2, Section 3, Section 5, Section 6, Section 7
+- Tests: no code-path change (planning/backlog update only)
+
+Known limitations:
+- This update defines the work plan only; AIL/packet implementation is not part
+  of this change.
+
+How to reproduce locally (commands):
+- `sed -n '1,320p' BACKLOG.md`
+
 ## 2026-02-28 (T-025 CLI lower mode)
 - Extended `gcode_parse` with `--mode parse|lower` (default `parse`).
 - Added lower mode outputs:

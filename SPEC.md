@@ -24,7 +24,7 @@ The parser returns:
 - Diagnostics with line/column (1-based)
 
 Optional downstream stage:
-- AST can be lowered into typed queue messages.
+- AST can be lowered into typed AIL instructions and queue messages.
 - v0 supports `G1Message`, `G2Message`, `G3Message`, and `G4Message` emission.
 - Message results support JSON conversion (`toJson`/`fromJson`) for transport,
   fixtures, and debugging.
@@ -33,7 +33,7 @@ Optional downstream stage:
   controls.
 
 The `gcode_parse` CLI supports:
-- `--mode parse|lower` (default: `parse`)
+- `--mode parse|ail|lower` (default: `parse`)
 - parse mode:
   - `--format debug` (default): stable, line-oriented parse format used by
     parser golden tests.
@@ -44,6 +44,11 @@ The `gcode_parse` CLI supports:
     `schema_version`, `messages`, `diagnostics`, and `rejected_lines`.
   - `--format debug`: stable, line-oriented lowered summary including emitted
     messages, rejections, diagnostics, and totals.
+- ail mode:
+  - `--format json`: machine-readable AIL JSON with top-level keys:
+    `schema_version`, `instructions`, `diagnostics`, and `rejected_lines`.
+  - `--format debug`: stable line-oriented AIL summary including instruction
+    kind/opcode, source, and totals.
 
 AST shape (v0.1):
 - Program: ordered list of `Line`
@@ -152,6 +157,9 @@ N50 X60
     "program G4 in a separate block").
 
 ## 6. Message Lowering (v0.1)
+- Pipeline note:
+  - Current supported path is `parse -> AIL -> messages`, where AIL is the
+    semantic intermediate representation for motion subset instructions.
 - Standalone lowering stage: AST + parser diagnostics -> queue-ready messages +
   diagnostics.
 - `G1Message` fields:
