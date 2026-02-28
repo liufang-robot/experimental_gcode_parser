@@ -1,0 +1,106 @@
+{
+  "diagnostics": [],
+  "instructions": [
+    {
+      "feed": 3.0,
+      "kind": "motion_linear",
+      "modal": {
+        "code": "G1",
+        "group": "GGroup1",
+        "updates_state": true
+      },
+      "opcode": "G1",
+      "source": {
+        "filename": "core_motion.ngc",
+        "line": 1,
+        "line_number": 10
+      },
+      "target_pose": {
+        "a": null,
+        "b": null,
+        "c": null,
+        "x": 1.0,
+        "y": 2.0,
+        "z": null
+      }
+    },
+    {
+      "arc": {
+        "i": 6.0,
+        "j": 7.0,
+        "k": null,
+        "r": null
+      },
+      "clockwise": true,
+      "feed": 8.0,
+      "kind": "motion_arc",
+      "modal": {
+        "code": "G2",
+        "group": "GGroup1",
+        "updates_state": true
+      },
+      "opcode": "G2",
+      "source": {
+        "filename": "core_motion.ngc",
+        "line": 2,
+        "line_number": 20
+      },
+      "target_pose": {
+        "a": null,
+        "b": null,
+        "c": null,
+        "x": 4.0,
+        "y": 5.0,
+        "z": null
+      }
+    },
+    {
+      "arc": {
+        "i": 11.0,
+        "j": 12.0,
+        "k": null,
+        "r": null
+      },
+      "clockwise": false,
+      "feed": 13.0,
+      "kind": "motion_arc",
+      "modal": {
+        "code": "G3",
+        "group": "GGroup1",
+        "updates_state": true
+      },
+      "opcode": "G3",
+      "source": {
+        "filename": "core_motion.ngc",
+        "line": 3,
+        "line_number": 30
+      },
+      "target_pose": {
+        "a": null,
+        "b": null,
+        "c": null,
+        "x": 9.0,
+        "y": 10.0,
+        "z": null
+      }
+    },
+    {
+      "dwell_mode": "seconds",
+      "dwell_value": 3.0,
+      "kind": "dwell",
+      "modal": {
+        "code": "G4",
+        "group": "GGroup2",
+        "updates_state": false
+      },
+      "opcode": "G4",
+      "source": {
+        "filename": "core_motion.ngc",
+        "line": 4,
+        "line_number": 40
+      }
+    }
+  ],
+  "rejected_lines": [],
+  "schema_version": 1
+}

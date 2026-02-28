@@ -1,5 +1,25 @@
 # CHANGELOG_AGENT
 
+## 2026-02-28 (T-027 AIL golden fixtures)
+- Added dedicated AIL lowering golden test target
+  (`test/ail_lowering_tests.cpp`) and fixture corpus under `testdata/ail/`.
+- Added representative AIL goldens for supported motion subset and fail-fast
+  error behavior.
+- Updated CMake to include `ail_lowering_tests` in the test matrix.
+
+SPEC sections / tests:
+- SPEC: Section 7 (AIL fixture expectations)
+- Tests: `test/ail_lowering_tests.cpp`, `testdata/ail/*.golden.json`,
+  `./dev/check.sh`
+
+Known limitations:
+- Current AIL fixture corpus is minimal (core motion + fail-fast); additional
+  edge-case fixtures can be added incrementally.
+
+How to reproduce locally (commands):
+- `ctest --test-dir build --output-on-failure -R AilLoweringGoldenTest`
+- `./dev/check.sh`
+
 ## 2026-02-28 (backlog sync after T-030 merge)
 - Updated `BACKLOG.md` to move `T-030` out of Ready/In Progress and into Done
   with `PR #40`.
