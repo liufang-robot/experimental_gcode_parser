@@ -31,6 +31,7 @@ sanitizer tests.
 `gcode_parse` supports:
 
 - `--mode parse` for AST + diagnostics output
+- `--mode ail` for intermediate AIL instruction output (`json` or debug summary)
 - `--mode lower` for lowered message output (`json` or debug summary)
 
 ## OODA Development Loop

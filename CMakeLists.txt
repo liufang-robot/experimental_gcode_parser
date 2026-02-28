@@ -83,6 +83,7 @@ target_link_libraries(gcode_antlr PUBLIC ${ANTLR4_RUNTIME_LIB})
 add_library(
   gcode_parser STATIC src/gcode_parser.cpp src/semantic_rules.cpp
                       src/ast_printer.cpp src/messages.cpp
+                      src/ail.cpp src/ail_json.cpp
                       src/lowering_family_factory.cpp src/lowering_family_g1.cpp
                       src/lowering_family_g2.cpp src/lowering_family_g3.cpp
                       src/lowering_family_g4.cpp src/messages_json.cpp
@@ -125,6 +126,13 @@ target_include_directories(messages_json_tests
 target_compile_definitions(messages_json_tests PRIVATE
                            GCODE_SOURCE_DIR="${CMAKE_CURRENT_SOURCE_DIR}")
 gtest_discover_tests(messages_json_tests DISCOVERY_MODE PRE_TEST)
+
+add_executable(ail_tests test/ail_tests.cpp)
+target_link_libraries(ail_tests PRIVATE gcode_parser)
+target_link_libraries(ail_tests PRIVATE GTest::gtest_main)
+target_link_libraries(ail_tests PRIVATE nlohmann_json::nlohmann_json)
+target_include_directories(ail_tests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
+gtest_discover_tests(ail_tests DISCOVERY_MODE PRE_TEST)
 
 add_executable(fuzz_smoke_tests test/fuzz_smoke_tests.cpp)
 target_link_libraries(fuzz_smoke_tests PRIVATE gcode_parser)
