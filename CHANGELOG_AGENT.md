@@ -1,5 +1,21 @@
 # CHANGELOG_AGENT
 
+## 2026-02-28 (chore remove irrelevant reference/hello)
+- Removed `reference/hello/` sample assets (ANTLR hello example and related
+  prompt scaffolding) because they are not used by this project.
+- Kept `reference/gcode/` intact.
+
+SPEC sections / tests:
+- SPEC: no behavior change
+- Tests: not applicable (reference cleanup only)
+
+Known limitations:
+- None; this change only removes unused reference material.
+
+How to reproduce locally (commands):
+- `test -d reference/hello && echo exists || echo removed`
+- `git status --short`
+
 ## 2026-02-28 (T-027 AIL golden fixtures)
 - Added dedicated AIL lowering golden test target
   (`test/ail_lowering_tests.cpp`) and fixture corpus under `testdata/ail/`.
