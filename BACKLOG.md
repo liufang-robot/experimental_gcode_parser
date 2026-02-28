@@ -30,25 +30,6 @@ Tests To Add/Update:
 - `test/ail_lowering_tests.cpp`
 - `testdata/ail/*.golden.json`
 
-### T-030 (P2) Add stage-by-stage CLI modes and artifacts
-Why:
-- Users need visibility into each pipeline stage.
-Scope:
-- Extend CLI to support `--mode parse|ail|packet|lower`.
-- Add stable debug/json output per stage.
-- Add stage-specific golden tests.
-Acceptance criteria:
-- Each mode produces output for same file with deterministic schema/text.
-- Existing parse/lower compatibility maintained.
-- `./dev/check.sh` passes.
-Out of scope:
-- Streaming packet emit mode.
-SPEC Sections:
-- Section 2.2 (CLI), Section 7 (testing).
-Tests To Add/Update:
-- `test/cli_tests.cpp`
-- `testdata/cli/*.golden.txt` and/or json fixtures
-
 ## Icebox
 - Coverage threshold policy and badge.
 - Multi-file include/subprogram parsing (future SPEC).
@@ -68,7 +49,7 @@ Use this template for new backlog items:
 
 ## In Progress
 (List tasks currently being worked on; only one assignee/task per PR)
-- T-030 (feature/t030-cli-stage-goldens)
+- (none)
 
 ## Done
 (Move completed tasks here with PR link)
@@ -100,3 +81,4 @@ Use this template for new backlog items:
 - T-026 (PR #37)
 - T-029 (PR #38)
 - T-028 (PR #39)
+- T-030 (PR #40)

@@ -1,5 +1,19 @@
 # CHANGELOG_AGENT
 
+## 2026-02-28 (backlog sync after T-030 merge)
+- Updated `BACKLOG.md` to move `T-030` out of Ready/In Progress and into Done
+  with `PR #40`.
+
+SPEC sections / tests:
+- SPEC: no behavior change
+- Tests: not applicable (backlog state sync only)
+
+Known limitations:
+- `T-027` remains queued until explicit AIL golden-fixture scope is closed.
+
+How to reproduce locally (commands):
+- `sed -n '1,220p' BACKLOG.md`
+
 ## 2026-02-28 (T-030 CLI stage-output goldens)
 - Added stage-level CLI golden fixtures under `testdata/cli/` covering
   `parse|ail|packet|lower` in both `debug` and `json` formats.
