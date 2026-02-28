@@ -37,7 +37,7 @@ struct AilDwellInstruction {
 struct AilAssignInstruction {
   SourceInfo source;
   std::string lhs;
-  std::string rhs_expr;
+  std::shared_ptr<ExprNode> rhs;
 };
 
 struct AilSyncInstruction {

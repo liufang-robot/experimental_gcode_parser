@@ -32,6 +32,7 @@ Current Siemens-aligned baseline for supported functions:
 | `G2` arc CW | Implemented | Emits `G2Message` with endpoint + arc fields + feed. |
 | `G3` arc CCW | Implemented | Emits `G3Message` with endpoint + arc fields + feed. |
 | `G4` dwell | Implemented | Emits `G4Message` with dwell mode/value. |
+| `R... = expr` assignment | Partial | Parsed into AIL assignment instruction; not yet evaluated/runtime-applied. |
 
 ## G1
 

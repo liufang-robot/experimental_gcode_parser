@@ -70,4 +70,20 @@ TEST(ParserDiagnosticsTest, ActionableSyntaxAndSemanticMessages) {
   }
 }
 
+TEST(ParserExpressionTest, ParsesAssignmentExpressionIntoAst) {
+  const auto result = gcode::parse("R1 = $P_ACT_X + 2*R2\n");
+  ASSERT_TRUE(result.diagnostics.empty());
+  ASSERT_EQ(result.program.lines.size(), 1u);
+  ASSERT_TRUE(result.program.lines[0].assignment.has_value());
+  EXPECT_EQ(result.program.lines[0].assignment->lhs, "R1");
+}
+
+TEST(ParserExpressionTest, ReportsExpressionSyntaxErrorLocation) {
+  const auto result = gcode::parse("R1 = $P_ACT_X + * 2\n");
+  ASSERT_FALSE(result.diagnostics.empty());
+  EXPECT_NE(result.diagnostics[0].message.find("syntax error"),
+            std::string::npos);
+  EXPECT_EQ(result.diagnostics[0].location.line, 1);
+}
+
 } // namespace

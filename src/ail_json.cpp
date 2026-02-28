@@ -26,6 +26,39 @@ nlohmann::json diagnosticToJson(const Diagnostic &diag) {
   return j;
 }
 
+nlohmann::json exprToJson(const std::shared_ptr<ExprNode> &expr) {
+  if (!expr) {
+    return nullptr;
+  }
+  return std::visit(
+      [](const auto &node) -> nlohmann::json {
+        using T = std::decay_t<decltype(node)>;
+        nlohmann::json j;
+        if constexpr (std::is_same_v<T, ExprLiteral>) {
+          j["kind"] = "literal";
+          j["value"] = node.value;
+          j["location"] = locationToJson(node.location);
+        } else if constexpr (std::is_same_v<T, ExprVariable>) {
+          j["kind"] = node.is_system ? "system_variable" : "variable";
+          j["name"] = node.name;
+          j["location"] = locationToJson(node.location);
+        } else if constexpr (std::is_same_v<T, ExprUnary>) {
+          j["kind"] = "unary";
+          j["op"] = node.op;
+          j["operand"] = exprToJson(node.operand);
+          j["location"] = locationToJson(node.location);
+        } else {
+          j["kind"] = "binary";
+          j["op"] = node.op;
+          j["lhs"] = exprToJson(node.lhs);
+          j["rhs"] = exprToJson(node.rhs);
+          j["location"] = locationToJson(node.location);
+        }
+        return j;
+      },
+      expr->node);
+}
+
 nlohmann::json optionalDoubleToJson(const std::optional<double> &value) {
   return value.has_value() ? nlohmann::json(*value) : nlohmann::json(nullptr);
 }
@@ -119,7 +152,7 @@ nlohmann::json instructionToJson(const AilInstruction &instruction) {
           j["kind"] = "assign";
           j["source"] = sourceToJson(inst.source);
           j["lhs"] = inst.lhs;
-          j["rhs_expr"] = inst.rhs_expr;
+          j["rhs"] = exprToJson(inst.rhs);
         } else {
           j["kind"] = "sync";
           j["source"] = sourceToJson(inst.source);

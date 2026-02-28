@@ -36,6 +36,7 @@ All emitted messages include:
 | `G2` arc CW | Implemented | Lowers to `G2Message` with pose/arc/feed. |
 | `G3` arc CCW | Implemented | Lowers to `G3Message` with pose/arc/feed. |
 | `G4` dwell | Implemented | Lowers to `G4Message` with mode/value. |
+| `R... = expr` assignment | Partial | Parsed and lowered into AIL `assign` instruction only (no runtime evaluator yet). |
 
 ## `G1` Linear Interpolation
 

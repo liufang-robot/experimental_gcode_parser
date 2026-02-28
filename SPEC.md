@@ -136,6 +136,25 @@ N40 G4 S30
 N50 X60
 ```
 
+### 3.6 Assignment Expressions (v0)
+- Statement form:
+  - `<lhs> = <expr>`
+- Supported `lhs` currently:
+  - `R`-style variable words (for example `R1`)
+- Supported expression operands:
+  - numeric literals
+  - variable words (for example `R2`)
+  - system variables (for example `$P_ACT_X`)
+- Supported operators:
+  - unary: `+`, `-`
+  - binary: `+`, `-`, `*`, `/`
+- Parenthesized subexpressions are not supported in v0.
+
+Example:
+```
+R1 = $P_ACT_X + 2*R2
+```
+
 ## 4. Non-goals (v0.1)
 - Full modal group validation beyond GGroup1 single-motion rule
 - Units/distance-mode state
