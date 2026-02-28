@@ -12,24 +12,6 @@
 - `P3`: optional/enhancement
 
 ## Ready Queue
-### T-027 (P1) Add AST -> AIL lowering for G1/G2/G3/G4
-Why:
-- Need deterministic semantic instructions before packetization.
-Scope:
-- Map supported motion commands to AIL instruction variants.
-- Preserve source line/N-line mapping and modal metadata.
-Acceptance criteria:
-- Existing supported motion commands lower to AIL with expected fields.
-- Golden fixtures for representative AIL output.
-- `./dev/check.sh` passes.
-Out of scope:
-- Packet transport/execution.
-SPEC Sections:
-- Section 3 (syntax), Section 6 (lowering), Section 7 (goldens).
-Tests To Add/Update:
-- `test/ail_lowering_tests.cpp`
-- `testdata/ail/*.golden.json`
-
 ## Icebox
 - Coverage threshold policy and badge.
 - Multi-file include/subprogram parsing (future SPEC).
@@ -49,7 +31,7 @@ Use this template for new backlog items:
 
 ## In Progress
 (List tasks currently being worked on; only one assignee/task per PR)
-- T-027 (feature/t027-ail-goldens)
+- (none)
 
 ## Done
 (Move completed tasks here with PR link)
@@ -82,3 +64,4 @@ Use this template for new backlog items:
 - T-029 (PR #38)
 - T-028 (PR #39)
 - T-030 (PR #40)
+- T-027 (PR #42)
