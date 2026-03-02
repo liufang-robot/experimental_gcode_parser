@@ -94,6 +94,27 @@ AilResult lowerToAil(const Program &program,
     stop_line = lowered.rejected_lines.front().source.line;
   }
 
+  struct IfLowerContext {
+    size_t branch_index = 0;
+    std::string end_label;
+    bool has_else = false;
+  };
+
+  std::vector<IfLowerContext> if_stack;
+  int generated_label_counter = 0;
+  const auto makeInternalLabel = [&](const std::string &prefix) {
+    ++generated_label_counter;
+    return "__CF_" + prefix + "_" + std::to_string(generated_label_counter);
+  };
+
+  const auto emitInternalLabel = [&](const std::string &name,
+                                     const SourceInfo &source) {
+    AilLabelInstruction label;
+    label.source = source;
+    label.name = name;
+    result.instructions.push_back(std::move(label));
+  };
+
   for (const auto &line : program.lines) {
     if (stop_line != 0 && line.line_index >= stop_line) {
       break;
@@ -107,6 +128,88 @@ AilResult lowerToAil(const Program &program,
       inst.lhs = line.assignment->lhs;
       inst.rhs = line.assignment->rhs;
       result.instructions.push_back(std::move(inst));
+      continue;
+    }
+    if (line.if_block_start_statement.has_value()) {
+      const auto source = sourceFromLine(line, options);
+
+      AilBranchIfInstruction branch;
+      branch.source = source;
+      branch.condition = line.if_block_start_statement->condition;
+      branch.then_branch.source = source;
+      branch.then_branch.opcode = "GOTO";
+      branch.then_branch.target = makeInternalLabel("IF_THEN");
+      branch.then_branch.target_kind = "label";
+
+      AilGotoInstruction else_branch;
+      else_branch.source = source;
+      else_branch.opcode = "GOTO";
+      else_branch.target = makeInternalLabel("IF_END");
+      else_branch.target_kind = "label";
+      branch.else_branch = std::move(else_branch);
+
+      const size_t branch_index = result.instructions.size();
+      const std::string then_label = branch.then_branch.target;
+      const std::string end_label = branch.else_branch->target;
+      result.instructions.push_back(std::move(branch));
+      emitInternalLabel(then_label, source);
+
+      IfLowerContext ctx;
+      ctx.branch_index = branch_index;
+      ctx.end_label = end_label;
+      if_stack.push_back(std::move(ctx));
+      continue;
+    }
+    if (line.else_statement.has_value()) {
+      const auto source = sourceFromLine(line, options);
+      if (if_stack.empty()) {
+        Diagnostic diag;
+        diag.severity = Diagnostic::Severity::Error;
+        diag.message = "ELSE without matching IF";
+        diag.location = line.else_statement->keyword_location;
+        result.diagnostics.push_back(std::move(diag));
+        continue;
+      }
+      auto &ctx = if_stack.back();
+      if (ctx.has_else) {
+        Diagnostic diag;
+        diag.severity = Diagnostic::Severity::Error;
+        diag.message = "duplicate ELSE for IF block";
+        diag.location = line.else_statement->keyword_location;
+        result.diagnostics.push_back(std::move(diag));
+        continue;
+      }
+
+      AilGotoInstruction skip_else;
+      skip_else.source = source;
+      skip_else.opcode = "GOTO";
+      skip_else.target = ctx.end_label;
+      skip_else.target_kind = "label";
+      result.instructions.push_back(std::move(skip_else));
+
+      const std::string else_label = makeInternalLabel("IF_ELSE");
+      auto &branch_inst = std::get<AilBranchIfInstruction>(
+          result.instructions[ctx.branch_index]);
+      if (branch_inst.else_branch.has_value()) {
+        branch_inst.else_branch->target = else_label;
+      }
+      emitInternalLabel(else_label, source);
+      ctx.has_else = true;
+      continue;
+    }
+    if (line.endif_statement.has_value()) {
+      const auto source = sourceFromLine(line, options);
+      if (if_stack.empty()) {
+        Diagnostic diag;
+        diag.severity = Diagnostic::Severity::Error;
+        diag.message = "ENDIF without matching IF";
+        diag.location = line.endif_statement->keyword_location;
+        result.diagnostics.push_back(std::move(diag));
+        continue;
+      }
+      const auto ctx = if_stack.back();
+      if_stack.pop_back();
+      emitInternalLabel(ctx.end_label, source);
       continue;
     }
     if (line.label_definition.has_value()) {
@@ -150,6 +253,17 @@ AilResult lowerToAil(const Program &program,
     if (found != message_by_line.end()) {
       result.instructions.push_back(found->second);
     }
+  }
+
+  for (const auto &ctx : if_stack) {
+    Diagnostic diag;
+    diag.severity = Diagnostic::Severity::Error;
+    diag.message = "missing ENDIF for IF block";
+    const auto &branch =
+        std::get<AilBranchIfInstruction>(result.instructions[ctx.branch_index]);
+    diag.location.line = branch.source.line;
+    diag.location.column = 1;
+    result.diagnostics.push_back(std::move(diag));
   }
   return result;
 }

@@ -128,4 +128,33 @@ TEST(AilTest, BranchIfJsonIncludesLogicalAndConditionMetadata) {
   EXPECT_EQ(json["instructions"][0]["condition"]["and_terms"][1], "(R2 > 10)");
 }
 
+TEST(AilTest, StructuredIfElseLowersToBranchGotoAndLabels) {
+  const auto result = gcode::parseAndLowerAil(
+      "IF (R1 == 1) AND (R2 > 10)\nG1 Z-5 F10\nELSE\nG1 X0 Y5\nENDIF\n");
+  ASSERT_TRUE(result.diagnostics.empty());
+  ASSERT_EQ(result.instructions.size(), 7u);
+
+  ASSERT_TRUE(std::holds_alternative<gcode::AilBranchIfInstruction>(
+      result.instructions[0]));
+  const auto &branch =
+      std::get<gcode::AilBranchIfInstruction>(result.instructions[0]);
+  EXPECT_EQ(branch.then_branch.target_kind, "label");
+  ASSERT_TRUE(branch.else_branch.has_value());
+  EXPECT_EQ(branch.else_branch->target_kind, "label");
+  EXPECT_NE(branch.then_branch.target, branch.else_branch->target);
+
+  EXPECT_TRUE(std::holds_alternative<gcode::AilLabelInstruction>(
+      result.instructions[1]));
+  EXPECT_TRUE(std::holds_alternative<gcode::AilLinearMoveInstruction>(
+      result.instructions[2]));
+  EXPECT_TRUE(std::holds_alternative<gcode::AilGotoInstruction>(
+      result.instructions[3]));
+  EXPECT_TRUE(std::holds_alternative<gcode::AilLabelInstruction>(
+      result.instructions[4]));
+  EXPECT_TRUE(std::holds_alternative<gcode::AilLinearMoveInstruction>(
+      result.instructions[5]));
+  EXPECT_TRUE(std::holds_alternative<gcode::AilLabelInstruction>(
+      result.instructions[6]));
+}
+
 } // namespace

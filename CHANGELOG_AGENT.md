@@ -1,5 +1,26 @@
 # CHANGELOG_AGENT
 
+## 2026-03-02 (T-035 structured IF/ELSE/ENDIF lowering to executable AIL)
+- Added structured control-flow lowering for `IF ... ELSE ... ENDIF` blocks in
+  AIL lowering, using internal labels/gotos and `branch_if` so runtime executes
+  only one branch body.
+- Added AIL diagnostics for malformed structured blocks during lowering
+  (`ELSE`/`ENDIF` mismatch and missing `ENDIF`).
+- Added tests for lowered instruction shape and executor branch-path behavior
+  proving single-branch execution.
+
+SPEC sections / tests:
+- SPEC: Section 6.1 (structured IF lowering/runtime semantics)
+- Tests: `test/ail_tests.cpp`, `test/ail_executor_tests.cpp`, `./dev/check.sh`
+
+Known limitations:
+- Structured `WHILE/FOR/REPEAT/LOOP` lowering is still not implemented.
+- Internal generated labels are implementation details and not stable API.
+
+How to reproduce locally (commands):
+- `ctest --test-dir build --output-on-failure -R \"AilTest.StructuredIfElseLowersToBranchGotoAndLabels|AilExecutorTest.StructuredIfElseExecutesSingleBranchAtRuntime\"`
+- `./dev/check.sh`
+
 ## 2026-03-02 (T-034 control-flow AND condition parsing)
 - Extended control-flow condition grammar to accept logical `AND` chains and
   parenthesized condition terms such as

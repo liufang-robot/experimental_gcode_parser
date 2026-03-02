@@ -307,6 +307,11 @@ N130 G01 X20 Y20
   - `label`
   - `goto` (`GOTOF/GOTOB/GOTO/GOTOC`) with target kind metadata
   - `branch_if` with condition + then/else goto branches
+- Structured `IF ... ELSE ... ENDIF` is lowered into linear control flow
+  (Lua-like block lowering pattern) using internal labels and gotos:
+  - entry `branch_if` chooses `then_label` vs `else_label`/`end_label`
+  - `then` body ends with `goto end_label` when `ELSE` exists
+  - exactly one branch body executes at runtime
 - Runtime executor API evaluates `branch_if` conditions via callback contract:
   - callback result states: `true`, `false`, `pending`, `error`
   - `pending` may include `wait_key` and `retry_at` metadata
