@@ -161,11 +161,50 @@ Example:
 R1 = $P_ACT_X + 2*R2
 ```
 
+### 3.7 Control Flow Syntax (parse-only in v0)
+- Jump directions:
+  - `GOTOF <target>`: forward search direction
+  - `GOTOB <target>`: backward search direction
+  - `GOTO <target>`: global search
+  - `GOTOC <target>`: non-faulting global search (controller runtime semantics
+    remain out of scope in v0 parser)
+- Jump targets:
+  - label (`<label>:` declaration)
+  - line number token (`N100`)
+  - numeric block number (`200`)
+  - system variable token (for indirection at runtime)
+- Single-line conditional jump:
+  - `IF <condition> GOTOx <target>`
+  - optional `THEN`
+  - optional `ELSE GOTOx <target>`
+- Structured control flow statements:
+  - `IF <condition>` ... `ELSE` ... `ENDIF`
+  - `WHILE <condition>` ... `ENDWHILE`
+  - `FOR <var> = <start> TO <end>` ... `ENDFOR`
+    - v0 parser assumes implicit step `+1` syntax-only
+  - `REPEAT` ... `UNTIL <condition>`
+  - `LOOP` ... `ENDLOOP`
+- Supported condition operators:
+  - `==`, `>`, `<`, `>=`, `<=`, `<>`
+- Label names follow word-style identifiers and may include underscores.
+- Parser behavior in v0 is syntax-only: labels are not resolved and control
+  flow is not executed.
+
+Example:
+```
+N100 G00 X10 Y10
+GOTO END_CODE
+N110 (This block is skipped)
+N120 (This block is skipped)
+END_CODE:
+N130 G01 X20 Y20
+```
+
 ## 4. Non-goals (v0.1)
 - Full modal group validation beyond GGroup1 single-motion rule
 - Units/distance-mode state
 - Full RS274NGC expressions/macros
-- Subprograms and flow control
+- Subprograms and full flow-control execution semantics
 
 ## 5. Diagnostics (v0.1)
 - Syntax errors reported by the lexer/parser with line/column.

@@ -86,4 +86,71 @@ TEST(ParserExpressionTest, ReportsExpressionSyntaxErrorLocation) {
   EXPECT_EQ(result.diagnostics[0].location.line, 1);
 }
 
+TEST(ParserControlFlowTest, ParsesGotoAndLabelWithUnderscore) {
+  const auto result = gcode::parse("GOTO END_CODE\nEND_CODE:\n");
+  ASSERT_TRUE(result.diagnostics.empty());
+  ASSERT_EQ(result.program.lines.size(), 2u);
+
+  ASSERT_TRUE(result.program.lines[0].goto_statement.has_value());
+  EXPECT_EQ(result.program.lines[0].goto_statement->opcode, "GOTO");
+  EXPECT_EQ(result.program.lines[0].goto_statement->target, "END_CODE");
+  EXPECT_EQ(result.program.lines[0].goto_statement->target_kind, "label");
+
+  ASSERT_TRUE(result.program.lines[1].label_definition.has_value());
+  EXPECT_EQ(result.program.lines[1].label_definition->name, "END_CODE");
+}
+
+TEST(ParserControlFlowTest, ParsesIfThenElseGoto) {
+  const auto result = gcode::parse("IF R1-2 GOTOF END_CODE ELSE GOTOB RETRY\n");
+  ASSERT_TRUE(result.diagnostics.empty());
+  ASSERT_EQ(result.program.lines.size(), 1u);
+  ASSERT_TRUE(result.program.lines[0].if_goto_statement.has_value());
+
+  const auto &if_stmt = *result.program.lines[0].if_goto_statement;
+  EXPECT_EQ(if_stmt.then_branch.opcode, "GOTOF");
+  EXPECT_EQ(if_stmt.then_branch.target, "END_CODE");
+  ASSERT_TRUE(if_stmt.else_branch.has_value());
+  EXPECT_EQ(if_stmt.else_branch->opcode, "GOTOB");
+  EXPECT_EQ(if_stmt.else_branch->target, "RETRY");
+}
+
+TEST(ParserControlFlowTest, ParsesGotoTargetKinds) {
+  const auto result = gcode::parse("GOTOC N100\nGOTO 200\nGOTOF $DEST\n");
+  ASSERT_TRUE(result.diagnostics.empty());
+  ASSERT_EQ(result.program.lines.size(), 3u);
+
+  ASSERT_TRUE(result.program.lines[0].goto_statement.has_value());
+  EXPECT_EQ(result.program.lines[0].goto_statement->target_kind, "line_number");
+  EXPECT_EQ(result.program.lines[0].goto_statement->target, "N100");
+
+  ASSERT_TRUE(result.program.lines[1].goto_statement.has_value());
+  EXPECT_EQ(result.program.lines[1].goto_statement->target_kind, "number");
+  EXPECT_EQ(result.program.lines[1].goto_statement->target, "200");
+
+  ASSERT_TRUE(result.program.lines[2].goto_statement.has_value());
+  EXPECT_EQ(result.program.lines[2].goto_statement->target_kind,
+            "system_variable");
+  EXPECT_EQ(result.program.lines[2].goto_statement->target, "$DEST");
+}
+
+TEST(ParserControlFlowTest, ParsesStructuredControlFlowStatements) {
+  const auto result = gcode::parse(
+      "IF R1 == 1\nELSE\nENDIF\nWHILE R1 < 10\nENDWHILE\nFOR R2 = 0 TO 3\n"
+      "ENDFOR\nREPEAT\nUNTIL R2 >= 3\nLOOP\nENDLOOP\n");
+  ASSERT_TRUE(result.diagnostics.empty());
+  ASSERT_EQ(result.program.lines.size(), 11u);
+
+  EXPECT_TRUE(result.program.lines[0].if_block_start_statement.has_value());
+  EXPECT_TRUE(result.program.lines[1].else_statement.has_value());
+  EXPECT_TRUE(result.program.lines[2].endif_statement.has_value());
+  EXPECT_TRUE(result.program.lines[3].while_statement.has_value());
+  EXPECT_TRUE(result.program.lines[4].endwhile_statement.has_value());
+  EXPECT_TRUE(result.program.lines[5].for_statement.has_value());
+  EXPECT_TRUE(result.program.lines[6].endfor_statement.has_value());
+  EXPECT_TRUE(result.program.lines[7].repeat_statement.has_value());
+  EXPECT_TRUE(result.program.lines[8].until_statement.has_value());
+  EXPECT_TRUE(result.program.lines[9].loop_statement.has_value());
+  EXPECT_TRUE(result.program.lines[10].endloop_statement.has_value());
+}
+
 } // namespace
