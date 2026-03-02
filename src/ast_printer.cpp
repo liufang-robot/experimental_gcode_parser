@@ -52,6 +52,20 @@ nlohmann::json exprToJson(const std::shared_ptr<ExprNode> &expr) {
       expr->node);
 }
 
+nlohmann::json conditionToJson(const Condition &condition) {
+  nlohmann::json j;
+  j["location"] = locationToJson(condition.location);
+  j["lhs"] = exprToJson(condition.lhs);
+  if (!condition.op.empty()) {
+    j["op"] = condition.op;
+    j["rhs"] = exprToJson(condition.rhs);
+  } else {
+    j["op"] = nullptr;
+    j["rhs"] = nullptr;
+  }
+  return j;
+}
+
 nlohmann::json lineToJson(const Line &line) {
   nlohmann::json j;
   j["line_index"] = line.line_index;
@@ -107,6 +121,123 @@ nlohmann::json lineToJson(const Line &line) {
     j["assignment"] = nullptr;
   }
 
+  if (line.label_definition.has_value()) {
+    nlohmann::json label;
+    label["name"] = line.label_definition->name;
+    label["location"] = locationToJson(line.label_definition->location);
+    j["label"] = label;
+  }
+
+  if (line.goto_statement.has_value()) {
+    nlohmann::json goto_stmt;
+    goto_stmt["opcode"] = line.goto_statement->opcode;
+    goto_stmt["target"] = line.goto_statement->target;
+    goto_stmt["target_kind"] = line.goto_statement->target_kind;
+    goto_stmt["keyword_location"] =
+        locationToJson(line.goto_statement->keyword_location);
+    goto_stmt["target_location"] =
+        locationToJson(line.goto_statement->target_location);
+    j["goto"] = goto_stmt;
+  }
+
+  if (line.if_goto_statement.has_value()) {
+    nlohmann::json if_goto;
+    if_goto["keyword_location"] =
+        locationToJson(line.if_goto_statement->keyword_location);
+    if_goto["condition"] = conditionToJson(line.if_goto_statement->condition);
+    if_goto["then_opcode"] = line.if_goto_statement->then_branch.opcode;
+    if_goto["then_target"] = line.if_goto_statement->then_branch.target;
+    if (line.if_goto_statement->else_branch.has_value()) {
+      if_goto["else_opcode"] = line.if_goto_statement->else_branch->opcode;
+      if_goto["else_target"] = line.if_goto_statement->else_branch->target;
+    }
+    j["if_goto"] = if_goto;
+  }
+
+  if (line.if_block_start_statement.has_value()) {
+    nlohmann::json if_block;
+    if_block["keyword_location"] =
+        locationToJson(line.if_block_start_statement->keyword_location);
+    if_block["condition"] =
+        conditionToJson(line.if_block_start_statement->condition);
+    j["if_block_start"] = if_block;
+  }
+
+  if (line.else_statement.has_value()) {
+    nlohmann::json else_stmt;
+    else_stmt["keyword_location"] =
+        locationToJson(line.else_statement->keyword_location);
+    j["else"] = else_stmt;
+  }
+
+  if (line.endif_statement.has_value()) {
+    nlohmann::json endif_stmt;
+    endif_stmt["keyword_location"] =
+        locationToJson(line.endif_statement->keyword_location);
+    j["endif"] = endif_stmt;
+  }
+
+  if (line.while_statement.has_value()) {
+    nlohmann::json while_stmt;
+    while_stmt["keyword_location"] =
+        locationToJson(line.while_statement->keyword_location);
+    while_stmt["condition"] = conditionToJson(line.while_statement->condition);
+    j["while"] = while_stmt;
+  }
+
+  if (line.endwhile_statement.has_value()) {
+    nlohmann::json endwhile_stmt;
+    endwhile_stmt["keyword_location"] =
+        locationToJson(line.endwhile_statement->keyword_location);
+    j["endwhile"] = endwhile_stmt;
+  }
+
+  if (line.for_statement.has_value()) {
+    nlohmann::json for_stmt;
+    for_stmt["keyword_location"] =
+        locationToJson(line.for_statement->keyword_location);
+    for_stmt["variable"] = line.for_statement->variable;
+    for_stmt["start"] = exprToJson(line.for_statement->start);
+    for_stmt["end"] = exprToJson(line.for_statement->end);
+    j["for"] = for_stmt;
+  }
+
+  if (line.endfor_statement.has_value()) {
+    nlohmann::json endfor_stmt;
+    endfor_stmt["keyword_location"] =
+        locationToJson(line.endfor_statement->keyword_location);
+    j["endfor"] = endfor_stmt;
+  }
+
+  if (line.repeat_statement.has_value()) {
+    nlohmann::json repeat_stmt;
+    repeat_stmt["keyword_location"] =
+        locationToJson(line.repeat_statement->keyword_location);
+    j["repeat"] = repeat_stmt;
+  }
+
+  if (line.until_statement.has_value()) {
+    nlohmann::json until_stmt;
+    until_stmt["keyword_location"] =
+        locationToJson(line.until_statement->keyword_location);
+    until_stmt["condition"] = conditionToJson(line.until_statement->condition);
+    j["until"] = until_stmt;
+  }
+
+  if (line.loop_statement.has_value()) {
+    nlohmann::json loop_stmt;
+    loop_stmt["keyword_location"] =
+        locationToJson(line.loop_statement->keyword_location);
+    j["loop"] = loop_stmt;
+  }
+
+  if (line.endloop_statement.has_value()) {
+    nlohmann::json endloop_stmt;
+    endloop_stmt["keyword_location"] =
+        locationToJson(line.endloop_statement->keyword_location);
+    j["endloop"] = endloop_stmt;
+  }
+
   return j;
 }
 
@@ -149,6 +280,84 @@ std::string format(const ParseResult &result) {
     if (line.assignment.has_value()) {
       out << "  assign " << line.assignment->lhs << " at ";
       writeLocation(out, line.assignment->location);
+      out << "\n";
+    }
+    if (line.label_definition.has_value()) {
+      out << "  label " << line.label_definition->name << " at ";
+      writeLocation(out, line.label_definition->location);
+      out << "\n";
+    }
+    if (line.goto_statement.has_value()) {
+      out << "  " << line.goto_statement->opcode << " "
+          << line.goto_statement->target << " ("
+          << line.goto_statement->target_kind << ") at ";
+      writeLocation(out, line.goto_statement->keyword_location);
+      out << "\n";
+    }
+    if (line.if_goto_statement.has_value()) {
+      out << "  if_goto then " << line.if_goto_statement->then_branch.opcode
+          << " " << line.if_goto_statement->then_branch.target;
+      if (line.if_goto_statement->else_branch.has_value()) {
+        out << " else " << line.if_goto_statement->else_branch->opcode << " "
+            << line.if_goto_statement->else_branch->target;
+      }
+      out << " at ";
+      writeLocation(out, line.if_goto_statement->keyword_location);
+      out << "\n";
+    }
+    if (line.if_block_start_statement.has_value()) {
+      out << "  if_block_start at ";
+      writeLocation(out, line.if_block_start_statement->keyword_location);
+      out << "\n";
+    }
+    if (line.else_statement.has_value()) {
+      out << "  else at ";
+      writeLocation(out, line.else_statement->keyword_location);
+      out << "\n";
+    }
+    if (line.endif_statement.has_value()) {
+      out << "  endif at ";
+      writeLocation(out, line.endif_statement->keyword_location);
+      out << "\n";
+    }
+    if (line.while_statement.has_value()) {
+      out << "  while at ";
+      writeLocation(out, line.while_statement->keyword_location);
+      out << "\n";
+    }
+    if (line.endwhile_statement.has_value()) {
+      out << "  endwhile at ";
+      writeLocation(out, line.endwhile_statement->keyword_location);
+      out << "\n";
+    }
+    if (line.for_statement.has_value()) {
+      out << "  for " << line.for_statement->variable << " at ";
+      writeLocation(out, line.for_statement->keyword_location);
+      out << "\n";
+    }
+    if (line.endfor_statement.has_value()) {
+      out << "  endfor at ";
+      writeLocation(out, line.endfor_statement->keyword_location);
+      out << "\n";
+    }
+    if (line.repeat_statement.has_value()) {
+      out << "  repeat at ";
+      writeLocation(out, line.repeat_statement->keyword_location);
+      out << "\n";
+    }
+    if (line.until_statement.has_value()) {
+      out << "  until at ";
+      writeLocation(out, line.until_statement->keyword_location);
+      out << "\n";
+    }
+    if (line.loop_statement.has_value()) {
+      out << "  loop at ";
+      writeLocation(out, line.loop_statement->keyword_location);
+      out << "\n";
+    }
+    if (line.endloop_statement.has_value()) {
+      out << "  endloop at ";
+      writeLocation(out, line.endloop_statement->keyword_location);
       out << "\n";
     }
   }

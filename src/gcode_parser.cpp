@@ -133,6 +133,82 @@ public:
   }
 
 private:
+  static std::string
+  jumpOpcodeFromKeyword(GCodeParser::Jump_keywordContext *ctx) {
+    if (!ctx) {
+      return "";
+    }
+    if (ctx->GOTOF_KW()) {
+      return "GOTOF";
+    }
+    if (ctx->GOTOB_KW()) {
+      return "GOTOB";
+    }
+    if (ctx->GOTOC_KW()) {
+      return "GOTOC";
+    }
+    return "GOTO";
+  }
+
+  static Location jumpKeywordLocation(GCodeParser::Jump_keywordContext *ctx) {
+    if (!ctx) {
+      return {};
+    }
+    if (ctx->GOTO_KW()) {
+      return locationFromToken(ctx->GOTO_KW()->getSymbol());
+    }
+    if (ctx->GOTOF_KW()) {
+      return locationFromToken(ctx->GOTOF_KW()->getSymbol());
+    }
+    if (ctx->GOTOB_KW()) {
+      return locationFromToken(ctx->GOTOB_KW()->getSymbol());
+    }
+    if (ctx->GOTOC_KW()) {
+      return locationFromToken(ctx->GOTOC_KW()->getSymbol());
+    }
+    return {};
+  }
+
+  Condition buildCondition(GCodeParser::ConditionContext *ctx) {
+    Condition condition;
+    condition.location = locationFromToken(ctx->getStart());
+    condition.lhs = buildExpr(ctx->lhs);
+    if (ctx->rhs) {
+      condition.rhs = buildExpr(ctx->rhs);
+    }
+    if (ctx->op) {
+      condition.op = ctx->op->getText();
+    }
+    return condition;
+  }
+
+  GotoStatement buildGotoStatement(GCodeParser::Goto_stmtContext *ctx) {
+    GotoStatement stmt;
+    stmt.opcode = jumpOpcodeFromKeyword(ctx->jump_keyword());
+    stmt.keyword_location = jumpKeywordLocation(ctx->jump_keyword());
+    auto *target = ctx->goto_target();
+    if (target->WORD()) {
+      stmt.target = toUpper(target->WORD()->getText());
+      stmt.target_kind = "label";
+      stmt.target_location = locationFromToken(target->WORD()->getSymbol());
+    } else if (target->LINE_NUMBER()) {
+      stmt.target = toUpper(target->LINE_NUMBER()->getText());
+      stmt.target_kind = "line_number";
+      stmt.target_location =
+          locationFromToken(target->LINE_NUMBER()->getSymbol());
+    } else if (target->NUMBER()) {
+      stmt.target = target->NUMBER()->getText();
+      stmt.target_kind = "number";
+      stmt.target_location = locationFromToken(target->NUMBER()->getSymbol());
+    } else if (target->SYSTEM_VAR()) {
+      stmt.target = toUpper(target->SYSTEM_VAR()->getText());
+      stmt.target_kind = "system_variable";
+      stmt.target_location =
+          locationFromToken(target->SYSTEM_VAR()->getSymbol());
+    }
+    return stmt;
+  }
+
   std::shared_ptr<ExprNode> buildExpr(GCodeParser::ExprContext *ctx) {
     return buildAdditiveExpr(ctx->additive_expr());
   }
@@ -246,6 +322,90 @@ private:
       assignment.location = locationFromToken(assign_ctx->WORD()->getSymbol());
       assignment.rhs = buildExpr(assign_ctx->expr());
       line.assignment = std::move(assignment);
+    } else if (statement_ctx && statement_ctx->label_stmt()) {
+      auto *label_ctx = statement_ctx->label_stmt();
+      LabelDefinition label;
+      label.name = toUpper(label_ctx->WORD()->getText());
+      label.location = locationFromToken(label_ctx->WORD()->getSymbol());
+      line.label_definition = std::move(label);
+    } else if (statement_ctx && statement_ctx->goto_stmt()) {
+      line.goto_statement = buildGotoStatement(statement_ctx->goto_stmt());
+    } else if (statement_ctx && statement_ctx->if_goto_stmt()) {
+      auto *if_ctx = statement_ctx->if_goto_stmt();
+      IfGotoStatement if_stmt;
+      if_stmt.keyword_location =
+          locationFromToken(if_ctx->IF_KW()->getSymbol());
+      if_stmt.condition = buildCondition(if_ctx->condition());
+      if_stmt.then_branch = buildGotoStatement(if_ctx->goto_stmt(0));
+      if (if_ctx->goto_stmt().size() > 1) {
+        if_stmt.else_branch = buildGotoStatement(if_ctx->goto_stmt(1));
+      }
+      line.if_goto_statement = std::move(if_stmt);
+    } else if (statement_ctx && statement_ctx->if_block_start_stmt()) {
+      auto *if_ctx = statement_ctx->if_block_start_stmt();
+      IfBlockStartStatement if_stmt;
+      if_stmt.keyword_location =
+          locationFromToken(if_ctx->IF_KW()->getSymbol());
+      if_stmt.condition = buildCondition(if_ctx->condition());
+      line.if_block_start_statement = std::move(if_stmt);
+    } else if (statement_ctx && statement_ctx->else_stmt()) {
+      ElseStatement else_stmt;
+      else_stmt.keyword_location =
+          locationFromToken(statement_ctx->else_stmt()->ELSE_KW()->getSymbol());
+      line.else_statement = else_stmt;
+    } else if (statement_ctx && statement_ctx->endif_stmt()) {
+      EndIfStatement endif_stmt;
+      endif_stmt.keyword_location = locationFromToken(
+          statement_ctx->endif_stmt()->ENDIF_KW()->getSymbol());
+      line.endif_statement = endif_stmt;
+    } else if (statement_ctx && statement_ctx->while_stmt()) {
+      auto *while_ctx = statement_ctx->while_stmt();
+      WhileStatement while_stmt;
+      while_stmt.keyword_location =
+          locationFromToken(while_ctx->WHILE_KW()->getSymbol());
+      while_stmt.condition = buildCondition(while_ctx->condition());
+      line.while_statement = std::move(while_stmt);
+    } else if (statement_ctx && statement_ctx->endwhile_stmt()) {
+      EndWhileStatement endwhile_stmt;
+      endwhile_stmt.keyword_location = locationFromToken(
+          statement_ctx->endwhile_stmt()->ENDWHILE_KW()->getSymbol());
+      line.endwhile_statement = endwhile_stmt;
+    } else if (statement_ctx && statement_ctx->for_stmt()) {
+      auto *for_ctx = statement_ctx->for_stmt();
+      ForStatement for_stmt;
+      for_stmt.keyword_location =
+          locationFromToken(for_ctx->FOR_KW()->getSymbol());
+      for_stmt.variable = toUpper(for_ctx->WORD()->getText());
+      for_stmt.start = buildExpr(for_ctx->expr(0));
+      for_stmt.end = buildExpr(for_ctx->expr(1));
+      line.for_statement = std::move(for_stmt);
+    } else if (statement_ctx && statement_ctx->endfor_stmt()) {
+      EndForStatement endfor_stmt;
+      endfor_stmt.keyword_location = locationFromToken(
+          statement_ctx->endfor_stmt()->ENDFOR_KW()->getSymbol());
+      line.endfor_statement = endfor_stmt;
+    } else if (statement_ctx && statement_ctx->repeat_stmt()) {
+      RepeatStatement repeat_stmt;
+      repeat_stmt.keyword_location = locationFromToken(
+          statement_ctx->repeat_stmt()->REPEAT_KW()->getSymbol());
+      line.repeat_statement = repeat_stmt;
+    } else if (statement_ctx && statement_ctx->until_stmt()) {
+      auto *until_ctx = statement_ctx->until_stmt();
+      UntilStatement until_stmt;
+      until_stmt.keyword_location =
+          locationFromToken(until_ctx->UNTIL_KW()->getSymbol());
+      until_stmt.condition = buildCondition(until_ctx->condition());
+      line.until_statement = std::move(until_stmt);
+    } else if (statement_ctx && statement_ctx->loop_stmt()) {
+      LoopStatement loop_stmt;
+      loop_stmt.keyword_location =
+          locationFromToken(statement_ctx->loop_stmt()->LOOP_KW()->getSymbol());
+      line.loop_statement = loop_stmt;
+    } else if (statement_ctx && statement_ctx->endloop_stmt()) {
+      EndLoopStatement endloop_stmt;
+      endloop_stmt.keyword_location = locationFromToken(
+          statement_ctx->endloop_stmt()->ENDLOOP_KW()->getSymbol());
+      line.endloop_statement = endloop_stmt;
     } else if (statement_ctx) {
       for (auto *item_ctx : statement_ctx->item()) {
         if (auto *word_node = item_ctx->WORD()) {
@@ -277,6 +437,34 @@ private:
       }
     } else if (line.assignment.has_value()) {
       line.line_index = line.assignment->location.line;
+    } else if (line.label_definition.has_value()) {
+      line.line_index = line.label_definition->location.line;
+    } else if (line.goto_statement.has_value()) {
+      line.line_index = line.goto_statement->keyword_location.line;
+    } else if (line.if_goto_statement.has_value()) {
+      line.line_index = line.if_goto_statement->keyword_location.line;
+    } else if (line.if_block_start_statement.has_value()) {
+      line.line_index = line.if_block_start_statement->keyword_location.line;
+    } else if (line.else_statement.has_value()) {
+      line.line_index = line.else_statement->keyword_location.line;
+    } else if (line.endif_statement.has_value()) {
+      line.line_index = line.endif_statement->keyword_location.line;
+    } else if (line.while_statement.has_value()) {
+      line.line_index = line.while_statement->keyword_location.line;
+    } else if (line.endwhile_statement.has_value()) {
+      line.line_index = line.endwhile_statement->keyword_location.line;
+    } else if (line.for_statement.has_value()) {
+      line.line_index = line.for_statement->keyword_location.line;
+    } else if (line.endfor_statement.has_value()) {
+      line.line_index = line.endfor_statement->keyword_location.line;
+    } else if (line.repeat_statement.has_value()) {
+      line.line_index = line.repeat_statement->keyword_location.line;
+    } else if (line.until_statement.has_value()) {
+      line.line_index = line.until_statement->keyword_location.line;
+    } else if (line.loop_statement.has_value()) {
+      line.line_index = line.loop_statement->keyword_location.line;
+    } else if (line.endloop_statement.has_value()) {
+      line.line_index = line.endloop_statement->keyword_location.line;
     } else if (line.line_number.has_value()) {
       line.line_index = line.line_number->location.line;
     } else if (line.block_delete_location.has_value()) {

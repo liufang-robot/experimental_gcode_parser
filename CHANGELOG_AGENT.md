@@ -1,5 +1,49 @@
 # CHANGELOG_AGENT
 
+## 2026-03-02 (T-033 expand parse-only control-flow syntax coverage)
+- Extended grammar/parser/AST for Siemens-style control-flow syntax:
+  `GOTOF/GOTOB/GOTO/GOTOC`, richer goto targets, structured
+  `IF/ELSE/ENDIF`, `WHILE/ENDWHILE`, `FOR/ENDFOR`, `REPEAT/UNTIL`,
+  and `LOOP/ENDLOOP`.
+- Added condition-operator parsing for control-flow conditions:
+  `==`, `>`, `<`, `>=`, `<=`, `<>`.
+- Expanded parser tests for jump opcode/target kinds and structured
+  control-flow statement parsing.
+
+SPEC sections / tests:
+- SPEC: Section 3.7 (expanded control-flow syntax), Section 4 wording update
+- Tests: `test/parser_tests.cpp`, `./dev/check.sh`
+
+Known limitations:
+- Control flow remains parse-only in v0 (no runtime branch execution, no label
+  resolution, no packet-level branch semantics).
+- `FOR` syntax currently assumes implicit step `+1` (no explicit `STEP` token).
+
+How to reproduce locally (commands):
+- `ctest --test-dir build --output-on-failure -R ParserControlFlowTest`
+- `./dev/check.sh`
+
+## 2026-03-02 (T-031 parse-only control flow syntax)
+- Added parser support for control-flow statements: label declarations
+  (`<label>:`), `GOTO <label>`, and
+  `IF <expr> THEN GOTO <label> [ELSE GOTO <label>]`.
+- Extended AST with explicit control-flow nodes and surfaced them in parse
+  debug/JSON output.
+- Expanded parser tests to cover `GOTO`, label parsing with underscores, and
+  `IF/THEN/ELSE` jump syntax.
+
+SPEC sections / tests:
+- SPEC: Section 3.7 (new), Section 4 (non-goals wording update)
+- Tests: `test/parser_tests.cpp`, `./dev/check.sh`
+
+Known limitations:
+- Control flow is parse-only in v0; labels are not resolved and no execution
+  or branch semantics are applied in lowering.
+
+How to reproduce locally (commands):
+- `ctest --test-dir build --output-on-failure -R ParserControlFlowTest`
+- `./dev/check.sh`
+
 ## 2026-02-28 (chore ignore generated output directory)
 - Updated `.gitignore` to ignore the full `output/` directory (not just
   `output/bench`) so generated artifacts do not pollute working tree status.
