@@ -1,5 +1,31 @@
 # CHANGELOG_AGENT
 
+## 2026-03-02 (T-032 runtime control-flow executor core)
+- Added control-flow AIL instruction lowering for parsed `label`, `goto`, and
+  `if ... goto` statements.
+- Added runtime `AilExecutor` with async condition-callback contract
+  (`true|false|pending|error`) and executor states
+  (`ready|blocked_on_condition|completed|fault`).
+- Added event/retry unblock behavior for pending branch conditions and
+  `GOTOF/GOTOB/GOTO/GOTOC` target-resolution behavior in executor runtime.
+- Added unit tests for executor completion, unresolved-target fault behavior,
+  non-faulting `GOTOC`, and pending-to-event resume flow.
+
+SPEC sections / tests:
+- SPEC: Section 6.1 (new control-flow executor runtime notes)
+- Tests: `test/ail_tests.cpp`, `test/ail_executor_tests.cpp`, `./dev/check.sh`
+
+Known limitations:
+- Structured block control statements (`IF/ELSE/ENDIF`, `WHILE`, `FOR`,
+  `REPEAT`, `LOOP`) are parse-supported but not yet lowered/executed as runtime
+  control-flow instructions.
+- Condition values are callback-resolved; builtin expression evaluator/runtime
+  variable store is not included in this slice.
+
+How to reproduce locally (commands):
+- `ctest --test-dir build --output-on-failure -R \"AilTest.LowersControlFlowInstructions|AilExecutorTest\"`
+- `./dev/check.sh`
+
 ## 2026-03-02 (T-033 expand parse-only control-flow syntax coverage)
 - Extended grammar/parser/AST for Siemens-style control-flow syntax:
   `GOTOF/GOTOB/GOTO/GOTOC`, richer goto targets, structured

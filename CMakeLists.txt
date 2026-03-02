@@ -135,6 +135,13 @@ target_link_libraries(ail_tests PRIVATE nlohmann_json::nlohmann_json)
 target_include_directories(ail_tests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
 gtest_discover_tests(ail_tests DISCOVERY_MODE PRE_TEST)
 
+add_executable(ail_executor_tests test/ail_executor_tests.cpp)
+target_link_libraries(ail_executor_tests PRIVATE gcode_parser)
+target_link_libraries(ail_executor_tests PRIVATE GTest::gtest_main)
+target_include_directories(ail_executor_tests
+                           PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
+gtest_discover_tests(ail_executor_tests DISCOVERY_MODE PRE_TEST)
+
 add_executable(ail_lowering_tests test/ail_lowering_tests.cpp)
 target_link_libraries(ail_lowering_tests PRIVATE gcode_parser)
 target_link_libraries(ail_lowering_tests PRIVATE GTest::gtest_main)

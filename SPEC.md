@@ -298,6 +298,30 @@ N130 G01 X20 Y20
     Non-motion AIL instructions (for example `assign`) are skipped with a
     warning diagnostic.
 
+### 6.1 Control-Flow AIL and Executor (v0)
+- AIL may include parse-lowered control-flow instructions:
+  - `label`
+  - `goto` (`GOTOF/GOTOB/GOTO/GOTOC`) with target kind metadata
+  - `branch_if` with condition + then/else goto branches
+- Runtime executor API evaluates `branch_if` conditions via callback contract:
+  - callback result states: `true`, `false`, `pending`, `error`
+  - `pending` may include `wait_key` and `retry_at` metadata
+- Executor state model:
+  - `ready`
+  - `blocked_on_condition`
+  - `completed`
+  - `fault`
+- Branch wait/retry behavior:
+  - on `pending`, executor blocks at the branch instruction
+  - resume on matching event (`wait_key`) or retry deadline
+- Target-resolution behavior (v0):
+  - `GOTOF`: forward-only lookup
+  - `GOTOB`: backward-only lookup
+  - `GOTO`: forward first, then backward
+  - `GOTOC`: same search behavior as `GOTO`, but unresolved target does not
+    fault and execution continues
+- Unresolved non-`GOTOC` target is runtime fault.
+
 ## 7. Testing Expectations
 - Golden tests for all examples in `SPEC.md`.
 - CLI tests must cover parse mode and lower mode (`json` + `debug` formats).
