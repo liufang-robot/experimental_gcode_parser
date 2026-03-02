@@ -168,6 +168,12 @@ nlohmann::json instructionToJson(const AilInstruction &instruction) {
           j["source"] = sourceToJson(inst.source);
           j["condition"] = nlohmann::json::object();
           j["condition"]["location"] = locationToJson(inst.condition.location);
+          j["condition"]["raw"] = inst.condition.raw_text;
+          j["condition"]["has_logical_and"] = inst.condition.has_logical_and;
+          j["condition"]["and_terms"] = nlohmann::json::array();
+          for (const auto &term : inst.condition.and_terms_raw) {
+            j["condition"]["and_terms"].push_back(term);
+          }
           j["condition"]["lhs"] = exprToJson(inst.condition.lhs);
           j["condition"]["op"] = inst.condition.op;
           j["condition"]["rhs"] = exprToJson(inst.condition.rhs);

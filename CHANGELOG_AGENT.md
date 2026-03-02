@@ -1,5 +1,27 @@
 # CHANGELOG_AGENT
 
+## 2026-03-02 (T-034 control-flow AND condition parsing)
+- Extended control-flow condition grammar to accept logical `AND` chains and
+  parenthesized condition terms such as
+  `IF (R1 == 1) AND (R2 > 10) ...`.
+- Added condition metadata fields (`raw`, `has_logical_and`, `and_terms`) to
+  AST/AIL JSON output so runtime condition resolvers can evaluate complex
+  expressions externally.
+- Added parser + AIL tests that lock `AND` condition parsing/lowering behavior.
+
+SPEC sections / tests:
+- SPEC: Section 3.7 (condition composition support)
+- Tests: `test/parser_tests.cpp`, `test/ail_tests.cpp`, `./dev/check.sh`
+
+Known limitations:
+- Logical composition currently supports `AND` only in parser grammar.
+- Parenthesized condition groups are preserved as raw terms and are not yet
+  lowered into a fully typed boolean expression tree.
+
+How to reproduce locally (commands):
+- `ctest --test-dir build --output-on-failure -R \"ParserControlFlowTest|AilTest.BranchIfJsonIncludesLogicalAndConditionMetadata\"`
+- `./dev/check.sh`
+
 ## 2026-03-02 (T-032 runtime control-flow executor core)
 - Added control-flow AIL instruction lowering for parsed `label`, `goto`, and
   `if ... goto` statements.

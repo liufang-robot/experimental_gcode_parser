@@ -111,4 +111,21 @@ TEST(AilTest, LowersControlFlowInstructions) {
   EXPECT_EQ(json["instructions"][2]["kind"], "goto");
 }
 
+TEST(AilTest, BranchIfJsonIncludesLogicalAndConditionMetadata) {
+  const auto result = gcode::parseAndLowerAil(
+      "IF (R1 == 1) AND (R2 > 10) GOTOF TARGET\nTARGET:\n");
+  ASSERT_TRUE(result.diagnostics.empty());
+  ASSERT_EQ(result.instructions.size(), 2u);
+  ASSERT_TRUE(std::holds_alternative<gcode::AilBranchIfInstruction>(
+      result.instructions[0]));
+
+  const auto json = nlohmann::json::parse(gcode::ailToJsonString(result));
+  ASSERT_EQ(json["instructions"][0]["kind"], "branch_if");
+  EXPECT_TRUE(
+      json["instructions"][0]["condition"]["has_logical_and"].get<bool>());
+  ASSERT_EQ(json["instructions"][0]["condition"]["and_terms"].size(), 2u);
+  EXPECT_EQ(json["instructions"][0]["condition"]["and_terms"][0], "(R1 == 1)");
+  EXPECT_EQ(json["instructions"][0]["condition"]["and_terms"][1], "(R2 > 10)");
+}
+
 } // namespace

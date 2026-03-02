@@ -95,7 +95,12 @@ endloop_stmt
     ;
 
 condition
+    : first=condition_term (ops+=AND_KW rest+=condition_term)*
+    ;
+
+condition_term
     : lhs=expr (op=comparison_op rhs=expr)?
+    | COMMENT
     ;
 
 comparison_op
@@ -219,6 +224,10 @@ THEN_KW
 
 ELSE_KW
     : [Ee] [Ll] [Ss] [Ee]
+    ;
+
+AND_KW
+    : [Aa] [Nn] [Dd]
     ;
 
 GOTO_KW
