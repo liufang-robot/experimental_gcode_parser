@@ -1,5 +1,26 @@
 # CHANGELOG_AGENT
 
+## 2026-03-02 (T-036 Siemens-style line-number handling)
+- Added semantic diagnostics for `N`-address usage:
+  invalid `N` token forms and misplaced `N` words not at block start.
+- Added duplicate `N`-address warning in parse diagnostics to flag ambiguous
+  line-number jumps.
+- Added executor warning for ambiguous runtime `N`/numeric target resolution
+  (nearest-match policy by search direction), plus coverage tests.
+
+SPEC sections / tests:
+- SPEC: Section 3.1, Section 3.7, Section 6.1
+- Tests: `test/parser_tests.cpp`, `test/ail_tests.cpp`,
+  `test/ail_executor_tests.cpp`, `./dev/check.sh`
+
+Known limitations:
+- Duplicate `N`-address handling is warning-only (allowed by parser).
+- `CALL`/subprogram line-number semantics remain out of scope.
+
+How to reproduce locally (commands):
+- `ctest --test-dir build --output-on-failure -R \"ParserControlFlowTest.*LineNumber|AilTest.KeepsLineNumberInInstructionSourceAndGotoTargetKind|AilExecutorTest.*LineNumber|AilExecutorTest.WarnsWhenDuplicateLineNumbersAreAmbiguous\"`
+- `./dev/check.sh`
+
 ## 2026-03-02 (T-035 structured IF/ELSE/ENDIF lowering to executable AIL)
 - Added structured control-flow lowering for `IF ... ELSE ... ENDIF` blocks in
   AIL lowering, using internal labels/gotos and `branch_if` so runtime executes

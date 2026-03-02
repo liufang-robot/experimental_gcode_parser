@@ -126,10 +126,11 @@ public:
 
 private:
   std::optional<size_t> resolveGotoTarget(size_t current_index,
-                                          const AilGotoInstruction &inst) const;
+                                          const AilGotoInstruction &inst);
   bool evaluateBranchAtPc(int64_t now_ms, const ConditionResolver &resolver);
   bool advanceOneInstruction(int64_t now_ms, const ConditionResolver &resolver);
   void addFault(const SourceInfo &source, const std::string &message);
+  void addWarning(const SourceInfo &source, const std::string &message);
 
   std::vector<AilInstruction> instructions_;
   std::unordered_map<std::string, std::vector<size_t>> label_positions_;

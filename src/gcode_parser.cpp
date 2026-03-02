@@ -440,6 +440,18 @@ private:
           line.items.emplace_back(std::move(word));
           continue;
         }
+        if (auto *line_number_node = item_ctx->LINE_NUMBER()) {
+          auto *token = line_number_node->getSymbol();
+          Word word;
+          word.text = token->getText();
+          word.location = locationFromToken(token);
+          auto parts = splitWordText(word.text);
+          word.head = toUpper(parts.head);
+          word.value = parts.value;
+          word.has_equal = parts.has_equal;
+          line.items.emplace_back(std::move(word));
+          continue;
+        }
         if (auto *comment_node = item_ctx->COMMENT()) {
           auto *token = comment_node->getSymbol();
           Comment comment;

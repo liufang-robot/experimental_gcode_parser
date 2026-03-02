@@ -1,6 +1,8 @@
 #include "semantic_rules.h"
 
+#include <cctype>
 #include <memory>
+#include <unordered_map>
 #include <vector>
 
 #include "lowering_family_common.h"
@@ -49,6 +51,18 @@ void addDiagnostic(std::vector<Diagnostic> *diagnostics, const Location &loc,
   diag.message = message;
   diag.location = loc;
   diagnostics->push_back(std::move(diag));
+}
+
+bool isUnsignedIntegerText(const std::string &text) {
+  if (text.empty()) {
+    return false;
+  }
+  for (char c : text) {
+    if (!std::isdigit(static_cast<unsigned char>(c))) {
+      return false;
+    }
+  }
+  return true;
 }
 
 class MotionExclusivityRule final : public LineSemanticRule {
@@ -197,11 +211,36 @@ public:
   }
 };
 
+class LineNumberWordRule final : public LineSemanticRule {
+public:
+  void apply(const Line &line,
+             std::vector<Diagnostic> *diagnostics) const override {
+    for (const auto &item : line.items) {
+      if (!std::holds_alternative<Word>(item)) {
+        continue;
+      }
+      const auto &word = std::get<Word>(item);
+      if (word.head != "N") {
+        continue;
+      }
+      if (!word.value.has_value() || !isUnsignedIntegerText(*word.value)) {
+        addDiagnostic(diagnostics, word.location,
+                      "invalid N-address; use unsigned integer form like N100");
+        return;
+      }
+      addDiagnostic(diagnostics, word.location,
+                    "N-address must be at block start (before statement)");
+      return;
+    }
+  }
+};
+
 std::vector<std::unique_ptr<LineSemanticRule>> makeRules() {
   std::vector<std::unique_ptr<LineSemanticRule>> rules;
   rules.push_back(std::make_unique<G4BlockRule>());
   rules.push_back(std::make_unique<MotionExclusivityRule>());
   rules.push_back(std::make_unique<G1CoordinateModeRule>());
+  rules.push_back(std::make_unique<LineNumberWordRule>());
   return rules;
 }
 
@@ -209,7 +248,47 @@ std::vector<std::unique_ptr<LineSemanticRule>> makeRules() {
 
 void addSemanticDiagnostics(ParseResult &result) {
   auto rules = makeRules();
+  std::unordered_map<int, Location> first_line_number_at;
+  bool has_line_number_target_jump = false;
   for (const auto &line : result.program.lines) {
+    if (line.goto_statement.has_value()) {
+      const auto &target_kind = line.goto_statement->target_kind;
+      if (target_kind == "line_number" || target_kind == "number") {
+        has_line_number_target_jump = true;
+        break;
+      }
+    }
+    if (line.if_goto_statement.has_value()) {
+      const auto &then_kind = line.if_goto_statement->then_branch.target_kind;
+      if (then_kind == "line_number" || then_kind == "number") {
+        has_line_number_target_jump = true;
+        break;
+      }
+      if (line.if_goto_statement->else_branch.has_value()) {
+        const auto &else_kind =
+            line.if_goto_statement->else_branch->target_kind;
+        if (else_kind == "line_number" || else_kind == "number") {
+          has_line_number_target_jump = true;
+          break;
+        }
+      }
+    }
+  }
+
+  for (const auto &line : result.program.lines) {
+    if (has_line_number_target_jump && line.line_number.has_value()) {
+      const int n = line.line_number->value;
+      const auto [it, inserted] =
+          first_line_number_at.emplace(n, line.line_number->location);
+      if (!inserted) {
+        Diagnostic diag;
+        diag.severity = Diagnostic::Severity::Warning;
+        diag.message = "duplicate N-address N" + std::to_string(n) +
+                       "; jumps by line number may be ambiguous";
+        diag.location = line.line_number->location;
+        result.diagnostics.push_back(std::move(diag));
+      }
+    }
     for (const auto &rule : rules) {
       const size_t before = result.diagnostics.size();
       rule->apply(line, &result.diagnostics);

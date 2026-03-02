@@ -133,6 +133,38 @@ TEST(ParserControlFlowTest, ParsesGotoTargetKinds) {
   EXPECT_EQ(result.program.lines[2].goto_statement->target, "$DEST");
 }
 
+TEST(ParserControlFlowTest, ParsesLineNumberAtBlockStart) {
+  const auto result = gcode::parse("N100 G1 X1\n");
+  ASSERT_TRUE(result.diagnostics.empty());
+  ASSERT_EQ(result.program.lines.size(), 1u);
+  ASSERT_TRUE(result.program.lines[0].line_number.has_value());
+  EXPECT_EQ(result.program.lines[0].line_number->value, 100);
+}
+
+TEST(ParserControlFlowTest, ReportsMisplacedOrInvalidNAddressWord) {
+  {
+    const auto result = gcode::parse("G1 N100 X1\n");
+    ASSERT_FALSE(result.diagnostics.empty());
+    EXPECT_NE(result.diagnostics[0].message.find("block start"),
+              std::string::npos);
+  }
+  {
+    const auto result = gcode::parse("G1 N-1 X1\n");
+    ASSERT_FALSE(result.diagnostics.empty());
+    EXPECT_NE(result.diagnostics[0].message.find("syntax error"),
+              std::string::npos);
+  }
+}
+
+TEST(ParserControlFlowTest, WarnsOnDuplicateLineNumbers) {
+  const auto result = gcode::parse("N100 G1 X1\nN100 G1 X2\nGOTO N100\n");
+  ASSERT_EQ(result.diagnostics.size(), 1u);
+  EXPECT_EQ(result.diagnostics[0].severity,
+            gcode::Diagnostic::Severity::Warning);
+  EXPECT_NE(result.diagnostics[0].message.find("duplicate N-address"),
+            std::string::npos);
+}
+
 TEST(ParserControlFlowTest, ParsesStructuredControlFlowStatements) {
   const auto result = gcode::parse(
       "IF R1 == 1\nELSE\nENDIF\nWHILE R1 < 10\nENDWHILE\nFOR R2 = 0 TO 3\n"

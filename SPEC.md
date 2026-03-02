@@ -77,6 +77,7 @@ AST shape (v0.1):
 - Optional line number: `N` + integer
 - One motion command per line (GGroup1)
 - Word letters are case-insensitive (`x` == `X`, `g1` == `G1`).
+- `N`-address block number must appear at block start (before statement words).
 
 ### 3.2 Numbers
 - Integers: `0`, `10`, `-3`, `+7`
@@ -191,6 +192,8 @@ R1 = $P_ACT_X + 2*R2
   - Parenthesized terms are accepted in control-flow conditions and preserved
     as raw condition terms for runtime resolver handling.
 - Label names follow word-style identifiers and may include underscores.
+- Duplicate `N` line numbers are accepted with warning; jumps by line number may
+  become ambiguous and runtime uses directional nearest-match policy.
 - Parser behavior in v0 is syntax-only: labels are not resolved and control
   flow is not executed.
 
@@ -329,6 +332,8 @@ N130 G01 X20 Y20
   - `GOTO`: forward first, then backward
   - `GOTOC`: same search behavior as `GOTO`, but unresolved target does not
     fault and execution continues
+- For `N`/numeric targets with multiple candidates in the chosen search
+  direction, runtime selects nearest match and emits warning diagnostic.
 - Unresolved non-`GOTOC` target is runtime fault.
 
 ## 7. Testing Expectations

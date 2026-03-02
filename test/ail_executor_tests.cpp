@@ -131,4 +131,44 @@ TEST(AilExecutorTest, StructuredIfElseExecutesSingleBranchAtRuntime) {
             visited_false.end());
 }
 
+TEST(AilExecutorTest, ResolvesDirectionalGotoByLineNumber) {
+  const auto lowered = gcode::parseAndLowerAil(
+      "N100 G1 X1\nGOTOF N300\nN200 G1 X2\nN300 G1 X3\n");
+  gcode::AilExecutor exec(lowered.instructions);
+
+  const auto resolver = [](const gcode::Condition &,
+                           const gcode::SourceInfo &) {
+    gcode::ConditionResolution r;
+    r.kind = gcode::ConditionResolutionKind::False;
+    return r;
+  };
+
+  ASSERT_TRUE(exec.step(0, resolver)); // N100 move
+  ASSERT_EQ(exec.state().pc, 1u);
+  ASSERT_TRUE(exec.step(0, resolver)); // GOTOF N300
+  ASSERT_EQ(exec.state().pc, 3u);
+}
+
+TEST(AilExecutorTest, WarnsWhenDuplicateLineNumbersAreAmbiguous) {
+  const auto lowered = gcode::parseAndLowerAil(
+      "N100 G1 X1\nN200 GOTO N300\nN300 G1 X2\nN300 G1 X3\n");
+  gcode::AilExecutor exec(lowered.instructions);
+
+  const auto resolver = [](const gcode::Condition &,
+                           const gcode::SourceInfo &) {
+    gcode::ConditionResolution r;
+    r.kind = gcode::ConditionResolutionKind::False;
+    return r;
+  };
+
+  ASSERT_TRUE(exec.step(0, resolver)); // N100 move
+  ASSERT_TRUE(exec.step(0, resolver)); // GOTO N300 (ambiguous forward)
+  ASSERT_FALSE(exec.diagnostics().empty());
+  EXPECT_EQ(exec.diagnostics().back().severity,
+            gcode::Diagnostic::Severity::Warning);
+  EXPECT_NE(
+      exec.diagnostics().back().message.find("multiple forward blocks match"),
+      std::string::npos);
+}
+
 } // namespace

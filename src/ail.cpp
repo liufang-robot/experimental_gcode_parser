@@ -308,9 +308,19 @@ void AilExecutor::addFault(const SourceInfo &source,
   diagnostics_.push_back(std::move(diag));
 }
 
+void AilExecutor::addWarning(const SourceInfo &source,
+                             const std::string &message) {
+  Diagnostic diag;
+  diag.severity = Diagnostic::Severity::Warning;
+  diag.message = message;
+  diag.location.line = source.line;
+  diag.location.column = 1;
+  diagnostics_.push_back(std::move(diag));
+}
+
 std::optional<size_t>
 AilExecutor::resolveGotoTarget(size_t current_index,
-                               const AilGotoInstruction &inst) const {
+                               const AilGotoInstruction &inst) {
   std::vector<size_t> candidates;
   if (inst.target_kind == "label") {
     auto it = label_positions_.find(inst.target);
@@ -371,13 +381,64 @@ AilExecutor::resolveGotoTarget(size_t current_index,
   };
 
   if (inst.opcode == "GOTOF") {
+    size_t count = 0;
+    for (size_t idx : candidates) {
+      if (idx > current_index) {
+        ++count;
+      }
+    }
+    if (count > 1 &&
+        (inst.target_kind == "line_number" || inst.target_kind == "number")) {
+      addWarning(inst.source, "multiple forward blocks match target " +
+                                  inst.target +
+                                  "; using nearest forward block");
+    }
     return pick_forward();
   }
   if (inst.opcode == "GOTOB") {
+    size_t count = 0;
+    for (size_t idx : candidates) {
+      if (idx < current_index) {
+        ++count;
+      }
+    }
+    if (count > 1 &&
+        (inst.target_kind == "line_number" || inst.target_kind == "number")) {
+      addWarning(inst.source, "multiple backward blocks match target " +
+                                  inst.target +
+                                  "; using nearest backward block");
+    }
     return pick_backward();
   }
   if (inst.opcode == "GOTO" || inst.opcode == "GOTOC") {
     auto forward = pick_forward();
+    if (forward.has_value()) {
+      size_t count = 0;
+      for (size_t idx : candidates) {
+        if (idx > current_index) {
+          ++count;
+        }
+      }
+      if (count > 1 &&
+          (inst.target_kind == "line_number" || inst.target_kind == "number")) {
+        addWarning(inst.source, "multiple forward blocks match target " +
+                                    inst.target +
+                                    "; using nearest forward block");
+      }
+    } else {
+      size_t count = 0;
+      for (size_t idx : candidates) {
+        if (idx < current_index) {
+          ++count;
+        }
+      }
+      if (count > 1 &&
+          (inst.target_kind == "line_number" || inst.target_kind == "number")) {
+        addWarning(inst.source, "multiple backward blocks match target " +
+                                    inst.target +
+                                    "; using nearest backward block");
+      }
+    }
     if (forward.has_value()) {
       return forward;
     }

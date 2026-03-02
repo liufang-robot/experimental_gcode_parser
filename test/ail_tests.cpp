@@ -157,4 +157,24 @@ TEST(AilTest, StructuredIfElseLowersToBranchGotoAndLabels) {
       result.instructions[6]));
 }
 
+TEST(AilTest, KeepsLineNumberInInstructionSourceAndGotoTargetKind) {
+  const auto result = gcode::parseAndLowerAil("N100 G1 X1\nGOTOF N100\n");
+  ASSERT_TRUE(result.diagnostics.empty());
+  ASSERT_EQ(result.instructions.size(), 2u);
+  ASSERT_TRUE(std::holds_alternative<gcode::AilLinearMoveInstruction>(
+      result.instructions[0]));
+  ASSERT_TRUE(std::holds_alternative<gcode::AilGotoInstruction>(
+      result.instructions[1]));
+
+  const auto &move =
+      std::get<gcode::AilLinearMoveInstruction>(result.instructions[0]);
+  ASSERT_TRUE(move.source.line_number.has_value());
+  EXPECT_EQ(*move.source.line_number, 100);
+
+  const auto &jump =
+      std::get<gcode::AilGotoInstruction>(result.instructions[1]);
+  EXPECT_EQ(jump.target_kind, "line_number");
+  EXPECT_EQ(jump.target, "N100");
+}
+
 } // namespace
