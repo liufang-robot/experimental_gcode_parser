@@ -159,6 +159,7 @@ line_number
 
 item
     : WORD
+    | LINE_NUMBER
     | COMMENT
     ;
 
