@@ -90,4 +90,25 @@ TEST(AilTest, AssignmentProducesTypedExpressionTree) {
   EXPECT_EQ(json["instructions"][0]["rhs"]["kind"], "binary");
 }
 
+TEST(AilTest, LowersControlFlowInstructions) {
+  const auto result = gcode::parseAndLowerAil(
+      "START:\nIF R1 == 1 GOTOF END\nGOTO START\nEND:\n");
+  ASSERT_TRUE(result.diagnostics.empty());
+  ASSERT_EQ(result.instructions.size(), 4u);
+  EXPECT_TRUE(std::holds_alternative<gcode::AilLabelInstruction>(
+      result.instructions[0]));
+  EXPECT_TRUE(std::holds_alternative<gcode::AilBranchIfInstruction>(
+      result.instructions[1]));
+  EXPECT_TRUE(std::holds_alternative<gcode::AilGotoInstruction>(
+      result.instructions[2]));
+  EXPECT_TRUE(std::holds_alternative<gcode::AilLabelInstruction>(
+      result.instructions[3]));
+
+  const auto json = nlohmann::json::parse(gcode::ailToJsonString(result));
+  ASSERT_EQ(json["instructions"].size(), 4u);
+  EXPECT_EQ(json["instructions"][0]["kind"], "label");
+  EXPECT_EQ(json["instructions"][1]["kind"], "branch_if");
+  EXPECT_EQ(json["instructions"][2]["kind"], "goto");
+}
+
 } // namespace

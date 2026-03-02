@@ -207,6 +207,21 @@ std::string formatAilDebug(const gcode::AilResult &result) {
                                               gcode::AilAssignInstruction>) {
             out << " kind=assign lhs=" << i.lhs << " rhs=\""
                 << exprToDebugText(i.rhs) << "\"";
+          } else if constexpr (std::is_same_v<std::decay_t<decltype(i)>,
+                                              gcode::AilLabelInstruction>) {
+            out << " kind=label name=" << i.name;
+          } else if constexpr (std::is_same_v<std::decay_t<decltype(i)>,
+                                              gcode::AilGotoInstruction>) {
+            out << " kind=goto opcode=" << i.opcode << " target=" << i.target
+                << " target_kind=" << i.target_kind;
+          } else if constexpr (std::is_same_v<std::decay_t<decltype(i)>,
+                                              gcode::AilBranchIfInstruction>) {
+            out << " kind=branch_if then_opcode=" << i.then_branch.opcode
+                << " then_target=" << i.then_branch.target;
+            if (i.else_branch.has_value()) {
+              out << " else_opcode=" << i.else_branch->opcode
+                  << " else_target=" << i.else_branch->target;
+            }
           } else {
             out << " kind=sync tag=" << i.sync_tag;
           }

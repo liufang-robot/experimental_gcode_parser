@@ -153,6 +153,36 @@ nlohmann::json instructionToJson(const AilInstruction &instruction) {
           j["source"] = sourceToJson(inst.source);
           j["lhs"] = inst.lhs;
           j["rhs"] = exprToJson(inst.rhs);
+        } else if constexpr (std::is_same_v<T, AilLabelInstruction>) {
+          j["kind"] = "label";
+          j["source"] = sourceToJson(inst.source);
+          j["name"] = inst.name;
+        } else if constexpr (std::is_same_v<T, AilGotoInstruction>) {
+          j["kind"] = "goto";
+          j["source"] = sourceToJson(inst.source);
+          j["opcode"] = inst.opcode;
+          j["target"] = inst.target;
+          j["target_kind"] = inst.target_kind;
+        } else if constexpr (std::is_same_v<T, AilBranchIfInstruction>) {
+          j["kind"] = "branch_if";
+          j["source"] = sourceToJson(inst.source);
+          j["condition"] = nlohmann::json::object();
+          j["condition"]["location"] = locationToJson(inst.condition.location);
+          j["condition"]["lhs"] = exprToJson(inst.condition.lhs);
+          j["condition"]["op"] = inst.condition.op;
+          j["condition"]["rhs"] = exprToJson(inst.condition.rhs);
+          j["then"] = nlohmann::json::object();
+          j["then"]["opcode"] = inst.then_branch.opcode;
+          j["then"]["target"] = inst.then_branch.target;
+          j["then"]["target_kind"] = inst.then_branch.target_kind;
+          if (inst.else_branch.has_value()) {
+            j["else"] = nlohmann::json::object();
+            j["else"]["opcode"] = inst.else_branch->opcode;
+            j["else"]["target"] = inst.else_branch->target;
+            j["else"]["target_kind"] = inst.else_branch->target_kind;
+          } else {
+            j["else"] = nullptr;
+          }
         } else {
           j["kind"] = "sync";
           j["source"] = sourceToJson(inst.source);
