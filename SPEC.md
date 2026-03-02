@@ -186,6 +186,10 @@ R1 = $P_ACT_X + 2*R2
   - `LOOP` ... `ENDLOOP`
 - Supported condition operators:
   - `==`, `>`, `<`, `>=`, `<=`, `<>`
+- Supported logical composition (v0 parser):
+  - `AND` across condition terms (for example `IF (R1 == 1) AND (R2 > 10)`)
+  - Parenthesized terms are accepted in control-flow conditions and preserved
+    as raw condition terms for runtime resolver handling.
 - Label names follow word-style identifiers and may include underscores.
 - Parser behavior in v0 is syntax-only: labels are not resolved and control
   flow is not executed.

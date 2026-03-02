@@ -75,6 +75,9 @@ struct Condition {
   std::shared_ptr<ExprNode> lhs;
   std::string op;
   std::shared_ptr<ExprNode> rhs;
+  std::string raw_text;
+  bool has_logical_and = false;
+  std::vector<std::string> and_terms_raw;
   Location location;
 };
 

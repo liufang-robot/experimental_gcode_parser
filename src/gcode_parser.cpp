@@ -172,12 +172,32 @@ private:
   Condition buildCondition(GCodeParser::ConditionContext *ctx) {
     Condition condition;
     condition.location = locationFromToken(ctx->getStart());
-    condition.lhs = buildExpr(ctx->lhs);
-    if (ctx->rhs) {
-      condition.rhs = buildExpr(ctx->rhs);
+    condition.raw_text = ctx->getText();
+    condition.has_logical_and = !ctx->ops.empty();
+
+    auto append_term = [&](GCodeParser::Condition_termContext *term_ctx) {
+      if (!term_ctx) {
+        return;
+      }
+      condition.and_terms_raw.push_back(term_ctx->getText());
+      if (term_ctx->lhs && !condition.lhs) {
+        condition.lhs = buildExpr(term_ctx->lhs);
+        if (term_ctx->rhs) {
+          condition.rhs = buildExpr(term_ctx->rhs);
+        }
+        if (term_ctx->op) {
+          condition.op = term_ctx->op->getText();
+        }
+      }
+    };
+
+    append_term(ctx->first);
+    for (auto *term_ctx : ctx->rest) {
+      append_term(term_ctx);
     }
-    if (ctx->op) {
-      condition.op = ctx->op->getText();
+
+    if (condition.and_terms_raw.empty()) {
+      condition.and_terms_raw.push_back(condition.raw_text);
     }
     return condition;
   }

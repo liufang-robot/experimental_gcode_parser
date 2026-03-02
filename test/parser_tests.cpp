@@ -153,4 +153,20 @@ TEST(ParserControlFlowTest, ParsesStructuredControlFlowStatements) {
   EXPECT_TRUE(result.program.lines[10].endloop_statement.has_value());
 }
 
+TEST(ParserControlFlowTest, ParsesStructuredIfWithAndParenthesizedConditions) {
+  const auto result = gcode::parse(
+      "IF (R1 == 1) AND (R2 > 10)\nG1 Z-5 F10\nELSE\nG0 X0 Y5\nENDIF\n");
+  ASSERT_TRUE(result.diagnostics.empty());
+  ASSERT_EQ(result.program.lines.size(), 5u);
+  ASSERT_TRUE(result.program.lines[0].if_block_start_statement.has_value());
+
+  const auto &condition =
+      result.program.lines[0].if_block_start_statement->condition;
+  EXPECT_TRUE(condition.has_logical_and);
+  ASSERT_EQ(condition.and_terms_raw.size(), 2u);
+  EXPECT_EQ(condition.and_terms_raw[0], "(R1 == 1)");
+  EXPECT_EQ(condition.and_terms_raw[1], "(R2 > 10)");
+  EXPECT_EQ(condition.raw_text, "(R1 == 1)AND(R2 > 10)");
+}
+
 } // namespace

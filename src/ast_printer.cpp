@@ -55,6 +55,12 @@ nlohmann::json exprToJson(const std::shared_ptr<ExprNode> &expr) {
 nlohmann::json conditionToJson(const Condition &condition) {
   nlohmann::json j;
   j["location"] = locationToJson(condition.location);
+  j["raw"] = condition.raw_text;
+  j["has_logical_and"] = condition.has_logical_and;
+  j["and_terms"] = nlohmann::json::array();
+  for (const auto &term : condition.and_terms_raw) {
+    j["and_terms"].push_back(term);
+  }
   j["lhs"] = exprToJson(condition.lhs);
   if (!condition.op.empty()) {
     j["op"] = condition.op;
