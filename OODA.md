@@ -61,6 +61,11 @@ A PR can merge only if all are true:
 - No unresolved P0/P1 concerns introduced by the PR.
 - SPEC/tests/changelog requirements are satisfied.
 - Scope is a single coherent backlog slice.
+- Human reviewer/user explicitly requests merge approval.
+
+Agent workflow rule:
+- The agent may create PRs, but must not execute merge until the user explicitly
+  asks to merge that specific PR.
 
 ## Definition of Done
 A task is done only when:
