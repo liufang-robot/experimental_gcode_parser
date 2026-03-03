@@ -9,6 +9,9 @@
 - Added SPEC policy reminder that feature/function PRs must update program
   reference docs in the same PR (`PROGRAM_REFERENCE.md` and/or
   `docs/src/program_reference.md`).
+- Synced both program-reference documents to current implemented behavior for
+  comments, line numbers, skip levels, control-flow/runtime boundaries, and
+  parse/lower options.
 
 SPEC sections / tests:
 - SPEC: Section 2.1

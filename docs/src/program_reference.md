@@ -34,11 +34,30 @@ Current Siemens-aligned baseline for supported functions:
 | `G2` arc CW | Implemented | Emits `G2Message` with endpoint + arc fields + feed. |
 | `G3` arc CCW | Implemented | Emits `G3Message` with endpoint + arc fields + feed. |
 | `G4` dwell | Implemented | Emits `G4Message` with dwell mode/value. |
-| `R... = expr` assignment | Partial | Parsed into AIL assignment instruction; not yet evaluated/runtime-applied. |
+| `R... = expr` assignment | Partial | Parsed and lowered to AIL `assign`; runtime evaluation/store policy not implemented. |
+| `N...` line number at block start | Implemented | Parsed into source metadata; duplicate-warning support for line-number jumps. |
+| Block delete `/` and `/0.. /9` | Implemented | Parsed with skip level metadata; skip policy applied by `LowerOptions.active_skip_levels`. |
+| `GOTO/GOTOF/GOTOB/GOTOC` + labels | Implemented | Parsed, lowered to AIL, and executable in `AilExecutor`. |
+| `IF cond GOTO ... [ELSE GOTO ...]` | Implemented | Parsed/lowered to AIL `branch_if`; runtime resolver decides branch. |
+| Structured `IF/ELSE/ENDIF` | Implemented | Parsed and lowered into label/goto control-flow pattern; runtime executes one branch. |
+| `WHILE/ENDWHILE`, `FOR/ENDFOR`, `REPEAT/UNTIL`, `LOOP/ENDLOOP` | Partial | Parse-only in current implementation (no lowering/executor semantics yet). |
+| Comments `;...`, `( ... )`, `(* ... *)` | Implemented | Preserved as comment items in parse output. |
+| Comments `// ...` | Partial | Supported only when `ParseOptions.enable_double_slash_comments=true`; error by default. |
 | Subprogram call by name (`THE_SHAPE`, `"THE_SHAPE"`) | Planned | Siemens-style call model planned; parser/runtime integration pending. |
 | Subprogram repeat (`P=<n> NAME`, `NAME P<n>`) | Planned | Repeat-count call semantics planned. |
 | Subprogram return (`M17` baseline, `RET` optional) | Planned | Return-to-caller runtime semantics planned. |
 | ISO compat call (`M98 P...`) | Planned | Enabled only by ISO-compatibility profile option. |
+
+## Parse/Lower Options
+
+- Parse options:
+  - `ParseOptions.enable_double_slash_comments`
+    - `false` (default): `// ...` emits diagnostic
+    - `true`: `// ...` is accepted as comment
+- Lower options:
+  - `LowerOptions.active_skip_levels`
+    - block-delete lines (`/` => level `0`, `/n` => level `n`) are skipped when
+      level is active
 
 ## Motion Packets
 
@@ -110,8 +129,42 @@ Output fields:
 
 - source: filename/line/line_number
 - modal: `group=GGroup2`, `code=G4`, `updates_state=false`
-- dwell_mode: `Seconds` (F) or `SpindleRevolutions` (S)
+- dwell_mode: `seconds` (F) or `revolutions` (S)
 - dwell_value: numeric value
+
+## Control Flow and AIL Runtime
+
+Implemented behavior:
+
+- `GOTO` target search:
+  - `GOTOF`: forward only
+  - `GOTOB`: backward only
+  - `GOTO`: forward then backward
+  - `GOTOC`: same search as `GOTO`, unresolved target does not fault
+- Target kinds:
+  - label, `N` line-number, numeric line-number, system-variable token target
+- `AilExecutor` branch resolver contract:
+  - callback returns `true`, `false`, `pending`, or `error`
+  - `pending` supports `wait_key` and retry timestamp
+- Structured `IF/ELSE/ENDIF` lowering:
+  - lowered to `branch_if` + internal labels + gotos (Lua-style chunk lowering)
+
+Current limitations:
+
+- Loop-family statements (`WHILE/FOR/REPEAT/LOOP`) are parse-only for now.
+- System-variable live evaluation is runtime-resolver responsibility and not
+  implemented inside parser/lowering.
+
+## Parser Diagnostics Highlights
+
+Implemented checks include:
+
+- block length limit: 512 chars including LF
+- invalid skip-level value (`/0.. /9` enforced)
+- invalid/misplaced `N` address words
+- duplicate `N` warning when line-number jumps are present
+- `G4` block-shape checks
+- assignment-shape baseline (`AP90` rejected; `AP=90`, `X1=10` accepted)
 
 ## Test References
 
