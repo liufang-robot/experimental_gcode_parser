@@ -4,6 +4,7 @@
 
 namespace gcode {
 
-void addSemanticDiagnostics(ParseResult &result);
+void addSemanticDiagnostics(ParseResult &result,
+                            bool enable_double_slash_comments);
 
 } // namespace gcode

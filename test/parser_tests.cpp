@@ -275,4 +275,25 @@ TEST(ParserSyntaxBaselineTest, ReportsUnclosedBlockComment) {
             std::string::npos);
 }
 
+TEST(ParserSyntaxBaselineTest, ReportsDoubleSlashCommentWhenModeDisabled) {
+  const auto result = gcode::parse("G1 X10 // trailing\n");
+  ASSERT_EQ(result.diagnostics.size(), 1u);
+  EXPECT_NE(result.diagnostics[0].message.find("double-slash comments require"),
+            std::string::npos);
+}
+
+TEST(ParserSyntaxBaselineTest, AcceptsDoubleSlashCommentWhenModeEnabled) {
+  gcode::ParseOptions options;
+  options.enable_double_slash_comments = true;
+  const auto result = gcode::parse("G1 X10 // trailing\n", options);
+  ASSERT_TRUE(result.diagnostics.empty());
+  ASSERT_EQ(result.program.lines.size(), 1u);
+  ASSERT_EQ(result.program.lines[0].items.size(), 3u);
+  ASSERT_TRUE(
+      std::holds_alternative<gcode::Comment>(result.program.lines[0].items[2]));
+  const auto &comment =
+      std::get<gcode::Comment>(result.program.lines[0].items[2]);
+  EXPECT_EQ(comment.text, "// trailing");
+}
+
 } // namespace

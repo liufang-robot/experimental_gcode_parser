@@ -283,7 +283,35 @@ public:
   }
 };
 
-std::vector<std::unique_ptr<LineSemanticRule>> makeRules() {
+class DoubleSlashCommentRule final : public LineSemanticRule {
+public:
+  explicit DoubleSlashCommentRule(bool enabled) : enabled_(enabled) {}
+
+  void apply(const Line &line,
+             std::vector<Diagnostic> *diagnostics) const override {
+    if (enabled_) {
+      return;
+    }
+    for (const auto &item : line.items) {
+      if (!std::holds_alternative<Comment>(item)) {
+        continue;
+      }
+      const auto &comment = std::get<Comment>(item);
+      if (comment.text.rfind("//", 0) != 0) {
+        continue;
+      }
+      addDiagnostic(diagnostics, comment.location,
+                    "double-slash comments require compatibility mode");
+      return;
+    }
+  }
+
+private:
+  bool enabled_ = false;
+};
+
+std::vector<std::unique_ptr<LineSemanticRule>>
+makeRules(bool enable_double_slash_comments) {
   std::vector<std::unique_ptr<LineSemanticRule>> rules;
   rules.push_back(std::make_unique<G4BlockRule>());
   rules.push_back(std::make_unique<MotionExclusivityRule>());
@@ -291,13 +319,16 @@ std::vector<std::unique_ptr<LineSemanticRule>> makeRules() {
   rules.push_back(std::make_unique<LineNumberWordRule>());
   rules.push_back(std::make_unique<BlockSkipLevelRule>());
   rules.push_back(std::make_unique<AssignmentShapeRule>());
+  rules.push_back(
+      std::make_unique<DoubleSlashCommentRule>(enable_double_slash_comments));
   return rules;
 }
 
 } // namespace
 
-void addSemanticDiagnostics(ParseResult &result) {
-  auto rules = makeRules();
+void addSemanticDiagnostics(ParseResult &result,
+                            bool enable_double_slash_comments) {
+  auto rules = makeRules(enable_double_slash_comments);
   std::unordered_map<int, Location> first_line_number_at;
   bool has_line_number_target_jump = false;
   for (const auto &line : result.program.lines) {

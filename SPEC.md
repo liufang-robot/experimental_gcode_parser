@@ -18,8 +18,9 @@ validation). It includes message-level modal metadata for supported functions.
   - Parentheses: `( ... )` with no nesting
 - Siemens comment compatibility (v0 current subset):
   - Block section: `(* ... *)` (multi-line)
-- Comments (planned Siemens compatibility mode; see PRD 5.3):
-  - Optional single-line: `// ...` (disabled by default unless enabled by config)
+- Optional Siemens compatibility mode:
+  - Single-line: `// ...` (disabled by default; enable via
+    `ParseOptions.enable_double_slash_comments`)
 
 ### 2.2 Output (Library + CLI)
 The parser returns:
