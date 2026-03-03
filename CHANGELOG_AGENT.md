@@ -6,6 +6,9 @@
   rejected by default, accepted when the option is enabled.
 - Added parser tests for disabled/enabled `//` behavior and preserved comment
   text.
+- Added SPEC policy reminder that feature/function PRs must update program
+  reference docs in the same PR (`PROGRAM_REFERENCE.md` and/or
+  `docs/src/program_reference.md`).
 
 SPEC sections / tests:
 - SPEC: Section 2.1

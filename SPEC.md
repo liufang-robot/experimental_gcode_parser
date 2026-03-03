@@ -475,6 +475,10 @@ mdBook documentation under:
 - Product-level goals, scope, and public API expectations in `PRD.md`.
 
 Requirements:
+- Every feature/function PR must update the program reference in the same PR:
+  - `PROGRAM_REFERENCE.md` (repo root reference)
+  - and/or `docs/src/program_reference.md` (mdBook reference)
+  If behavior is unchanged, explicitly state "no program-reference change" in PR.
 - The program reference must describe currently implemented parser/lowering behavior,
   not only planned behavior.
 - Every documented command/function must include a status:
