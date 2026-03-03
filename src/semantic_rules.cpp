@@ -257,6 +257,32 @@ public:
   }
 };
 
+class AssignmentShapeRule final : public LineSemanticRule {
+public:
+  void apply(const Line &line,
+             std::vector<Diagnostic> *diagnostics) const override {
+    for (const auto &item : line.items) {
+      if (!std::holds_alternative<Word>(item)) {
+        continue;
+      }
+      const auto &word = std::get<Word>(item);
+      if (!word.value.has_value()) {
+        continue;
+      }
+      if (word.has_equal) {
+        continue;
+      }
+      if (word.head.size() <= 1) {
+        continue;
+      }
+      addDiagnostic(
+          diagnostics, word.location,
+          "use '=' for multi-letter or numeric-extension address values");
+      return;
+    }
+  }
+};
+
 std::vector<std::unique_ptr<LineSemanticRule>> makeRules() {
   std::vector<std::unique_ptr<LineSemanticRule>> rules;
   rules.push_back(std::make_unique<G4BlockRule>());
@@ -264,6 +290,7 @@ std::vector<std::unique_ptr<LineSemanticRule>> makeRules() {
   rules.push_back(std::make_unique<G1CoordinateModeRule>());
   rules.push_back(std::make_unique<LineNumberWordRule>());
   rules.push_back(std::make_unique<BlockSkipLevelRule>());
+  rules.push_back(std::make_unique<AssignmentShapeRule>());
   return rules;
 }
 

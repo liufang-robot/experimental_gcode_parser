@@ -175,15 +175,18 @@ Example:
 R1 = $P_ACT_X + 2*R2
 ```
 
+Implemented Siemens baseline checks:
+- require `=` for multi-letter or numeric-extension address values
+  (for example `AP=90`, `X1=10`; `AP90` is rejected)
+- single-letter + single-constant omission remains accepted
+  (for example `X10`, `F100`)
+
 Planned Siemens compatibility extension:
 - add structured variable references for:
   - user-defined variables (baseline `R...`)
   - system variables with selectors (`$...` + bracket arguments)
 - preserve variable-reference structure in AIL for runtime resolver usage.
-- add Siemens assignment-shape checks:
-  - require `=` for multi-letter addresses and expression values
-  - accept omission for single-letter + single-constant value
-  - support numeric-extension disambiguation forms (`X1=...`)
+- extend assignment/value-shape support for full Siemens expression forms.
 
 ### 3.8 Program Naming and Metadata (planned Siemens compatibility)
 - Planned syntax support:
