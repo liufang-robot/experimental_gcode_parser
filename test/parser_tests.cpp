@@ -235,4 +235,25 @@ TEST(ParserSyntaxBaselineTest, ReportsBlockLengthOverflow) {
   EXPECT_EQ(result.diagnostics[0].location.line, 1);
 }
 
+TEST(ParserSyntaxBaselineTest, RequiresEqualForMultiLetterAddressValues) {
+  const auto result = gcode::parse("G1 AP90 RP=10\n");
+  ASSERT_EQ(result.diagnostics.size(), 1u);
+  EXPECT_EQ(result.diagnostics[0].severity, gcode::Diagnostic::Severity::Error);
+  EXPECT_NE(result.diagnostics[0].message.find("use '='"), std::string::npos);
+}
+
+TEST(ParserSyntaxBaselineTest, AcceptsNumericExtensionWithEqual) {
+  const auto result = gcode::parse("X1=10\n");
+  ASSERT_TRUE(result.diagnostics.empty());
+  ASSERT_EQ(result.program.lines.size(), 1u);
+  ASSERT_EQ(result.program.lines[0].items.size(), 1u);
+  ASSERT_TRUE(
+      std::holds_alternative<gcode::Word>(result.program.lines[0].items[0]));
+  const auto &word = std::get<gcode::Word>(result.program.lines[0].items[0]);
+  EXPECT_EQ(word.head, "X1");
+  ASSERT_TRUE(word.value.has_value());
+  EXPECT_EQ(*word.value, "10");
+  EXPECT_TRUE(word.has_equal);
+}
+
 } // namespace

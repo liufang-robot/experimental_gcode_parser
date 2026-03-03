@@ -1,5 +1,24 @@
 # CHANGELOG_AGENT
 
+## 2026-03-03 (T-049 slice 3: assignment-shape baseline checks)
+- Added parser semantic rule enforcing `=` for multi-letter or
+  numeric-extension address values (for example rejects `AP90`, accepts
+  `AP=90` and `X1=10`).
+- Added parser tests for invalid missing-`=` multi-letter value form and valid
+  numeric-extension `X1=10` parsing.
+- Updated SPEC assignment-shape baseline notes to reflect implemented behavior.
+
+SPEC sections / tests:
+- SPEC: Section 3.6
+- Tests: `test/parser_tests.cpp`, `./dev/check.sh`
+
+Known limitations:
+- Full Siemens expression-value assignment shapes are still planned.
+
+How to reproduce locally (commands):
+- `ctest --test-dir build --output-on-failure -R \"ParserSyntaxBaselineTest|ParserExpressionTest\"`
+- `./dev/check.sh`
+
 ## 2026-03-03 (T-049 slice 2: skip-level execution policy in lowering)
 - Added skip-level execution policy support in `LowerOptions` via
   `active_skip_levels`.
