@@ -81,6 +81,9 @@ AST shape (v0.1):
 - One motion command per line (GGroup1)
 - Word letters are case-insensitive (`x` == `X`, `g1` == `G1`).
 - `N`-address block number must appear at block start (before statement words).
+- Planned Siemens compatibility extension:
+  - block-skip levels `/0.. /9` (single level per block)
+  - block length validation against configured limit (Siemens baseline 512 chars)
 
 ### 3.2 Numbers
 - Integers: `0`, `10`, `-3`, `+7`
@@ -155,6 +158,10 @@ N50 X60
   - numeric literals
   - variable words (for example `R2`)
   - system variables (for example `$P_ACT_X`)
+- Current system-variable scope in v0:
+  - simple token form only (for example `$P_ACT_X`)
+  - bracketed selector forms (for example `$P_UIFR[1,X,TR]`, `$A_IN[1]`) are
+    reserved for Siemens-compatibility extension tasks
 - Supported operators:
   - unary: `+`, `-`
   - binary: `+`, `-`, `*`, `/`
@@ -164,6 +171,50 @@ Example:
 ```
 R1 = $P_ACT_X + 2*R2
 ```
+
+Planned Siemens compatibility extension:
+- add structured variable references for:
+  - user-defined variables (baseline `R...`)
+  - system variables with selectors (`$...` + bracket arguments)
+- preserve variable-reference structure in AIL for runtime resolver usage.
+- add Siemens assignment-shape checks:
+  - require `=` for multi-letter addresses and expression values
+  - accept omission for single-letter + single-constant value
+  - support numeric-extension disambiguation forms (`X1=...`)
+
+### 3.8 Program Naming and Metadata (planned Siemens compatibility)
+- Planned syntax support:
+  - Siemens-style program names (identifier constraints) for internal naming.
+  - external transfer name forms that start with `%` for compatibility parsing.
+- Parser responsibility:
+  - preserve raw program-name text and source location.
+  - report invalid name-shape diagnostics under Siemens-compatibility mode.
+
+### 3.9 Subprogram Syntax (planned Siemens compatibility)
+- Planned syntax support:
+  - direct call by program name:
+    - `<subprogram_name>`
+    - `\"<subprogram_name>\"` (quoted form compatibility)
+    - `<subprogram_name> P<count>`
+    - `P=<count> <subprogram_name>`
+  - optional ISO-compatibility call:
+    - `M98 P<program_name_or_id>` (gated by ISO mode option)
+  - subprogram return/end statements:
+    - `M17` (baseline Siemens return)
+    - `RET` (optional compatibility extension)
+  - advanced/procedural forms (planned):
+    - `PROC <name>(<typed_params>)`
+    - call with arguments `<name>(<args...>)`
+- Parser/lowering responsibility:
+  - preserve call target, repeat count, and argument list structure
+  - preserve declaration signatures and return statements
+  - emit deterministic diagnostics for malformed call/declaration syntax
+- Runtime responsibility:
+  - resolve target by configured search policy
+    - same-context/bare-name resolution
+    - qualified-path resolution where required
+  - execute with call stack and return semantics
+  - fault or warn by policy on unresolved calls/invalid returns
 
 ### 3.7 Control Flow Syntax (parse-only in v0)
 - Jump directions:
@@ -214,7 +265,7 @@ N130 G01 X20 Y20
 - Full modal group validation beyond GGroup1 single-motion rule
 - Units/distance-mode state
 - Full RS274NGC expressions/macros
-- Subprograms and full flow-control execution semantics
+- Full subprogram execution semantics (call stack/lookup) in v0.1
 
 ## 5. Diagnostics (v0.1)
 - Syntax errors reported by the lexer/parser with line/column.
@@ -229,6 +280,10 @@ N130 G01 X20 Y20
   - Semantic messages should include an explicit correction hint (for example,
     "choose one coordinate mode", "choose only one of G1/G2/G3", or
     "program G4 in a separate block").
+- Planned Siemens compatibility diagnostics:
+  - block exceeds configured max length (Siemens baseline 512 chars)
+  - malformed skip-level marker
+  - invalid assignment-shape for `=` requirement/omission rules
 
 ## 6. Message Lowering (v0.1)
 - Pipeline note:
@@ -329,6 +384,13 @@ N130 G01 X20 Y20
 - Runtime executor API evaluates `branch_if` conditions via callback contract:
   - callback result states: `true`, `false`, `pending`, `error`
   - `pending` may include `wait_key` and `retry_at` metadata
+- Variable evaluation boundary:
+  - parser/lowering does not resolve live system-variable values
+  - runtime resolver is responsible for evaluating user/system-variable
+    references, including pending/unavailable outcomes
+- Skip-level execution boundary (planned Siemens compatibility):
+  - parser/lowering captures skip marker + optional level metadata
+  - runtime decides execution/skip by active skip-level configuration
 - Executor state model:
   - `ready`
   - `blocked_on_condition`

@@ -26,6 +26,39 @@ How to reproduce locally (commands):
 - `git diff -- PRD.md SPEC.md BACKLOG.md ARCHITECTURE.md IMPLEMENTATION_PLAN.md CHANGELOG_AGENT.md`
 - `nl -ba ARCHITECTURE.md | sed -n '16,180p'`
 - `nl -ba SPEC.md | sed -n '12,40p'`
+## 2026-03-03 (docs: system variables + user-defined variables requirement)
+- Added PRD requirement section for variable handling that explicitly covers both
+  user-defined variables (`R...`) and Siemens-style system variables (`$...`),
+  including parse/runtime responsibility boundaries.
+- Updated SPEC to clarify current v0 variable scope and planned Siemens
+  selector-form extensions (for example `$P_UIFR[1,X,TR]`, `$A_IN[1]`).
+- Added backlog task `T-048` for implementation planning/execution of variable
+  reference modeling and runtime resolver semantics.
+- Added Siemens Chapter-2 baseline requirement capture for:
+  - NC naming compatibility
+  - block formatting and block-length diagnostics
+  - assignment `=` rules and numeric-extension disambiguation
+  - skip-level syntax `/0.. /9` and parse/runtime execution boundary
+  via new backlog task `T-049`.
+- Added Siemens subprogram requirement capture:
+  - `.MPF/.SPF` organization
+  - baseline `M17` return and optional `RET`
+  - direct/quoted name calls, repeat calls (`P` / `P=` forms)
+  - resolver policy for same-folder vs qualified-path lookup
+  via new backlog task `T-050`.
+- Updated reference docs to mark subprogram features as `Planned` and added
+  development-architecture notes for resolver/call-stack/policy boundaries.
+
+SPEC sections / tests:
+- SPEC: Section 3.1, Section 3.6, Section 3.8, Section 3.9, Section 5, Section 6.1
+- Tests: not applicable (docs-only requirement/reference update)
+
+Known limitations:
+- No parser/runtime behavior change in this slice; this update is requirement
+  capture and planning only.
+
+How to reproduce locally (commands):
+- `git diff -- PRD.md SPEC.md BACKLOG.md CHANGELOG_AGENT.md`
 
 ## 2026-03-02 (T-036 Siemens-style line-number handling)
 - Added semantic diagnostics for `N`-address usage:

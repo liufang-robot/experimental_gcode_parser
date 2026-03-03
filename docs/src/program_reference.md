@@ -35,6 +35,10 @@ Current Siemens-aligned baseline for supported functions:
 | `G3` arc CCW | Implemented | Emits `G3Message` with endpoint + arc fields + feed. |
 | `G4` dwell | Implemented | Emits `G4Message` with dwell mode/value. |
 | `R... = expr` assignment | Partial | Parsed into AIL assignment instruction; not yet evaluated/runtime-applied. |
+| Subprogram call by name (`THE_SHAPE`, `"THE_SHAPE"`) | Planned | Siemens-style call model planned; parser/runtime integration pending. |
+| Subprogram repeat (`P=<n> NAME`, `NAME P<n>`) | Planned | Repeat-count call semantics planned. |
+| Subprogram return (`M17` baseline, `RET` optional) | Planned | Return-to-caller runtime semantics planned. |
+| ISO compat call (`M98 P...`) | Planned | Enabled only by ISO-compatibility profile option. |
 
 ## Motion Packets
 

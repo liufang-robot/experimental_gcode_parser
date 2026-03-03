@@ -28,6 +28,7 @@ Suggested review order:
 - `5.11` Rapid traverse (`G0`, `RTLION`, `RTLIOF`)
 - `5.12` M-code syntax/semantics
 - `5.13` Incremental parse/edit-resume API
+- `5.14` System variables and user-defined variables
 
 ## 0.2 Acceptance Fixture (Integrated)
 Reserved integrated scenario for end-to-end acceptance after implementation:
@@ -634,6 +635,145 @@ Acceptance expectation:
   - resume from first error line
   - line-fix scenario transitions from error to valid output.
 
+### 5.14 Variables: System Variables + User-Defined Variables
+Requirement intent:
+- Support Siemens-compatible variable usage for both user-defined variables and
+  system variables in expressions, conditions, and control flow.
+
+Required variable categories:
+- User-defined variables:
+  - baseline `R` variables (for example `R1`, `R2`)
+- System variables:
+  - Siemens-style `$...` variable names (for example `$P_ACT_X`)
+  - structured forms with selectors (for example `$P_UIFR[1,X,TR]`,
+    `$A_IN[1]`)
+
+Required usage forms:
+- assignment:
+  - `R1 = $P_UIFR[1,X,TR]`
+  - `R2 = $A_IN[1]`
+- expressions:
+  - `R3 = $P_ACT_X + 2*R2`
+- conditions:
+  - `IF $A_IN[1] > 0 GOTOF READY`
+
+Behavior boundary (must be explicit in design/spec):
+- Parse/lowering stage:
+  - parse and preserve variable references structurally
+  - validate syntax shape only
+  - do not fetch live machine values
+- Runtime stage:
+  - resolve variable values through resolver/policy hooks
+  - enforce access/write permissions
+  - handle timing semantics (preprocessing-time vs main-run variables)
+
+Product-level constraints:
+- Variable access rules are machine/profile controlled (not hardcoded).
+- Diagnostics must clearly separate:
+  - parse-time syntax errors
+  - runtime access/protection failures
+  - runtime pending/unavailable-value outcomes
+
+Acceptance expectation:
+- SPEC defines variable reference syntax and parse/runtime responsibilities.
+- Architecture/backlog include resolver and policy interfaces for runtime
+  evaluation.
+- Tests cover user-defined and system-variable references in assignment and
+  condition contexts.
+
+### 5.4 Siemens Fundamental NC Syntax Principles (Chapter 2 baseline)
+Requirement intent:
+- Add Siemens-compatible baseline grammar/format rules for NC program identity,
+  block structure, value assignment, comments, and skip blocks.
+
+Required coverage:
+- Program naming:
+  - parser accepts Siemens-style program identifiers and optional external
+    transfer naming prefixes (for example `%...`) as compatibility syntax.
+  - internal model preserves full raw program name text.
+- Block structure:
+  - block number form `N<positive_int>` at block start
+  - block end by line feed
+  - block length limit support (Siemens baseline 512 chars, including comment and
+    LF) with deterministic diagnostics on overflow
+  - repeated-address allowances where valid (for example multiple `G`, `M`, `H`)
+- Value assignment rules:
+  - support Siemens `=` requirement contract:
+    - mandatory when multi-letter address or expression value is used
+    - optional for single-letter + single-constant forms
+  - support numeric extension disambiguation forms (for example `X1=10`)
+- Comments:
+  - semicolon end-of-block comments as baseline
+  - preserve comment text for display/debug output
+- Skip blocks:
+  - support `/` block-skip marker and skip levels `/0.. /9`
+  - preserve skip-level metadata in parse/AIL outputs
+  - runtime may skip execution based on configured active levels
+
+Behavior boundary:
+- Parse stage:
+  - recognize and validate syntax/shape
+  - preserve raw text/metadata (name, skip level, comments)
+- Runtime stage:
+  - decide effective skip execution by active skip-level configuration
+
+Acceptance expectation:
+- SPEC defines syntax/diagnostics for naming/block/assignment/comment/skip forms.
+- Backlog tasks split parser and runtime responsibilities for skip-level handling.
+- Tests cover valid/invalid examples for each category.
+
+### 5.5 Siemens Subprograms (MPF/SPF) and Call Semantics
+Requirement intent:
+- Support Siemens-style subprogram organization and invocation semantics, with
+  Siemens-first behavior and optional ISO-compat mode.
+
+Required syntax and behavior:
+- Direct subprogram call by program name in main program (`.MPF`):
+  - example: `POCKET_FINISH`
+- Quoted-name call compatibility:
+  - example: `"POCKET_FINISH"`
+- Repeated call count with `P`:
+  - examples: `DRILL_HOLE P5`, `P=5 DRILL_HOLE`
+- Optional ISO-compat mode call form:
+  - `M98 P<program_name_or_id>` (enabled only when ISO compatibility is on)
+- Subprogram return/end forms:
+  - `M17` is required Siemens baseline return from subprogram
+  - `RET` may be supported as compatibility extension by profile
+  - main program end remains `M2`/`M30` semantics
+
+Program/file organization expectations:
+- Main program commonly `.MPF`; subprogram commonly `.SPF`
+- Program manager storage models (global SPF vs workpiece-local) are represented
+  as resolver/search policy, not hardcoded paths in parser.
+- Call target resolution policy:
+  - if subprogram is in same folder/context, bare name resolution is allowed
+  - otherwise full/qualified path resolution is required by policy configuration
+
+Advanced parameter passing (planned):
+- declaration-like form (for example `PROC MY_SUB(REAL _DEPTH, REAL _FEED)`)
+- call with arguments (for example `MY_SUB(10.5, 200)`)
+- parser must preserve signature/argument structure; runtime binding policy is
+  resolved by subprogram execution engine.
+
+Behavior boundary:
+- Parse/lowering stage:
+  - recognize call statements, repeat count, declaration/signature forms, and
+    subprogram end statements
+  - build structured call/declaration instructions with source location
+  - do not perform file-system lookup or execute call stack
+- Runtime stage:
+  - resolve subprogram targets by configured search policy
+  - manage call stack/return points
+  - enforce recursion/depth/lookup error policies
+
+Acceptance expectation:
+- SPEC defines subprogram syntax contract and diagnostics.
+- Backlog includes parser, AIL lowering, and runtime call-stack execution slices.
+- Tests cover:
+  - direct name call, repeated call (`P`)
+  - `M17`/`RET` return behavior
+  - unresolved target diagnostics and ISO-mode gating for `M98`.
+
 ## 6. Command Family Policy
 - `G` codes:
   - Implement only command families explicitly listed in SPEC + backlog tasks.
@@ -642,6 +782,9 @@ Acceptance expectation:
     before implementation.
 - Vendor/extend codes:
   - require explicit spec entry + tests before treated as supported behavior.
+- Variable families:
+  - user-defined and system-variable handling must be explicitly specified in
+    SPEC before runtime semantics are enabled.
 
 ## 7. Quality Requirements
 - Must not crash/hang on malformed input.

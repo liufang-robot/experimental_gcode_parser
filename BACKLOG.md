@@ -271,6 +271,94 @@ Architecture planning queue for PRD Section 5 requirements:
 - `Tests To Add/Update`:
   - `test/parser_tests.cpp` (comment parsing + diagnostics)
   - parser/CLI golden fixtures affected by comment syntax updates
+- `ID`: T-050
+- `Priority`: P1
+- `Title`: Siemens subprogram model (MPF/SPF, direct call, P-repeat, M17/RET, ISO M98)
+- `Why`: Subprogram organization and call semantics are required for practical
+  Siemens compatibility and reusable NC structure.
+- `Scope`:
+  - parser/AST support for:
+    - direct call by subprogram name
+    - quoted-name call form
+    - repeat count `P`
+    - `P=<count> <name>` and `<name> P<count>` forms
+    - `M17` and `RET`
+    - ISO-gated `M98 P...` compatibility syntax
+  - (planned extension) parse model for `PROC` signatures and call arguments
+  - AIL/runtime execution model for call stack, return, and unresolved-target
+    diagnostics/policies
+  - search-path policy model (same-folder bare name vs qualified/full path)
+- `Acceptance Criteria`:
+  - SPEC documents syntax + parse/runtime responsibilities
+  - parser tests cover call/return syntax and ISO-mode gating
+  - executor tests cover call stack return flow and unresolved call behavior
+- `Out of Scope`:
+  - full program-manager filesystem replication
+  - controller-specific PLC integration details
+- `SPEC Sections`:
+  - Section 3.9
+  - Section 6.1 (runtime control-flow execution notes)
+- `Tests To Add/Update`:
+  - `test/parser_tests.cpp`
+  - `test/ail_tests.cpp`
+  - `test/ail_executor_tests.cpp`
+
+- `ID`: T-049
+- `Priority`: P1
+- `Title`: Siemens Chapter-2 syntax baseline (naming/blocks/assignment/comments/skip levels)
+- `Why`: We need explicit Siemens fundamental grammar coverage for NC program
+  structure and skip behavior before higher-level runtime features.
+- `Scope`:
+  - add parser support/validation for:
+    - Siemens-compatible program-name forms (including `%...` compatibility mode)
+    - block length limit diagnostics (Siemens baseline 512 chars)
+    - assignment-shape `=` rules and numeric-extension disambiguation
+    - skip-level markers `/0.. /9` metadata capture
+  - define runtime boundary for skip-level execution policy
+- `Acceptance Criteria`:
+  - SPEC sections updated with concrete syntax/diagnostics behavior
+  - parser tests cover valid/invalid chapter-2 baseline examples
+  - runtime tests cover skip-level on/off behavior once execution hook is added
+- `Out of Scope`:
+  - full subprogram file-management implementation
+  - HMI-specific UI configuration behavior for skip levels
+- `SPEC Sections`:
+  - Section 3.1, Section 3.6, Section 3.8, Section 5, Section 6.1
+- `Tests To Add/Update`:
+  - `test/parser_tests.cpp`
+  - `test/ail_tests.cpp`
+  - `test/ail_executor_tests.cpp`
+
+- `ID`: T-048
+- `Priority`: P1
+- `Title`: System variables and user-defined variables model (Siemens-compatible)
+- `Why`: PRD now requires explicit handling for both user-defined variables
+  (`R...`) and Siemens-style system variables (`$...`) with clear parse/runtime
+  responsibility boundaries.
+- `Scope`:
+  - extend variable reference model to support structured system-variable forms
+    (including selector syntax like `[1,X,TR]`)
+  - define parser diagnostics for malformed variable selectors
+  - define runtime resolver contract for variable read/eval outcomes
+    (`value|pending|error`) in expressions/conditions
+  - define policy hooks for access/write restrictions and timing classes
+    (preprocessing vs main-run variables)
+- `Acceptance Criteria`:
+  - SPEC documents syntax and boundary behavior for variable evaluation
+  - parser/AIL tests cover user-defined + system-variable references
+  - executor tests cover resolver `pending/error` behavior with variable-backed
+    conditions
+- `Out of Scope`:
+  - full Siemens parameter-manual variable catalog implementation
+  - PLC-side variable transport internals
+- `SPEC Sections`:
+  - Section 3.6 (assignment expressions / variable references)
+  - Section 6.1 (runtime resolver behavior)
+- `Tests To Add/Update`:
+  - `test/parser_tests.cpp`
+  - `test/ail_tests.cpp`
+  - `test/ail_executor_tests.cpp`
+
 ## Icebox
 - Coverage threshold policy and badge.
 - Multi-file include/subprogram parsing (future SPEC).
