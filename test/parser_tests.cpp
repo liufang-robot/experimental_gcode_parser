@@ -256,4 +256,23 @@ TEST(ParserSyntaxBaselineTest, AcceptsNumericExtensionWithEqual) {
   EXPECT_TRUE(word.has_equal);
 }
 
+TEST(ParserSyntaxBaselineTest, ParsesMultiLineBlockComment) {
+  const auto result = gcode::parse("(* line1\nline2 *)\nG1 X10\n");
+  ASSERT_TRUE(result.diagnostics.empty());
+  ASSERT_EQ(result.program.lines.size(), 2u);
+  ASSERT_EQ(result.program.lines[0].items.size(), 1u);
+  ASSERT_TRUE(
+      std::holds_alternative<gcode::Comment>(result.program.lines[0].items[0]));
+  const auto &comment =
+      std::get<gcode::Comment>(result.program.lines[0].items[0]);
+  EXPECT_EQ(comment.text, "(* line1\nline2 *)");
+}
+
+TEST(ParserSyntaxBaselineTest, ReportsUnclosedBlockComment) {
+  const auto result = gcode::parse("(* line1\nline2\nG1 X10\n");
+  ASSERT_FALSE(result.diagnostics.empty());
+  EXPECT_NE(result.diagnostics[0].message.find("malformed comments"),
+            std::string::npos);
+}
+
 } // namespace

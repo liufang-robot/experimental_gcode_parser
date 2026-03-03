@@ -1,5 +1,24 @@
 # CHANGELOG_AGENT
 
+## 2026-03-03 (T-037 slice 1: Siemens block-comment parsing)
+- Added parser grammar support for Siemens block comments
+  `(* ... *)`, including multi-line comment text.
+- Added parser tests covering multi-line block-comment capture and unclosed
+  block-comment diagnostics.
+- Updated SPEC input-comment section to mark `(* ... *)` as implemented in the
+  current v0 subset.
+
+SPEC sections / tests:
+- SPEC: Section 2.1
+- Tests: `test/parser_tests.cpp`, `./dev/check.sh`
+
+Known limitations:
+- Optional Siemens `//` comment mode remains planned and config-gated.
+
+How to reproduce locally (commands):
+- `ctest --test-dir build --output-on-failure -R \"ParserSyntaxBaselineTest\"`
+- `./dev/check.sh`
+
 ## 2026-03-03 (T-049 slice 3: assignment-shape baseline checks)
 - Added parser semantic rule enforcing `=` for multi-letter or
   numeric-extension address values (for example rejects `AP90`, accepts
