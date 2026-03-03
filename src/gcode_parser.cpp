@@ -567,7 +567,7 @@ void addBlockLengthDiagnostics(std::string_view input,
 
 } // namespace
 
-ParseResult parse(std::string_view input) {
+ParseResult parse(std::string_view input, const ParseOptions &options) {
   ParseResult result;
   antlr4::ANTLRInputStream stream{std::string(input)};
   GCodeLexer lexer(&stream);
@@ -591,8 +591,12 @@ ParseResult parse(std::string_view input) {
   }
 
   addBlockLengthDiagnostics(input, &result.diagnostics);
-  addSemanticDiagnostics(result);
+  addSemanticDiagnostics(result, options.enable_double_slash_comments);
   return result;
+}
+
+ParseResult parse(std::string_view input) {
+  return parse(input, ParseOptions{});
 }
 
 } // namespace gcode

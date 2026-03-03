@@ -1,5 +1,34 @@
 # CHANGELOG_AGENT
 
+## 2026-03-03 (T-037 slice 2: optional // comment mode)
+- Added parse option `ParseOptions.enable_double_slash_comments`.
+- Added `// ...` comment token support with config-gated semantic behavior:
+  rejected by default, accepted when the option is enabled.
+- Added parser tests for disabled/enabled `//` behavior and preserved comment
+  text.
+- Added SPEC policy reminder that feature/function PRs must update program
+  reference docs in the same PR (`PROGRAM_REFERENCE.md` and/or
+  `docs/src/program_reference.md`).
+- Synced both program-reference documents to current implemented behavior for
+  comments, line numbers, skip levels, control-flow/runtime boundaries, and
+  parse/lower options.
+- Added SPEC documentation-policy rules requiring design docs to be synced into
+  `docs/src/` and long documentation pages to be split into smaller mdBook
+  pages linked via `docs/src/SUMMARY.md`.
+
+SPEC sections / tests:
+- SPEC: Section 2.1
+- Tests: `test/parser_tests.cpp`, `test/semantic_rules_tests.cpp`,
+  `./dev/check.sh`
+
+Known limitations:
+- `//` compatibility mode is parser-only in this slice and not yet exposed as a
+  CLI flag.
+
+How to reproduce locally (commands):
+- `ctest --test-dir build --output-on-failure -R \"ParserSyntaxBaselineTest|SemanticRulesTest\"`
+- `./dev/check.sh`
+
 ## 2026-03-03 (T-037 slice 1: Siemens block-comment parsing)
 - Added parser grammar support for Siemens block comments
   `(* ... *)`, including multi-line comment text.

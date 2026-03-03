@@ -6,6 +6,11 @@
 
 namespace gcode {
 
+struct ParseOptions {
+  bool enable_double_slash_comments = false;
+};
+
+ParseResult parse(std::string_view input, const ParseOptions &options);
 ParseResult parse(std::string_view input);
 
 } // namespace gcode

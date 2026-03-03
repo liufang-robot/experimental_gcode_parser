@@ -37,7 +37,15 @@ All emitted messages include:
 | `G2` arc CW | Implemented | Lowers to `G2Message` with pose/arc/feed. |
 | `G3` arc CCW | Implemented | Lowers to `G3Message` with pose/arc/feed. |
 | `G4` dwell | Implemented | Lowers to `G4Message` with mode/value. |
-| `R... = expr` assignment | Partial | Parsed and lowered into AIL `assign` instruction only (no runtime evaluator yet). |
+| `R... = expr` assignment | Partial | Parsed/lowered into AIL `assign`; runtime evaluator/store not implemented. |
+| `N...` line number at block start | Implemented | Parsed into source metadata; duplicate-warning support for line-number jumps. |
+| Block delete `/` and `/0.. /9` | Implemented | Parsed with level metadata; lowering skip policy uses `LowerOptions.active_skip_levels`. |
+| `GOTO/GOTOF/GOTOB/GOTOC` + labels | Implemented | Parsed, lowered to AIL, executable in `AilExecutor`. |
+| `IF cond GOTO ... [ELSE GOTO ...]` | Implemented | Lowered to AIL `branch_if`; runtime resolver selects branch. |
+| Structured `IF/ELSE/ENDIF` | Implemented | Lowered to `branch_if` + internal labels + gotos. |
+| `WHILE/FOR/REPEAT/LOOP` families | Partial | Parse-only in current implementation. |
+| Comments `;...`, `( ... )`, `(* ... *)` | Implemented | Comment text preserved in parse output. |
+| Comments `// ...` | Partial | Supported only when `ParseOptions.enable_double_slash_comments=true`. |
 | Subprogram call by name (`THE_SHAPE`, `"THE_SHAPE"`) | Planned | Siemens-style subprogram invocation; parser + runtime call stack pending. |
 | Subprogram repeat (`P=<n> NAME`, `NAME P<n>`) | Planned | Repeat-call semantics and looped call execution pending. |
 | Subprogram return (`M17` baseline, `RET` optional) | Planned | Return-to-caller execution semantics pending runtime integration. |
@@ -62,6 +70,15 @@ Test references:
 - `test/packet_tests.cpp`
 - `test/cli_tests.cpp`
 - `testdata/packets/*.golden.json`
+
+## Parse/Lower Options
+
+Implemented options:
+- `ParseOptions.enable_double_slash_comments`
+  - default `false`: `// ...` diagnostics
+  - `true`: `// ...` accepted as comments
+- `LowerOptions.active_skip_levels`
+  - block-delete lines are skipped when their level is active (`/` => level `0`)
 
 ## `G1` Linear Interpolation
 
@@ -148,6 +165,21 @@ Diagnostics:
 Examples:
 - `G4 F3`
 - `G4 S30`
+
+## Control Flow Runtime Notes
+
+Implemented target search behavior:
+- `GOTOF`: forward-only
+- `GOTOB`: backward-only
+- `GOTO`: forward then backward
+- `GOTOC`: unresolved target does not fault
+
+Branch runtime behavior:
+- condition resolver returns `true|false|pending|error`
+- `pending` supports event wait/retry metadata
+
+Current limitation:
+- `WHILE/FOR/REPEAT/LOOP` parse but do not yet lower to executable runtime flow.
 
 Test references:
 - `test/messages_tests.cpp`
