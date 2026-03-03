@@ -127,6 +127,7 @@ struct ExecutorBlockedState {
 struct ExecutorState {
   ExecutorStatus status = ExecutorStatus::Ready;
   size_t pc = 0;
+  std::optional<RapidInterpolationMode> rapid_mode_current;
   std::optional<ExecutorBlockedState> blocked;
   std::optional<std::string> fault_message;
 };

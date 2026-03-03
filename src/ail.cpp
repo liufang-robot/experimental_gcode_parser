@@ -681,6 +681,12 @@ bool AilExecutor::advanceOneInstruction(int64_t now_ms,
   if (std::holds_alternative<AilMCodeInstruction>(inst)) {
     return handleMCodeAtPc();
   }
+  if (std::holds_alternative<AilRapidTraverseModeInstruction>(inst)) {
+    const auto &rapid = std::get<AilRapidTraverseModeInstruction>(inst);
+    state_.rapid_mode_current = rapid.mode;
+    ++state_.pc;
+    return true;
+  }
   ++state_.pc;
   return true;
 }

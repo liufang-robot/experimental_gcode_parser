@@ -1,5 +1,27 @@
 # CHANGELOG_AGENT
 
+## 2026-03-03 (T-045 slice 4: executor tracks rapid-mode state)
+- Added `ExecutorState.rapid_mode_current` and executor handling for
+  `rapid_mode` instructions so `AilExecutor` now tracks current `RTLION`/`RTLIOF`
+  mode during step execution.
+- Added executor test coverage for rapid-mode state transitions and persistence
+  across `G0` instructions.
+- Updated SPEC/program-reference docs to reflect current runtime boundary:
+  state tracking implemented, machine-actuation override semantics still
+  pending.
+
+SPEC sections / tests:
+- SPEC: Section 3.3
+- Tests: `test/ail_executor_tests.cpp`, `./dev/check.sh`
+
+Known limitations:
+- Runtime machine-actuation interpolation override behavior is not implemented;
+  tracked rapid mode is currently execution state metadata.
+
+How to reproduce locally (commands):
+- `ctest --test-dir build --output-on-failure -R \"AilExecutorTest\"`
+- `./dev/check.sh`
+
 ## 2026-03-03 (T-045 slice 3: propagate effective rapid mode onto G0 outputs)
 - Added `rapid_mode_effective` metadata on AIL linear instructions and applied
   current `RTLION`/`RTLIOF` state to subsequent `G0` instructions during

@@ -133,8 +133,8 @@ Lowering output:
   - `feed`: optional `F` (accepted in baseline parse/lowering model)
 
 Current limitation:
-- Siemens `RTLION`/`RTLIOF` rapid interpolation mode control and override
-  precedence are not implemented yet.
+- Siemens `RTLION`/`RTLIOF` machine-actuation override precedence is not
+  implemented yet.
 
 ## `RTLION` / `RTLIOF` Rapid Mode (AIL Baseline)
 
@@ -153,8 +153,8 @@ Current lowering output:
   rapid-mode command has been set earlier in program order
 
 Current limitation:
-- Runtime executor does not yet apply interpolation override behavior to machine
-  actuation; state is currently modeled/output metadata only.
+- Runtime executor now tracks rapid-mode state transitions, but does not yet
+  apply interpolation override behavior to machine actuation.
 - Packet stage skips standalone `rapid_mode` instructions as non-motion
   (warning), but preserves `rapid_mode_effective` on `G0` linear payloads.
 

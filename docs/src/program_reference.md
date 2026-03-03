@@ -124,8 +124,8 @@ Output fields:
 
 Current limitations:
 
-- Siemens rapid interpolation mode controls (`RTLION`/`RTLIOF`) are not yet
-  implemented in current runtime/packet behavior.
+- Siemens rapid interpolation mode machine-actuation override behavior is not
+  fully implemented in current runtime/packet behavior.
 
 ## RTLION / RTLIOF
 
@@ -145,8 +145,8 @@ Current behavior:
 
 Current limitations:
 
-- Runtime execution behavior for interpolation override is not implemented yet
-  (state is currently metadata/output only).
+- Runtime execution now tracks rapid-mode state transitions, but interpolation
+  override behavior for machine actuation is not implemented yet.
 - Packetization skips standalone `rapid_mode` with a warning (non-motion
   instruction), while preserving `rapid_mode_effective` on `G0` linear payloads.
 

@@ -245,4 +245,35 @@ TEST(AilExecutorTest, UnknownMFunctionIgnorePolicySuppressesDiagnostic) {
   EXPECT_TRUE(exec.diagnostics().empty());
 }
 
+TEST(AilExecutorTest, TracksRapidModeStateFromRTLIONAndRTLIOF) {
+  const auto lowered =
+      gcode::parseAndLowerAil("G0 X1\nRTLIOF\nG0 X2\nRTLION\nG0 X3\n");
+  gcode::AilExecutor exec(lowered.instructions);
+
+  const auto resolver = [](const gcode::Condition &,
+                           const gcode::SourceInfo &) {
+    gcode::ConditionResolution r;
+    r.kind = gcode::ConditionResolutionKind::False;
+    return r;
+  };
+
+  ASSERT_TRUE(exec.step(0, resolver)); // G0 X1
+  EXPECT_FALSE(exec.state().rapid_mode_current.has_value());
+
+  ASSERT_TRUE(exec.step(0, resolver)); // RTLIOF
+  ASSERT_TRUE(exec.state().rapid_mode_current.has_value());
+  EXPECT_EQ(*exec.state().rapid_mode_current,
+            gcode::RapidInterpolationMode::NonLinear);
+
+  ASSERT_TRUE(exec.step(0, resolver)); // G0 X2
+  ASSERT_TRUE(exec.state().rapid_mode_current.has_value());
+  EXPECT_EQ(*exec.state().rapid_mode_current,
+            gcode::RapidInterpolationMode::NonLinear);
+
+  ASSERT_TRUE(exec.step(0, resolver)); // RTLION
+  ASSERT_TRUE(exec.state().rapid_mode_current.has_value());
+  EXPECT_EQ(*exec.state().rapid_mode_current,
+            gcode::RapidInterpolationMode::Linear);
+}
+
 } // namespace
