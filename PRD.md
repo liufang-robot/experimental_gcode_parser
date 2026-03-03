@@ -28,6 +28,7 @@ Suggested review order:
 - `5.11` Rapid traverse (`G0`, `RTLION`, `RTLIOF`)
 - `5.12` M-code syntax/semantics
 - `5.13` Incremental parse/edit-resume API
+- `5.14` System variables and user-defined variables
 
 ## 0.2 Acceptance Fixture (Integrated)
 Reserved integrated scenario for end-to-end acceptance after implementation:
@@ -634,6 +635,52 @@ Acceptance expectation:
   - resume from first error line
   - line-fix scenario transitions from error to valid output.
 
+### 5.14 Variables: System Variables + User-Defined Variables
+Requirement intent:
+- Support Siemens-compatible variable usage for both user-defined variables and
+  system variables in expressions, conditions, and control flow.
+
+Required variable categories:
+- User-defined variables:
+  - baseline `R` variables (for example `R1`, `R2`)
+- System variables:
+  - Siemens-style `$...` variable names (for example `$P_ACT_X`)
+  - structured forms with selectors (for example `$P_UIFR[1,X,TR]`,
+    `$A_IN[1]`)
+
+Required usage forms:
+- assignment:
+  - `R1 = $P_UIFR[1,X,TR]`
+  - `R2 = $A_IN[1]`
+- expressions:
+  - `R3 = $P_ACT_X + 2*R2`
+- conditions:
+  - `IF $A_IN[1] > 0 GOTOF READY`
+
+Behavior boundary (must be explicit in design/spec):
+- Parse/lowering stage:
+  - parse and preserve variable references structurally
+  - validate syntax shape only
+  - do not fetch live machine values
+- Runtime stage:
+  - resolve variable values through resolver/policy hooks
+  - enforce access/write permissions
+  - handle timing semantics (preprocessing-time vs main-run variables)
+
+Product-level constraints:
+- Variable access rules are machine/profile controlled (not hardcoded).
+- Diagnostics must clearly separate:
+  - parse-time syntax errors
+  - runtime access/protection failures
+  - runtime pending/unavailable-value outcomes
+
+Acceptance expectation:
+- SPEC defines variable reference syntax and parse/runtime responsibilities.
+- Architecture/backlog include resolver and policy interfaces for runtime
+  evaluation.
+- Tests cover user-defined and system-variable references in assignment and
+  condition contexts.
+
 ## 6. Command Family Policy
 - `G` codes:
   - Implement only command families explicitly listed in SPEC + backlog tasks.
@@ -642,6 +689,9 @@ Acceptance expectation:
     before implementation.
 - Vendor/extend codes:
   - require explicit spec entry + tests before treated as supported behavior.
+- Variable families:
+  - user-defined and system-variable handling must be explicitly specified in
+    SPEC before runtime semantics are enabled.
 
 ## 7. Quality Requirements
 - Must not crash/hang on malformed input.

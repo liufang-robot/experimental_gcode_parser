@@ -271,6 +271,36 @@ Architecture planning queue for PRD Section 5 requirements:
 - `Tests To Add/Update`:
   - `test/parser_tests.cpp` (comment parsing + diagnostics)
   - parser/CLI golden fixtures affected by comment syntax updates
+- `ID`: T-048
+- `Priority`: P1
+- `Title`: System variables and user-defined variables model (Siemens-compatible)
+- `Why`: PRD now requires explicit handling for both user-defined variables
+  (`R...`) and Siemens-style system variables (`$...`) with clear parse/runtime
+  responsibility boundaries.
+- `Scope`:
+  - extend variable reference model to support structured system-variable forms
+    (including selector syntax like `[1,X,TR]`)
+  - define parser diagnostics for malformed variable selectors
+  - define runtime resolver contract for variable read/eval outcomes
+    (`value|pending|error`) in expressions/conditions
+  - define policy hooks for access/write restrictions and timing classes
+    (preprocessing vs main-run variables)
+- `Acceptance Criteria`:
+  - SPEC documents syntax and boundary behavior for variable evaluation
+  - parser/AIL tests cover user-defined + system-variable references
+  - executor tests cover resolver `pending/error` behavior with variable-backed
+    conditions
+- `Out of Scope`:
+  - full Siemens parameter-manual variable catalog implementation
+  - PLC-side variable transport internals
+- `SPEC Sections`:
+  - Section 3.6 (assignment expressions / variable references)
+  - Section 6.1 (runtime resolver behavior)
+- `Tests To Add/Update`:
+  - `test/parser_tests.cpp`
+  - `test/ail_tests.cpp`
+  - `test/ail_executor_tests.cpp`
+
 ## Icebox
 - Coverage threshold policy and badge.
 - Multi-file include/subprogram parsing (future SPEC).

@@ -155,6 +155,10 @@ N50 X60
   - numeric literals
   - variable words (for example `R2`)
   - system variables (for example `$P_ACT_X`)
+- Current system-variable scope in v0:
+  - simple token form only (for example `$P_ACT_X`)
+  - bracketed selector forms (for example `$P_UIFR[1,X,TR]`, `$A_IN[1]`) are
+    reserved for Siemens-compatibility extension tasks
 - Supported operators:
   - unary: `+`, `-`
   - binary: `+`, `-`, `*`, `/`
@@ -164,6 +168,12 @@ Example:
 ```
 R1 = $P_ACT_X + 2*R2
 ```
+
+Planned Siemens compatibility extension:
+- add structured variable references for:
+  - user-defined variables (baseline `R...`)
+  - system variables with selectors (`$...` + bracket arguments)
+- preserve variable-reference structure in AIL for runtime resolver usage.
 
 ### 3.7 Control Flow Syntax (parse-only in v0)
 - Jump directions:
@@ -329,6 +339,10 @@ N130 G01 X20 Y20
 - Runtime executor API evaluates `branch_if` conditions via callback contract:
   - callback result states: `true`, `false`, `pending`, `error`
   - `pending` may include `wait_key` and `retry_at` metadata
+- Variable evaluation boundary:
+  - parser/lowering does not resolve live system-variable values
+  - runtime resolver is responsible for evaluating user/system-variable
+    references, including pending/unavailable outcomes
 - Executor state model:
   - `ready`
   - `blocked_on_condition`
