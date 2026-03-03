@@ -106,7 +106,9 @@ AST shape (v0.1):
 - Baseline v0 behavior:
   - `G0` is parsed/lowered as a linear-motion family member with `modal.code=G0`
   - `RTLION` / `RTLIOF` are parsed/lowered into AIL rapid-mode instructions
-    (packet/runtime interpolation override semantics are still planned)
+    (runtime interpolation override semantics are still planned)
+  - AIL/packet `G0` output carries current effective rapid mode when
+    previously set by `RTLION`/`RTLIOF`
 
 Examples (from `testdata/g1_samples.ngc`):
 ```

@@ -128,6 +128,18 @@ TEST(PacketTest, SkipsRapidModeInstructionWithWarning) {
   EXPECT_NE(result.diagnostics[0].message.find("rapid_mode"),
             std::string::npos);
   EXPECT_EQ(result.diagnostics[0].location.line, 1);
+
+  ASSERT_TRUE(std::holds_alternative<gcode::MotionLinearPayload>(
+      result.packets[0].payload));
+  const auto &payload =
+      std::get<gcode::MotionLinearPayload>(result.packets[0].payload);
+  ASSERT_TRUE(payload.rapid_mode_effective.has_value());
+  EXPECT_EQ(*payload.rapid_mode_effective,
+            gcode::RapidInterpolationMode::Linear);
+
+  const auto json = nlohmann::json::parse(gcode::packetToJsonString(result));
+  ASSERT_EQ(json["packets"].size(), 1u);
+  EXPECT_EQ(json["packets"][0]["payload"]["rapid_mode_effective"], "linear");
 }
 
 TEST(PacketTest, JsonContainsStableSchema) {

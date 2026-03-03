@@ -1,5 +1,27 @@
 # CHANGELOG_AGENT
 
+## 2026-03-03 (T-045 slice 3: propagate effective rapid mode onto G0 outputs)
+- Added `rapid_mode_effective` metadata on AIL linear instructions and applied
+  current `RTLION`/`RTLIOF` state to subsequent `G0` instructions during
+  lowering.
+- Propagated `rapid_mode_effective` to packet linear payload output.
+- Updated AIL/packet JSON and debug formatting to expose effective rapid mode
+  when present.
+- Added tests for AIL rapid-mode propagation and packet payload propagation.
+- Updated SPEC and program-reference docs for current behavior/limitations.
+
+SPEC sections / tests:
+- SPEC: Section 3.3
+- Tests: `test/ail_tests.cpp`, `test/packet_tests.cpp`, `./dev/check.sh`
+
+Known limitations:
+- Runtime execution still does not apply interpolation override behavior
+  directly; rapid mode is currently modeled as output metadata.
+
+How to reproduce locally (commands):
+- `ctest --test-dir build --output-on-failure -R \"AilTest|PacketTest\"`
+- `./dev/check.sh`
+
 ## 2026-03-03 (T-045 slice 2: RTLION/RTLIOF AIL rapid-mode baseline)
 - Added AIL rapid interpolation mode instruction emission for `RTLION` and
   `RTLIOF` (`rapid_mode` with `opcode` + `mode`), preserving these commands in
