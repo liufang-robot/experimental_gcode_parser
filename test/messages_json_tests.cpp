@@ -105,6 +105,17 @@ TEST(MessagesJsonTest, RoundTripWithG4PreservesResult) {
   EXPECT_EQ(gcode::toJsonString(roundtrip), json);
 }
 
+TEST(MessagesJsonTest, RoundTripWithG0PreservesResult) {
+  const std::string input = "N1 G0 X10 Y20 F100\n";
+  gcode::LowerOptions options;
+  options.filename = "rapid_roundtrip.ngc";
+  const auto result = gcode::parseAndLower(input, options);
+
+  const auto json = gcode::toJsonString(result);
+  const auto roundtrip = gcode::fromJsonString(json);
+  EXPECT_EQ(gcode::toJsonString(roundtrip), json);
+}
+
 TEST(MessagesJsonTest, SerializedMessagesIncludeModalMetadata) {
   const std::string input = "G1 X10\nG2 X20 I1 J2\nG4 F3\n";
   const auto result = gcode::parseAndLower(input);

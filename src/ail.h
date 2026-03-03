@@ -18,6 +18,7 @@ namespace gcode {
 struct AilLinearMoveInstruction {
   SourceInfo source;
   ModalState modal;
+  std::string opcode = "G1";
   Pose6 target_pose;
   std::optional<double> feed;
 };

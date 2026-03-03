@@ -8,6 +8,13 @@ namespace {
 
 bool closeEnough(double lhs, double rhs) { return std::abs(lhs - rhs) < 1e-9; }
 
+const gcode::G0Message *asG0(const gcode::ParsedMessage &msg) {
+  if (!std::holds_alternative<gcode::G0Message>(msg)) {
+    return nullptr;
+  }
+  return &std::get<gcode::G0Message>(msg);
+}
+
 const gcode::G1Message *asG1(const gcode::ParsedMessage &msg) {
   if (!std::holds_alternative<gcode::G1Message>(msg)) {
     return nullptr;
@@ -70,6 +77,33 @@ TEST(MessagesTest, G1Extraction) {
   EXPECT_EQ(g1->modal.group, gcode::ModalGroupId::Motion);
   EXPECT_EQ(g1->modal.code, "G1");
   EXPECT_TRUE(g1->modal.updates_state);
+}
+
+TEST(MessagesTest, G0Extraction) {
+  const std::string input = "N10 G0 X10 Y20 Z30 F100\n";
+  gcode::LowerOptions options;
+  options.filename = "job.ngc";
+  const auto result = gcode::parseAndLower(input, options);
+
+  EXPECT_TRUE(result.diagnostics.empty());
+  ASSERT_EQ(result.messages.size(), 1u);
+
+  const auto *g0 = asG0(result.messages[0]);
+  ASSERT_NE(g0, nullptr);
+  EXPECT_EQ(g0->source.line, 1);
+  ASSERT_TRUE(g0->source.line_number.has_value());
+  EXPECT_EQ(*g0->source.line_number, 10);
+  ASSERT_TRUE(g0->target_pose.x.has_value());
+  EXPECT_TRUE(closeEnough(*g0->target_pose.x, 10.0));
+  ASSERT_TRUE(g0->target_pose.y.has_value());
+  EXPECT_TRUE(closeEnough(*g0->target_pose.y, 20.0));
+  ASSERT_TRUE(g0->target_pose.z.has_value());
+  EXPECT_TRUE(closeEnough(*g0->target_pose.z, 30.0));
+  ASSERT_TRUE(g0->feed.has_value());
+  EXPECT_TRUE(closeEnough(*g0->feed, 100.0));
+  EXPECT_EQ(g0->modal.group, gcode::ModalGroupId::Motion);
+  EXPECT_EQ(g0->modal.code, "G0");
+  EXPECT_TRUE(g0->modal.updates_state);
 }
 
 TEST(MessagesTest, LowercaseWordsEquivalent) {

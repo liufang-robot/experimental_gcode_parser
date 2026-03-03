@@ -5,7 +5,7 @@
         "column": 4,
         "line": 2
       },
-      "message": "multiple motion commands in one line; choose only one of G1/G2/G3",
+      "message": "multiple motion commands in one line; choose only one of G0/G1/G2/G3",
       "severity": "error"
     }
   ],
@@ -44,7 +44,7 @@
             "column": 4,
             "line": 2
           },
-          "message": "multiple motion commands in one line; choose only one of G1/G2/G3",
+          "message": "multiple motion commands in one line; choose only one of G0/G1/G2/G3",
           "severity": "error"
         }
       ],

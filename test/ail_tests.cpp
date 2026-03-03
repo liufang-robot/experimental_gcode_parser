@@ -74,6 +74,28 @@ TEST(AilTest, JsonContainsInstructionSchemaAndModal) {
   EXPECT_EQ(j["instructions"][1]["modal"]["group"], "GGroup2");
 }
 
+TEST(AilTest, G0LowersToLinearInstructionWithG0Opcode) {
+  const auto result = gcode::parseAndLowerAil("G0 X10 Y20 F500\n");
+  ASSERT_TRUE(result.diagnostics.empty());
+  ASSERT_EQ(result.instructions.size(), 1u);
+  ASSERT_TRUE(std::holds_alternative<gcode::AilLinearMoveInstruction>(
+      result.instructions[0]));
+  const auto &move =
+      std::get<gcode::AilLinearMoveInstruction>(result.instructions[0]);
+  EXPECT_EQ(move.opcode, "G0");
+  EXPECT_EQ(move.modal.code, "G0");
+  ASSERT_TRUE(move.target_pose.x.has_value());
+  ASSERT_TRUE(move.target_pose.y.has_value());
+  EXPECT_TRUE(closeEnough(*move.target_pose.x, 10.0));
+  EXPECT_TRUE(closeEnough(*move.target_pose.y, 20.0));
+  ASSERT_TRUE(move.feed.has_value());
+  EXPECT_TRUE(closeEnough(*move.feed, 500.0));
+
+  const auto json = nlohmann::json::parse(gcode::ailToJsonString(result));
+  EXPECT_EQ(json["instructions"][0]["kind"], "motion_linear");
+  EXPECT_EQ(json["instructions"][0]["opcode"], "G0");
+}
+
 TEST(AilTest, EmitsMFunctionInstructionsInAilAndJson) {
   const auto result = gcode::parseAndLowerAil("N10 M3\nN20 M2=3 M5\n");
   ASSERT_TRUE(result.diagnostics.empty());

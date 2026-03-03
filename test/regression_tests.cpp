@@ -43,7 +43,7 @@ TEST(RegressionTest, Regression_UnsupportedChars_HasAccurateLocation) {
 }
 
 TEST(RegressionTest, Regression_NonMotionGCode_DoesNotEmitMessage) {
-  const std::string input = "G0 X10\n";
+  const std::string input = "G90 X10\n";
   const auto result = gcode::parseAndLower(input);
 
   EXPECT_TRUE(result.diagnostics.empty());
