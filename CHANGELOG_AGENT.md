@@ -1,5 +1,28 @@
 # CHANGELOG_AGENT
 
+## 2026-03-03 (CI speedup slice 2: PR fast-check path)
+- Added `dev/check_pr.sh` to run a faster PR gate:
+  - clang-format check
+  - configure/build
+  - test suite
+  - fuzz smoke test
+- Updated CI `build-test` job to use:
+  - `dev/check_pr.sh` for `pull_request`
+  - `dev/check.sh` for `push` on `main`
+- This keeps full heavy validation on mainline while reducing PR latency.
+
+SPEC sections / tests:
+- SPEC: not applicable (CI/process change only)
+- Validation: `./dev/check.sh`
+
+Known limitations:
+- PR fast path skips clang-tidy and sanitizer stages; those remain in full
+  `./dev/check.sh` on `main` pushes.
+
+How to reproduce locally (commands):
+- `./dev/check_pr.sh`
+- `./dev/check.sh`
+
 ## 2026-03-03 (CI speedup slice 1: trigger/concurrency/cache)
 - Updated CI triggers to avoid duplicate branch + PR runs:
   - `push` now runs only on `main`
