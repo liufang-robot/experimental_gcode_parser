@@ -1,5 +1,28 @@
 # CHANGELOG_AGENT
 
+## 2026-03-03 (docs: publish split design pages in mdBook)
+- Added mdBook design section with split pages:
+  - `docs/src/design/index.md`
+  - `docs/src/design/pipeline.md`
+  - `docs/src/design/modal_strategy.md`
+  - `docs/src/design/implementation_plan.md`
+- Updated `docs/src/SUMMARY.md`, `docs/src/index.md`, and
+  `docs/src/development_reference.md` to link to design pages and avoid a
+  monolithic single-page design dump.
+- Synced mdBook structure with new SPEC policy requiring design docs under
+  `docs/src/` and doc splitting for long pages.
+
+SPEC sections / tests:
+- SPEC: Section 9 (Documentation Policy)
+- Tests: `./dev/check.sh`
+
+Known limitations:
+- Design pages are synchronized summaries of root docs; deep implementation
+  details still primarily live in `ARCHITECTURE.md` and `IMPLEMENTATION_PLAN.md`.
+
+How to reproduce locally (commands):
+- `./dev/check.sh`
+
 ## 2026-03-03 (T-037 slice 2: optional // comment mode)
 - Added parse option `ParseOptions.enable_double_slash_comments`.
 - Added `// ...` comment token support with config-gated semantic behavior:
