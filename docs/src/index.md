@@ -5,6 +5,7 @@ This mdBook is the product documentation entrypoint for this repository.
 Use these sections:
 
 - Development Reference: architecture, build/test workflow, contribution gates.
+- Design: architecture pipeline, modal strategy, and implementation phases.
 - Program Reference: implemented G-code function syntax and output behavior.
 
 Policy:
