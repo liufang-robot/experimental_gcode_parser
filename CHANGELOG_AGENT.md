@@ -1,5 +1,32 @@
 # CHANGELOG_AGENT
 
+## 2026-03-03 (docs architecture review alignment)
+- Added architecture documentation baseline files:
+  `ARCHITECTURE.md` (pipeline/modules/policy model with Mermaid diagrams) and
+  `IMPLEMENTATION_PLAN.md` (phased delivery/dependency order/test matrix).
+- Expanded PRD/backlog coverage for Siemens-focused requirement planning
+  (`T-037`..`T-047`) and added integrated acceptance fixture
+  `testdata/integration/simple_integrated_case.ngc`.
+- Applied review fixes for documentation consistency:
+  included Group 6 in modal strategy, documented `ParseSession` incremental
+  resume design, aligned backlog selection policy with implementation dependency
+  order, and clarified `SPEC.md` current vs planned comment syntax modes.
+
+SPEC sections / tests:
+- SPEC: Section 2.1 (comment mode clarification), Section 6 (resume contract)
+- Tests: not applicable (docs + fixture planning update only)
+
+Known limitations:
+- This slice is documentation/planning only; Siemens feature families remain to
+  be implemented task-by-task.
+- `SPEC.md` still reflects current implemented parser behavior for many syntax
+  families and intentionally marks Siemens extensions as planned.
+
+How to reproduce locally (commands):
+- `git diff -- PRD.md SPEC.md BACKLOG.md ARCHITECTURE.md IMPLEMENTATION_PLAN.md CHANGELOG_AGENT.md`
+- `nl -ba ARCHITECTURE.md | sed -n '16,180p'`
+- `nl -ba SPEC.md | sed -n '12,40p'`
+
 ## 2026-03-02 (T-036 Siemens-style line-number handling)
 - Added semantic diagnostics for `N`-address usage:
   invalid `N` token forms and misplaced `N` words not at block start.
