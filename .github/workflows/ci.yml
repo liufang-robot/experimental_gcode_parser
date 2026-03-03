@@ -2,7 +2,13 @@ name: ci
 
 on:
   push:
+    branches:
+      - main
   pull_request:
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   build-test:
@@ -17,6 +23,14 @@ jobs:
           sudo apt-get install -y curl default-jre-headless clang-format clang-tidy cmake ninja-build libantlr4-runtime-dev libgtest-dev nlohmann-json3-dev gcovr
 
       - name: Install ANTLR tool (4.10.1)
+        id: antlr-cache
+        uses: actions/cache@v4
+        with:
+          path: .tools/antlr-4.10.1-complete.jar
+          key: antlr-4.10.1
+
+      - name: Download ANTLR tool (4.10.1)
+        if: steps.antlr-cache.outputs.cache-hit != 'true'
         run: |
           mkdir -p .tools
           curl -fsSL -o .tools/antlr-4.10.1-complete.jar https://www.antlr.org/download/antlr-4.10.1-complete.jar
@@ -58,6 +72,14 @@ jobs:
           sudo apt-get install -y curl default-jre-headless cmake ninja-build libantlr4-runtime-dev libgtest-dev nlohmann-json3-dev gcovr
 
       - name: Install ANTLR tool (4.10.1)
+        id: antlr-cache
+        uses: actions/cache@v4
+        with:
+          path: .tools/antlr-4.10.1-complete.jar
+          key: antlr-4.10.1
+
+      - name: Download ANTLR tool (4.10.1)
+        if: steps.antlr-cache.outputs.cache-hit != 'true'
         run: |
           mkdir -p .tools
           curl -fsSL -o .tools/antlr-4.10.1-complete.jar https://www.antlr.org/download/antlr-4.10.1-complete.jar

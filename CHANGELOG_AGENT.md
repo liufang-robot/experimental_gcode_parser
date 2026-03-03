@@ -1,5 +1,25 @@
 # CHANGELOG_AGENT
 
+## 2026-03-03 (CI speedup slice 1: trigger/concurrency/cache)
+- Updated CI triggers to avoid duplicate branch + PR runs:
+  - `push` now runs only on `main`
+  - `pull_request` continues for PR validation
+- Added workflow-level concurrency cancellation so superseded runs on the same
+  ref are auto-canceled.
+- Added ANTLR tool caching (`.tools/antlr-4.10.1-complete.jar`) and conditional
+  download in `build-test` and `benchmark-smoke`.
+
+SPEC sections / tests:
+- SPEC: not applicable (CI orchestration change only)
+- Validation: YAML sanity via local inspection; runtime validation occurs in GitHub Actions.
+
+Known limitations:
+- Full `build-test` runtime remains dominated by `./dev/check.sh` (format/tidy,
+  sanitizer build/tests).
+
+How to reproduce locally (commands):
+- `sed -n '1,260p' .github/workflows/ci.yml`
+
 ## 2026-03-03 (T-046 slice 3: M-function executor boundary policy)
 - Added `AilExecutor` handling for `m_function` instructions with configurable
   unknown-M policy (`error`, `warning`, `ignore`).
