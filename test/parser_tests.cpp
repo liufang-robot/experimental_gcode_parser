@@ -296,4 +296,24 @@ TEST(ParserSyntaxBaselineTest, AcceptsDoubleSlashCommentWhenModeEnabled) {
   EXPECT_EQ(comment.text, "// trailing");
 }
 
+TEST(ParserSyntaxBaselineTest, ParsesMCodeBaselineForms) {
+  const auto result = gcode::parse("M3\nM2=3\n");
+  ASSERT_TRUE(result.diagnostics.empty());
+  ASSERT_EQ(result.program.lines.size(), 2u);
+}
+
+TEST(ParserSyntaxBaselineTest, ReportsMCodeValueOutOfRange) {
+  const auto result = gcode::parse("M2147483648\n");
+  ASSERT_EQ(result.diagnostics.size(), 1u);
+  EXPECT_NE(result.diagnostics[0].message.find("out of range"),
+            std::string::npos);
+}
+
+TEST(ParserSyntaxBaselineTest, ReportsExtendedMAddressForProhibitedFunctions) {
+  const auto result = gcode::parse("M2=30\n");
+  ASSERT_EQ(result.diagnostics.size(), 1u);
+  EXPECT_NE(result.diagnostics[0].message.find("not allowed"),
+            std::string::npos);
+}
+
 } // namespace

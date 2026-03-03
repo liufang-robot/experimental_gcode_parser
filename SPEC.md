@@ -224,6 +224,18 @@ Planned Siemens compatibility extension:
   - execute with call stack and return semantics
   - fault or warn by policy on unresolved calls/invalid returns
 
+### 3.10 M Functions (baseline parse/validation)
+- Supported baseline syntax:
+  - `M<value>` (for example `M3`, `M30`)
+  - `M<address_extension>=<value>` (for example `M2=3`)
+- Baseline validation:
+  - M-function value must be integer in range `0..2147483647`
+  - extended address form must use `=` (`M<ext>=<value>`)
+  - extended address is rejected for `M0`, `M1`, `M2`, `M17`, `M30`
+- Current scope:
+  - parse + diagnostics only
+  - no runtime machine action mapping in this slice
+
 ### 3.7 Control Flow Syntax (parse-only in v0)
 - Jump directions:
   - `GOTOF <target>`: forward search direction

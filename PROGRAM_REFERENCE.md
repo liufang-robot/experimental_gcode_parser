@@ -37,6 +37,7 @@ All emitted messages include:
 | `G2` arc CW | Implemented | Lowers to `G2Message` with pose/arc/feed. |
 | `G3` arc CCW | Implemented | Lowers to `G3Message` with pose/arc/feed. |
 | `G4` dwell | Implemented | Lowers to `G4Message` with mode/value. |
+| `M` functions (`M<value>`, `M<ext>=<value>`) | Partial | Parse + validation only; runtime mapping pending. |
 | `R... = expr` assignment | Partial | Parsed/lowered into AIL `assign`; runtime evaluator/store not implemented. |
 | `N...` line number at block start | Implemented | Parsed into source metadata; duplicate-warning support for line-number jumps. |
 | Block delete `/` and `/0.. /9` | Implemented | Parsed with level metadata; lowering skip policy uses `LowerOptions.active_skip_levels`. |
@@ -165,6 +166,23 @@ Diagnostics:
 Examples:
 - `G4 F3`
 - `G4 S30`
+
+## `M` Functions (Baseline)
+
+Status:
+- `Partial` (parse + diagnostics)
+
+Supported syntax:
+- `M<value>`
+- `M<address_extension>=<value>`
+
+Validation:
+- integer range: `0..2147483647`
+- extension form requires `=` syntax
+- extension form is rejected for `M0/M1/M2/M17/M30`
+
+Current limitation:
+- runtime machine action mapping is not implemented yet.
 
 ## Control Flow Runtime Notes
 

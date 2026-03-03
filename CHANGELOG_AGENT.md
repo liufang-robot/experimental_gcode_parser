@@ -1,5 +1,27 @@
 # CHANGELOG_AGENT
 
+## 2026-03-03 (T-046 slice 1: M-function parse/validation baseline)
+- Added semantic validation baseline for M functions:
+  - accepts `M<value>` and `M<ext>=<value>` parse forms
+  - enforces integer range `0..2147483647`
+  - rejects extended form for `M0/M1/M2/M17/M30`
+- Added parser tests for valid baseline forms and invalid range/prohibited
+  extended-address cases.
+- Updated SPEC and program-reference docs to mark M-function support as
+  parse+diagnostics partial (runtime actuation pending).
+
+SPEC sections / tests:
+- SPEC: Section 3.10
+- Tests: `test/parser_tests.cpp`, `./dev/check.sh`
+
+Known limitations:
+- Runtime machine action mapping for M functions is not implemented in this
+  slice.
+
+How to reproduce locally (commands):
+- `ctest --test-dir build --output-on-failure -R \"ParserSyntaxBaselineTest\"`
+- `./dev/check.sh`
+
 ## 2026-03-03 (docs: publish split design pages in mdBook)
 - Added mdBook design section with split pages:
   - `docs/src/design/index.md`

@@ -34,6 +34,7 @@ Current Siemens-aligned baseline for supported functions:
 | `G2` arc CW | Implemented | Emits `G2Message` with endpoint + arc fields + feed. |
 | `G3` arc CCW | Implemented | Emits `G3Message` with endpoint + arc fields + feed. |
 | `G4` dwell | Implemented | Emits `G4Message` with dwell mode/value. |
+| `M` functions (`M<value>`, `M<ext>=<value>`) | Partial | Parse + validation only in current slice; runtime machine actions not yet mapped. |
 | `R... = expr` assignment | Partial | Parsed and lowered to AIL `assign`; runtime evaluation/store policy not implemented. |
 | `N...` line number at block start | Implemented | Parsed into source metadata; duplicate-warning support for line-number jumps. |
 | Block delete `/` and `/0.. /9` | Implemented | Parsed with skip level metadata; skip policy applied by `LowerOptions.active_skip_levels`. |
@@ -131,6 +132,24 @@ Output fields:
 - modal: `group=GGroup2`, `code=G4`, `updates_state=false`
 - dwell_mode: `seconds` (F) or `revolutions` (S)
 - dwell_value: numeric value
+
+## M Functions (Baseline)
+
+Status:
+- `Partial` (parse + validation only)
+
+Supported syntax:
+- `M<value>` (for example `M3`, `M30`)
+- `M<address_extension>=<value>` (for example `M2=3`)
+
+Validation:
+- M value must be integer `0..2147483647`
+- Extended form must use equals syntax
+- Extended form is rejected for predefined stop/end families:
+  - `M0`, `M1`, `M2`, `M17`, `M30`
+
+Current limitation:
+- Runtime machine-function execution mapping is not implemented in this slice.
 
 ## Control Flow and AIL Runtime
 
