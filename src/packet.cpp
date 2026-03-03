@@ -63,8 +63,8 @@ PacketResult lowerAilToPackets(const AilResult &ail_result) {
                 makeSkippedInstructionWarning(inst.source, "m_function"));
           } else if constexpr (std::is_same_v<
                                    T, AilRapidTraverseModeInstruction>) {
-            result.diagnostics.push_back(
-                makeSkippedInstructionWarning(inst.source, "rapid_mode"));
+            // Rapid-mode instructions influence G0 payload metadata and do not
+            // produce standalone packets.
           } else if constexpr (std::is_same_v<T, AilLabelInstruction>) {
             result.diagnostics.push_back(
                 makeSkippedInstructionWarning(inst.source, "label"));

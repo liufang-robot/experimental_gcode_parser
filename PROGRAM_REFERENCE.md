@@ -155,8 +155,8 @@ Current lowering output:
 Current limitation:
 - Runtime executor now tracks rapid-mode state transitions, but does not yet
   apply interpolation override behavior to machine actuation.
-- Packet stage skips standalone `rapid_mode` instructions as non-motion
-  (warning), but preserves `rapid_mode_effective` on `G0` linear payloads.
+- Packet stage does not emit standalone packets for `rapid_mode` instructions,
+  and preserves `rapid_mode_effective` on `G0` linear payloads.
 
 ## `G2` / `G3` Circular Interpolation
 

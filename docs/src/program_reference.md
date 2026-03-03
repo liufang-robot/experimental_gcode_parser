@@ -147,8 +147,8 @@ Current limitations:
 
 - Runtime execution now tracks rapid-mode state transitions, but interpolation
   override behavior for machine actuation is not implemented yet.
-- Packetization skips standalone `rapid_mode` with a warning (non-motion
-  instruction), while preserving `rapid_mode_effective` on `G0` linear payloads.
+- Packetization does not emit standalone packets for `rapid_mode`, while
+  preserving `rapid_mode_effective` on `G0` linear payloads.
 
 ## G2 / G3
 
