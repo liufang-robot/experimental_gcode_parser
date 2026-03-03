@@ -77,13 +77,16 @@ AST shape (v0.1):
 
 ### 3.1 Line structure
 - Optional block delete: `/`
+- Optional block delete with skip level: `/0`..`/9`
 - Optional line number: `N` + integer
 - One motion command per line (GGroup1)
 - Word letters are case-insensitive (`x` == `X`, `g1` == `G1`).
 - `N`-address block number must appear at block start (before statement words).
-- Planned Siemens compatibility extension:
-  - block-skip levels `/0.. /9` (single level per block)
-  - block length validation against configured limit (Siemens baseline 512 chars)
+- Block-skip level constraints:
+  - only one skip level value is allowed after `/`
+  - valid range is `/0` through `/9`
+- Block length validation:
+  - parser reports error if a block exceeds 512 characters (including LF).
 
 ### 3.2 Numbers
 - Integers: `0`, `10`, `-3`, `+7`
@@ -281,8 +284,7 @@ N130 G01 X20 Y20
     "choose one coordinate mode", "choose only one of G1/G2/G3", or
     "program G4 in a separate block").
 - Planned Siemens compatibility diagnostics:
-  - block exceeds configured max length (Siemens baseline 512 chars)
-  - malformed skip-level marker
+  - malformed skip-level marker (outside `/0.. /9`)
   - invalid assignment-shape for `=` requirement/omission rules
 
 ## 6. Message Lowering (v0.1)

@@ -201,4 +201,38 @@ TEST(ParserControlFlowTest, ParsesStructuredIfWithAndParenthesizedConditions) {
   EXPECT_EQ(condition.raw_text, "(R1 == 1)AND(R2 > 10)");
 }
 
+TEST(ParserSyntaxBaselineTest, ParsesBlockDeleteWithSkipLevel) {
+  const auto result = gcode::parse("/1 N100 G1 X1\n");
+  ASSERT_TRUE(result.diagnostics.empty());
+  ASSERT_EQ(result.program.lines.size(), 1u);
+
+  const auto &line = result.program.lines[0];
+  EXPECT_TRUE(line.block_delete);
+  ASSERT_TRUE(line.block_delete_level.has_value());
+  EXPECT_EQ(*line.block_delete_level, 1);
+  ASSERT_TRUE(line.line_number.has_value());
+  EXPECT_EQ(line.line_number->value, 100);
+}
+
+TEST(ParserSyntaxBaselineTest, ReportsInvalidSkipLevelRange) {
+  const auto result = gcode::parse("/10 N20 G1 X1\n");
+  ASSERT_EQ(result.diagnostics.size(), 1u);
+  EXPECT_EQ(result.diagnostics[0].severity, gcode::Diagnostic::Severity::Error);
+  EXPECT_NE(result.diagnostics[0].message.find("skip level"),
+            std::string::npos);
+}
+
+TEST(ParserSyntaxBaselineTest, ReportsBlockLengthOverflow) {
+  std::string input = "N10 ";
+  input.append(510, 'X');
+  input.push_back('\n');
+
+  const auto result = gcode::parse(input);
+  ASSERT_EQ(result.diagnostics.size(), 1u);
+  EXPECT_EQ(result.diagnostics[0].severity, gcode::Diagnostic::Severity::Error);
+  EXPECT_NE(result.diagnostics[0].message.find("block length exceeds 512"),
+            std::string::npos);
+  EXPECT_EQ(result.diagnostics[0].location.line, 1);
+}
+
 } // namespace

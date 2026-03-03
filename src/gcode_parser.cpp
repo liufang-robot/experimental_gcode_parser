@@ -4,6 +4,7 @@
 #include <cctype>
 #include <memory>
 #include <string>
+#include <string_view>
 
 #include "GCodeBaseVisitor.h"
 #include "GCodeLexer.h"
@@ -64,6 +65,22 @@ WordParts splitWordText(const std::string &text) {
   return parts;
 }
 
+std::optional<int> parseUnsignedIntStrict(std::string_view text) {
+  if (text.empty()) {
+    return std::nullopt;
+  }
+  for (char c : text) {
+    if (!std::isdigit(static_cast<unsigned char>(c))) {
+      return std::nullopt;
+    }
+  }
+  try {
+    return std::stoi(std::string(text));
+  } catch (...) {
+    return std::nullopt;
+  }
+}
+
 class DiagnosticErrorListener : public antlr4::BaseErrorListener {
 public:
   explicit DiagnosticErrorListener(std::vector<Diagnostic> *out) : out_(out) {}
@@ -122,14 +139,14 @@ public:
   }
 
   antlrcpp::Any visitLine(GCodeParser::LineContext *ctx) override {
-    return buildLine(ctx->getStart(), ctx->block_delete(), ctx->line_number(),
-                     ctx->statement());
+    return buildLine(ctx->getStart(), ctx->block_delete(), ctx->skip_level(),
+                     ctx->line_number(), ctx->statement());
   }
 
   antlrcpp::Any
   visitLine_no_eol(GCodeParser::Line_no_eolContext *ctx) override {
-    return buildLine(ctx->getStart(), ctx->block_delete(), ctx->line_number(),
-                     ctx->statement());
+    return buildLine(ctx->getStart(), ctx->block_delete(), ctx->skip_level(),
+                     ctx->line_number(), ctx->statement());
   }
 
 private:
@@ -314,12 +331,20 @@ private:
 
   Line buildLine(antlr4::Token *start,
                  GCodeParser::Block_deleteContext *block_ctx,
+                 GCodeParser::Skip_levelContext *skip_ctx,
                  GCodeParser::Line_numberContext *number_ctx,
                  GCodeParser::StatementContext *statement_ctx) {
     Line line;
     if (block_ctx) {
       line.block_delete = true;
       line.block_delete_location = locationFromToken(block_ctx->getStart());
+    }
+    if (skip_ctx) {
+      auto *token = skip_ctx->NUMBER()->getSymbol();
+      line.block_delete_level_raw = token->getText();
+      line.block_delete_level_location = locationFromToken(token);
+      line.block_delete_level =
+          parseUnsignedIntStrict(*line.block_delete_level_raw);
     }
     if (number_ctx) {
       auto *token = number_ctx->LINE_NUMBER()->getSymbol();
@@ -508,6 +533,38 @@ private:
   }
 };
 
+void addBlockLengthDiagnostics(std::string_view input,
+                               std::vector<Diagnostic> *diagnostics) {
+  if (!diagnostics) {
+    return;
+  }
+  constexpr int kMaxBlockLength = 512;
+
+  int line = 1;
+  int line_length = 0;
+  for (size_t i = 0; i < input.size(); ++i) {
+    const char ch = input[i];
+    if (ch == '\n') {
+      const int block_length =
+          line_length + 1; // LF is counted by Siemens rule.
+      if (block_length > kMaxBlockLength) {
+        Diagnostic diag;
+        diag.severity = Diagnostic::Severity::Error;
+        diag.message =
+            "block length exceeds 512 characters (including end-of-block LF)";
+        diag.location = {line, kMaxBlockLength + 1};
+        diagnostics->push_back(std::move(diag));
+      }
+      ++line;
+      line_length = 0;
+      continue;
+    }
+    if (ch != '\r') {
+      ++line_length;
+    }
+  }
+}
+
 } // namespace
 
 ParseResult parse(std::string_view input) {
@@ -533,6 +590,7 @@ ParseResult parse(std::string_view input) {
     }
   }
 
+  addBlockLengthDiagnostics(input, &result.diagnostics);
   addSemanticDiagnostics(result);
   return result;
 }
