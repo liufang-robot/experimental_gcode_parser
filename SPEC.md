@@ -13,9 +13,12 @@ validation). It includes message-level modal metadata for supported functions.
 - UTF-8 text
 - Line endings: `\n` or `\r\n`
 - Tabs are whitespace
-- Comments:
+- Comments (v0 current):
   - Semicolon: `; ...` to end-of-line
   - Parentheses: `( ... )` with no nesting
+- Comments (planned Siemens compatibility mode; see PRD 5.3):
+  - Block section: `(* ... *)` (multi-line)
+  - Optional single-line: `// ...` (disabled by default unless enabled by config)
 
 ### 2.2 Output (Library + CLI)
 The parser returns:
@@ -268,6 +271,14 @@ N130 G01 X20 Y20
   - Provide session-level edit + resume from line API for interactive workflows.
   - After line edit, reparsing preserves deterministic message ordering and
     stable source line mapping.
+  - Incremental resume contract:
+    - API may reparse from an explicit line or from first error line.
+    - Prefix before resume line is preserved; suffix is reparsed and merged.
+    - Line mapping remains 1-based and deterministic after merge.
+    - Example workflow:
+      - parse `G1 X10` + `G1 X12,30` -> error at line 2
+      - edit line 2 to `G1 X12 Y30`
+      - resume from line 2 and continue lowering.
 - Queue diff/apply API (v0):
   - Provide line-keyed message diff with `added`, `updated`, and
     `removed_lines`.
