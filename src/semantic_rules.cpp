@@ -235,12 +235,35 @@ public:
   }
 };
 
+class BlockSkipLevelRule final : public LineSemanticRule {
+public:
+  void apply(const Line &line,
+             std::vector<Diagnostic> *diagnostics) const override {
+    if (!line.block_delete) {
+      return;
+    }
+    if (!line.block_delete_level_raw.has_value()) {
+      return;
+    }
+    const Location loc = line.block_delete_level_location.value_or(Location{});
+
+    if (!line.block_delete_level.has_value()) {
+      addDiagnostic(diagnostics, loc, "invalid skip level; use /0 through /9");
+      return;
+    }
+    if (*line.block_delete_level < 0 || *line.block_delete_level > 9) {
+      addDiagnostic(diagnostics, loc, "invalid skip level; use /0 through /9");
+    }
+  }
+};
+
 std::vector<std::unique_ptr<LineSemanticRule>> makeRules() {
   std::vector<std::unique_ptr<LineSemanticRule>> rules;
   rules.push_back(std::make_unique<G4BlockRule>());
   rules.push_back(std::make_unique<MotionExclusivityRule>());
   rules.push_back(std::make_unique<G1CoordinateModeRule>());
   rules.push_back(std::make_unique<LineNumberWordRule>());
+  rules.push_back(std::make_unique<BlockSkipLevelRule>());
   return rules;
 }
 

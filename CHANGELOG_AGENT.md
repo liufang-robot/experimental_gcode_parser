@@ -1,5 +1,26 @@
 # CHANGELOG_AGENT
 
+## 2026-03-03 (T-049 slice 1: skip-level parsing + block-length diagnostics)
+- Added parser support for Siemens-style block-delete skip levels (`/0.. /9`)
+  and captured skip level metadata in AST lines.
+- Added semantic validation for skip-level range with actionable diagnostics for
+  invalid values (for example `/10`).
+- Added parser diagnostics when a block exceeds 512 characters (including
+  end-of-block LF), plus parser tests for new behavior.
+
+SPEC sections / tests:
+- SPEC: Section 3.1, Section 5
+- Tests: `test/parser_tests.cpp`, `./dev/check.sh`
+
+Known limitations:
+- Block length uses fixed Siemens baseline (512) and is not yet profile-configurable.
+- Skip-level metadata is parse-stage only in this slice (runtime skip-policy
+  execution wiring comes in follow-up slices).
+
+How to reproduce locally (commands):
+- `ctest --test-dir build --output-on-failure -R \"ParserSyntaxBaselineTest|ParserControlFlowTest\"`
+- `./dev/check.sh`
+
 ## 2026-03-03 (T-041 foundation scaffolding: machine profile + modal registry)
 - Added `MachineProfile` baseline scaffolding (`src/machine_profile.*`) with
   controller/tool-mode/error-policy fields and a Siemens 840D baseline preset.

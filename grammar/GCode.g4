@@ -5,14 +5,21 @@ program
     ;
 
 line
-    : block_delete? line_number? statement? EOL
-    | block_delete? line_number? EOL
+    : block_delete skip_level? line_number? statement? EOL
+    | block_delete skip_level? line_number? EOL
+    | line_number? statement? EOL
+    | line_number? EOL
     ;
 
 line_no_eol
-    : block_delete? line_number? statement
-    | block_delete line_number?
+    : block_delete skip_level? line_number? statement
+    | block_delete skip_level? line_number?
+    | line_number? statement
     | line_number
+    ;
+
+skip_level
+    : NUMBER
     ;
 
 statement

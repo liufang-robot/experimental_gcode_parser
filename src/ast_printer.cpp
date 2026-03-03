@@ -81,6 +81,9 @@ nlohmann::json lineToJson(const Line &line) {
   } else {
     j["block_delete_location"] = nullptr;
   }
+  if (line.block_delete_level.has_value()) {
+    j["block_delete_level"] = *line.block_delete_level;
+  }
 
   if (line.line_number.has_value()) {
     nlohmann::json line_number;
@@ -255,6 +258,9 @@ std::string format(const ParseResult &result) {
   for (const auto &line : result.program.lines) {
     out << "line " << line.line_index << "\n";
     out << "  block_delete: " << (line.block_delete ? "true" : "false") << "\n";
+    if (line.block_delete_level.has_value()) {
+      out << "  block_delete_level: " << *line.block_delete_level << "\n";
+    }
     out << "  line_number: ";
     if (line.line_number.has_value()) {
       out << line.line_number->value << " at ";

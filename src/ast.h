@@ -159,6 +159,9 @@ struct LineNumber {
 struct Line {
   bool block_delete = false;
   std::optional<Location> block_delete_location;
+  std::optional<int> block_delete_level;
+  std::optional<std::string> block_delete_level_raw;
+  std::optional<Location> block_delete_level_location;
   std::optional<LineNumber> line_number;
   std::vector<LineItem> items;
   std::optional<Assignment> assignment;
