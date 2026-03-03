@@ -100,6 +100,15 @@ std::optional<AilMCodeInstruction> mCodeFromWord(const Word &word,
   return inst;
 }
 
+bool isKnownPredefinedMFunction(int64_t value) {
+  if (value == 0 || value == 1 || value == 2 || value == 3 || value == 4 ||
+      value == 5 || value == 6 || value == 17 || value == 19 || value == 30 ||
+      value == 70) {
+    return true;
+  }
+  return value >= 40 && value <= 45;
+}
+
 } // namespace
 
 bool lineHasError(const std::vector<Diagnostic> &diagnostics, int line) {
@@ -353,8 +362,10 @@ AilResult parseAndLowerAil(std::string_view input,
   return lowerToAil(parsed.program, parsed.diagnostics, options);
 }
 
-AilExecutor::AilExecutor(std::vector<AilInstruction> instructions)
-    : instructions_(std::move(instructions)) {
+AilExecutor::AilExecutor(std::vector<AilInstruction> instructions,
+                         ErrorPolicy unknown_mcode_policy)
+    : instructions_(std::move(instructions)),
+      unknown_mcode_policy_(unknown_mcode_policy) {
   for (size_t i = 0; i < instructions_.size(); ++i) {
     const auto &inst = instructions_[i];
     std::visit(
@@ -581,6 +592,26 @@ bool AilExecutor::evaluateBranchAtPc(int64_t now_ms,
   return true;
 }
 
+bool AilExecutor::handleMCodeAtPc() {
+  const auto &inst = std::get<AilMCodeInstruction>(instructions_[state_.pc]);
+  if (isKnownPredefinedMFunction(inst.value)) {
+    ++state_.pc;
+    return true;
+  }
+
+  const std::string m_text = "M" + std::to_string(inst.value);
+  if (unknown_mcode_policy_ == ErrorPolicy::Error) {
+    addFault(inst.source, "unsupported M function: " + m_text);
+    return true;
+  }
+  if (unknown_mcode_policy_ == ErrorPolicy::Warning) {
+    addWarning(inst.source,
+               "unsupported M function ignored by policy: " + m_text);
+  }
+  ++state_.pc;
+  return true;
+}
+
 bool AilExecutor::advanceOneInstruction(int64_t now_ms,
                                         const ConditionResolver &resolver) {
   if (state_.pc >= instructions_.size()) {
@@ -605,6 +636,9 @@ bool AilExecutor::advanceOneInstruction(int64_t now_ms,
   }
   if (std::holds_alternative<AilBranchIfInstruction>(inst)) {
     return evaluateBranchAtPc(now_ms, resolver);
+  }
+  if (std::holds_alternative<AilMCodeInstruction>(inst)) {
+    return handleMCodeAtPc();
   }
   ++state_.pc;
   return true;

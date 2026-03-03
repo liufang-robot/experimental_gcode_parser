@@ -1,5 +1,26 @@
 # CHANGELOG_AGENT
 
+## 2026-03-03 (T-046 slice 3: M-function executor boundary policy)
+- Added `AilExecutor` handling for `m_function` instructions with configurable
+  unknown-M policy (`error`, `warning`, `ignore`).
+- Added known predefined Siemens M-value classification in executor
+  (`M0/M1/M2/M3/M4/M5/M6/M17/M19/M30/M40..M45/M70`) so these advance without
+  machine-actuation side effects in v0.
+- Added executor tests for known M behavior and unknown-M policy outcomes.
+- Updated SPEC and program-reference docs for current executor boundary.
+
+SPEC sections / tests:
+- SPEC: Section 3.10, Section 6.1
+- Tests: `test/ail_executor_tests.cpp`, `./dev/check.sh`
+
+Known limitations:
+- No machine actuation mapping yet for M functions (spindle/coolant/tool I/O is
+  not executed in this slice).
+
+How to reproduce locally (commands):
+- `ctest --test-dir build --output-on-failure -R \"AilExecutorTest\"`
+- `./dev/check.sh`
+
 ## 2026-03-03 (T-046 slice 2: M-function AIL emission baseline)
 - Added `AilMCodeInstruction` and lowering logic to emit `m_function`
   instructions from parsed M words (`M<value>` and `M<ext>=<value>`).

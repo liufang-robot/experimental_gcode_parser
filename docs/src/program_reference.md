@@ -136,7 +136,7 @@ Output fields:
 ## M Functions (Baseline)
 
 Status:
-- `Partial` (parse + validation + AIL emission)
+- `Partial` (parse + validation + AIL emission + executor boundary policy)
 
 Supported syntax:
 - `M<value>` (for example `M3`, `M30`)
@@ -156,6 +156,13 @@ AIL output:
   - source
   - value
   - optional address extension
+
+Executor boundary behavior:
+- Known predefined Siemens M values (`M0/M1/M2/M3/M4/M5/M6/M17/M19/M30/M40..M45/M70`) are accepted and advanced without machine actuation in v0.
+- Unknown M values follow executor policy:
+  - `error` => fault
+  - `warning` => warning diagnostic and continue
+  - `ignore` => continue
 
 ## Control Flow and AIL Runtime
 

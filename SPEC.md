@@ -234,7 +234,11 @@ Planned Siemens compatibility extension:
   - extended address is rejected for `M0`, `M1`, `M2`, `M17`, `M30`
 - Current scope:
   - parse + diagnostics + AIL emission (`m_function`)
-  - no runtime machine action mapping in this slice
+  - executor boundary policy:
+    - known predefined Siemens M functions are accepted as executable no-op
+      control instructions in v0
+    - unknown M functions follow executor policy (`error|warning|ignore`)
+  - no runtime machine action mapping/actuation in this slice
 
 ### 3.7 Control Flow Syntax (parse-only in v0)
 - Jump directions:
@@ -429,6 +433,15 @@ N130 G01 X20 Y20
     fault and execution continues
 - For `N`/numeric targets with multiple candidates in the chosen search
   direction, runtime selects nearest match and emits warning diagnostic.
+- M-function runtime boundary (v0):
+  - `m_function` instructions are present in AIL and seen by executor
+  - known predefined Siemens M values:
+    - `M0/M1/M2/M3/M4/M5/M6/M17/M19/M30/M40..M45/M70`
+    are accepted without machine-actuation side effects in v0
+  - unknown M values are handled by executor policy:
+    - `error` => fault
+    - `warning` => warning diagnostic and continue
+    - `ignore` => continue silently
 - Unresolved non-`GOTOC` target is runtime fault.
 
 ## 7. Testing Expectations
