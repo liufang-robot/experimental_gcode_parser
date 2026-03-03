@@ -1,5 +1,23 @@
 # CHANGELOG_AGENT
 
+## 2026-03-03 (CI speedup slice 4: benchmark gating for PR latency)
+- Added `workflow_dispatch` trigger to CI so benchmark can be run manually.
+- Gated `benchmark-smoke` to skip on `pull_request` events and run on
+  `main` push/manual dispatch only.
+- This removes benchmark runtime from PR critical path while preserving regular
+  benchmark signal on mainline.
+
+SPEC sections / tests:
+- SPEC: not applicable (CI/process change only)
+- Validation: `./dev/check.sh`
+
+Known limitations:
+- PRs no longer execute benchmark-smoke by default; benchmark coverage is on
+  main pushes/manual runs.
+
+How to reproduce locally (commands):
+- `sed -n '1,220p' .github/workflows/ci.yml`
+
 ## 2026-03-03 (CI speedup slice 3: ccache for CI builds)
 - Added `ccache` to CI dependencies for `build-test` and `benchmark-smoke`.
 - Added cache persistence for `.ccache` across runs using `actions/cache`.
