@@ -479,6 +479,14 @@ Requirements:
   - `PROGRAM_REFERENCE.md` (repo root reference)
   - and/or `docs/src/program_reference.md` (mdBook reference)
   If behavior is unchanged, explicitly state "no program-reference change" in PR.
+- Architecture/design documentation must also be published under `docs/src/`
+  (mdBook), not only as repo-root markdown files.
+  - If design docs exist at root (for example `ARCHITECTURE.md`,
+    `IMPLEMENTATION_PLAN.md`), keep matching mdBook pages in sync.
+- If a documentation page becomes too long, split it into smaller topical files
+  and link them through `docs/src/SUMMARY.md`.
+  - Prefer one topic per page (for example parser pipeline, modal strategy,
+    runtime executor, migration plan) rather than a single monolithic file.
 - The program reference must describe currently implemented parser/lowering behavior,
   not only planned behavior.
 - Every documented command/function must include a status:

@@ -12,6 +12,9 @@
 - Synced both program-reference documents to current implemented behavior for
   comments, line numbers, skip levels, control-flow/runtime boundaries, and
   parse/lower options.
+- Added SPEC documentation-policy rules requiring design docs to be synced into
+  `docs/src/` and long documentation pages to be split into smaller mdBook
+  pages linked via `docs/src/SUMMARY.md`.
 
 SPEC sections / tests:
 - SPEC: Section 2.1
