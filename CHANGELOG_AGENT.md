@@ -1,5 +1,25 @@
 # CHANGELOG_AGENT
 
+## 2026-03-03 (CI speedup slice 3: ccache for CI builds)
+- Added `ccache` to CI dependencies for `build-test` and `benchmark-smoke`.
+- Added cache persistence for `.ccache` across runs using `actions/cache`.
+- Wired compiler launcher to ccache:
+  - `build-test`: via `CMAKE_CXX_COMPILER_LAUNCHER=ccache` environment
+  - `benchmark-smoke`: via cmake configure flag
+- Added post-job ccache stats output to track hit/miss behavior.
+
+SPEC sections / tests:
+- SPEC: not applicable (CI/process change only)
+- Validation: `./dev/check.sh`
+
+Known limitations:
+- First run after cache key change is cold and may not speed up.
+- Cache efficiency depends on source churn and branch reuse patterns.
+
+How to reproduce locally (commands):
+- `ccache -s`
+- `sed -n '1,280p' .github/workflows/ci.yml`
+
 ## 2026-03-03 (CI speedup slice 2: PR fast-check path)
 - Added `dev/check_pr.sh` to run a faster PR gate:
   - clang-format check
