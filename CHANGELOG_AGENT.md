@@ -40,9 +40,15 @@ How to reproduce locally (commands):
   - assignment `=` rules and numeric-extension disambiguation
   - skip-level syntax `/0.. /9` and parse/runtime execution boundary
   via new backlog task `T-049`.
+- Added Siemens subprogram requirement capture:
+  - `.MPF/.SPF` organization
+  - baseline `M17` return and optional `RET`
+  - direct/quoted name calls, repeat calls (`P` / `P=` forms)
+  - resolver policy for same-folder vs qualified-path lookup
+  via new backlog task `T-050`.
 
 SPEC sections / tests:
-- SPEC: Section 3.1, Section 3.6, Section 3.8, Section 5, Section 6.1
+- SPEC: Section 3.1, Section 3.6, Section 3.8, Section 3.9, Section 5, Section 6.1
 - Tests: not applicable (docs-only requirement update)
 
 Known limitations:

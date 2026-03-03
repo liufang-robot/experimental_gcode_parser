@@ -271,6 +271,38 @@ Architecture planning queue for PRD Section 5 requirements:
 - `Tests To Add/Update`:
   - `test/parser_tests.cpp` (comment parsing + diagnostics)
   - parser/CLI golden fixtures affected by comment syntax updates
+- `ID`: T-050
+- `Priority`: P1
+- `Title`: Siemens subprogram model (MPF/SPF, direct call, P-repeat, M17/RET, ISO M98)
+- `Why`: Subprogram organization and call semantics are required for practical
+  Siemens compatibility and reusable NC structure.
+- `Scope`:
+  - parser/AST support for:
+    - direct call by subprogram name
+    - quoted-name call form
+    - repeat count `P`
+    - `P=<count> <name>` and `<name> P<count>` forms
+    - `M17` and `RET`
+    - ISO-gated `M98 P...` compatibility syntax
+  - (planned extension) parse model for `PROC` signatures and call arguments
+  - AIL/runtime execution model for call stack, return, and unresolved-target
+    diagnostics/policies
+  - search-path policy model (same-folder bare name vs qualified/full path)
+- `Acceptance Criteria`:
+  - SPEC documents syntax + parse/runtime responsibilities
+  - parser tests cover call/return syntax and ISO-mode gating
+  - executor tests cover call stack return flow and unresolved call behavior
+- `Out of Scope`:
+  - full program-manager filesystem replication
+  - controller-specific PLC integration details
+- `SPEC Sections`:
+  - Section 3.9
+  - Section 6.1 (runtime control-flow execution notes)
+- `Tests To Add/Update`:
+  - `test/parser_tests.cpp`
+  - `test/ail_tests.cpp`
+  - `test/ail_executor_tests.cpp`
+
 - `ID`: T-049
 - `Priority`: P1
 - `Title`: Siemens Chapter-2 syntax baseline (naming/blocks/assignment/comments/skip levels)

@@ -722,6 +722,58 @@ Acceptance expectation:
 - Backlog tasks split parser and runtime responsibilities for skip-level handling.
 - Tests cover valid/invalid examples for each category.
 
+### 5.5 Siemens Subprograms (MPF/SPF) and Call Semantics
+Requirement intent:
+- Support Siemens-style subprogram organization and invocation semantics, with
+  Siemens-first behavior and optional ISO-compat mode.
+
+Required syntax and behavior:
+- Direct subprogram call by program name in main program (`.MPF`):
+  - example: `POCKET_FINISH`
+- Quoted-name call compatibility:
+  - example: `"POCKET_FINISH"`
+- Repeated call count with `P`:
+  - examples: `DRILL_HOLE P5`, `P=5 DRILL_HOLE`
+- Optional ISO-compat mode call form:
+  - `M98 P<program_name_or_id>` (enabled only when ISO compatibility is on)
+- Subprogram return/end forms:
+  - `M17` is required Siemens baseline return from subprogram
+  - `RET` may be supported as compatibility extension by profile
+  - main program end remains `M2`/`M30` semantics
+
+Program/file organization expectations:
+- Main program commonly `.MPF`; subprogram commonly `.SPF`
+- Program manager storage models (global SPF vs workpiece-local) are represented
+  as resolver/search policy, not hardcoded paths in parser.
+- Call target resolution policy:
+  - if subprogram is in same folder/context, bare name resolution is allowed
+  - otherwise full/qualified path resolution is required by policy configuration
+
+Advanced parameter passing (planned):
+- declaration-like form (for example `PROC MY_SUB(REAL _DEPTH, REAL _FEED)`)
+- call with arguments (for example `MY_SUB(10.5, 200)`)
+- parser must preserve signature/argument structure; runtime binding policy is
+  resolved by subprogram execution engine.
+
+Behavior boundary:
+- Parse/lowering stage:
+  - recognize call statements, repeat count, declaration/signature forms, and
+    subprogram end statements
+  - build structured call/declaration instructions with source location
+  - do not perform file-system lookup or execute call stack
+- Runtime stage:
+  - resolve subprogram targets by configured search policy
+  - manage call stack/return points
+  - enforce recursion/depth/lookup error policies
+
+Acceptance expectation:
+- SPEC defines subprogram syntax contract and diagnostics.
+- Backlog includes parser, AIL lowering, and runtime call-stack execution slices.
+- Tests cover:
+  - direct name call, repeated call (`P`)
+  - `M17`/`RET` return behavior
+  - unresolved target diagnostics and ISO-mode gating for `M98`.
+
 ## 6. Command Family Policy
 - `G` codes:
   - Implement only command families explicitly listed in SPEC + backlog tasks.

@@ -190,6 +190,32 @@ Planned Siemens compatibility extension:
   - preserve raw program-name text and source location.
   - report invalid name-shape diagnostics under Siemens-compatibility mode.
 
+### 3.9 Subprogram Syntax (planned Siemens compatibility)
+- Planned syntax support:
+  - direct call by program name:
+    - `<subprogram_name>`
+    - `\"<subprogram_name>\"` (quoted form compatibility)
+    - `<subprogram_name> P<count>`
+    - `P=<count> <subprogram_name>`
+  - optional ISO-compatibility call:
+    - `M98 P<program_name_or_id>` (gated by ISO mode option)
+  - subprogram return/end statements:
+    - `M17` (baseline Siemens return)
+    - `RET` (optional compatibility extension)
+  - advanced/procedural forms (planned):
+    - `PROC <name>(<typed_params>)`
+    - call with arguments `<name>(<args...>)`
+- Parser/lowering responsibility:
+  - preserve call target, repeat count, and argument list structure
+  - preserve declaration signatures and return statements
+  - emit deterministic diagnostics for malformed call/declaration syntax
+- Runtime responsibility:
+  - resolve target by configured search policy
+    - same-context/bare-name resolution
+    - qualified-path resolution where required
+  - execute with call stack and return semantics
+  - fault or warn by policy on unresolved calls/invalid returns
+
 ### 3.7 Control Flow Syntax (parse-only in v0)
 - Jump directions:
   - `GOTOF <target>`: forward search direction
@@ -239,7 +265,7 @@ N130 G01 X20 Y20
 - Full modal group validation beyond GGroup1 single-motion rule
 - Units/distance-mode state
 - Full RS274NGC expressions/macros
-- Subprograms and full flow-control execution semantics
+- Full subprogram execution semantics (call stack/lookup) in v0.1
 
 ## 5. Diagnostics (v0.1)
 - Syntax errors reported by the lexer/parser with line/column.
