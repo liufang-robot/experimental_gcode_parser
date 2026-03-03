@@ -46,10 +46,12 @@ How to reproduce locally (commands):
   - direct/quoted name calls, repeat calls (`P` / `P=` forms)
   - resolver policy for same-folder vs qualified-path lookup
   via new backlog task `T-050`.
+- Updated reference docs to mark subprogram features as `Planned` and added
+  development-architecture notes for resolver/call-stack/policy boundaries.
 
 SPEC sections / tests:
 - SPEC: Section 3.1, Section 3.6, Section 3.8, Section 3.9, Section 5, Section 6.1
-- Tests: not applicable (docs-only requirement update)
+- Tests: not applicable (docs-only requirement/reference update)
 
 Known limitations:
 - No parser/runtime behavior change in this slice; this update is requirement

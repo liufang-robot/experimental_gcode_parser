@@ -38,6 +38,10 @@ All emitted messages include:
 | `G3` arc CCW | Implemented | Lowers to `G3Message` with pose/arc/feed. |
 | `G4` dwell | Implemented | Lowers to `G4Message` with mode/value. |
 | `R... = expr` assignment | Partial | Parsed and lowered into AIL `assign` instruction only (no runtime evaluator yet). |
+| Subprogram call by name (`THE_SHAPE`, `"THE_SHAPE"`) | Planned | Siemens-style subprogram invocation; parser + runtime call stack pending. |
+| Subprogram repeat (`P=<n> NAME`, `NAME P<n>`) | Planned | Repeat-call semantics and looped call execution pending. |
+| Subprogram return (`M17` baseline, `RET` optional) | Planned | Return-to-caller execution semantics pending runtime integration. |
+| ISO compat call (`M98 P...`) | Planned | Gated by ISO compatibility mode policy. |
 
 ## Motion Packet Stage
 

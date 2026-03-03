@@ -44,6 +44,30 @@ sanitizer tests.
 3. Decide one scoped backlog slice.
 4. Act with code/tests/docs updates in one PR.
 
+## Planned Runtime Architecture Notes
+
+### Subprogram Execution Model (Siemens compatibility)
+
+Planned runtime components:
+
+- `ProgramResolver`:
+  - resolves subprogram by name (same-context lookup first, then configured
+    qualified-path search policy).
+- `CallStackEngine`:
+  - pushes return point on subprogram call.
+  - pops return point on `M17` (baseline) or optional `RET`.
+- `CompatibilityPolicy`:
+  - gates ISO form `M98 P...`.
+  - controls unresolved-target behavior and call-depth limits.
+
+Parse/runtime boundary:
+
+- Parse/lowering:
+  - captures call target, repeat count (`P`/`P=`), and return statements as
+    structured instructions.
+- Runtime:
+  - performs lookup, call/return control flow, and policy enforcement.
+
 ## Contribution Requirements
 
 - Keep C++17.
