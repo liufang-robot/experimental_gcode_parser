@@ -33,7 +33,8 @@ All emitted messages include:
 
 | Command | Status | Notes |
 |---|---|---|
-| `G0` rapid baseline | Implemented | Lowered as linear motion with modal code `G0`; `RTLION/RTLIOF` behavior pending. |
+| `G0` rapid baseline | Implemented | Lowered as linear motion with modal code `G0`. |
+| `RTLION` / `RTLIOF` rapid interpolation mode | Partial | Lowered to AIL `rapid_mode` instructions; packet/runtime override semantics pending. |
 | `G1` linear | Implemented | Lowers to `G1Message` with pose/feed. |
 | `G2` arc CW | Implemented | Lowers to `G2Message` with pose/arc/feed. |
 | `G3` arc CCW | Implemented | Lowers to `G3Message` with pose/arc/feed. |
@@ -134,6 +135,24 @@ Lowering output:
 Current limitation:
 - Siemens `RTLION`/`RTLIOF` rapid interpolation mode control and override
   precedence are not implemented yet.
+
+## `RTLION` / `RTLIOF` Rapid Mode (AIL Baseline)
+
+Status:
+- `Partial`
+
+Syntax:
+- `RTLION`
+- `RTLIOF`
+
+Current lowering output:
+- Emits AIL instruction kind `rapid_mode` with:
+  - `opcode`: `RTLION` or `RTLIOF`
+  - `mode`: `linear` (`RTLION`) or `nonlinear` (`RTLIOF`)
+
+Current limitation:
+- Message and packet stages do not yet execute/interpolate based on this state.
+- Packet stage reports warning and skips `rapid_mode` as non-motion.
 
 ## `G2` / `G3` Circular Interpolation
 

@@ -30,7 +30,8 @@ Current Siemens-aligned baseline for supported functions:
 
 | Command | Status | Notes |
 |---|---|---|
-| `G0` rapid baseline | Implemented | Emits `G0Message` with target pose + feed; rapid interpolation mode controls (`RTLION/RTLIOF`) are pending. |
+| `G0` rapid baseline | Implemented | Emits `G0Message` with target pose + feed. |
+| `RTLION` / `RTLIOF` rapid interpolation mode | Partial | Lowered to AIL `rapid_mode`; packet/runtime interpolation semantics pending. |
 | `G1` linear | Implemented | Emits `G1Message` with target pose + feed. |
 | `G2` arc CW | Implemented | Emits `G2Message` with endpoint + arc fields + feed. |
 | `G3` arc CCW | Implemented | Emits `G3Message` with endpoint + arc fields + feed. |
@@ -125,6 +126,25 @@ Current limitations:
 
 - Siemens rapid interpolation mode controls (`RTLION`/`RTLIOF`) are not yet
   implemented in current runtime/packet behavior.
+
+## RTLION / RTLIOF
+
+Syntax examples:
+
+- `RTLION`
+- `RTLIOF`
+
+Current behavior:
+
+- Lowering to AIL emits `kind=rapid_mode` instructions.
+- JSON shape includes:
+  - `opcode`: `RTLION` or `RTLIOF`
+  - `mode`: `linear` or `nonlinear`
+
+Current limitations:
+
+- Message and packet outputs do not apply interpolation-mode behavior yet.
+- Packetization skips `rapid_mode` with a warning (non-motion instruction).
 
 ## G2 / G3
 

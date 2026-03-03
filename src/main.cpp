@@ -220,6 +220,16 @@ std::string formatAilDebug(const gcode::AilResult &result) {
               out << " ext=" << *i.address_extension;
             }
             out << " value=" << i.value;
+          } else if constexpr (std::is_same_v<
+                                   std::decay_t<decltype(i)>,
+                                   gcode::AilRapidTraverseModeInstruction>) {
+            out << " kind=rapid_mode opcode="
+                << (i.mode == gcode::RapidInterpolationMode::Linear ? "RTLION"
+                                                                    : "RTLIOF");
+            out << " mode="
+                << (i.mode == gcode::RapidInterpolationMode::Linear
+                        ? "linear"
+                        : "nonlinear");
           } else if constexpr (std::is_same_v<std::decay_t<decltype(i)>,
                                               gcode::AilAssignInstruction>) {
             out << " kind=assign lhs=" << i.lhs << " rhs=\""

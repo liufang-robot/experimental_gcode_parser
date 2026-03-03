@@ -105,7 +105,8 @@ AST shape (v0.1):
 - Mixed Cartesian + polar in one line is an error
 - Baseline v0 behavior:
   - `G0` is parsed/lowered as a linear-motion family member with `modal.code=G0`
-  - `RTLION` / `RTLIOF` Siemens rapid interpolation semantics are planned
+  - `RTLION` / `RTLIOF` are parsed/lowered into AIL rapid-mode instructions
+    (packet/runtime interpolation override semantics are still planned)
 
 Examples (from `testdata/g1_samples.ngc`):
 ```

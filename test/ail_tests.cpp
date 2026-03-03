@@ -137,6 +137,37 @@ TEST(AilTest, EmitsMFunctionInstructionsInAilAndJson) {
   EXPECT_EQ(json["instructions"][2]["value"], 5);
 }
 
+TEST(AilTest, EmitsRapidTraverseModeInstructionsForRTLIONAndRTLIOF) {
+  const auto result = gcode::parseAndLowerAil("RTLION\nG0 X1\nRTLIOF\nG0 X2\n");
+  ASSERT_TRUE(result.diagnostics.empty());
+  ASSERT_TRUE(result.rejected_lines.empty());
+  ASSERT_EQ(result.instructions.size(), 4u);
+
+  ASSERT_TRUE(std::holds_alternative<gcode::AilRapidTraverseModeInstruction>(
+      result.instructions[0]));
+  ASSERT_TRUE(std::holds_alternative<gcode::AilLinearMoveInstruction>(
+      result.instructions[1]));
+  ASSERT_TRUE(std::holds_alternative<gcode::AilRapidTraverseModeInstruction>(
+      result.instructions[2]));
+  ASSERT_TRUE(std::holds_alternative<gcode::AilLinearMoveInstruction>(
+      result.instructions[3]));
+
+  const auto &mode0 =
+      std::get<gcode::AilRapidTraverseModeInstruction>(result.instructions[0]);
+  EXPECT_EQ(mode0.mode, gcode::RapidInterpolationMode::Linear);
+
+  const auto &mode1 =
+      std::get<gcode::AilRapidTraverseModeInstruction>(result.instructions[2]);
+  EXPECT_EQ(mode1.mode, gcode::RapidInterpolationMode::NonLinear);
+
+  const auto json = nlohmann::json::parse(gcode::ailToJsonString(result));
+  EXPECT_EQ(json["instructions"][0]["kind"], "rapid_mode");
+  EXPECT_EQ(json["instructions"][0]["opcode"], "RTLION");
+  EXPECT_EQ(json["instructions"][0]["mode"], "linear");
+  EXPECT_EQ(json["instructions"][2]["opcode"], "RTLIOF");
+  EXPECT_EQ(json["instructions"][2]["mode"], "nonlinear");
+}
+
 TEST(AilTest, AssignmentProducesTypedExpressionTree) {
   const auto result = gcode::parseAndLowerAil("R1 = $P_ACT_X + 2*R2\n");
   ASSERT_EQ(result.instructions.size(), 1u);

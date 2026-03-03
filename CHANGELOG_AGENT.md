@@ -1,5 +1,28 @@
 # CHANGELOG_AGENT
 
+## 2026-03-03 (T-045 slice 2: RTLION/RTLIOF AIL rapid-mode baseline)
+- Added AIL rapid interpolation mode instruction emission for `RTLION` and
+  `RTLIOF` (`rapid_mode` with `opcode` + `mode`), preserving these commands in
+  lowering output instead of dropping them.
+- Updated AIL JSON/debug output to serialize `rapid_mode` instructions.
+- Updated packetization to skip `rapid_mode` as non-motion with warning
+  diagnostics.
+- Added tests for AIL rapid-mode emission and packet skip-warning behavior.
+- Updated SPEC and program-reference docs for current rapid-mode baseline and
+  remaining runtime/packet limitations.
+
+SPEC sections / tests:
+- SPEC: Section 3.3
+- Tests: `test/ail_tests.cpp`, `test/packet_tests.cpp`, `./dev/check.sh`
+
+Known limitations:
+- `RTLION`/`RTLIOF` semantics are represented in AIL only in this slice;
+  runtime interpolation override behavior is not implemented yet.
+
+How to reproduce locally (commands):
+- `ctest --test-dir build --output-on-failure -R \"AilTest|PacketTest\"`
+- `./dev/check.sh`
+
 ## 2026-03-03 (T-045 slice 1: G0 rapid baseline in lower/AIL/packet pipeline)
 - Added `G0` motion-family lowering (`G0Lowerer`) and message support
   (`G0Message`) so `G0` now emits in lower JSON/debug output alongside existing

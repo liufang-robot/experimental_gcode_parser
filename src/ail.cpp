@@ -109,6 +109,25 @@ std::optional<AilMCodeInstruction> mCodeFromWord(const Word &word,
   return inst;
 }
 
+std::optional<AilRapidTraverseModeInstruction>
+rapidTraverseModeFromWord(const Word &word, const SourceInfo &source) {
+  if (word.value.has_value()) {
+    return std::nullopt;
+  }
+  AilRapidTraverseModeInstruction inst;
+  if (word.head == "RTLION") {
+    inst.source = source;
+    inst.mode = RapidInterpolationMode::Linear;
+    return inst;
+  }
+  if (word.head == "RTLIOF") {
+    inst.source = source;
+    inst.mode = RapidInterpolationMode::NonLinear;
+    return inst;
+  }
+  return std::nullopt;
+}
+
 bool isKnownPredefinedMFunction(int64_t value) {
   if (value == 0 || value == 1 || value == 2 || value == 3 || value == 4 ||
       value == 5 || value == 6 || value == 17 || value == 19 || value == 30 ||
@@ -340,6 +359,10 @@ AilResult lowerToAil(const Program &program,
         continue;
       }
       const auto &word = std::get<Word>(item);
+      const auto rapid_mode = rapidTraverseModeFromWord(word, source);
+      if (rapid_mode.has_value()) {
+        result.instructions.push_back(*rapid_mode);
+      }
       const auto mcode = mCodeFromWord(word, source);
       if (!mcode.has_value()) {
         continue;
