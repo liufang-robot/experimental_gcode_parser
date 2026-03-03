@@ -269,4 +269,41 @@ TEST(MessagesTest, MotionModalGroupTracksG1ThenG2) {
   EXPECT_TRUE(g2.modal.updates_state);
 }
 
+TEST(MessagesTest, ActiveSkipLevelSkipsMatchingBlockDeleteLines) {
+  const std::string input = "/1 G1 X10\n/2 G1 X20\nG1 X30\n";
+  gcode::LowerOptions options;
+  options.active_skip_levels = {1};
+  const auto result = gcode::parseAndLower(input, options);
+
+  EXPECT_TRUE(result.diagnostics.empty());
+  EXPECT_TRUE(result.rejected_lines.empty());
+  ASSERT_EQ(result.messages.size(), 2u);
+
+  const auto *first = asG1(result.messages[0]);
+  ASSERT_NE(first, nullptr);
+  ASSERT_TRUE(first->target_pose.x.has_value());
+  EXPECT_TRUE(closeEnough(*first->target_pose.x, 20.0));
+
+  const auto *second = asG1(result.messages[1]);
+  ASSERT_NE(second, nullptr);
+  ASSERT_TRUE(second->target_pose.x.has_value());
+  EXPECT_TRUE(closeEnough(*second->target_pose.x, 30.0));
+}
+
+TEST(MessagesTest, SlashWithoutLevelUsesDefaultLevelZero) {
+  const std::string input = "/ G1 X10\nG1 X20\n";
+  gcode::LowerOptions options;
+  options.active_skip_levels = {0};
+  const auto result = gcode::parseAndLower(input, options);
+
+  EXPECT_TRUE(result.diagnostics.empty());
+  EXPECT_TRUE(result.rejected_lines.empty());
+  ASSERT_EQ(result.messages.size(), 1u);
+
+  const auto *msg = asG1(result.messages[0]);
+  ASSERT_NE(msg, nullptr);
+  ASSERT_TRUE(msg->target_pose.x.has_value());
+  EXPECT_TRUE(closeEnough(*msg->target_pose.x, 20.0));
+}
+
 } // namespace

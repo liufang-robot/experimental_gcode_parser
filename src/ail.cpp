@@ -1,5 +1,6 @@
 #include "ail.h"
 
+#include <algorithm>
 #include <limits>
 #include <type_traits>
 #include <unordered_map>
@@ -62,6 +63,20 @@ bool lineHasError(const std::vector<Diagnostic> &diagnostics, int line) {
   return false;
 }
 
+bool isSkipLevelActive(const LowerOptions &options, int level) {
+  return std::find(options.active_skip_levels.begin(),
+                   options.active_skip_levels.end(),
+                   level) != options.active_skip_levels.end();
+}
+
+bool shouldSkipLine(const Line &line, const LowerOptions &options) {
+  if (!line.block_delete) {
+    return false;
+  }
+  const int level = line.block_delete_level.value_or(0);
+  return isSkipLevelActive(options, level);
+}
+
 SourceInfo sourceFromLine(const Line &line, const LowerOptions &options) {
   SourceInfo source;
   source.filename = options.filename;
@@ -118,6 +133,9 @@ AilResult lowerToAil(const Program &program,
   for (const auto &line : program.lines) {
     if (stop_line != 0 && line.line_index >= stop_line) {
       break;
+    }
+    if (shouldSkipLine(line, options)) {
+      continue;
     }
     if (lineHasError(result.diagnostics, line.line_index)) {
       continue;

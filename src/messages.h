@@ -81,6 +81,7 @@ using ParsedMessage = std::variant<G1Message, G2Message, G3Message, G4Message>;
 
 struct LowerOptions {
   std::optional<std::string> filename;
+  std::vector<int> active_skip_levels;
 };
 
 struct MessageResult {

@@ -1,5 +1,26 @@
 # CHANGELOG_AGENT
 
+## 2026-03-03 (T-049 slice 2: skip-level execution policy in lowering)
+- Added skip-level execution policy support in `LowerOptions` via
+  `active_skip_levels`.
+- Message/AIL/streaming lowering now skips lines with block-delete markers when
+  the corresponding skip level is active (default `/` maps to level `0`).
+- Added coverage tests for message lowering, AIL lowering, and streaming mode
+  skip behavior.
+
+SPEC sections / tests:
+- SPEC: Section 6.1
+- Tests: `test/messages_tests.cpp`, `test/ail_tests.cpp`,
+  `test/streaming_tests.cpp`, `./dev/check.sh`
+
+Known limitations:
+- Skip-level behavior is currently configured per lowering call and is not yet
+  wired to machine-profile or session-level UI state.
+
+How to reproduce locally (commands):
+- `ctest --test-dir build --output-on-failure -R \"MessagesTest|AilTest|StreamingTest\"`
+- `./dev/check.sh`
+
 ## 2026-03-03 (T-049 slice 1: skip-level parsing + block-length diagnostics)
 - Added parser support for Siemens-style block-delete skip levels (`/0.. /9`)
   and captured skip level metadata in AST lines.
