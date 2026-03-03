@@ -16,8 +16,9 @@ validation). It includes message-level modal metadata for supported functions.
 - Comments (v0 current):
   - Semicolon: `; ...` to end-of-line
   - Parentheses: `( ... )` with no nesting
-- Comments (planned Siemens compatibility mode; see PRD 5.3):
+- Siemens comment compatibility (v0 current subset):
   - Block section: `(* ... *)` (multi-line)
+- Comments (planned Siemens compatibility mode; see PRD 5.3):
   - Optional single-line: `// ...` (disabled by default unless enabled by config)
 
 ### 2.2 Output (Library + CLI)
