@@ -148,6 +148,14 @@ nlohmann::json instructionToJson(const AilInstruction &instruction) {
           j["modal"] = modalToJson(inst.modal);
           j["dwell_mode"] = dwellModeToString(inst.dwell_mode);
           j["dwell_value"] = inst.dwell_value;
+        } else if constexpr (std::is_same_v<T, AilMCodeInstruction>) {
+          j["kind"] = "m_function";
+          j["opcode"] = "M";
+          j["source"] = sourceToJson(inst.source);
+          j["address_extension"] = inst.address_extension.has_value()
+                                       ? nlohmann::json(*inst.address_extension)
+                                       : nlohmann::json(nullptr);
+          j["value"] = inst.value;
         } else if constexpr (std::is_same_v<T, AilAssignInstruction>) {
           j["kind"] = "assign";
           j["source"] = sourceToJson(inst.source);

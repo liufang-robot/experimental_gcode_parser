@@ -233,7 +233,7 @@ Planned Siemens compatibility extension:
   - extended address form must use `=` (`M<ext>=<value>`)
   - extended address is rejected for `M0`, `M1`, `M2`, `M17`, `M30`
 - Current scope:
-  - parse + diagnostics only
+  - parse + diagnostics + AIL emission (`m_function`)
   - no runtime machine action mapping in this slice
 
 ### 3.7 Control Flow Syntax (parse-only in v0)
@@ -387,7 +387,8 @@ N130 G01 X20 Y20
     - `modal`: modal metadata copied from originating instruction
     - `payload`: type-specific fields
   - v0 packetization only converts motion/dwell AIL instructions.
-    Non-motion AIL instructions (for example `assign`) are skipped with a
+    Non-motion AIL instructions (for example `assign`, `m_function`) are skipped
+    with a
     warning diagnostic.
 
 ### 6.1 Control-Flow AIL and Executor (v0)

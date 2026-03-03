@@ -57,6 +57,18 @@ PacketResult lowerAilToPackets(const AilResult &ail_result) {
           } else if constexpr (std::is_same_v<T, AilAssignInstruction>) {
             result.diagnostics.push_back(
                 makeSkippedInstructionWarning(inst.source, "assign"));
+          } else if constexpr (std::is_same_v<T, AilMCodeInstruction>) {
+            result.diagnostics.push_back(
+                makeSkippedInstructionWarning(inst.source, "m_function"));
+          } else if constexpr (std::is_same_v<T, AilLabelInstruction>) {
+            result.diagnostics.push_back(
+                makeSkippedInstructionWarning(inst.source, "label"));
+          } else if constexpr (std::is_same_v<T, AilGotoInstruction>) {
+            result.diagnostics.push_back(
+                makeSkippedInstructionWarning(inst.source, "goto"));
+          } else if constexpr (std::is_same_v<T, AilBranchIfInstruction>) {
+            result.diagnostics.push_back(
+                makeSkippedInstructionWarning(inst.source, "branch_if"));
           } else {
             result.diagnostics.push_back(
                 makeSkippedInstructionWarning(inst.source, "sync"));

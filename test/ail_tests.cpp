@@ -74,6 +74,47 @@ TEST(AilTest, JsonContainsInstructionSchemaAndModal) {
   EXPECT_EQ(j["instructions"][1]["modal"]["group"], "GGroup2");
 }
 
+TEST(AilTest, EmitsMFunctionInstructionsInAilAndJson) {
+  const auto result = gcode::parseAndLowerAil("N10 M3\nN20 M2=3 M5\n");
+  ASSERT_TRUE(result.diagnostics.empty());
+  ASSERT_TRUE(result.rejected_lines.empty());
+  ASSERT_EQ(result.instructions.size(), 3u);
+
+  ASSERT_TRUE(std::holds_alternative<gcode::AilMCodeInstruction>(
+      result.instructions[0]));
+  ASSERT_TRUE(std::holds_alternative<gcode::AilMCodeInstruction>(
+      result.instructions[1]));
+  ASSERT_TRUE(std::holds_alternative<gcode::AilMCodeInstruction>(
+      result.instructions[2]));
+
+  const auto &m0 = std::get<gcode::AilMCodeInstruction>(result.instructions[0]);
+  EXPECT_EQ(m0.source.line, 1);
+  ASSERT_TRUE(m0.source.line_number.has_value());
+  EXPECT_EQ(*m0.source.line_number, 10);
+  EXPECT_FALSE(m0.address_extension.has_value());
+  EXPECT_EQ(m0.value, 3);
+
+  const auto &m1 = std::get<gcode::AilMCodeInstruction>(result.instructions[1]);
+  EXPECT_EQ(m1.source.line, 2);
+  ASSERT_TRUE(m1.source.line_number.has_value());
+  EXPECT_EQ(*m1.source.line_number, 20);
+  ASSERT_TRUE(m1.address_extension.has_value());
+  EXPECT_EQ(*m1.address_extension, 2);
+  EXPECT_EQ(m1.value, 3);
+
+  const auto &m2 = std::get<gcode::AilMCodeInstruction>(result.instructions[2]);
+  EXPECT_FALSE(m2.address_extension.has_value());
+  EXPECT_EQ(m2.value, 5);
+
+  const auto json = nlohmann::json::parse(gcode::ailToJsonString(result));
+  ASSERT_EQ(json["instructions"].size(), 3u);
+  EXPECT_EQ(json["instructions"][0]["kind"], "m_function");
+  EXPECT_EQ(json["instructions"][0]["value"], 3);
+  EXPECT_TRUE(json["instructions"][0]["address_extension"].is_null());
+  EXPECT_EQ(json["instructions"][1]["address_extension"], 2);
+  EXPECT_EQ(json["instructions"][2]["value"], 5);
+}
+
 TEST(AilTest, AssignmentProducesTypedExpressionTree) {
   const auto result = gcode::parseAndLowerAil("R1 = $P_ACT_X + 2*R2\n");
   ASSERT_EQ(result.instructions.size(), 1u);

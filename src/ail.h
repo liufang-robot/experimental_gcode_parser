@@ -37,6 +37,12 @@ struct AilDwellInstruction {
   double dwell_value = 0.0;
 };
 
+struct AilMCodeInstruction {
+  SourceInfo source;
+  std::optional<int64_t> address_extension;
+  int64_t value = 0;
+};
+
 // Placeholder variants for upcoming non-motion semantics.
 struct AilAssignInstruction {
   SourceInfo source;
@@ -70,9 +76,9 @@ struct AilSyncInstruction {
 
 using AilInstruction =
     std::variant<AilLinearMoveInstruction, AilArcMoveInstruction,
-                 AilDwellInstruction, AilAssignInstruction, AilLabelInstruction,
-                 AilGotoInstruction, AilBranchIfInstruction,
-                 AilSyncInstruction>;
+                 AilDwellInstruction, AilMCodeInstruction, AilAssignInstruction,
+                 AilLabelInstruction, AilGotoInstruction,
+                 AilBranchIfInstruction, AilSyncInstruction>;
 
 struct AilResult {
   std::vector<AilInstruction> instructions;

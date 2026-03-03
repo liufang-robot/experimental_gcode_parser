@@ -136,7 +136,7 @@ Output fields:
 ## M Functions (Baseline)
 
 Status:
-- `Partial` (parse + validation only)
+- `Partial` (parse + validation + AIL emission)
 
 Supported syntax:
 - `M<value>` (for example `M3`, `M30`)
@@ -150,6 +150,12 @@ Validation:
 
 Current limitation:
 - Runtime machine-function execution mapping is not implemented in this slice.
+
+AIL output:
+- Emits `m_function` instructions with:
+  - source
+  - value
+  - optional address extension
 
 ## Control Flow and AIL Runtime
 

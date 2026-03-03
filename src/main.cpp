@@ -204,6 +204,13 @@ std::string formatAilDebug(const gcode::AilResult &result) {
                         : "seconds");
             out << " dwell=" << std::setprecision(12) << i.dwell_value;
           } else if constexpr (std::is_same_v<std::decay_t<decltype(i)>,
+                                              gcode::AilMCodeInstruction>) {
+            out << " kind=m_function opcode=M";
+            if (i.address_extension.has_value()) {
+              out << " ext=" << *i.address_extension;
+            }
+            out << " value=" << i.value;
+          } else if constexpr (std::is_same_v<std::decay_t<decltype(i)>,
                                               gcode::AilAssignInstruction>) {
             out << " kind=assign lhs=" << i.lhs << " rhs=\""
                 << exprToDebugText(i.rhs) << "\"";

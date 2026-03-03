@@ -2,6 +2,17 @@
   "diagnostics": [],
   "instructions": [
     {
+      "address_extension": null,
+      "kind": "m_function",
+      "opcode": "M",
+      "source": {
+        "filename": "testdata/messages/g4_dwell.ngc",
+        "line": 1,
+        "line_number": 10
+      },
+      "value": 3
+    },
+    {
       "feed": 200.0,
       "kind": "motion_linear",
       "modal": {
