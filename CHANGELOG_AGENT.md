@@ -1,5 +1,27 @@
 # CHANGELOG_AGENT
 
+## 2026-03-03 (T-041 foundation scaffolding: machine profile + modal registry)
+- Added `MachineProfile` baseline scaffolding (`src/machine_profile.*`) with
+  controller/tool-mode/error-policy fields and a Siemens 840D baseline preset.
+- Added `ModalRegistry` baseline scaffolding (`src/modal_registry.*`) with
+  Siemens group-keyed state, block lifecycle (`beginBlock`), and conflict checks.
+- Added unit tests for profile defaults/range handling and modal persistence,
+  block-scope behavior, and conflict detection.
+
+SPEC sections / tests:
+- SPEC: no user-visible behavior change in this slice (internal scaffolding only)
+- Tests: `test/machine_profile_tests.cpp`, `test/modal_registry_tests.cpp`,
+  `./dev/check.sh`
+
+Known limitations:
+- Registry is not yet wired into parser/lowering/runtime pipelines.
+- Group conflict policies currently implement error-default only; warning/ignore
+  handling will be added in later slices.
+
+How to reproduce locally (commands):
+- `ctest --test-dir build --output-on-failure -R \"MachineProfileTest|ModalRegistryTest\"`
+- `./dev/check.sh`
+
 ## 2026-03-03 (docs architecture review alignment)
 - Added architecture documentation baseline files:
   `ARCHITECTURE.md` (pipeline/modules/policy model with Mermaid diagrams) and

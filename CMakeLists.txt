@@ -88,7 +88,8 @@ add_library(
                       src/lowering_family_factory.cpp src/lowering_family_g1.cpp
                       src/lowering_family_g2.cpp src/lowering_family_g3.cpp
                       src/lowering_family_g4.cpp src/messages_json.cpp
-                      src/session.cpp src/message_diff.cpp)
+                      src/session.cpp src/message_diff.cpp
+                      src/machine_profile.cpp src/modal_registry.cpp)
 target_include_directories(gcode_parser PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/src
                                             ${GENERATED_DIR})
 target_link_libraries(gcode_parser PUBLIC gcode_antlr)
@@ -209,6 +210,20 @@ target_link_libraries(semantic_rules_tests PRIVATE GTest::gtest_main)
 target_include_directories(semantic_rules_tests
                            PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
 gtest_discover_tests(semantic_rules_tests DISCOVERY_MODE PRE_TEST)
+
+add_executable(machine_profile_tests test/machine_profile_tests.cpp)
+target_link_libraries(machine_profile_tests PRIVATE gcode_parser)
+target_link_libraries(machine_profile_tests PRIVATE GTest::gtest_main)
+target_include_directories(machine_profile_tests
+                           PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
+gtest_discover_tests(machine_profile_tests DISCOVERY_MODE PRE_TEST)
+
+add_executable(modal_registry_tests test/modal_registry_tests.cpp)
+target_link_libraries(modal_registry_tests PRIVATE gcode_parser)
+target_link_libraries(modal_registry_tests PRIVATE GTest::gtest_main)
+target_include_directories(modal_registry_tests
+                           PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
+gtest_discover_tests(modal_registry_tests DISCOVERY_MODE PRE_TEST)
 
 add_executable(lowering_family_factory_tests test/lowering_family_factory_tests.cpp)
 target_link_libraries(lowering_family_factory_tests PRIVATE gcode_parser)
