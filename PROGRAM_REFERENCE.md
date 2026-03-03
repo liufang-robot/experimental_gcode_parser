@@ -149,10 +149,14 @@ Current lowering output:
 - Emits AIL instruction kind `rapid_mode` with:
   - `opcode`: `RTLION` or `RTLIOF`
   - `mode`: `linear` (`RTLION`) or `nonlinear` (`RTLIOF`)
+- following `G0` AIL linear instructions carry `rapid_mode_effective` when a
+  rapid-mode command has been set earlier in program order
 
 Current limitation:
-- Message and packet stages do not yet execute/interpolate based on this state.
-- Packet stage reports warning and skips `rapid_mode` as non-motion.
+- Runtime executor does not yet apply interpolation override behavior to machine
+  actuation; state is currently modeled/output metadata only.
+- Packet stage skips standalone `rapid_mode` instructions as non-motion
+  (warning), but preserves `rapid_mode_effective` on `G0` linear payloads.
 
 ## `G2` / `G3` Circular Interpolation
 

@@ -15,6 +15,7 @@ enum class PacketType { LinearMove, ArcMove, Dwell };
 struct MotionLinearPayload {
   Pose6 target_pose;
   std::optional<double> feed;
+  std::optional<RapidInterpolationMode> rapid_mode_effective;
 };
 
 struct MotionArcPayload {

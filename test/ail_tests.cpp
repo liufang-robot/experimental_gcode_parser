@@ -168,6 +168,41 @@ TEST(AilTest, EmitsRapidTraverseModeInstructionsForRTLIONAndRTLIOF) {
   EXPECT_EQ(json["instructions"][2]["mode"], "nonlinear");
 }
 
+TEST(AilTest, AppliesCurrentRapidModeToFollowingG0Instructions) {
+  const auto result =
+      gcode::parseAndLowerAil("G0 X1\nRTLIOF\nG0 X2\nRTLION\nG0 X3\n");
+  ASSERT_TRUE(result.diagnostics.empty());
+  ASSERT_EQ(result.instructions.size(), 5u);
+
+  ASSERT_TRUE(std::holds_alternative<gcode::AilLinearMoveInstruction>(
+      result.instructions[0]));
+  const auto &g0_before_mode =
+      std::get<gcode::AilLinearMoveInstruction>(result.instructions[0]);
+  EXPECT_EQ(g0_before_mode.opcode, "G0");
+  EXPECT_FALSE(g0_before_mode.rapid_mode_effective.has_value());
+
+  ASSERT_TRUE(std::holds_alternative<gcode::AilLinearMoveInstruction>(
+      result.instructions[2]));
+  const auto &g0_nonlinear =
+      std::get<gcode::AilLinearMoveInstruction>(result.instructions[2]);
+  ASSERT_TRUE(g0_nonlinear.rapid_mode_effective.has_value());
+  EXPECT_EQ(*g0_nonlinear.rapid_mode_effective,
+            gcode::RapidInterpolationMode::NonLinear);
+
+  ASSERT_TRUE(std::holds_alternative<gcode::AilLinearMoveInstruction>(
+      result.instructions[4]));
+  const auto &g0_linear =
+      std::get<gcode::AilLinearMoveInstruction>(result.instructions[4]);
+  ASSERT_TRUE(g0_linear.rapid_mode_effective.has_value());
+  EXPECT_EQ(*g0_linear.rapid_mode_effective,
+            gcode::RapidInterpolationMode::Linear);
+
+  const auto json = nlohmann::json::parse(gcode::ailToJsonString(result));
+  EXPECT_FALSE(json["instructions"][0].contains("rapid_mode_effective"));
+  EXPECT_EQ(json["instructions"][2]["rapid_mode_effective"], "nonlinear");
+  EXPECT_EQ(json["instructions"][4]["rapid_mode_effective"], "linear");
+}
+
 TEST(AilTest, AssignmentProducesTypedExpressionTree) {
   const auto result = gcode::parseAndLowerAil("R1 = $P_ACT_X + 2*R2\n");
   ASSERT_EQ(result.instructions.size(), 1u);

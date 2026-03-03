@@ -136,6 +136,10 @@ nlohmann::json instructionToJson(const AilInstruction &instruction) {
           j["modal"] = modalToJson(inst.modal);
           j["target_pose"] = poseToJson(inst.target_pose);
           j["feed"] = optionalDoubleToJson(inst.feed);
+          if (inst.rapid_mode_effective.has_value()) {
+            j["rapid_mode_effective"] =
+                rapidModeToString(*inst.rapid_mode_effective);
+          }
         } else if constexpr (std::is_same_v<T, AilArcMoveInstruction>) {
           j["kind"] = "motion_arc";
           j["opcode"] = inst.clockwise ? "G2" : "G3";

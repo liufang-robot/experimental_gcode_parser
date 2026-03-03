@@ -31,6 +31,10 @@ std::string dwellModeToString(DwellMode mode) {
   return mode == DwellMode::Revolutions ? "revolutions" : "seconds";
 }
 
+std::string rapidModeToString(RapidInterpolationMode mode) {
+  return mode == RapidInterpolationMode::Linear ? "linear" : "nonlinear";
+}
+
 nlohmann::json locationToJson(const Location &location) {
   nlohmann::json j;
   j["line"] = location.line;
@@ -107,6 +111,10 @@ nlohmann::json payloadToJson(const PacketPayload &payload) {
         if constexpr (std::is_same_v<T, MotionLinearPayload>) {
           j["target_pose"] = poseToJson(p.target_pose);
           j["feed"] = optionalDoubleToJson(p.feed);
+          if (p.rapid_mode_effective.has_value()) {
+            j["rapid_mode_effective"] =
+                rapidModeToString(*p.rapid_mode_effective);
+          }
         } else if constexpr (std::is_same_v<T, MotionArcPayload>) {
           j["clockwise"] = p.clockwise;
           j["target_pose"] = poseToJson(p.target_pose);

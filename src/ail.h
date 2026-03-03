@@ -15,12 +15,15 @@
 
 namespace gcode {
 
+enum class RapidInterpolationMode { Linear, NonLinear };
+
 struct AilLinearMoveInstruction {
   SourceInfo source;
   ModalState modal;
   std::string opcode = "G1";
   Pose6 target_pose;
   std::optional<double> feed;
+  std::optional<RapidInterpolationMode> rapid_mode_effective;
 };
 
 struct AilArcMoveInstruction {
@@ -44,8 +47,6 @@ struct AilMCodeInstruction {
   std::optional<int64_t> address_extension;
   int64_t value = 0;
 };
-
-enum class RapidInterpolationMode { Linear, NonLinear };
 
 struct AilRapidTraverseModeInstruction {
   SourceInfo source;

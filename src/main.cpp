@@ -182,6 +182,13 @@ std::string formatAilDebug(const gcode::AilResult &result) {
                                        gcode::AilLinearMoveInstruction>) {
             out << " kind=motion_linear opcode=" << i.opcode;
             appendModal(out, i.modal);
+            if (i.rapid_mode_effective.has_value()) {
+              out << " rapid_mode="
+                  << (*i.rapid_mode_effective ==
+                              gcode::RapidInterpolationMode::Linear
+                          ? "linear"
+                          : "nonlinear");
+            }
             appendOptionalDouble(out, "x", i.target_pose.x);
             appendOptionalDouble(out, "y", i.target_pose.y);
             appendOptionalDouble(out, "z", i.target_pose.z);
@@ -303,6 +310,13 @@ std::string formatPacketDebug(const gcode::PacketResult &result) {
         [&](const auto &payload) {
           using T = std::decay_t<decltype(payload)>;
           if constexpr (std::is_same_v<T, gcode::MotionLinearPayload>) {
+            if (payload.rapid_mode_effective.has_value()) {
+              out << " rapid_mode="
+                  << (*payload.rapid_mode_effective ==
+                              gcode::RapidInterpolationMode::Linear
+                          ? "linear"
+                          : "nonlinear");
+            }
             appendOptionalDouble(out, "x", payload.target_pose.x);
             appendOptionalDouble(out, "y", payload.target_pose.y);
             appendOptionalDouble(out, "z", payload.target_pose.z);

@@ -203,6 +203,7 @@ AilResult lowerToAil(const Program &program,
 
   std::vector<IfLowerContext> if_stack;
   int generated_label_counter = 0;
+  std::optional<RapidInterpolationMode> current_rapid_mode;
   const auto makeInternalLabel = [&](const std::string &prefix) {
     ++generated_label_counter;
     return "__CF_" + prefix + "_" + std::to_string(generated_label_counter);
@@ -361,6 +362,7 @@ AilResult lowerToAil(const Program &program,
       const auto &word = std::get<Word>(item);
       const auto rapid_mode = rapidTraverseModeFromWord(word, source);
       if (rapid_mode.has_value()) {
+        current_rapid_mode = rapid_mode->mode;
         result.instructions.push_back(*rapid_mode);
       }
       const auto mcode = mCodeFromWord(word, source);
@@ -371,7 +373,14 @@ AilResult lowerToAil(const Program &program,
     }
     const auto found = message_by_line.find(line.line_index);
     if (found != message_by_line.end()) {
-      result.instructions.push_back(found->second);
+      auto lowered_inst = found->second;
+      if (std::holds_alternative<AilLinearMoveInstruction>(lowered_inst)) {
+        auto &linear = std::get<AilLinearMoveInstruction>(lowered_inst);
+        if (linear.opcode == "G0") {
+          linear.rapid_mode_effective = current_rapid_mode;
+        }
+      }
+      result.instructions.push_back(std::move(lowered_inst));
     }
   }
 

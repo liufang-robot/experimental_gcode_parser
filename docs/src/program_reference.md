@@ -140,11 +140,15 @@ Current behavior:
 - JSON shape includes:
   - `opcode`: `RTLION` or `RTLIOF`
   - `mode`: `linear` or `nonlinear`
+- Following `G0` AIL linear instructions include `rapid_mode_effective` when a
+  rapid-mode command is active in prior program order.
 
 Current limitations:
 
-- Message and packet outputs do not apply interpolation-mode behavior yet.
-- Packetization skips `rapid_mode` with a warning (non-motion instruction).
+- Runtime execution behavior for interpolation override is not implemented yet
+  (state is currently metadata/output only).
+- Packetization skips standalone `rapid_mode` with a warning (non-motion
+  instruction), while preserving `rapid_mode_effective` on `G0` linear payloads.
 
 ## G2 / G3
 
