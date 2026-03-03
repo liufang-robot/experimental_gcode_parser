@@ -110,6 +110,10 @@ std::string dwellModeToString(DwellMode mode) {
   return mode == DwellMode::Revolutions ? "revolutions" : "seconds";
 }
 
+std::string rapidModeToString(RapidInterpolationMode mode) {
+  return mode == RapidInterpolationMode::Linear ? "linear" : "nonlinear";
+}
+
 nlohmann::json rejectedLineToJson(const MessageResult::RejectedLine &line) {
   nlohmann::json j;
   j["source"] = sourceToJson(line.source);
@@ -156,6 +160,13 @@ nlohmann::json instructionToJson(const AilInstruction &instruction) {
                                        ? nlohmann::json(*inst.address_extension)
                                        : nlohmann::json(nullptr);
           j["value"] = inst.value;
+        } else if constexpr (std::is_same_v<T,
+                                            AilRapidTraverseModeInstruction>) {
+          j["kind"] = "rapid_mode";
+          j["opcode"] =
+              inst.mode == RapidInterpolationMode::Linear ? "RTLION" : "RTLIOF";
+          j["source"] = sourceToJson(inst.source);
+          j["mode"] = rapidModeToString(inst.mode);
         } else if constexpr (std::is_same_v<T, AilAssignInstruction>) {
           j["kind"] = "assign";
           j["source"] = sourceToJson(inst.source);

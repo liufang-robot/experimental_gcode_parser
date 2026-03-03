@@ -60,6 +60,10 @@ PacketResult lowerAilToPackets(const AilResult &ail_result) {
           } else if constexpr (std::is_same_v<T, AilMCodeInstruction>) {
             result.diagnostics.push_back(
                 makeSkippedInstructionWarning(inst.source, "m_function"));
+          } else if constexpr (std::is_same_v<
+                                   T, AilRapidTraverseModeInstruction>) {
+            result.diagnostics.push_back(
+                makeSkippedInstructionWarning(inst.source, "rapid_mode"));
           } else if constexpr (std::is_same_v<T, AilLabelInstruction>) {
             result.diagnostics.push_back(
                 makeSkippedInstructionWarning(inst.source, "label"));

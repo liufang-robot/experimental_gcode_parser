@@ -115,6 +115,21 @@ TEST(PacketTest, SkipsNonMotionInstructionsWithWarning) {
   EXPECT_EQ(result.diagnostics[0].location.line, 1);
 }
 
+TEST(PacketTest, SkipsRapidModeInstructionWithWarning) {
+  const auto result = gcode::parseLowerAndPacketize("RTLION\nG0 X10\n");
+
+  ASSERT_EQ(result.packets.size(), 1u);
+  EXPECT_EQ(result.packets[0].type, gcode::PacketType::LinearMove);
+  EXPECT_EQ(result.packets[0].modal.code, "G0");
+
+  ASSERT_EQ(result.diagnostics.size(), 1u);
+  EXPECT_EQ(result.diagnostics[0].severity,
+            gcode::Diagnostic::Severity::Warning);
+  EXPECT_NE(result.diagnostics[0].message.find("rapid_mode"),
+            std::string::npos);
+  EXPECT_EQ(result.diagnostics[0].location.line, 1);
+}
+
 TEST(PacketTest, JsonContainsStableSchema) {
   const auto result = gcode::parseLowerAndPacketize("G1 X10\nG4 F3\n");
   const auto json = nlohmann::json::parse(gcode::packetToJsonString(result));

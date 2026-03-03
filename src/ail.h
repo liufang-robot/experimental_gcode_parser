@@ -45,6 +45,13 @@ struct AilMCodeInstruction {
   int64_t value = 0;
 };
 
+enum class RapidInterpolationMode { Linear, NonLinear };
+
+struct AilRapidTraverseModeInstruction {
+  SourceInfo source;
+  RapidInterpolationMode mode = RapidInterpolationMode::Linear;
+};
+
 // Placeholder variants for upcoming non-motion semantics.
 struct AilAssignInstruction {
   SourceInfo source;
@@ -78,7 +85,8 @@ struct AilSyncInstruction {
 
 using AilInstruction =
     std::variant<AilLinearMoveInstruction, AilArcMoveInstruction,
-                 AilDwellInstruction, AilMCodeInstruction, AilAssignInstruction,
+                 AilDwellInstruction, AilMCodeInstruction,
+                 AilRapidTraverseModeInstruction, AilAssignInstruction,
                  AilLabelInstruction, AilGotoInstruction,
                  AilBranchIfInstruction, AilSyncInstruction>;
 
