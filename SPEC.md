@@ -390,9 +390,11 @@ N130 G01 X20 Y20
   - parser/lowering does not resolve live system-variable values
   - runtime resolver is responsible for evaluating user/system-variable
     references, including pending/unavailable outcomes
-- Skip-level execution boundary (planned Siemens compatibility):
-  - parser/lowering captures skip marker + optional level metadata
-  - runtime decides execution/skip by active skip-level configuration
+- Skip-level execution boundary (v0 Siemens baseline):
+  - parser captures skip marker + optional level metadata (`/` => level `0`)
+  - lowering/execution stage applies skip policy from
+    `LowerOptions.active_skip_levels`
+  - a block-delete line is skipped only when its level is active
 - Executor state model:
   - `ready`
   - `blocked_on_condition`

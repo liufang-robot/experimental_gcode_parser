@@ -177,4 +177,28 @@ TEST(AilTest, KeepsLineNumberInInstructionSourceAndGotoTargetKind) {
   EXPECT_EQ(jump.target, "N100");
 }
 
+TEST(AilTest, ActiveSkipLevelRemovesMatchingLinesFromInstructionStream) {
+  gcode::LowerOptions options;
+  options.active_skip_levels = {1};
+  const auto result =
+      gcode::parseAndLowerAil("/1 G1 X10\n/2 G1 X20\nG1 X30\n", options);
+  ASSERT_TRUE(result.diagnostics.empty());
+  ASSERT_TRUE(result.rejected_lines.empty());
+  ASSERT_EQ(result.instructions.size(), 2u);
+
+  ASSERT_TRUE(std::holds_alternative<gcode::AilLinearMoveInstruction>(
+      result.instructions[0]));
+  ASSERT_TRUE(std::holds_alternative<gcode::AilLinearMoveInstruction>(
+      result.instructions[1]));
+
+  const auto &first =
+      std::get<gcode::AilLinearMoveInstruction>(result.instructions[0]);
+  const auto &second =
+      std::get<gcode::AilLinearMoveInstruction>(result.instructions[1]);
+  ASSERT_TRUE(first.target_pose.x.has_value());
+  ASSERT_TRUE(second.target_pose.x.has_value());
+  EXPECT_TRUE(closeEnough(*first.target_pose.x, 20.0));
+  EXPECT_TRUE(closeEnough(*second.target_pose.x, 30.0));
+}
+
 } // namespace

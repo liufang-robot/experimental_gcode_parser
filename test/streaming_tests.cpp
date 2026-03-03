@@ -142,4 +142,26 @@ TEST(StreamingTest, CallbackCanCaptureAndValidateDetailedMessages) {
   EXPECT_FALSE(third.modal.updates_state);
 }
 
+TEST(StreamingTest, SkipLevelsAreAppliedInStreamingMode) {
+  const std::string input = "/1 G1 X10\nG1 X20\n";
+  std::vector<gcode::ParsedMessage> messages;
+
+  gcode::LowerOptions lower_options;
+  lower_options.active_skip_levels = {1};
+  gcode::StreamCallbacks callbacks;
+  callbacks.on_message = [&](const gcode::ParsedMessage &message) {
+    messages.push_back(message);
+  };
+
+  const bool completed =
+      gcode::parseAndLowerStream(input, lower_options, callbacks);
+  ASSERT_TRUE(completed);
+  ASSERT_EQ(messages.size(), 1u);
+  ASSERT_TRUE(std::holds_alternative<gcode::G1Message>(messages[0]));
+
+  const auto &g1 = std::get<gcode::G1Message>(messages[0]);
+  ASSERT_TRUE(g1.target_pose.x.has_value());
+  EXPECT_TRUE(closeEnough(*g1.target_pose.x, 20.0));
+}
+
 } // namespace

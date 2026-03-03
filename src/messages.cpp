@@ -1,5 +1,6 @@
 #include "messages.h"
 
+#include <algorithm>
 #include <fstream>
 #include <sstream>
 #include <unordered_map>
@@ -33,6 +34,20 @@ collectLineErrors(const std::vector<Diagnostic> &diagnostics, int line) {
 }
 
 bool isWord(const LineItem &item) { return std::holds_alternative<Word>(item); }
+
+bool isSkipLevelActive(const LowerOptions &options, int level) {
+  return std::find(options.active_skip_levels.begin(),
+                   options.active_skip_levels.end(),
+                   level) != options.active_skip_levels.end();
+}
+
+bool shouldSkipLine(const Line &line, const LowerOptions &options) {
+  if (!line.block_delete) {
+    return false;
+  }
+  const int level = line.block_delete_level.value_or(0);
+  return isSkipLevelActive(options, level);
+}
 
 int motionCode(const Word &word) {
   if (word.head != "G" || !word.value.has_value()) {
@@ -101,6 +116,9 @@ MessageResult lowerToMessages(const Program &program,
   const auto indexed_lowerers = indexLowerers(lowerers);
 
   for (const auto &line : program.lines) {
+    if (shouldSkipLine(line, options)) {
+      continue;
+    }
     const bool has_line_error =
         lineHasError(result.diagnostics, line.line_index);
     if (has_line_error) {
@@ -175,6 +193,9 @@ bool lowerToMessagesStream(const Program &program,
     if (shouldStop(stream_options, lines_seen, messages_seen,
                    diagnostics_seen)) {
       return false;
+    }
+    if (shouldSkipLine(line, options)) {
+      continue;
     }
 
     const bool has_line_error =
