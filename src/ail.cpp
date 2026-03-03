@@ -1,7 +1,9 @@
 #include "ail.h"
 
 #include <algorithm>
+#include <cctype>
 #include <limits>
+#include <optional>
 #include <type_traits>
 #include <unordered_map>
 
@@ -49,6 +51,53 @@ AilInstruction toInstruction(const ParsedMessage &message) {
         }
       },
       message);
+}
+
+std::optional<int64_t> parseUnsignedInt64Strict(std::string_view text) {
+  if (text.empty()) {
+    return std::nullopt;
+  }
+  int64_t value = 0;
+  for (char c : text) {
+    if (!std::isdigit(static_cast<unsigned char>(c))) {
+      return std::nullopt;
+    }
+    const int digit = c - '0';
+    if (value > (std::numeric_limits<int64_t>::max() - digit) / 10) {
+      return std::nullopt;
+    }
+    value = value * 10 + digit;
+  }
+  return value;
+}
+
+std::optional<AilMCodeInstruction> mCodeFromWord(const Word &word,
+                                                 const SourceInfo &source) {
+  if (word.head.empty() || word.head[0] != 'M' || !word.value.has_value()) {
+    return std::nullopt;
+  }
+  const auto value = parseUnsignedInt64Strict(*word.value);
+  if (!value.has_value()) {
+    return std::nullopt;
+  }
+
+  const std::string extension_text = word.head.substr(1);
+  std::optional<int64_t> extension;
+  if (!extension_text.empty()) {
+    if (!word.has_equal) {
+      return std::nullopt;
+    }
+    extension = parseUnsignedInt64Strict(extension_text);
+    if (!extension.has_value()) {
+      return std::nullopt;
+    }
+  }
+
+  AilMCodeInstruction inst;
+  inst.source = source;
+  inst.address_extension = extension;
+  inst.value = *value;
+  return inst;
 }
 
 } // namespace
@@ -266,6 +315,18 @@ AilResult lowerToAil(const Program &program,
       }
       result.instructions.push_back(std::move(inst));
       continue;
+    }
+    const auto source = sourceFromLine(line, options);
+    for (const auto &item : line.items) {
+      if (!std::holds_alternative<Word>(item)) {
+        continue;
+      }
+      const auto &word = std::get<Word>(item);
+      const auto mcode = mCodeFromWord(word, source);
+      if (!mcode.has_value()) {
+        continue;
+      }
+      result.instructions.push_back(*mcode);
     }
     const auto found = message_by_line.find(line.line_index);
     if (found != message_by_line.end()) {

@@ -1,5 +1,14 @@
 {
-  "diagnostics": [],
+  "diagnostics": [
+    {
+      "location": {
+        "column": 1,
+        "line": 1
+      },
+      "message": "packetization skipped non-motion instruction: m_function",
+      "severity": "warning"
+    }
+  ],
   "packets": [
     {
       "modal": {

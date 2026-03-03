@@ -1,5 +1,28 @@
 # CHANGELOG_AGENT
 
+## 2026-03-03 (T-046 slice 2: M-function AIL emission baseline)
+- Added `AilMCodeInstruction` and lowering logic to emit `m_function`
+  instructions from parsed M words (`M<value>` and `M<ext>=<value>`).
+- Added AIL JSON/debug output support for `m_function` instructions with
+  `value` and optional `address_extension`.
+- Added AIL tests covering emission order, line-number propagation, and JSON
+  shape for multiple M functions in one program.
+- Updated SPEC and program-reference docs to reflect parse/validation + AIL
+  support status for M functions.
+
+SPEC sections / tests:
+- SPEC: Section 3.10, Section 6
+- Tests: `test/ail_tests.cpp`, `./dev/check.sh`
+
+Known limitations:
+- Runtime machine action mapping/execution semantics for M functions are not
+  implemented in this slice.
+- Packet stage continues to skip `m_function` (non-motion) instructions.
+
+How to reproduce locally (commands):
+- `ctest --test-dir build --output-on-failure -R \"AilTest\"`
+- `./dev/check.sh`
+
 ## 2026-03-03 (T-046 slice 1: M-function parse/validation baseline)
 - Added semantic validation baseline for M functions:
   - accepts `M<value>` and `M<ext>=<value>` parse forms

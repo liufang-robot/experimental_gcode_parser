@@ -170,7 +170,7 @@ Examples:
 ## `M` Functions (Baseline)
 
 Status:
-- `Partial` (parse + diagnostics)
+- `Partial` (parse + diagnostics + AIL emission)
 
 Supported syntax:
 - `M<value>`
@@ -183,6 +183,12 @@ Validation:
 
 Current limitation:
 - runtime machine action mapping is not implemented yet.
+
+AIL output:
+- emits `m_function` instructions with:
+  - `source`
+  - `value`
+  - optional `address_extension`
 
 ## Control Flow Runtime Notes
 
