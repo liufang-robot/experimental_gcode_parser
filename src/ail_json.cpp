@@ -127,7 +127,7 @@ nlohmann::json instructionToJson(const AilInstruction &instruction) {
         nlohmann::json j;
         if constexpr (std::is_same_v<T, AilLinearMoveInstruction>) {
           j["kind"] = "motion_linear";
-          j["opcode"] = "G1";
+          j["opcode"] = inst.opcode;
           j["source"] = sourceToJson(inst.source);
           j["modal"] = modalToJson(inst.modal);
           j["target_pose"] = poseToJson(inst.target_pose);

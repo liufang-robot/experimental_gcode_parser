@@ -1,5 +1,34 @@
 # CHANGELOG_AGENT
 
+## 2026-03-03 (T-045 slice 1: G0 rapid baseline in lower/AIL/packet pipeline)
+- Added `G0` motion-family lowering (`G0Lowerer`) and message support
+  (`G0Message`) so `G0` now emits in lower JSON/debug output alongside existing
+  motion families.
+- Updated AIL linear move instruction model to carry explicit `opcode`
+  (`G0`/`G1`) and propagated this through AIL JSON/debug and packetization so
+  downstream consumers can distinguish rapid vs feed linear intent via modal
+  metadata.
+- Added tests for G0 lowering, message JSON round-trip, AIL opcode emission,
+  packet emission, and motion-family factory registration.
+- Updated `SPEC.md`, `PROGRAM_REFERENCE.md`, and
+  `docs/src/program_reference.md` to reflect `G0` support and current
+  limitations.
+
+SPEC sections / tests:
+- SPEC: Section 1, Section 2.2, Section 3.3
+- Tests: `test/lowering_family_g0_tests.cpp`, `test/messages_tests.cpp`,
+  `test/messages_json_tests.cpp`, `test/ail_tests.cpp`,
+  `test/packet_tests.cpp`, `test/lowering_family_factory_tests.cpp`,
+  `./dev/check.sh`
+
+Known limitations:
+- Siemens `RTLION`/`RTLIOF` rapid interpolation mode semantics and override
+  precedence are not implemented in this slice.
+
+How to reproduce locally (commands):
+- `ctest --test-dir build --output-on-failure -R "G0LowererTest|MessagesTest|MessagesJsonTest|AilTest|PacketTest|LoweringFamilyFactoryTest"`
+- `./dev/check.sh`
+
 ## 2026-03-03 (CI speedup slice 4: benchmark gating for PR latency)
 - Added `workflow_dispatch` trigger to CI so benchmark can be run manually.
 - Gated `benchmark-smoke` to skip on `pull_request` events and run on

@@ -25,14 +25,15 @@ Implemented API paths:
 ## Modal Metadata
 
 All emitted messages include:
-- `modal.group`: `GGroup1` for `G1/G2/G3`, `GGroup2` for `G4`
-- `modal.code`: `G1`/`G2`/`G3`/`G4`
-- `modal.updates_state`: `true` for `G1/G2/G3`, `false` for `G4`
+- `modal.group`: `GGroup1` for `G0/G1/G2/G3`, `GGroup2` for `G4`
+- `modal.code`: `G0`/`G1`/`G2`/`G3`/`G4`
+- `modal.updates_state`: `true` for `G0/G1/G2/G3`, `false` for `G4`
 
 ## Command Matrix
 
 | Command | Status | Notes |
 |---|---|---|
+| `G0` rapid baseline | Implemented | Lowered as linear motion with modal code `G0`; `RTLION/RTLIOF` behavior pending. |
 | `G1` linear | Implemented | Lowers to `G1Message` with pose/feed. |
 | `G2` arc CW | Implemented | Lowers to `G2Message` with pose/arc/feed. |
 | `G3` arc CCW | Implemented | Lowers to `G3Message` with pose/arc/feed. |
@@ -66,6 +67,8 @@ Behavior:
   - type-specific `payload`
 - Non-motion AIL instructions (such as assignment) are not packetized and emit
   warning diagnostics.
+- `G0` and `G1` both map to linear packets; consumers should inspect
+  `packet.modal.code` to distinguish rapid vs feed interpolation intent.
 
 Test references:
 - `test/packet_tests.cpp`
@@ -111,6 +114,26 @@ Test references:
 - `test/parser_tests.cpp`
 - `test/regression_tests.cpp`
 - `testdata/g1_samples.ngc`
+
+## `G0` Rapid Traverse Baseline
+
+Status:
+- `Implemented` (baseline)
+
+Syntax:
+- `G0 X... Y... Z... [A...] [B...] [C...] [F...]`
+- `G0 AP=... RP=... [F...]`
+
+Lowering output:
+- `G0Message`
+  - `source`: filename/line/line_number
+  - `modal`: `group=GGroup1`, `code=G0`, `updates_state=true`
+  - `target_pose`: optional `x/y/z/a/b/c`
+  - `feed`: optional `F` (accepted in baseline parse/lowering model)
+
+Current limitation:
+- Siemens `RTLION`/`RTLIOF` rapid interpolation mode control and override
+  precedence are not implemented yet.
 
 ## `G2` / `G3` Circular Interpolation
 

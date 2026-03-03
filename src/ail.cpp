@@ -16,10 +16,19 @@ AilInstruction toInstruction(const ParsedMessage &message) {
   return std::visit(
       [](const auto &msg) -> AilInstruction {
         using T = std::decay_t<decltype(msg)>;
-        if constexpr (std::is_same_v<T, G1Message>) {
+        if constexpr (std::is_same_v<T, G0Message>) {
           AilLinearMoveInstruction inst;
           inst.source = msg.source;
           inst.modal = msg.modal;
+          inst.opcode = "G0";
+          inst.target_pose = msg.target_pose;
+          inst.feed = msg.feed;
+          return inst;
+        } else if constexpr (std::is_same_v<T, G1Message>) {
+          AilLinearMoveInstruction inst;
+          inst.source = msg.source;
+          inst.modal = msg.modal;
+          inst.opcode = "G1";
           inst.target_pose = msg.target_pose;
           inst.feed = msg.feed;
           return inst;

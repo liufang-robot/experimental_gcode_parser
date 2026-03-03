@@ -2,7 +2,7 @@
 
 ## 1. Purpose
 Parse G-code text (string or file) into a simple, syntax-level JSON model
-focused on G1 (linear), G2/G3 (circular), and G4 (dwell) commands.
+focused on G0/G1 (linear/rapid), G2/G3 (circular), and G4 (dwell) commands.
 
 v0.1 is **syntax-focused** (no execution, no full multi-group modal
 validation). It includes message-level modal metadata for supported functions.
@@ -30,8 +30,10 @@ The parser returns:
 
 Optional downstream stage:
 - AST can be lowered into typed AIL instructions, motion packets, and queue messages.
-- v0 supports `G1Message`, `G2Message`, `G3Message`, and `G4Message` emission.
-- v0 supports motion packet emission from AIL motion instructions (`G1/G2/G3/G4`).
+- v0 supports `G0Message`, `G1Message`, `G2Message`, `G3Message`, and
+  `G4Message` emission.
+- v0 supports motion packet emission from AIL motion instructions
+  (`G0/G1/G2/G3/G4`).
 - Message results support JSON conversion (`toJson`/`fromJson`) for transport,
   fixtures, and debugging.
 - Additive API: streaming parse/lower output mode for large-file workflows
@@ -95,15 +97,19 @@ AST shape (v0.1):
 - Decimals: `1.0`, `-2.5`, `.5`, `5.`, `+.25`
 - No scientific notation in v0.1
 
-### 3.3 G1 (linear interpolation)
-- Motion word: `G1`
+### 3.3 G0 / G1 (rapid + linear interpolation baseline)
+- Motion words: `G0`, `G1`
 - Cartesian endpoint: `X`, `Y`, `Z`, optional `A`
 - Polar endpoint: `AP=...` and `RP=...`
 - Feedrate: `F...`
 - Mixed Cartesian + polar in one line is an error
+- Baseline v0 behavior:
+  - `G0` is parsed/lowered as a linear-motion family member with `modal.code=G0`
+  - `RTLION` / `RTLIOF` Siemens rapid interpolation semantics are planned
 
 Examples (from `testdata/g1_samples.ngc`):
 ```
+G0 X20 Y10
 G1 Z-2 F40
 G1 X100 Y100 Z200
 G1 AP=90 RP=10 F40

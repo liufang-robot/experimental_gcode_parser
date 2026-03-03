@@ -163,7 +163,14 @@ Diagnostic diagnosticFromJson(const nlohmann::json &j) {
 
 nlohmann::json messageToJson(const ParsedMessage &message) {
   nlohmann::json j;
-  if (std::holds_alternative<G1Message>(message)) {
+  if (std::holds_alternative<G0Message>(message)) {
+    const auto &g0 = std::get<G0Message>(message);
+    j["type"] = "G0";
+    j["source"] = sourceToJson(g0.source);
+    j["modal"] = modalToJson(g0.modal);
+    j["target_pose"] = poseToJson(g0.target_pose);
+    j["feed"] = optionalDoubleToJson(g0.feed);
+  } else if (std::holds_alternative<G1Message>(message)) {
     const auto &g1 = std::get<G1Message>(message);
     j["type"] = "G1";
     j["source"] = sourceToJson(g1.source);
@@ -199,7 +206,20 @@ nlohmann::json messageToJson(const ParsedMessage &message) {
 
 ParsedMessage messageFromJson(const nlohmann::json &j) {
   const auto type = j.value("type", "");
-  if (type == "G1") {
+  if (type == "G0") {
+    G0Message g0;
+    if (j.contains("source")) {
+      g0.source = sourceFromJson(j["source"]);
+    }
+    if (j.contains("target_pose")) {
+      g0.target_pose = poseFromJson(j["target_pose"]);
+    }
+    if (j.contains("modal")) {
+      g0.modal = modalFromJson(j["modal"]);
+    }
+    g0.feed = optionalDoubleFromJson(j, "feed");
+    return g0;
+  } else if (type == "G1") {
     G1Message g1;
     if (j.contains("source")) {
       g1.source = sourceFromJson(j["source"]);

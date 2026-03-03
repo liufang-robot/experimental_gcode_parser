@@ -51,12 +51,12 @@ bool shouldSkipLine(const Line &line, const LowerOptions &options) {
 
 int motionCode(const Word &word) {
   if (word.head != "G" || !word.value.has_value()) {
-    return 0;
+    return -1;
   }
   try {
     return std::stoi(*word.value);
   } catch (...) {
-    return 0;
+    return -1;
   }
 }
 
@@ -133,6 +133,7 @@ MessageResult lowerToMessages(const Program &program,
       break;
     }
 
+    bool has_motion = false;
     int found_motion = 0;
     for (const auto &item : line.items) {
       if (!isWord(item)) {
@@ -140,16 +141,17 @@ MessageResult lowerToMessages(const Program &program,
       }
       const auto &word = std::get<Word>(item);
       const int code = motionCode(word);
-      if (code == 1 || code == 2 || code == 3 || code == 4) {
-        if (found_motion != 0 && code != found_motion) {
+      if (code >= 0 && code <= 4) {
+        if (has_motion && code != found_motion) {
           found_motion = -1;
           break;
         }
+        has_motion = true;
         found_motion = code;
       }
     }
 
-    if (found_motion == 0) {
+    if (!has_motion) {
       continue;
     }
 
@@ -214,6 +216,7 @@ bool lowerToMessagesStream(const Program &program,
       return false;
     }
 
+    bool has_motion = false;
     int found_motion = 0;
     for (const auto &item : line.items) {
       if (!isWord(item)) {
@@ -221,16 +224,17 @@ bool lowerToMessagesStream(const Program &program,
       }
       const auto &word = std::get<Word>(item);
       const int code = motionCode(word);
-      if (code == 1 || code == 2 || code == 3 || code == 4) {
-        if (found_motion != 0 && code != found_motion) {
+      if (code >= 0 && code <= 4) {
+        if (has_motion && code != found_motion) {
           found_motion = -1;
           break;
         }
+        has_motion = true;
         found_motion = code;
       }
     }
 
-    if (found_motion == 0) {
+    if (!has_motion) {
       continue;
     }
     const auto found = indexed_lowerers.find(found_motion);

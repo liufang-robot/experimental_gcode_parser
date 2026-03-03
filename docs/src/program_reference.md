@@ -18,18 +18,19 @@ This section documents currently implemented parser/lowering behavior.
 Every emitted message includes `modal` metadata:
 
 - `group`: `GGroup1` (modal motion) or `GGroup2` (non-modal dwell)
-- `code`: emitted function code (`G1`, `G2`, `G3`, `G4`)
+- `code`: emitted function code (`G0`, `G1`, `G2`, `G3`, `G4`)
 - `updates_state`: whether this message updates modal state
 
 Current Siemens-aligned baseline for supported functions:
 
-- `G1/G2/G3` -> `GGroup1`, `updates_state=true`
+- `G0/G1/G2/G3` -> `GGroup1`, `updates_state=true`
 - `G4` -> `GGroup2`, `updates_state=false`
 
 ## Command Status Matrix
 
 | Command | Status | Notes |
 |---|---|---|
+| `G0` rapid baseline | Implemented | Emits `G0Message` with target pose + feed; rapid interpolation mode controls (`RTLION/RTLIOF`) are pending. |
 | `G1` linear | Implemented | Emits `G1Message` with target pose + feed. |
 | `G2` arc CW | Implemented | Emits `G2Message` with endpoint + arc fields + feed. |
 | `G3` arc CCW | Implemented | Emits `G3Message` with endpoint + arc fields + feed. |
@@ -66,10 +67,12 @@ Status:
 - `Implemented` (motion subset)
 
 Rules:
-- Packetization consumes AIL and emits packets for `G1/G2/G3/G4`.
+- Packetization consumes AIL and emits packets for `G0/G1/G2/G3/G4`.
 - `packet_id` is 1-based and deterministic per result order.
 - Non-motion AIL instructions (for example `assign`) are skipped with a
   warning diagnostic.
+- `G0` and `G1` both use packet type `linear_move`; distinguish intent via
+  `packet.modal.code` (`G0` vs `G1`).
 
 Output fields:
 - packet: `packet_id`, `type`, `source`, `modal`, `payload`
@@ -98,6 +101,30 @@ Output fields:
 - modal: `group=GGroup1`, `code=G1`, `updates_state=true`
 - target_pose: optional `x/y/z/a/b/c`
 - feed: optional `F`
+
+## G0
+
+Syntax examples:
+
+- `G0 X10 Y20 Z30`
+- `G0 AP=90 RP=10`
+
+Rules:
+
+- Case-insensitive words (`g0`, `x`, `f`) are accepted.
+- Mixing Cartesian and polar words in one `G0` line is rejected.
+
+Output fields:
+
+- source: filename/line/line_number
+- modal: `group=GGroup1`, `code=G0`, `updates_state=true`
+- target_pose: optional `x/y/z/a/b/c`
+- feed: optional `F` (baseline parser/lowering acceptance)
+
+Current limitations:
+
+- Siemens rapid interpolation mode controls (`RTLION`/`RTLIOF`) are not yet
+  implemented in current runtime/packet behavior.
 
 ## G2 / G3
 

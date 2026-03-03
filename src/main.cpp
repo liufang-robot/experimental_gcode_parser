@@ -88,7 +88,17 @@ std::string formatLowerDebug(const gcode::MessageResult &result) {
           appendSource(out, msg.source);
           appendModal(out, msg.modal);
           if constexpr (std::is_same_v<std::decay_t<decltype(msg)>,
-                                       gcode::G1Message>) {
+                                       gcode::G0Message>) {
+            out << " type=G0";
+            appendOptionalDouble(out, "x", msg.target_pose.x);
+            appendOptionalDouble(out, "y", msg.target_pose.y);
+            appendOptionalDouble(out, "z", msg.target_pose.z);
+            appendOptionalDouble(out, "a", msg.target_pose.a);
+            appendOptionalDouble(out, "b", msg.target_pose.b);
+            appendOptionalDouble(out, "c", msg.target_pose.c);
+            appendOptionalDouble(out, "feed", msg.feed);
+          } else if constexpr (std::is_same_v<std::decay_t<decltype(msg)>,
+                                              gcode::G1Message>) {
             out << " type=G1";
             appendOptionalDouble(out, "x", msg.target_pose.x);
             appendOptionalDouble(out, "y", msg.target_pose.y);
@@ -170,7 +180,7 @@ std::string formatAilDebug(const gcode::AilResult &result) {
           appendSource(out, i.source);
           if constexpr (std::is_same_v<std::decay_t<decltype(i)>,
                                        gcode::AilLinearMoveInstruction>) {
-            out << " kind=motion_linear opcode=G1";
+            out << " kind=motion_linear opcode=" << i.opcode;
             appendModal(out, i.modal);
             appendOptionalDouble(out, "x", i.target_pose.x);
             appendOptionalDouble(out, "y", i.target_pose.y);

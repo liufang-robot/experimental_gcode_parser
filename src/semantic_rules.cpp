@@ -27,7 +27,7 @@ bool isMotionWord(const Word &word, int *out_code) {
   }
   try {
     int code = std::stoi(*word.value);
-    if (code == 1 || code == 2 || code == 3 || code == 4) {
+    if (code == 0 || code == 1 || code == 2 || code == 3 || code == 4) {
       if (out_code) {
         *out_code = code;
       }
@@ -111,7 +111,7 @@ public:
         addDiagnostic(
             diagnostics, word.location,
             "multiple motion commands in one line; choose only one of "
-            "G1/G2/G3");
+            "G0/G1/G2/G3");
         return;
       }
       has_motion = true;

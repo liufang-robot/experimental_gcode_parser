@@ -81,6 +81,25 @@ TEST(PacketTest, ConvertsAilMotionInstructionsToPackets) {
   EXPECT_TRUE(closeEnough(p2.dwell_value, 30.0));
 }
 
+TEST(PacketTest, ConvertsG0LinearMoveToLinearPacket) {
+  const auto result = gcode::parseLowerAndPacketize("G0 X10 Y20 F500\n");
+  ASSERT_TRUE(result.diagnostics.empty());
+  ASSERT_TRUE(result.rejected_lines.empty());
+  ASSERT_EQ(result.packets.size(), 1u);
+  EXPECT_EQ(result.packets[0].type, gcode::PacketType::LinearMove);
+  EXPECT_EQ(result.packets[0].modal.code, "G0");
+  ASSERT_TRUE(std::holds_alternative<gcode::MotionLinearPayload>(
+      result.packets[0].payload));
+  const auto &payload =
+      std::get<gcode::MotionLinearPayload>(result.packets[0].payload);
+  ASSERT_TRUE(payload.target_pose.x.has_value());
+  ASSERT_TRUE(payload.target_pose.y.has_value());
+  EXPECT_TRUE(closeEnough(*payload.target_pose.x, 10.0));
+  EXPECT_TRUE(closeEnough(*payload.target_pose.y, 20.0));
+  ASSERT_TRUE(payload.feed.has_value());
+  EXPECT_TRUE(closeEnough(*payload.feed, 500.0));
+}
+
 TEST(PacketTest, SkipsNonMotionInstructionsWithWarning) {
   const auto result =
       gcode::parseLowerAndPacketize("R1 = $P_ACT_X + 2\nG1 X20\n");

@@ -45,6 +45,13 @@ struct G1Message {
   std::optional<double> feed;
 };
 
+struct G0Message {
+  SourceInfo source;
+  ModalState modal;
+  Pose6 target_pose;
+  std::optional<double> feed;
+};
+
 struct ArcParams {
   std::optional<double> i;
   std::optional<double> j;
@@ -77,7 +84,8 @@ struct G4Message {
   double dwell_value = 0.0;
 };
 
-using ParsedMessage = std::variant<G1Message, G2Message, G3Message, G4Message>;
+using ParsedMessage =
+    std::variant<G0Message, G1Message, G2Message, G3Message, G4Message>;
 
 struct LowerOptions {
   std::optional<std::string> filename;
