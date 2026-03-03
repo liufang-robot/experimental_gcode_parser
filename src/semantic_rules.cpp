@@ -1,7 +1,11 @@
 #include "semantic_rules.h"
 
 #include <cctype>
+#include <cstdint>
+#include <limits>
 #include <memory>
+#include <optional>
+#include <string_view>
 #include <unordered_map>
 #include <vector>
 
@@ -63,6 +67,26 @@ bool isUnsignedIntegerText(const std::string &text) {
     }
   }
   return true;
+}
+
+std::optional<int64_t> parseInt64Strict(std::string_view text) {
+  if (text.empty()) {
+    return std::nullopt;
+  }
+  for (char c : text) {
+    if (!std::isdigit(static_cast<unsigned char>(c))) {
+      return std::nullopt;
+    }
+  }
+  int64_t value = 0;
+  for (char c : text) {
+    const int digit = c - '0';
+    if (value > (std::numeric_limits<int64_t>::max() - digit) / 10) {
+      return std::nullopt;
+    }
+    value = value * 10 + digit;
+  }
+  return value;
 }
 
 class MotionExclusivityRule final : public LineSemanticRule {
@@ -283,6 +307,56 @@ public:
   }
 };
 
+class MCodeShapeRule final : public LineSemanticRule {
+public:
+  void apply(const Line &line,
+             std::vector<Diagnostic> *diagnostics) const override {
+    constexpr int64_t kMCodeMin = 0;
+    constexpr int64_t kMCodeMax = 2147483647;
+    for (const auto &item : line.items) {
+      if (!std::holds_alternative<Word>(item)) {
+        continue;
+      }
+      const auto &word = std::get<Word>(item);
+      if (word.head.empty() || word.head[0] != 'M') {
+        continue;
+      }
+
+      const std::string ext = word.head.substr(1);
+      const bool has_extension = !ext.empty();
+      if (has_extension && !isUnsignedIntegerText(ext)) {
+        continue;
+      }
+
+      if (!word.value.has_value()) {
+        addDiagnostic(diagnostics, word.location,
+                      "M function requires integer value");
+        return;
+      }
+      const auto value = parseInt64Strict(*word.value);
+      if (!value.has_value() || *value < kMCodeMin || *value > kMCodeMax) {
+        addDiagnostic(diagnostics, word.location,
+                      "M function value out of range (0..2147483647)");
+        return;
+      }
+
+      if (has_extension && !word.has_equal) {
+        addDiagnostic(diagnostics, word.location,
+                      "extended M address requires '=' form: M<ext>=<value>");
+        return;
+      }
+      if (has_extension) {
+        if (*value == 0 || *value == 1 || *value == 2 || *value == 17 ||
+            *value == 30) {
+          addDiagnostic(diagnostics, word.location,
+                        "extended M address not allowed for M0/M1/M2/M17/M30");
+          return;
+        }
+      }
+    }
+  }
+};
+
 class DoubleSlashCommentRule final : public LineSemanticRule {
 public:
   explicit DoubleSlashCommentRule(bool enabled) : enabled_(enabled) {}
@@ -319,6 +393,7 @@ makeRules(bool enable_double_slash_comments) {
   rules.push_back(std::make_unique<LineNumberWordRule>());
   rules.push_back(std::make_unique<BlockSkipLevelRule>());
   rules.push_back(std::make_unique<AssignmentShapeRule>());
+  rules.push_back(std::make_unique<MCodeShapeRule>());
   rules.push_back(
       std::make_unique<DoubleSlashCommentRule>(enable_double_slash_comments));
   return rules;
