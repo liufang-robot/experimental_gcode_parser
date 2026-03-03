@@ -271,6 +271,32 @@ Architecture planning queue for PRD Section 5 requirements:
 - `Tests To Add/Update`:
   - `test/parser_tests.cpp` (comment parsing + diagnostics)
   - parser/CLI golden fixtures affected by comment syntax updates
+- `ID`: T-049
+- `Priority`: P1
+- `Title`: Siemens Chapter-2 syntax baseline (naming/blocks/assignment/comments/skip levels)
+- `Why`: We need explicit Siemens fundamental grammar coverage for NC program
+  structure and skip behavior before higher-level runtime features.
+- `Scope`:
+  - add parser support/validation for:
+    - Siemens-compatible program-name forms (including `%...` compatibility mode)
+    - block length limit diagnostics (Siemens baseline 512 chars)
+    - assignment-shape `=` rules and numeric-extension disambiguation
+    - skip-level markers `/0.. /9` metadata capture
+  - define runtime boundary for skip-level execution policy
+- `Acceptance Criteria`:
+  - SPEC sections updated with concrete syntax/diagnostics behavior
+  - parser tests cover valid/invalid chapter-2 baseline examples
+  - runtime tests cover skip-level on/off behavior once execution hook is added
+- `Out of Scope`:
+  - full subprogram file-management implementation
+  - HMI-specific UI configuration behavior for skip levels
+- `SPEC Sections`:
+  - Section 3.1, Section 3.6, Section 3.8, Section 5, Section 6.1
+- `Tests To Add/Update`:
+  - `test/parser_tests.cpp`
+  - `test/ail_tests.cpp`
+  - `test/ail_executor_tests.cpp`
+
 - `ID`: T-048
 - `Priority`: P1
 - `Title`: System variables and user-defined variables model (Siemens-compatible)

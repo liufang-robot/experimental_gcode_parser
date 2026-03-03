@@ -681,6 +681,47 @@ Acceptance expectation:
 - Tests cover user-defined and system-variable references in assignment and
   condition contexts.
 
+### 5.4 Siemens Fundamental NC Syntax Principles (Chapter 2 baseline)
+Requirement intent:
+- Add Siemens-compatible baseline grammar/format rules for NC program identity,
+  block structure, value assignment, comments, and skip blocks.
+
+Required coverage:
+- Program naming:
+  - parser accepts Siemens-style program identifiers and optional external
+    transfer naming prefixes (for example `%...`) as compatibility syntax.
+  - internal model preserves full raw program name text.
+- Block structure:
+  - block number form `N<positive_int>` at block start
+  - block end by line feed
+  - block length limit support (Siemens baseline 512 chars, including comment and
+    LF) with deterministic diagnostics on overflow
+  - repeated-address allowances where valid (for example multiple `G`, `M`, `H`)
+- Value assignment rules:
+  - support Siemens `=` requirement contract:
+    - mandatory when multi-letter address or expression value is used
+    - optional for single-letter + single-constant forms
+  - support numeric extension disambiguation forms (for example `X1=10`)
+- Comments:
+  - semicolon end-of-block comments as baseline
+  - preserve comment text for display/debug output
+- Skip blocks:
+  - support `/` block-skip marker and skip levels `/0.. /9`
+  - preserve skip-level metadata in parse/AIL outputs
+  - runtime may skip execution based on configured active levels
+
+Behavior boundary:
+- Parse stage:
+  - recognize and validate syntax/shape
+  - preserve raw text/metadata (name, skip level, comments)
+- Runtime stage:
+  - decide effective skip execution by active skip-level configuration
+
+Acceptance expectation:
+- SPEC defines syntax/diagnostics for naming/block/assignment/comment/skip forms.
+- Backlog tasks split parser and runtime responsibilities for skip-level handling.
+- Tests cover valid/invalid examples for each category.
+
 ## 6. Command Family Policy
 - `G` codes:
   - Implement only command families explicitly listed in SPEC + backlog tasks.

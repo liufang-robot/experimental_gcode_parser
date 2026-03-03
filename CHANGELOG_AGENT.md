@@ -34,9 +34,15 @@ How to reproduce locally (commands):
   selector-form extensions (for example `$P_UIFR[1,X,TR]`, `$A_IN[1]`).
 - Added backlog task `T-048` for implementation planning/execution of variable
   reference modeling and runtime resolver semantics.
+- Added Siemens Chapter-2 baseline requirement capture for:
+  - NC naming compatibility
+  - block formatting and block-length diagnostics
+  - assignment `=` rules and numeric-extension disambiguation
+  - skip-level syntax `/0.. /9` and parse/runtime execution boundary
+  via new backlog task `T-049`.
 
 SPEC sections / tests:
-- SPEC: Section 3.6, Section 6.1
+- SPEC: Section 3.1, Section 3.6, Section 3.8, Section 5, Section 6.1
 - Tests: not applicable (docs-only requirement update)
 
 Known limitations:
