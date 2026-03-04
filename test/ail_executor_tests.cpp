@@ -1,4 +1,5 @@
 #include <algorithm>
+#include <functional>
 #include <memory>
 #include <string>
 #include <vector>
@@ -9,6 +10,35 @@
 #include "tool_policy.h"
 
 namespace {
+
+class StubToolPolicy final : public gcode::ToolPolicy {
+public:
+  using Resolver = std::function<gcode::ToolSelectionResolution(
+      const gcode::ToolSelectionState &)>;
+
+  StubToolPolicy(Resolver resolver, gcode::ErrorPolicy unresolved_policy,
+                 gcode::ErrorPolicy ambiguous_policy)
+      : resolver_(std::move(resolver)), unresolved_policy_(unresolved_policy),
+        ambiguous_policy_(ambiguous_policy) {}
+
+  gcode::ToolSelectionResolution
+  resolveSelection(const gcode::ToolSelectionState &selection) const override {
+    return resolver_(selection);
+  }
+
+  gcode::ErrorPolicy unresolvedPolicy() const override {
+    return unresolved_policy_;
+  }
+
+  gcode::ErrorPolicy ambiguousPolicy() const override {
+    return ambiguous_policy_;
+  }
+
+private:
+  Resolver resolver_;
+  gcode::ErrorPolicy unresolved_policy_ = gcode::ErrorPolicy::Error;
+  gcode::ErrorPolicy ambiguous_policy_ = gcode::ErrorPolicy::Error;
+};
 
 TEST(AilExecutorTest, ResolvesGotoAndCompletes) {
   const auto lowered = gcode::parseAndLowerAil("L1:\nGOTO L2\nL2:\n");
@@ -453,11 +483,17 @@ TEST(AilExecutorTest, M6WithoutPendingSelectionWarningPolicyContinues) {
 }
 
 TEST(AilExecutorTest, ToolPolicySubstitutesPendingSelectionDuringM6) {
-  gcode::ToolPolicyOptions policy_options;
-  policy_options.allow_substitution = true;
-  policy_options.substitution_map["12"] = "7";
-  const auto policy =
-      std::make_shared<gcode::DefaultToolPolicy>(policy_options);
+  const auto policy = std::make_shared<StubToolPolicy>(
+      [](const gcode::ToolSelectionState &selection) {
+        gcode::ToolSelectionResolution resolved;
+        resolved.kind = gcode::ToolSelectionResolutionKind::Resolved;
+        resolved.selection = selection;
+        resolved.selection.selector_value = "7";
+        resolved.substituted = true;
+        resolved.message = "substituted by test policy";
+        return resolved;
+      },
+      gcode::ErrorPolicy::Error, gcode::ErrorPolicy::Error);
 
   gcode::LowerOptions options;
   options.tool_change_mode = gcode::ToolChangeMode::DeferredM6;
@@ -482,15 +518,20 @@ TEST(AilExecutorTest, ToolPolicySubstitutesPendingSelectionDuringM6) {
 }
 
 TEST(AilExecutorTest, ToolPolicyFallbackResolvesUnresolvedSelection) {
-  gcode::ToolPolicyOptions policy_options;
-  policy_options.fallback_selection =
-      gcode::ToolSelectionState{std::nullopt, "7"};
-  const auto policy =
-      std::make_shared<gcode::DefaultToolPolicy>(policy_options);
+  const auto policy = std::make_shared<StubToolPolicy>(
+      [](const gcode::ToolSelectionState &) {
+        gcode::ToolSelectionResolution resolved;
+        resolved.kind = gcode::ToolSelectionResolutionKind::Resolved;
+        resolved.selection = gcode::ToolSelectionState{std::nullopt, "7"};
+        resolved.substituted = true;
+        resolved.message = "fallback selected by test policy";
+        return resolved;
+      },
+      gcode::ErrorPolicy::Error, gcode::ErrorPolicy::Error);
 
   gcode::LowerOptions options;
   options.tool_change_mode = gcode::ToolChangeMode::DeferredM6;
-  const auto lowered = gcode::parseAndLowerAil("T999991\nM6\n", options);
+  const auto lowered = gcode::parseAndLowerAil("T12\nM6\n", options);
   gcode::AilExecutor exec(lowered.instructions, gcode::ErrorPolicy::Error,
                           gcode::ErrorPolicy::Error, policy);
 
@@ -511,11 +552,19 @@ TEST(AilExecutorTest, ToolPolicyFallbackResolvesUnresolvedSelection) {
 }
 
 TEST(AilExecutorTest, ToolPolicyAmbiguousSelectionFaultsByDefault) {
-  const auto policy = std::make_shared<gcode::DefaultToolPolicy>();
+  const auto policy = std::make_shared<StubToolPolicy>(
+      [](const gcode::ToolSelectionState &selection) {
+        gcode::ToolSelectionResolution unresolved;
+        unresolved.kind = gcode::ToolSelectionResolutionKind::Ambiguous;
+        unresolved.selection = selection;
+        unresolved.message = "multiple candidate tools matched";
+        return unresolved;
+      },
+      gcode::ErrorPolicy::Error, gcode::ErrorPolicy::Error);
 
   gcode::LowerOptions options;
   options.tool_change_mode = gcode::ToolChangeMode::DirectT;
-  const auto lowered = gcode::parseAndLowerAil("T999992\n", options);
+  const auto lowered = gcode::parseAndLowerAil("T12\n", options);
   gcode::AilExecutor exec(lowered.instructions, gcode::ErrorPolicy::Error,
                           gcode::ErrorPolicy::Error, policy);
 

@@ -1,5 +1,27 @@
 # CHANGELOG_AGENT
 
+## 2026-03-04 (T-054 follow-up: remove magic marker policy behavior)
+- Removed deterministic magic marker handling from `DefaultToolPolicy`
+  (`999991`/`999992` and marker parsing paths).
+- Kept default policy behavior focused on:
+  - direct resolution
+  - optional substitution map
+  - unresolved fallback for empty selection values
+- Reworked tool-policy executor tests to use explicit stub policies for
+  substitution/fallback/ambiguous outcomes, improving clarity and reducing
+  test-only behavior in production policy code.
+
+SPEC sections / tests:
+- SPEC: no contract change (clarity/implementation cleanup)
+- Tests: `test/ail_executor_tests.cpp`
+
+Known limitations:
+- Default policy remains a baseline resolver; machine-specific ambiguity
+  detection/resolution still requires specialized policy implementations.
+
+How to reproduce locally (commands):
+- `./dev/check.sh`
+
 ## 2026-03-04 (T-054 slice: tool policy resolver/substitution integration)
 - Added tool policy interface + default implementation:
   - `ToolPolicy` / `DefaultToolPolicy`
