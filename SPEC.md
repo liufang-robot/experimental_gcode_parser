@@ -1,4 +1,4 @@
-# SPEC — CNC G-code Parser Library (v0.1)
+#SPEC — CNC G - code Parser Library(v0.1)
 
 ## 1. Purpose
 Parse G-code text (string or file) into a simple, syntax-level JSON model
@@ -94,39 +94,47 @@ AST shape (v0.1):
 - Word letters are case-insensitive (`x` == `X`, `g1` == `G1`).
 - `N`-address block number must appear at block start (before statement words).
 - Block-skip level constraints:
-  - only one skip level value is allowed after `/`
-  - valid range is `/0` through `/9`
-- Block length validation:
-  - parser reports error if a block exceeds 512 characters (including LF).
+- only one skip level value is allowed after `/` -
+    valid range is `/ 0` through `/ 9` - Block length
+    validation:-parser reports error if a
+                    block exceeds 512 characters(including LF)
+                        .
 
-### 3.2 Numbers
-- Integers: `0`, `10`, `-3`, `+7`
-- Decimals: `1.0`, `-2.5`, `.5`, `5.`, `+.25`
-- No scientific notation in v0.1
+                ## #3.2 Numbers
+               -
+      Integers: `0`, `10`, `- 3`, `+ 7` -
+      Decimals: `1.0`, `- 2.5`, `.5`, `5.`, `+ .25` -
+                                                No scientific notation in v0.1
 
-### 3.3 G0 / G1 (rapid + linear interpolation baseline)
-- Motion words: `G0`, `G1`
-- Cartesian endpoint: `X`, `Y`, `Z`, optional `A`
-- Polar endpoint: `AP=...` and `RP=...`
-- Feedrate: `F...`
-- Mixed Cartesian + polar in one line is an error
-- Baseline v0 behavior:
-  - `G0` is parsed/lowered as a linear-motion family member with `modal.code=G0`
-  - `RTLION` / `RTLIOF` are parsed/lowered into AIL rapid-mode instructions
-    (runtime machine-actuation override semantics are still planned)
-  - AIL/packet `G0` output carries current effective rapid mode when
-    previously set by `RTLION`/`RTLIOF`
-  - `AilExecutor` tracks current rapid-mode state as it executes
+                                                    ## #3.3 G0
+                                                    / G1(rapid +
+                                                         linear interpolation
+                                                             baseline) -
+                                                Motion
+         words: `G0`, `G1` - Cartesian
+      endpoint: `X`, `Y`, `Z`, optional `A` - Polar
+      endpoint: `AP = ...` and `RP = ...` -
+      Feedrate: `F...` - Mixed Cartesian + polar in one line is an error -
+                Baseline v0
+      behavior:
+          - `G0` is parsed / lowered as a linear - motion family member
+                                                   with `modal.code =
+              G0` - `RTLION` / `RTLIOF` are parsed / lowered into AIL rapid -
+              mode
+              instructions(runtime machine -
+                           actuation override semantics are still planned) -
+              AIL /
+                  packet `G0` output carries current effective rapid mode when
+                  previously set by `RTLION`/`RTLIOF` - `AilExecutor` tracks
+              current rapid
+              -
+              mode state as it executes
     `RTLION`/`RTLIOF` instructions
 
-Examples (from `testdata/g1_samples.ngc`):
-```
-G0 X20 Y10
-G1 Z-2 F40
-G1 X100 Y100 Z200
-G1 AP=90 RP=10 F40
-G1 G94 X100 Y20 Z30 A40 F100
-G1 X10 AP=90 RP=10   ; mixed modes should error
+                  Examples(from `testdata / g1_samples.ngc`):
+``` G0 X20 Y10 G1 Z
+              - 2 F40 G1 X100 Y100 Z200 G1 AP = 90 RP = 10 F40 G1 G94 X100 Y20
+          Z30 A40 F100 G1 X10 AP = 90 RP = 10; mixed modes should error
 ```
 
 ### 3.4 G2 / G3 (circular interpolation)
@@ -242,8 +250,11 @@ Planned Siemens compatibility extension:
   - `RET` and `M17` lower to explicit AIL `return_boundary` instructions.
   - packet stage does not emit standalone packets for `subprogram_call`.
   - packet stage does not emit standalone packets for `return_boundary`.
-  - executor treats `return_boundary` as an executable control-flow boundary
-    instruction (placeholder until call-stack runtime is added).
+  - executor call baseline:
+    - `subprogram_call` resolves target against in-program labels, pushes return
+      PC, and transfers control to target label
+    - `return_boundary` pops return PC and resumes caller
+    - unresolved call target or return with empty call stack is a runtime fault
 - Parser/lowering responsibility:
   - preserve call target, repeat count, and argument list structure
   - preserve declaration signatures and return statements
@@ -545,15 +556,16 @@ N130 G01 X20 Y20
   - `RET` and `M17` emit explicit `return_boundary` AIL instructions
   - packet stage does not emit standalone motion packets for
     `return_boundary`
-  - executor currently advances through `return_boundary` without call-stack
-    side effects (call-stack return semantics are a follow-up slice)
+  - executor pops and resumes from call stack
+  - return with empty call stack is a runtime fault
 - Subprogram call runtime boundary (v0 baseline):
   - direct call forms emit explicit `subprogram_call` AIL instructions with
     optional `repeat_count`
   - packet stage does not emit standalone motion packets for
     `subprogram_call`
-  - executor currently advances through `subprogram_call` without call-stack
-    side effects (target resolution/call-stack execution are follow-up slices)
+  - executor resolves target by label in current instruction stream, pushes
+    return PC, and transfers control to target label
+  - unresolved subprogram target is a runtime fault
 - Tool runtime boundary (current):
   - `tool_select` / `tool_change` instructions are explicit executable control
     instructions in AIL

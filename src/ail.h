@@ -170,6 +170,7 @@ struct ExecutorBlockedState {
 struct ExecutorState {
   ExecutorStatus status = ExecutorStatus::Ready;
   size_t pc = 0;
+  size_t call_stack_depth = 0;
   std::optional<RapidInterpolationMode> rapid_mode_current;
   std::optional<ToolRadiusCompMode> tool_radius_comp_current;
   std::optional<WorkingPlane> working_plane_current;
@@ -207,6 +208,7 @@ private:
   std::vector<AilInstruction> instructions_;
   std::unordered_map<std::string, std::vector<size_t>> label_positions_;
   std::unordered_map<int, std::vector<size_t>> line_number_positions_;
+  std::vector<size_t> call_stack_return_pcs_;
   std::unordered_set<std::string> pending_events_;
   ErrorPolicy unknown_mcode_policy_ = ErrorPolicy::Error;
   ErrorPolicy m6_without_pending_policy_ = ErrorPolicy::Error;

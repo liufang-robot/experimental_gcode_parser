@@ -221,8 +221,8 @@ TEST(AilExecutorTest, KnownMFunctionAdvancesWithoutFault) {
   EXPECT_EQ(exec.state().status, gcode::ExecutorStatus::Completed);
 }
 
-TEST(AilExecutorTest, ReturnBoundaryInstructionsAdvanceWithoutFault) {
-  const auto lowered = gcode::parseAndLowerAil("RET\nM17\nG1 X1\n");
+TEST(AilExecutorTest, ReturnBoundaryFaultsWithoutCallFrame) {
+  const auto lowered = gcode::parseAndLowerAil("RET\n");
   gcode::AilExecutor exec(lowered.instructions);
 
   const auto resolver = [](const gcode::Condition &,
@@ -232,17 +232,15 @@ TEST(AilExecutorTest, ReturnBoundaryInstructionsAdvanceWithoutFault) {
     return r;
   };
 
-  ASSERT_TRUE(exec.step(0, resolver)); // RET
-  EXPECT_EQ(exec.state().status, gcode::ExecutorStatus::Ready);
-  ASSERT_TRUE(exec.step(0, resolver)); // M17
-  EXPECT_EQ(exec.state().status, gcode::ExecutorStatus::Ready);
-  ASSERT_TRUE(exec.step(0, resolver)); // G1
-  ASSERT_TRUE(exec.step(0, resolver)); // complete
-  EXPECT_EQ(exec.state().status, gcode::ExecutorStatus::Completed);
+  ASSERT_TRUE(exec.step(0, resolver));
+  EXPECT_EQ(exec.state().status, gcode::ExecutorStatus::Fault);
+  ASSERT_FALSE(exec.diagnostics().empty());
+  EXPECT_NE(exec.diagnostics().back().message.find("empty call stack"),
+            std::string::npos);
 }
 
-TEST(AilExecutorTest, SubprogramCallInstructionsAdvanceWithoutFault) {
-  const auto lowered = gcode::parseAndLowerAil("L1000\nL2000 P2\nG1 X1\n");
+TEST(AilExecutorTest, SubprogramCallFaultsWhenTargetMissing) {
+  const auto lowered = gcode::parseAndLowerAil("L1000\n");
   gcode::AilExecutor exec(lowered.instructions);
 
   const auto resolver = [](const gcode::Condition &,
@@ -252,13 +250,33 @@ TEST(AilExecutorTest, SubprogramCallInstructionsAdvanceWithoutFault) {
     return r;
   };
 
-  ASSERT_TRUE(exec.step(0, resolver)); // L1000
-  EXPECT_EQ(exec.state().status, gcode::ExecutorStatus::Ready);
-  ASSERT_TRUE(exec.step(0, resolver)); // L2000 P2
-  EXPECT_EQ(exec.state().status, gcode::ExecutorStatus::Ready);
-  ASSERT_TRUE(exec.step(0, resolver)); // G1
-  ASSERT_TRUE(exec.step(0, resolver)); // complete
+  ASSERT_TRUE(exec.step(0, resolver));
+  EXPECT_EQ(exec.state().status, gcode::ExecutorStatus::Fault);
+  ASSERT_FALSE(exec.diagnostics().empty());
+  EXPECT_NE(exec.diagnostics().back().message.find("unresolved subprogram"),
+            std::string::npos);
+}
+
+TEST(AilExecutorTest, SubprogramCallAndReturnUseCallStack) {
+  const auto lowered = gcode::parseAndLowerAil(
+      "GOTO START\nL1000:\nG1 X1\nRET\nSTART:\nL1000\nGOTO END\nEND:\nG1 X2\n");
+  gcode::AilExecutor exec(lowered.instructions);
+
+  const auto resolver = [](const gcode::Condition &,
+                           const gcode::SourceInfo &) {
+    gcode::ConditionResolution r;
+    r.kind = gcode::ConditionResolutionKind::False;
+    return r;
+  };
+
+  int guard = 0;
+  while (exec.state().status == gcode::ExecutorStatus::Ready && guard < 32) {
+    ASSERT_TRUE(exec.step(0, resolver));
+    ++guard;
+  }
   EXPECT_EQ(exec.state().status, gcode::ExecutorStatus::Completed);
+  EXPECT_EQ(exec.state().call_stack_depth, 0u);
+  EXPECT_TRUE(exec.diagnostics().empty());
 }
 
 TEST(AilExecutorTest, UnknownMFunctionFaultsByDefaultPolicy) {
