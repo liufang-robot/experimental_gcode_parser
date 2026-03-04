@@ -336,4 +336,118 @@ TEST(AilExecutorTest, TracksWorkingPlaneStateFromG17G18G19) {
   EXPECT_EQ(*exec.state().working_plane_current, gcode::WorkingPlane::YZ);
 }
 
+TEST(AilExecutorTest, DeferredToolModeUsesPendingSelectionUntilM6) {
+  gcode::LowerOptions options;
+  options.tool_change_mode = gcode::ToolChangeMode::DeferredM6;
+  const auto lowered = gcode::parseAndLowerAil("T12\nM6\n", options);
+  gcode::AilExecutor exec(lowered.instructions);
+
+  const auto resolver = [](const gcode::Condition &,
+                           const gcode::SourceInfo &) {
+    gcode::ConditionResolution r;
+    r.kind = gcode::ConditionResolutionKind::False;
+    return r;
+  };
+
+  ASSERT_TRUE(exec.step(0, resolver)); // T12
+  EXPECT_FALSE(exec.state().active_tool_selection.has_value());
+  ASSERT_TRUE(exec.state().pending_tool_selection.has_value());
+  EXPECT_EQ(exec.state().pending_tool_selection->selector_value, "12");
+
+  ASSERT_TRUE(exec.step(0, resolver)); // M6
+  ASSERT_TRUE(exec.state().active_tool_selection.has_value());
+  EXPECT_EQ(exec.state().active_tool_selection->selector_value, "12");
+  EXPECT_FALSE(exec.state().pending_tool_selection.has_value());
+}
+
+TEST(AilExecutorTest, DeferredToolModeUsesLastSelectionBeforeM6) {
+  gcode::LowerOptions options;
+  options.tool_change_mode = gcode::ToolChangeMode::DeferredM6;
+  const auto lowered = gcode::parseAndLowerAil("T12\nT7\nM6\n", options);
+  gcode::AilExecutor exec(lowered.instructions);
+
+  const auto resolver = [](const gcode::Condition &,
+                           const gcode::SourceInfo &) {
+    gcode::ConditionResolution r;
+    r.kind = gcode::ConditionResolutionKind::False;
+    return r;
+  };
+
+  ASSERT_TRUE(exec.step(0, resolver)); // T12
+  ASSERT_TRUE(exec.state().pending_tool_selection.has_value());
+  EXPECT_EQ(exec.state().pending_tool_selection->selector_value, "12");
+
+  ASSERT_TRUE(exec.step(0, resolver)); // T7
+  ASSERT_TRUE(exec.state().pending_tool_selection.has_value());
+  EXPECT_EQ(exec.state().pending_tool_selection->selector_value, "7");
+
+  ASSERT_TRUE(exec.step(0, resolver)); // M6
+  ASSERT_TRUE(exec.state().active_tool_selection.has_value());
+  EXPECT_EQ(exec.state().active_tool_selection->selector_value, "7");
+  EXPECT_FALSE(exec.state().pending_tool_selection.has_value());
+}
+
+TEST(AilExecutorTest, DirectToolModeActivatesImmediatelyOnToolSelect) {
+  gcode::LowerOptions options;
+  options.tool_change_mode = gcode::ToolChangeMode::DirectT;
+  const auto lowered = gcode::parseAndLowerAil("T12\n", options);
+  gcode::AilExecutor exec(lowered.instructions);
+
+  const auto resolver = [](const gcode::Condition &,
+                           const gcode::SourceInfo &) {
+    gcode::ConditionResolution r;
+    r.kind = gcode::ConditionResolutionKind::False;
+    return r;
+  };
+
+  ASSERT_TRUE(exec.step(0, resolver)); // T12
+  ASSERT_TRUE(exec.state().active_tool_selection.has_value());
+  EXPECT_EQ(exec.state().active_tool_selection->selector_value, "12");
+  EXPECT_FALSE(exec.state().pending_tool_selection.has_value());
+}
+
+TEST(AilExecutorTest, M6WithoutPendingSelectionFaultsByDefault) {
+  gcode::LowerOptions options;
+  options.tool_change_mode = gcode::ToolChangeMode::DeferredM6;
+  const auto lowered = gcode::parseAndLowerAil("M6\n", options);
+  gcode::AilExecutor exec(lowered.instructions);
+
+  const auto resolver = [](const gcode::Condition &,
+                           const gcode::SourceInfo &) {
+    gcode::ConditionResolution r;
+    r.kind = gcode::ConditionResolutionKind::False;
+    return r;
+  };
+
+  ASSERT_TRUE(exec.step(0, resolver));
+  EXPECT_EQ(exec.state().status, gcode::ExecutorStatus::Fault);
+  ASSERT_FALSE(exec.diagnostics().empty());
+  EXPECT_NE(exec.diagnostics().back().message.find("no pending tool selection"),
+            std::string::npos);
+}
+
+TEST(AilExecutorTest, M6WithoutPendingSelectionWarningPolicyContinues) {
+  gcode::LowerOptions options;
+  options.tool_change_mode = gcode::ToolChangeMode::DeferredM6;
+  const auto lowered = gcode::parseAndLowerAil("M6\nG1 X1\n", options);
+  gcode::AilExecutor exec(lowered.instructions, gcode::ErrorPolicy::Error,
+                          gcode::ErrorPolicy::Warning);
+
+  const auto resolver = [](const gcode::Condition &,
+                           const gcode::SourceInfo &) {
+    gcode::ConditionResolution r;
+    r.kind = gcode::ConditionResolutionKind::False;
+    return r;
+  };
+
+  ASSERT_TRUE(exec.step(0, resolver)); // M6
+  EXPECT_EQ(exec.state().status, gcode::ExecutorStatus::Ready);
+  ASSERT_FALSE(exec.diagnostics().empty());
+  EXPECT_EQ(exec.diagnostics().back().severity,
+            gcode::Diagnostic::Severity::Warning);
+  ASSERT_TRUE(exec.step(0, resolver)); // G1
+  ASSERT_TRUE(exec.step(0, resolver)); // complete
+  EXPECT_EQ(exec.state().status, gcode::ExecutorStatus::Completed);
+}
+
 } // namespace

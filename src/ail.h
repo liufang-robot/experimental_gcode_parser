@@ -79,6 +79,11 @@ struct AilToolChangeInstruction {
   ToolActionTiming timing = ToolActionTiming::DeferredUntilM6;
 };
 
+struct ToolSelectionState {
+  std::optional<int64_t> selector_index;
+  std::string selector_value;
+};
+
 // Placeholder variants for upcoming non-motion semantics.
 struct AilAssignInstruction {
   SourceInfo source;
@@ -158,14 +163,18 @@ struct ExecutorState {
   std::optional<RapidInterpolationMode> rapid_mode_current;
   std::optional<ToolRadiusCompMode> tool_radius_comp_current;
   std::optional<WorkingPlane> working_plane_current;
+  std::optional<ToolSelectionState> active_tool_selection;
+  std::optional<ToolSelectionState> pending_tool_selection;
   std::optional<ExecutorBlockedState> blocked;
   std::optional<std::string> fault_message;
 };
 
 class AilExecutor {
 public:
-  explicit AilExecutor(std::vector<AilInstruction> instructions,
-                       ErrorPolicy unknown_mcode_policy = ErrorPolicy::Error);
+  explicit AilExecutor(
+      std::vector<AilInstruction> instructions,
+      ErrorPolicy unknown_mcode_policy = ErrorPolicy::Error,
+      ErrorPolicy m6_without_pending_policy = ErrorPolicy::Error);
 
   const ExecutorState &state() const { return state_; }
   const std::vector<Diagnostic> &diagnostics() const { return diagnostics_; }
@@ -178,6 +187,8 @@ private:
                                           const AilGotoInstruction &inst);
   bool evaluateBranchAtPc(int64_t now_ms, const ConditionResolver &resolver);
   bool handleMCodeAtPc();
+  bool handleToolSelectAtPc();
+  bool handleToolChangeAtPc();
   bool advanceOneInstruction(int64_t now_ms, const ConditionResolver &resolver);
   void addFault(const SourceInfo &source, const std::string &message);
   void addWarning(const SourceInfo &source, const std::string &message);
@@ -187,6 +198,7 @@ private:
   std::unordered_map<int, std::vector<size_t>> line_number_positions_;
   std::unordered_set<std::string> pending_events_;
   ErrorPolicy unknown_mcode_policy_ = ErrorPolicy::Error;
+  ErrorPolicy m6_without_pending_policy_ = ErrorPolicy::Error;
   ExecutorState state_;
   std::vector<Diagnostic> diagnostics_;
 };
