@@ -302,6 +302,12 @@ TEST(ParserSyntaxBaselineTest, ParsesMCodeBaselineForms) {
   ASSERT_EQ(result.program.lines.size(), 2u);
 }
 
+TEST(ParserSyntaxBaselineTest, ParsesSubprogramCallAndReturnSurfaceSyntax) {
+  const auto result = gcode::parse("L1000\nL2000 P3\nP=2 L3000\nRET\nM17\n");
+  ASSERT_TRUE(result.diagnostics.empty());
+  ASSERT_EQ(result.program.lines.size(), 5u);
+}
+
 TEST(ParserSyntaxBaselineTest, ReportsMCodeValueOutOfRange) {
   const auto result = gcode::parse("M2147483648\n");
   ASSERT_EQ(result.diagnostics.size(), 1u);

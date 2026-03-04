@@ -245,6 +245,32 @@ TEST(CliFormatTest, AilModeHandlesAssignmentExpression) {
   EXPECT_EQ(parsed["instructions"][0]["lhs"], "R1");
 }
 
+TEST(CliFormatTest, AilModeOutputsSubprogramCallSchema) {
+  const auto temp_file =
+      std::filesystem::temp_directory_path() / "gcode_cli_call_test.ngc";
+  {
+    std::ofstream out(temp_file, std::ios::out | std::ios::trunc);
+    ASSERT_TRUE(out.is_open());
+    out << "L1000 P2\n";
+  }
+
+  const std::string command = std::string("\"") + GCODE_PARSE_BIN +
+                              "\" --mode ail --format json \"" +
+                              temp_file.string() + "\"";
+  const auto result = runCommand(command);
+
+  std::error_code ec;
+  std::filesystem::remove(temp_file, ec);
+
+  EXPECT_EQ(result.exit_code, 0);
+  EXPECT_TRUE(result.stderr_text.empty());
+  const auto parsed = nlohmann::json::parse(result.stdout_text);
+  ASSERT_EQ(parsed["instructions"].size(), 1u);
+  EXPECT_EQ(parsed["instructions"][0]["kind"], "subprogram_call");
+  EXPECT_EQ(parsed["instructions"][0]["target"], "L1000");
+  EXPECT_EQ(parsed["instructions"][0]["repeat_count"], 2);
+}
+
 TEST(CliFormatTest, PacketJsonOutputsPacketSchema) {
   const std::filesystem::path source_dir(GCODE_SOURCE_DIR);
   const auto input_path = source_dir / "testdata" / "messages" / "g4_dwell.ngc";

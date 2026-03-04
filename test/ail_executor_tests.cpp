@@ -241,6 +241,26 @@ TEST(AilExecutorTest, ReturnBoundaryInstructionsAdvanceWithoutFault) {
   EXPECT_EQ(exec.state().status, gcode::ExecutorStatus::Completed);
 }
 
+TEST(AilExecutorTest, SubprogramCallInstructionsAdvanceWithoutFault) {
+  const auto lowered = gcode::parseAndLowerAil("L1000\nL2000 P2\nG1 X1\n");
+  gcode::AilExecutor exec(lowered.instructions);
+
+  const auto resolver = [](const gcode::Condition &,
+                           const gcode::SourceInfo &) {
+    gcode::ConditionResolution r;
+    r.kind = gcode::ConditionResolutionKind::False;
+    return r;
+  };
+
+  ASSERT_TRUE(exec.step(0, resolver)); // L1000
+  EXPECT_EQ(exec.state().status, gcode::ExecutorStatus::Ready);
+  ASSERT_TRUE(exec.step(0, resolver)); // L2000 P2
+  EXPECT_EQ(exec.state().status, gcode::ExecutorStatus::Ready);
+  ASSERT_TRUE(exec.step(0, resolver)); // G1
+  ASSERT_TRUE(exec.step(0, resolver)); // complete
+  EXPECT_EQ(exec.state().status, gcode::ExecutorStatus::Completed);
+}
+
 TEST(AilExecutorTest, UnknownMFunctionFaultsByDefaultPolicy) {
   const auto lowered = gcode::parseAndLowerAil("M123456\n");
   gcode::AilExecutor exec(lowered.instructions);

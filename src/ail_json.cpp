@@ -236,6 +236,13 @@ nlohmann::json instructionToJson(const AilInstruction &instruction) {
           j["kind"] = "return_boundary";
           j["opcode"] = inst.opcode;
           j["source"] = sourceToJson(inst.source);
+        } else if constexpr (std::is_same_v<T, AilSubprogramCallInstruction>) {
+          j["kind"] = "subprogram_call";
+          j["source"] = sourceToJson(inst.source);
+          j["target"] = inst.target;
+          j["repeat_count"] = inst.repeat_count.has_value()
+                                  ? nlohmann::json(*inst.repeat_count)
+                                  : nlohmann::json(nullptr);
         } else if constexpr (std::is_same_v<T, AilAssignInstruction>) {
           j["kind"] = "assign";
           j["source"] = sourceToJson(inst.source);

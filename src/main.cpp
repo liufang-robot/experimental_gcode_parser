@@ -299,6 +299,13 @@ std::string formatAilDebug(const gcode::AilResult &result) {
                                    std::decay_t<decltype(i)>,
                                    gcode::AilReturnBoundaryInstruction>) {
             out << " kind=return_boundary opcode=" << i.opcode;
+          } else if constexpr (std::is_same_v<
+                                   std::decay_t<decltype(i)>,
+                                   gcode::AilSubprogramCallInstruction>) {
+            out << " kind=subprogram_call target=" << i.target;
+            if (i.repeat_count.has_value()) {
+              out << " repeat_count=" << *i.repeat_count;
+            }
           } else if constexpr (std::is_same_v<std::decay_t<decltype(i)>,
                                               gcode::AilAssignInstruction>) {
             out << " kind=assign lhs=" << i.lhs << " rhs=\""

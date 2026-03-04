@@ -216,6 +216,43 @@ TEST(AilTest, EmitsReturnBoundaryInstructionsForRetAndM17) {
   EXPECT_EQ(json["instructions"][1]["opcode"], "M17");
 }
 
+TEST(AilTest, EmitsSubprogramCallInstructionsForDirectAndPRepeatForms) {
+  const auto result =
+      gcode::parseAndLowerAil("L1001\nL1002 P3\nP=2 L1003\nG1 X1\n");
+  ASSERT_TRUE(result.diagnostics.empty());
+  ASSERT_EQ(result.instructions.size(), 4u);
+  ASSERT_TRUE(std::holds_alternative<gcode::AilSubprogramCallInstruction>(
+      result.instructions[0]));
+  ASSERT_TRUE(std::holds_alternative<gcode::AilSubprogramCallInstruction>(
+      result.instructions[1]));
+  ASSERT_TRUE(std::holds_alternative<gcode::AilSubprogramCallInstruction>(
+      result.instructions[2]));
+  ASSERT_TRUE(std::holds_alternative<gcode::AilLinearMoveInstruction>(
+      result.instructions[3]));
+
+  const auto &call0 =
+      std::get<gcode::AilSubprogramCallInstruction>(result.instructions[0]);
+  const auto &call1 =
+      std::get<gcode::AilSubprogramCallInstruction>(result.instructions[1]);
+  const auto &call2 =
+      std::get<gcode::AilSubprogramCallInstruction>(result.instructions[2]);
+  EXPECT_EQ(call0.target, "L1001");
+  EXPECT_FALSE(call0.repeat_count.has_value());
+  EXPECT_EQ(call1.target, "L1002");
+  ASSERT_TRUE(call1.repeat_count.has_value());
+  EXPECT_EQ(*call1.repeat_count, 3);
+  EXPECT_EQ(call2.target, "L1003");
+  ASSERT_TRUE(call2.repeat_count.has_value());
+  EXPECT_EQ(*call2.repeat_count, 2);
+
+  const auto json = nlohmann::json::parse(gcode::ailToJsonString(result));
+  EXPECT_EQ(json["instructions"][0]["kind"], "subprogram_call");
+  EXPECT_EQ(json["instructions"][0]["target"], "L1001");
+  EXPECT_TRUE(json["instructions"][0]["repeat_count"].is_null());
+  EXPECT_EQ(json["instructions"][1]["repeat_count"], 3);
+  EXPECT_EQ(json["instructions"][2]["repeat_count"], 2);
+}
+
 TEST(AilTest, EmitsRapidTraverseModeInstructionsForRTLIONAndRTLIOF) {
   const auto result = gcode::parseAndLowerAil("RTLION\nG0 X1\nRTLIOF\nG0 X2\n");
   ASSERT_TRUE(result.diagnostics.empty());

@@ -324,6 +324,78 @@ returnBoundaryFromMCode(const AilMCodeInstruction &mcode) {
   return inst;
 }
 
+std::optional<int64_t> parseSubprogramRepeatCount(const Word &word) {
+  if (word.head != "P" || !word.value.has_value()) {
+    return std::nullopt;
+  }
+  return parseUnsignedInt64Strict(*word.value);
+}
+
+bool isSubprogramTargetWord(const Word &word) {
+  if (word.has_equal || word.text.empty() || word.head.empty()) {
+    return false;
+  }
+  const char first = word.head.front();
+  if (first == 'G' || first == 'M' || first == 'T' || first == 'P' ||
+      first == 'N' || first == 'X' || first == 'Y' || first == 'Z' ||
+      first == 'A' || first == 'B' || first == 'C' || first == 'I' ||
+      first == 'J' || first == 'K' || first == 'F' || first == 'S' ||
+      first == 'R') {
+    return false;
+  }
+  if (word.head == "RET" || word.head == "RTLION" || word.head == "RTLIOF") {
+    return false;
+  }
+  return true;
+}
+
+std::string subprogramTargetFromWord(const Word &word) {
+  return toUpper(word.text);
+}
+
+std::optional<AilSubprogramCallInstruction>
+subprogramCallFromLine(const Line &line, const SourceInfo &source) {
+  std::vector<const Word *> words;
+  words.reserve(line.items.size());
+  for (const auto &item : line.items) {
+    if (!std::holds_alternative<Word>(item)) {
+      continue;
+    }
+    words.push_back(&std::get<Word>(item));
+  }
+
+  if (words.size() == 1) {
+    if (!isSubprogramTargetWord(*words.front())) {
+      return std::nullopt;
+    }
+    AilSubprogramCallInstruction inst;
+    inst.source = source;
+    inst.target = subprogramTargetFromWord(*words.front());
+    return inst;
+  }
+
+  if (words.size() != 2) {
+    return std::nullopt;
+  }
+
+  AilSubprogramCallInstruction inst;
+  inst.source = source;
+
+  const auto first_repeat = parseSubprogramRepeatCount(*words[0]);
+  const auto second_repeat = parseSubprogramRepeatCount(*words[1]);
+  if (first_repeat.has_value() && isSubprogramTargetWord(*words[1])) {
+    inst.repeat_count = *first_repeat;
+    inst.target = subprogramTargetFromWord(*words[1]);
+    return inst;
+  }
+  if (second_repeat.has_value() && isSubprogramTargetWord(*words[0])) {
+    inst.repeat_count = *second_repeat;
+    inst.target = subprogramTargetFromWord(*words[0]);
+    return inst;
+  }
+  return std::nullopt;
+}
+
 } // namespace
 
 bool lineHasError(const std::vector<Diagnostic> &diagnostics, int line) {
@@ -549,6 +621,11 @@ AilResult lowerToAil(const Program &program,
       continue;
     }
     const auto source = sourceFromLine(line, options);
+    if (const auto call = subprogramCallFromLine(line, source);
+        call.has_value()) {
+      result.instructions.push_back(*call);
+      continue;
+    }
     for (const auto &item : line.items) {
       if (!std::holds_alternative<Word>(item)) {
         continue;
@@ -1041,6 +1118,10 @@ bool AilExecutor::advanceOneInstruction(int64_t now_ms,
     return handleToolChangeAtPc();
   }
   if (std::holds_alternative<AilReturnBoundaryInstruction>(inst)) {
+    ++state_.pc;
+    return true;
+  }
+  if (std::holds_alternative<AilSubprogramCallInstruction>(inst)) {
     ++state_.pc;
     return true;
   }

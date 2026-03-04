@@ -87,6 +87,12 @@ struct AilReturnBoundaryInstruction {
   std::string opcode = "RET";
 };
 
+struct AilSubprogramCallInstruction {
+  SourceInfo source;
+  std::string target;
+  std::optional<int64_t> repeat_count;
+};
+
 // Placeholder variants for upcoming non-motion semantics.
 struct AilAssignInstruction {
   SourceInfo source;
@@ -124,7 +130,8 @@ using AilInstruction =
                  AilRapidTraverseModeInstruction, AilToolRadiusCompInstruction,
                  AilWorkingPlaneInstruction, AilToolSelectInstruction,
                  AilToolChangeInstruction, AilReturnBoundaryInstruction,
-                 AilAssignInstruction, AilLabelInstruction, AilGotoInstruction,
+                 AilSubprogramCallInstruction, AilAssignInstruction,
+                 AilLabelInstruction, AilGotoInstruction,
                  AilBranchIfInstruction, AilSyncInstruction>;
 
 struct AilResult {
