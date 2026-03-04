@@ -279,6 +279,53 @@ TEST(AilExecutorTest, SubprogramCallAndReturnUseCallStack) {
   EXPECT_TRUE(exec.diagnostics().empty());
 }
 
+TEST(AilExecutorTest, SubprogramCallRepeatCountReentersTargetUntilExhausted) {
+  const auto lowered = gcode::parseAndLowerAil(
+      "GOTO START\nL1000:\nRET\nSTART:\nL1000 P3\nG1 X2\n");
+  gcode::AilExecutor exec(lowered.instructions);
+
+  const auto resolver = [](const gcode::Condition &,
+                           const gcode::SourceInfo &) {
+    gcode::ConditionResolution r;
+    r.kind = gcode::ConditionResolutionKind::False;
+    return r;
+  };
+
+  int guard = 0;
+  while (exec.state().status == gcode::ExecutorStatus::Ready && guard < 32) {
+    ASSERT_TRUE(exec.step(0, resolver));
+    ++guard;
+  }
+  EXPECT_EQ(exec.state().status, gcode::ExecutorStatus::Completed);
+  EXPECT_EQ(exec.state().call_stack_depth, 0u);
+  EXPECT_TRUE(exec.diagnostics().empty());
+}
+
+TEST(AilExecutorTest, SubprogramCallWithZeroRepeatIsIgnoredWithWarning) {
+  const auto resolver = [](const gcode::Condition &,
+                           const gcode::SourceInfo &) {
+    gcode::ConditionResolution r;
+    r.kind = gcode::ConditionResolutionKind::False;
+    return r;
+  };
+
+  const auto lowered = gcode::parseAndLowerAil(
+      "GOTO START\nL1000:\nRET\nSTART:\nL1000 P0\nG1 X2\n");
+  gcode::AilExecutor exec(lowered.instructions);
+
+  int guard = 0;
+  while (exec.state().status == gcode::ExecutorStatus::Ready && guard < 32) {
+    ASSERT_TRUE(exec.step(0, resolver));
+    ++guard;
+  }
+  EXPECT_EQ(exec.state().status, gcode::ExecutorStatus::Completed);
+  ASSERT_FALSE(exec.diagnostics().empty());
+  EXPECT_EQ(exec.diagnostics().back().severity,
+            gcode::Diagnostic::Severity::Warning);
+  EXPECT_NE(exec.diagnostics().back().message.find("repeat count <= 0"),
+            std::string::npos);
+}
+
 TEST(AilExecutorTest, UnknownMFunctionFaultsByDefaultPolicy) {
   const auto lowered = gcode::parseAndLowerAil("M123456\n");
   gcode::AilExecutor exec(lowered.instructions);

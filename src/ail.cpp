@@ -1119,15 +1119,21 @@ bool AilExecutor::advanceOneInstruction(int64_t now_ms,
   }
   if (std::holds_alternative<AilReturnBoundaryInstruction>(inst)) {
     const auto &ret = std::get<AilReturnBoundaryInstruction>(inst);
-    if (call_stack_return_pcs_.empty()) {
+    if (call_stack_frames_.empty()) {
       addFault(ret.source,
                "return boundary encountered with empty call stack: " +
                    ret.opcode);
       return true;
     }
-    state_.pc = call_stack_return_pcs_.back();
-    call_stack_return_pcs_.pop_back();
-    state_.call_stack_depth = call_stack_return_pcs_.size();
+    auto &frame = call_stack_frames_.back();
+    if (frame.remaining_repeats > 1) {
+      --frame.remaining_repeats;
+      state_.pc = frame.target_pc;
+      return true;
+    }
+    state_.pc = frame.return_pc;
+    call_stack_frames_.pop_back();
+    state_.call_stack_depth = call_stack_frames_.size();
     return true;
   }
   if (std::holds_alternative<AilSubprogramCallInstruction>(inst)) {
@@ -1141,9 +1147,21 @@ bool AilExecutor::advanceOneInstruction(int64_t now_ms,
       addWarning(call.source, "duplicate subprogram target labels for " +
                                   call.target + "; using first definition");
     }
-    call_stack_return_pcs_.push_back(state_.pc + 1);
-    state_.call_stack_depth = call_stack_return_pcs_.size();
-    state_.pc = it->second.front();
+    const int64_t repeat_count = call.repeat_count.value_or(1);
+    if (repeat_count <= 0) {
+      addWarning(call.source,
+                 "subprogram repeat count <= 0 ignored for target " +
+                     call.target);
+      ++state_.pc;
+      return true;
+    }
+    SubprogramCallFrame frame;
+    frame.return_pc = state_.pc + 1;
+    frame.target_pc = it->second.front();
+    frame.remaining_repeats = repeat_count;
+    call_stack_frames_.push_back(frame);
+    state_.call_stack_depth = call_stack_frames_.size();
+    state_.pc = frame.target_pc;
     return true;
   }
   ++state_.pc;

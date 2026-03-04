@@ -195,6 +195,12 @@ public:
   bool step(int64_t now_ms, const ConditionResolver &resolver);
 
 private:
+  struct SubprogramCallFrame {
+    size_t return_pc = 0;
+    size_t target_pc = 0;
+    int64_t remaining_repeats = 1;
+  };
+
   std::optional<size_t> resolveGotoTarget(size_t current_index,
                                           const AilGotoInstruction &inst);
   bool evaluateBranchAtPc(int64_t now_ms, const ConditionResolver &resolver);
@@ -208,7 +214,7 @@ private:
   std::vector<AilInstruction> instructions_;
   std::unordered_map<std::string, std::vector<size_t>> label_positions_;
   std::unordered_map<int, std::vector<size_t>> line_number_positions_;
-  std::vector<size_t> call_stack_return_pcs_;
+  std::vector<SubprogramCallFrame> call_stack_frames_;
   std::unordered_set<std::string> pending_events_;
   ErrorPolicy unknown_mcode_policy_ = ErrorPolicy::Error;
   ErrorPolicy m6_without_pending_policy_ = ErrorPolicy::Error;

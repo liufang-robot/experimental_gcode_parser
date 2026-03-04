@@ -1,4 +1,24 @@
-#CHANGELOG_AGENT
+# CHANGELOG_AGENT
+
+## 2026-03-04 (T-050 slice 4: runtime repeat_count semantics for subprogram_call)
+- Implemented runtime handling for `subprogram_call.repeat_count`:
+  - call frame tracks remaining repeats
+  - `RET`/`M17` re-enters target until repeat count is exhausted, then returns
+    to caller
+- Added runtime policy for non-positive repeat counts:
+  - `repeat_count <= 0` is ignored with warning and execution continues
+- Added executor tests for repeat-loop behavior and zero-repeat warning flow.
+
+SPEC sections / tests:
+- SPEC: Section 3.9, Section 6.1
+- Tests: `test/ail_executor_tests.cpp`
+
+Known limitations:
+- Subprogram target resolution remains label-based within current lowered
+  program; multi-file MPF/SPF search-path resolution is still pending.
+
+How to reproduce locally (commands):
+- `./dev/check.sh`
 
 ## 2026-03-04 (T-050 slice 3: executor call-stack baseline for call/return)
 - Added executor call-stack runtime behavior for subprogram boundaries:
@@ -17,8 +37,6 @@ SPEC sections / tests:
 Known limitations:
 - Subprogram target resolution is currently label-based within current lowered
   program only (no multi-file MPF/SPF search-path resolution yet).
-- `repeat_count` in `subprogram_call` is parsed/lowered but repeat-loop runtime
-  semantics are not implemented in this slice.
 
 How to reproduce locally (commands):
 - `./dev/check.sh`
