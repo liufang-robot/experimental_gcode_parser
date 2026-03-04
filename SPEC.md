@@ -251,6 +251,18 @@ Planned Siemens compatibility extension:
     - unknown M functions follow executor policy (`error|warning|ignore`)
   - no runtime machine action mapping/actuation in this slice
 
+### 3.11 Tool Radius Compensation (Group 7 baseline)
+- Supported syntax:
+  - `G40` (compensation off)
+  - `G41` (left of contour)
+  - `G42` (right of contour)
+- Current scope:
+  - parse + AIL emission (`tool_radius_comp`)
+  - executor state tracking (`tool_radius_comp_current`)
+  - packet stage does not emit standalone packets for this modal instruction
+- Current limitation:
+  - no cutter-path geometric compensation is applied in v0
+
 ### 3.7 Control Flow Syntax (parse-only in v0)
 - Jump directions:
   - `GOTOF <target>`: forward search direction

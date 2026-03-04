@@ -168,6 +168,41 @@ TEST(AilTest, EmitsRapidTraverseModeInstructionsForRTLIONAndRTLIOF) {
   EXPECT_EQ(json["instructions"][2]["mode"], "nonlinear");
 }
 
+TEST(AilTest, EmitsToolRadiusCompInstructionsForG40G41G42) {
+  const auto result = gcode::parseAndLowerAil("G40\nG41\nG42\nG1 X1\n");
+  ASSERT_TRUE(result.diagnostics.empty());
+  ASSERT_TRUE(result.rejected_lines.empty());
+  ASSERT_EQ(result.instructions.size(), 4u);
+
+  ASSERT_TRUE(std::holds_alternative<gcode::AilToolRadiusCompInstruction>(
+      result.instructions[0]));
+  ASSERT_TRUE(std::holds_alternative<gcode::AilToolRadiusCompInstruction>(
+      result.instructions[1]));
+  ASSERT_TRUE(std::holds_alternative<gcode::AilToolRadiusCompInstruction>(
+      result.instructions[2]));
+  ASSERT_TRUE(std::holds_alternative<gcode::AilLinearMoveInstruction>(
+      result.instructions[3]));
+
+  const auto &comp0 =
+      std::get<gcode::AilToolRadiusCompInstruction>(result.instructions[0]);
+  EXPECT_EQ(comp0.mode, gcode::ToolRadiusCompMode::Off);
+  const auto &comp1 =
+      std::get<gcode::AilToolRadiusCompInstruction>(result.instructions[1]);
+  EXPECT_EQ(comp1.mode, gcode::ToolRadiusCompMode::Left);
+  const auto &comp2 =
+      std::get<gcode::AilToolRadiusCompInstruction>(result.instructions[2]);
+  EXPECT_EQ(comp2.mode, gcode::ToolRadiusCompMode::Right);
+
+  const auto json = nlohmann::json::parse(gcode::ailToJsonString(result));
+  EXPECT_EQ(json["instructions"][0]["kind"], "tool_radius_comp");
+  EXPECT_EQ(json["instructions"][0]["opcode"], "G40");
+  EXPECT_EQ(json["instructions"][0]["mode"], "off");
+  EXPECT_EQ(json["instructions"][1]["opcode"], "G41");
+  EXPECT_EQ(json["instructions"][1]["mode"], "left");
+  EXPECT_EQ(json["instructions"][2]["opcode"], "G42");
+  EXPECT_EQ(json["instructions"][2]["mode"], "right");
+}
+
 TEST(AilTest, AppliesCurrentRapidModeToFollowingG0Instructions) {
   const auto result =
       gcode::parseAndLowerAil("G0 X1\nRTLIOF\nG0 X2\nRTLION\nG0 X3\n");

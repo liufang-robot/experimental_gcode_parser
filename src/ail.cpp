@@ -128,6 +128,36 @@ rapidTraverseModeFromWord(const Word &word, const SourceInfo &source) {
   return std::nullopt;
 }
 
+std::optional<AilToolRadiusCompInstruction>
+toolRadiusCompFromWord(const Word &word, const SourceInfo &source) {
+  if (word.head != "G" || !word.value.has_value()) {
+    return std::nullopt;
+  }
+
+  int code = 0;
+  try {
+    code = std::stoi(*word.value);
+  } catch (...) {
+    return std::nullopt;
+  }
+
+  AilToolRadiusCompInstruction inst;
+  inst.source = source;
+  if (code == 40) {
+    inst.mode = ToolRadiusCompMode::Off;
+    return inst;
+  }
+  if (code == 41) {
+    inst.mode = ToolRadiusCompMode::Left;
+    return inst;
+  }
+  if (code == 42) {
+    inst.mode = ToolRadiusCompMode::Right;
+    return inst;
+  }
+  return std::nullopt;
+}
+
 bool isKnownPredefinedMFunction(int64_t value) {
   if (value == 0 || value == 1 || value == 2 || value == 3 || value == 4 ||
       value == 5 || value == 6 || value == 17 || value == 19 || value == 30 ||
@@ -364,6 +394,10 @@ AilResult lowerToAil(const Program &program,
       if (rapid_mode.has_value()) {
         current_rapid_mode = rapid_mode->mode;
         result.instructions.push_back(*rapid_mode);
+      }
+      const auto tool_radius_comp = toolRadiusCompFromWord(word, source);
+      if (tool_radius_comp.has_value()) {
+        result.instructions.push_back(*tool_radius_comp);
       }
       const auto mcode = mCodeFromWord(word, source);
       if (!mcode.has_value()) {
@@ -684,6 +718,12 @@ bool AilExecutor::advanceOneInstruction(int64_t now_ms,
   if (std::holds_alternative<AilRapidTraverseModeInstruction>(inst)) {
     const auto &rapid = std::get<AilRapidTraverseModeInstruction>(inst);
     state_.rapid_mode_current = rapid.mode;
+    ++state_.pc;
+    return true;
+  }
+  if (std::holds_alternative<AilToolRadiusCompInstruction>(inst)) {
+    const auto &comp = std::get<AilToolRadiusCompInstruction>(inst);
+    state_.tool_radius_comp_current = comp.mode;
     ++state_.pc;
     return true;
   }

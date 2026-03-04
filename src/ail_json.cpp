@@ -114,6 +114,16 @@ std::string rapidModeToString(RapidInterpolationMode mode) {
   return mode == RapidInterpolationMode::Linear ? "linear" : "nonlinear";
 }
 
+std::string toolRadiusCompModeToString(ToolRadiusCompMode mode) {
+  if (mode == ToolRadiusCompMode::Off) {
+    return "off";
+  }
+  if (mode == ToolRadiusCompMode::Left) {
+    return "left";
+  }
+  return "right";
+}
+
 nlohmann::json rejectedLineToJson(const MessageResult::RejectedLine &line) {
   nlohmann::json j;
   j["source"] = sourceToJson(line.source);
@@ -171,6 +181,17 @@ nlohmann::json instructionToJson(const AilInstruction &instruction) {
               inst.mode == RapidInterpolationMode::Linear ? "RTLION" : "RTLIOF";
           j["source"] = sourceToJson(inst.source);
           j["mode"] = rapidModeToString(inst.mode);
+        } else if constexpr (std::is_same_v<T, AilToolRadiusCompInstruction>) {
+          j["kind"] = "tool_radius_comp";
+          if (inst.mode == ToolRadiusCompMode::Off) {
+            j["opcode"] = "G40";
+          } else if (inst.mode == ToolRadiusCompMode::Left) {
+            j["opcode"] = "G41";
+          } else {
+            j["opcode"] = "G42";
+          }
+          j["source"] = sourceToJson(inst.source);
+          j["mode"] = toolRadiusCompModeToString(inst.mode);
         } else if constexpr (std::is_same_v<T, AilAssignInstruction>) {
           j["kind"] = "assign";
           j["source"] = sourceToJson(inst.source);

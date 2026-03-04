@@ -237,6 +237,23 @@ std::string formatAilDebug(const gcode::AilResult &result) {
                 << (i.mode == gcode::RapidInterpolationMode::Linear
                         ? "linear"
                         : "nonlinear");
+          } else if constexpr (std::is_same_v<
+                                   std::decay_t<decltype(i)>,
+                                   gcode::AilToolRadiusCompInstruction>) {
+            out << " kind=tool_radius_comp opcode=";
+            if (i.mode == gcode::ToolRadiusCompMode::Off) {
+              out << "G40";
+            } else if (i.mode == gcode::ToolRadiusCompMode::Left) {
+              out << "G41";
+            } else {
+              out << "G42";
+            }
+            out << " mode="
+                << (i.mode == gcode::ToolRadiusCompMode::Off
+                        ? "off"
+                        : (i.mode == gcode::ToolRadiusCompMode::Left
+                               ? "left"
+                               : "right"));
           } else if constexpr (std::is_same_v<std::decay_t<decltype(i)>,
                                               gcode::AilAssignInstruction>) {
             out << " kind=assign lhs=" << i.lhs << " rhs=\""

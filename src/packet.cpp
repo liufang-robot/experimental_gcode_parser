@@ -65,6 +65,10 @@ PacketResult lowerAilToPackets(const AilResult &ail_result) {
                                    T, AilRapidTraverseModeInstruction>) {
             // Rapid-mode instructions influence G0 payload metadata and do not
             // produce standalone packets.
+          } else if constexpr (std::is_same_v<T,
+                                              AilToolRadiusCompInstruction>) {
+            // Tool-radius-compensation instructions are modal state and do not
+            // produce standalone packets.
           } else if constexpr (std::is_same_v<T, AilLabelInstruction>) {
             result.diagnostics.push_back(
                 makeSkippedInstructionWarning(inst.source, "label"));
