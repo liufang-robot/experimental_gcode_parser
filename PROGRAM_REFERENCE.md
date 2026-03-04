@@ -36,6 +36,7 @@ All emitted messages include:
 | `G0` rapid baseline | Implemented | Lowered as linear motion with modal code `G0`. |
 | `RTLION` / `RTLIOF` rapid interpolation mode | Partial | Lowered to AIL `rapid_mode` instructions; packet/runtime override semantics pending. |
 | `G40` / `G41` / `G42` tool radius compensation | Partial | Lowered to AIL `tool_radius_comp`; executor tracks modal state only. |
+| `G17` / `G18` / `G19` working plane | Partial | Lowered to AIL `working_plane`; executor tracks active plane state only. |
 | `G1` linear | Implemented | Lowers to `G1Message` with pose/feed. |
 | `G2` arc CW | Implemented | Lowers to `G2Message` with pose/arc/feed. |
 | `G3` arc CCW | Implemented | Lowers to `G3Message` with pose/arc/feed. |
@@ -178,6 +179,28 @@ Current lowering output:
 Current limitation:
 - No cutter-path geometric compensation is applied in v0.
 - Packet stage does not emit standalone packets for `tool_radius_comp`
+  instructions.
+
+## `G17` / `G18` / `G19` Working Plane (Group 6 baseline)
+
+Status:
+- `Partial`
+
+Syntax:
+- `G17`
+- `G18`
+- `G19`
+
+Current lowering output:
+- Emits AIL instruction kind `working_plane` with:
+  - `opcode`: `G17` or `G18` or `G19`
+  - `plane`: `xy` (`G17`), `zx` (`G18`), `yz` (`G19`)
+- `AilExecutor` tracks current value in `working_plane_current`
+
+Current limitation:
+- No downstream geometric behavior remap is applied yet for arcs/tool
+  compensation based on the selected plane.
+- Packet stage does not emit standalone packets for `working_plane`
   instructions.
 
 ## `G2` / `G3` Circular Interpolation

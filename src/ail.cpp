@@ -158,6 +158,36 @@ toolRadiusCompFromWord(const Word &word, const SourceInfo &source) {
   return std::nullopt;
 }
 
+std::optional<AilWorkingPlaneInstruction>
+workingPlaneFromWord(const Word &word, const SourceInfo &source) {
+  if (word.head != "G" || !word.value.has_value()) {
+    return std::nullopt;
+  }
+
+  int code = 0;
+  try {
+    code = std::stoi(*word.value);
+  } catch (...) {
+    return std::nullopt;
+  }
+
+  AilWorkingPlaneInstruction inst;
+  inst.source = source;
+  if (code == 17) {
+    inst.plane = WorkingPlane::XY;
+    return inst;
+  }
+  if (code == 18) {
+    inst.plane = WorkingPlane::ZX;
+    return inst;
+  }
+  if (code == 19) {
+    inst.plane = WorkingPlane::YZ;
+    return inst;
+  }
+  return std::nullopt;
+}
+
 bool isKnownPredefinedMFunction(int64_t value) {
   if (value == 0 || value == 1 || value == 2 || value == 3 || value == 4 ||
       value == 5 || value == 6 || value == 17 || value == 19 || value == 30 ||
@@ -398,6 +428,10 @@ AilResult lowerToAil(const Program &program,
       const auto tool_radius_comp = toolRadiusCompFromWord(word, source);
       if (tool_radius_comp.has_value()) {
         result.instructions.push_back(*tool_radius_comp);
+      }
+      const auto working_plane = workingPlaneFromWord(word, source);
+      if (working_plane.has_value()) {
+        result.instructions.push_back(*working_plane);
       }
       const auto mcode = mCodeFromWord(word, source);
       if (!mcode.has_value()) {
@@ -724,6 +758,12 @@ bool AilExecutor::advanceOneInstruction(int64_t now_ms,
   if (std::holds_alternative<AilToolRadiusCompInstruction>(inst)) {
     const auto &comp = std::get<AilToolRadiusCompInstruction>(inst);
     state_.tool_radius_comp_current = comp.mode;
+    ++state_.pc;
+    return true;
+  }
+  if (std::holds_alternative<AilWorkingPlaneInstruction>(inst)) {
+    const auto &plane = std::get<AilWorkingPlaneInstruction>(inst);
+    state_.working_plane_current = plane.plane;
     ++state_.pc;
     return true;
   }

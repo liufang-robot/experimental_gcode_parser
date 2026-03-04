@@ -263,6 +263,19 @@ Planned Siemens compatibility extension:
 - Current limitation:
   - no cutter-path geometric compensation is applied in v0
 
+### 3.12 Working Plane Selection (Group 6 baseline)
+- Supported syntax:
+  - `G17` (XY plane)
+  - `G18` (ZX plane)
+  - `G19` (YZ plane)
+- Current scope:
+  - parse + AIL emission (`working_plane`)
+  - executor state tracking (`working_plane_current`)
+  - packet stage does not emit standalone packets for this modal instruction
+- Current limitation:
+  - no downstream geometric remapping of arc/tool-compensation behavior is
+    applied in v0
+
 ### 3.7 Control Flow Syntax (parse-only in v0)
 - Jump directions:
   - `GOTOF <target>`: forward search direction

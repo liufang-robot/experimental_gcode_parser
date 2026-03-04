@@ -1,5 +1,28 @@
 # CHANGELOG_AGENT
 
+## 2026-03-04 (T-040 slice 1: Group 6 working-plane AIL/executor baseline)
+- Added AIL instruction emission for `G17/G18/G19` as `working_plane` with
+  normalized plane values (`xy|zx|yz`).
+- Added `AilExecutor` state tracking via `working_plane_current`.
+- Updated AIL JSON/debug output and packet behavior so working-plane
+  instructions are preserved in AIL and ignored as standalone packet events.
+- Added tests for AIL emission, executor state tracking, and packet behavior.
+- Updated SPEC/program-reference docs for current Group 6 baseline scope.
+
+SPEC sections / tests:
+- SPEC: Section 3.12
+- Tests: `test/ail_tests.cpp`, `test/ail_executor_tests.cpp`,
+  `test/packet_tests.cpp`, `./dev/check.sh`
+
+Known limitations:
+- No plane-dependent geometric remapping is implemented in v0.
+- Packet output remains motion/dwell only; Group 6 is currently modal state
+  metadata.
+
+How to reproduce locally (commands):
+- `ctest --test-dir build --output-on-failure -R \"AilTest|AilExecutorTest|PacketTest\"`
+- `./dev/check.sh`
+
 ## 2026-03-04 (T-039 slice 1: Group 7 tool-radius-comp AIL/executor baseline)
 - Added AIL instruction emission for `G40/G41/G42` as `tool_radius_comp` with
   normalized mode values (`off|left|right`).

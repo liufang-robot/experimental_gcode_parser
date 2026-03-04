@@ -254,6 +254,21 @@ std::string formatAilDebug(const gcode::AilResult &result) {
                         : (i.mode == gcode::ToolRadiusCompMode::Left
                                ? "left"
                                : "right"));
+          } else if constexpr (std::is_same_v<
+                                   std::decay_t<decltype(i)>,
+                                   gcode::AilWorkingPlaneInstruction>) {
+            out << " kind=working_plane opcode=";
+            if (i.plane == gcode::WorkingPlane::XY) {
+              out << "G17";
+            } else if (i.plane == gcode::WorkingPlane::ZX) {
+              out << "G18";
+            } else {
+              out << "G19";
+            }
+            out << " plane="
+                << (i.plane == gcode::WorkingPlane::XY
+                        ? "xy"
+                        : (i.plane == gcode::WorkingPlane::ZX ? "zx" : "yz"));
           } else if constexpr (std::is_same_v<std::decay_t<decltype(i)>,
                                               gcode::AilAssignInstruction>) {
             out << " kind=assign lhs=" << i.lhs << " rhs=\""

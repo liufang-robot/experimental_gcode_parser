@@ -124,6 +124,16 @@ std::string toolRadiusCompModeToString(ToolRadiusCompMode mode) {
   return "right";
 }
 
+std::string workingPlaneToString(WorkingPlane plane) {
+  if (plane == WorkingPlane::XY) {
+    return "xy";
+  }
+  if (plane == WorkingPlane::ZX) {
+    return "zx";
+  }
+  return "yz";
+}
+
 nlohmann::json rejectedLineToJson(const MessageResult::RejectedLine &line) {
   nlohmann::json j;
   j["source"] = sourceToJson(line.source);
@@ -192,6 +202,17 @@ nlohmann::json instructionToJson(const AilInstruction &instruction) {
           }
           j["source"] = sourceToJson(inst.source);
           j["mode"] = toolRadiusCompModeToString(inst.mode);
+        } else if constexpr (std::is_same_v<T, AilWorkingPlaneInstruction>) {
+          j["kind"] = "working_plane";
+          if (inst.plane == WorkingPlane::XY) {
+            j["opcode"] = "G17";
+          } else if (inst.plane == WorkingPlane::ZX) {
+            j["opcode"] = "G18";
+          } else {
+            j["opcode"] = "G19";
+          }
+          j["source"] = sourceToJson(inst.source);
+          j["plane"] = workingPlaneToString(inst.plane);
         } else if constexpr (std::is_same_v<T, AilAssignInstruction>) {
           j["kind"] = "assign";
           j["source"] = sourceToJson(inst.source);
