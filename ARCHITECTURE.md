@@ -159,6 +159,16 @@ stateDiagram-v2
   - executes AIL with policy hooks
   - applies machine-specific actions (tool/mcode behavior)
 
+### 7.1 Instruction-First Execution Contract
+- Any machine-visible action must exist as an explicit executable instruction in
+  AIL (or future equivalent runtime IR).
+- Execution transport is instruction-dependent:
+  - motion instructions: may emit motion packets for planner/queue consumers
+  - non-motion control instructions: may execute via runtime control-command
+    path without standalone motion packets
+- Therefore, "not packetized" does not imply "not executable"; it means the
+  instruction is routed through a non-motion execution path.
+
 ## 8. Current Coverage Snapshot
 - Implemented:
   - core `G1/G2/G3/G4` flow

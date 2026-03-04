@@ -47,6 +47,16 @@ flowchart LR
   - tracks pending selection state
   - resolves selection/substitution via policy and commits active tool state
 
+## Instruction Contract
+
+- Tool actions are machine-visible behavior, so they must be explicit executable
+  instructions (`tool_select`, `tool_change`) in AIL.
+- These instructions are not motion packets by default.
+  - Motion packets remain a transport for geometry/motion families.
+  - Tool instructions execute through runtime control-command handling.
+- This keeps parser/lowering deterministic while allowing hardware-specific
+  actuation mapping in runtime policy layers.
+
 ## Command Forms by Mode
 
 ### Without Tool Management

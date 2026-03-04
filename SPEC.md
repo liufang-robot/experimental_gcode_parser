@@ -34,6 +34,13 @@ Optional downstream stage:
   `G4Message` emission.
 - v0 supports motion packet emission from AIL motion instructions
   (`G0/G1/G2/G3/G4`).
+- Normative execution-model contract:
+  - machine-executable semantics must be represented as explicit typed AIL
+    instructions
+  - packet emission is an execution transport for motion families, not a
+    requirement for every executable instruction
+  - non-motion control instructions may execute through executor/policy paths
+    without standalone motion packets
 - Message results support JSON conversion (`toJson`/`fromJson`) for transport,
   fixtures, and debugging.
 - Additive API: streaming parse/lower output mode for large-file workflows
@@ -306,7 +313,9 @@ Planned Siemens compatibility extension:
     - `tool_select` with `selector_index?`, `selector_value`, and
       `timing` (`immediate|deferred_until_m6`)
     - `tool_change` for `M6` with `timing`
-  - packet stage does not emit standalone packets for tool instructions.
+  - packet stage does not emit standalone packets for tool instructions
+    (tool instructions are executable control instructions, routed to runtime
+    control path rather than motion packets).
   - executor direct/deferred state behavior remains a follow-up slice.
 
 ### 3.7 Control Flow Syntax (parse-only in v0)
@@ -511,6 +520,12 @@ N130 G01 X20 Y20
     - `error` => fault
     - `warning` => warning diagnostic and continue
     - `ignore` => continue silently
+- Tool runtime boundary (current):
+  - `tool_select` / `tool_change` instructions are explicit executable control
+    instructions in AIL
+  - packet stage intentionally does not emit standalone motion packets for them
+  - direct/deferred activation semantics and pending-tool state execution are
+    tracked as follow-up runtime work
 - Unresolved non-`GOTOC` target is runtime fault.
 
 ## 7. Testing Expectations
