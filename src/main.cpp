@@ -295,6 +295,10 @@ std::string formatAilDebug(const gcode::AilResult &result) {
                 << (i.timing == gcode::ToolActionTiming::Immediate
                         ? "immediate"
                         : "deferred_until_m6");
+          } else if constexpr (std::is_same_v<
+                                   std::decay_t<decltype(i)>,
+                                   gcode::AilReturnBoundaryInstruction>) {
+            out << " kind=return_boundary opcode=" << i.opcode;
           } else if constexpr (std::is_same_v<std::decay_t<decltype(i)>,
                                               gcode::AilAssignInstruction>) {
             out << " kind=assign lhs=" << i.lhs << " rhs=\""

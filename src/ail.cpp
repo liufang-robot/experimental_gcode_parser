@@ -302,6 +302,28 @@ toolChangeFromMCode(const AilMCodeInstruction &mcode) {
   return inst;
 }
 
+std::optional<AilReturnBoundaryInstruction>
+returnBoundaryFromWord(const Word &word, const SourceInfo &source) {
+  if (word.head != "RET" || word.value.has_value() || word.has_equal) {
+    return std::nullopt;
+  }
+  AilReturnBoundaryInstruction inst;
+  inst.source = source;
+  inst.opcode = "RET";
+  return inst;
+}
+
+std::optional<AilReturnBoundaryInstruction>
+returnBoundaryFromMCode(const AilMCodeInstruction &mcode) {
+  if (mcode.value != 17 || mcode.address_extension.has_value()) {
+    return std::nullopt;
+  }
+  AilReturnBoundaryInstruction inst;
+  inst.source = mcode.source;
+  inst.opcode = "M17";
+  return inst;
+}
+
 } // namespace
 
 bool lineHasError(const std::vector<Diagnostic> &diagnostics, int line) {
@@ -550,8 +572,18 @@ AilResult lowerToAil(const Program &program,
       if (tool_select.has_value()) {
         result.instructions.push_back(*tool_select);
       }
+      const auto return_boundary = returnBoundaryFromWord(word, source);
+      if (return_boundary.has_value()) {
+        result.instructions.push_back(*return_boundary);
+        continue;
+      }
       const auto mcode = mCodeFromWord(word, source);
       if (!mcode.has_value()) {
+        continue;
+      }
+      const auto return_boundary_mcode = returnBoundaryFromMCode(*mcode);
+      if (return_boundary_mcode.has_value()) {
+        result.instructions.push_back(*return_boundary_mcode);
         continue;
       }
       auto tool_change = toolChangeFromMCode(*mcode);
@@ -1007,6 +1039,10 @@ bool AilExecutor::advanceOneInstruction(int64_t now_ms,
   }
   if (std::holds_alternative<AilToolChangeInstruction>(inst)) {
     return handleToolChangeAtPc();
+  }
+  if (std::holds_alternative<AilReturnBoundaryInstruction>(inst)) {
+    ++state_.pc;
+    return true;
   }
   ++state_.pc;
   return true;

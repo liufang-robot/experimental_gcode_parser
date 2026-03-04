@@ -193,6 +193,29 @@ TEST(AilTest, EmitsToolSelectImmediateTimingWhenDirectModeConfigured) {
   EXPECT_EQ(select.timing, gcode::ToolActionTiming::Immediate);
 }
 
+TEST(AilTest, EmitsReturnBoundaryInstructionsForRetAndM17) {
+  const auto result = gcode::parseAndLowerAil("RET\nM17\n");
+  ASSERT_TRUE(result.diagnostics.empty());
+  ASSERT_EQ(result.instructions.size(), 2u);
+  ASSERT_TRUE(std::holds_alternative<gcode::AilReturnBoundaryInstruction>(
+      result.instructions[0]));
+  ASSERT_TRUE(std::holds_alternative<gcode::AilReturnBoundaryInstruction>(
+      result.instructions[1]));
+
+  const auto &ret =
+      std::get<gcode::AilReturnBoundaryInstruction>(result.instructions[0]);
+  const auto &m17 =
+      std::get<gcode::AilReturnBoundaryInstruction>(result.instructions[1]);
+  EXPECT_EQ(ret.opcode, "RET");
+  EXPECT_EQ(m17.opcode, "M17");
+
+  const auto json = nlohmann::json::parse(gcode::ailToJsonString(result));
+  EXPECT_EQ(json["instructions"][0]["kind"], "return_boundary");
+  EXPECT_EQ(json["instructions"][0]["opcode"], "RET");
+  EXPECT_EQ(json["instructions"][1]["kind"], "return_boundary");
+  EXPECT_EQ(json["instructions"][1]["opcode"], "M17");
+}
+
 TEST(AilTest, EmitsRapidTraverseModeInstructionsForRTLIONAndRTLIOF) {
   const auto result = gcode::parseAndLowerAil("RTLION\nG0 X1\nRTLIOF\nG0 X2\n");
   ASSERT_TRUE(result.diagnostics.empty());
