@@ -16,4 +16,5 @@ Pages in this section are split by topic for easier review:
 - incremental parse session API
 - work-offset model (Group 8 + suppression commands)
 - dimensions/units model (Groups 13/14 + `AC/IC` + `DIAM*`)
+- tool-change semantics (direct `T` vs deferred `T`+`M6`)
 - implementation phases and task ordering

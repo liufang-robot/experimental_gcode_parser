@@ -1,5 +1,28 @@
 # CHANGELOG_AGENT
 
+## 2026-03-04 (T-038 design: tool-change architecture)
+- Added a dedicated architecture page for Siemens tool-change semantics:
+  - direct `T` change vs deferred `T`+`M6` execution model
+  - with/without tool-management selector forms (number/location/name)
+  - runtime pending-selection state and policy hooks for resolver/substitution
+- Defined parser/lowering/executor/policy boundaries and output schema
+  expectations for `tool_select`/`tool_change`.
+- Added staged implementation slices and a generated follow-up backlog set
+  (`T-051`..`T-054`) with required tests/doc updates per slice.
+- Linked the design page into docs navigation and root architecture.
+- Marked `T-038` as done in backlog as local/unmerged.
+
+SPEC sections / tests:
+- SPEC target: tool command syntax/runtime sections (future implementation)
+- This PR is architecture/docs only; no parser/runtime behavior change.
+
+Known limitations:
+- No new parser/lowering/executor implementation in this slice.
+- Tool database/life management and PLC integration remain out of scope.
+
+How to reproduce locally (commands):
+- `./dev/check.sh`
+
 ## 2026-03-04 (T-042 design: dimensions and units architecture)
 - Added a dedicated architecture page for dimensions/units semantics:
   - Group 14 modal distance model (`G90/G91`)

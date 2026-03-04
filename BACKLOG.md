@@ -359,6 +359,86 @@ Architecture planning queue for PRD Section 5 requirements:
   - `test/ail_tests.cpp`
   - `test/ail_executor_tests.cpp`
 
+- `ID`: T-051
+- `Priority`: P1
+- `Title`: Tool selector normalization for Siemens `T...` forms
+- `Why`: `T-038` requires one normalized selector model across number/location/
+  name forms with mode-aware validation.
+- `Scope`:
+  - parse/AST normalization for:
+    - management-off forms: `T<number>`, `T=<number>`, `T<n>=<number>`
+    - management-on forms: `T=<location|name>`, `T<n>=<location|name>`
+  - mode-aware diagnostics for invalid selector forms
+- `Acceptance Criteria`:
+  - parser emits normalized selector representation with stable locations
+  - invalid-by-mode forms produce clear actionable diagnostics
+- `Out of Scope`:
+  - runtime activation semantics (`M6` / pending state)
+- `SPEC Sections`:
+  - future: tool command syntax + selector rules
+- `Tests To Add/Update`:
+  - `test/parser_tests.cpp`
+  - golden fixtures affected by selector output shape
+
+- `ID`: T-052
+- `Priority`: P1
+- `Title`: AIL instruction split for tool select/change
+- `Why`: `T-038` requires explicit `tool_select` vs `tool_change` boundaries
+  and timing metadata (`immediate` vs `deferred_until_m6`).
+- `Scope`:
+  - AIL schema + lowering updates for `tool_select` and `tool_change`
+  - JSON/debug output updates for new instruction shapes
+- `Acceptance Criteria`:
+  - AIL outputs preserve timing metadata and source attribution
+  - CLI JSON/debug outputs remain deterministic
+- `Out of Scope`:
+  - policy-based resolver/substitution behavior
+- `SPEC Sections`:
+  - future: AIL/tool instruction schema
+- `Tests To Add/Update`:
+  - `test/ail_tests.cpp`
+  - `test/cli_tests.cpp`
+
+- `ID`: T-053
+- `Priority`: P1
+- `Title`: Executor pending-tool state and direct/deferred semantics
+- `Why`: `T-038` requires runtime behavior for both direct `T` activation and
+  deferred `T`+`M6` execution.
+- `Scope`:
+  - executor state for `active_tool` and `pending_tool_selection`
+  - behavior rules for direct mode, deferred mode, and last-selection-wins
+  - `M6` without pending selection policy hook
+- `Acceptance Criteria`:
+  - executor behavior is deterministic across direct/deferred configurations
+  - diagnostics/policy behavior is explicit for `M6` without pending tool
+- `Out of Scope`:
+  - tool database substitution resolution internals
+- `SPEC Sections`:
+  - future: runtime tool-change behavior
+- `Tests To Add/Update`:
+  - `test/ail_executor_tests.cpp`
+  - `test/ail_tests.cpp` (if metadata coupling changes)
+
+- `ID`: T-054
+- `Priority`: P1
+- `Title`: Tool resolver/substitution policy integration
+- `Why`: `T-038` requires machine-policy control for unresolved/ambiguous tool
+  selectors and substitution behavior.
+- `Scope`:
+  - tool policy interface and default policy implementation
+  - unresolved/ambiguous selector outcomes (`error|warning|fallback`)
+  - substitution-enabled vs substitution-disabled behavior
+- `Acceptance Criteria`:
+  - policy outcomes are pluggable and test-covered
+  - diagnostics clearly identify unresolved/ambiguous selectors
+- `Out of Scope`:
+  - full tool life/wear optimization algorithms
+- `SPEC Sections`:
+  - future: policy and diagnostics behavior for tool management
+- `Tests To Add/Update`:
+  - `test/machine_profile_tests.cpp`
+  - `test/ail_executor_tests.cpp`
+
 ## Icebox
 - Coverage threshold policy and badge.
 - Multi-file include/subprogram parsing (future SPEC).
@@ -424,3 +504,4 @@ Use this template for new backlog items:
 - T-047 (local, unmerged)
 - T-043 (local, unmerged)
 - T-042 (local, unmerged)
+- T-038 (local, unmerged)
