@@ -13,11 +13,11 @@
 
 #include "machine_profile.h"
 #include "messages.h"
+#include "subprogram_policy.h"
 #include "tool_selection.h"
 
 namespace gcode {
 class ToolPolicy;
-
 enum class RapidInterpolationMode { Linear, NonLinear };
 enum class ToolRadiusCompMode { Off, Left, Right };
 enum class WorkingPlane { XY, ZX, YZ };
@@ -160,7 +160,6 @@ using ConditionResolver =
     std::function<ConditionResolution(const Condition &, const SourceInfo &)>;
 
 enum class ExecutorStatus { Ready, BlockedOnCondition, Completed, Fault };
-enum class SubprogramSearchPolicy { ExactOnly, ExactThenBareName };
 
 struct ExecutorBlockedState {
   size_t instruction_index = 0;
@@ -190,7 +189,8 @@ public:
       std::shared_ptr<const ToolPolicy> tool_policy = nullptr,
       ErrorPolicy unresolved_subprogram_policy = ErrorPolicy::Error,
       SubprogramSearchPolicy subprogram_search_policy =
-          SubprogramSearchPolicy::ExactOnly);
+          SubprogramSearchPolicy::ExactOnly,
+      std::shared_ptr<const SubprogramPolicy> subprogram_policy = nullptr);
 
   const ExecutorState &state() const { return state_; }
   const std::vector<Diagnostic> &diagnostics() const { return diagnostics_; }
@@ -211,8 +211,6 @@ private:
   bool handleMCodeAtPc();
   bool handleToolSelectAtPc();
   bool handleToolChangeAtPc();
-  std::vector<std::string>
-  subprogramTargetCandidates(const std::string &target) const;
   bool advanceOneInstruction(int64_t now_ms, const ConditionResolver &resolver);
   void addFault(const SourceInfo &source, const std::string &message);
   void addWarning(const SourceInfo &source, const std::string &message);
@@ -224,10 +222,8 @@ private:
   std::unordered_set<std::string> pending_events_;
   ErrorPolicy unknown_mcode_policy_ = ErrorPolicy::Error;
   ErrorPolicy m6_without_pending_policy_ = ErrorPolicy::Error;
-  ErrorPolicy unresolved_subprogram_policy_ = ErrorPolicy::Error;
-  SubprogramSearchPolicy subprogram_search_policy_ =
-      SubprogramSearchPolicy::ExactOnly;
   std::shared_ptr<const ToolPolicy> tool_policy_;
+  std::shared_ptr<const SubprogramPolicy> subprogram_policy_;
   ExecutorState state_;
   std::vector<Diagnostic> diagnostics_;
 };

@@ -1,5 +1,25 @@
 #CHANGELOG_AGENT
 
+## 2026-03-04 (T-050 slice 7: pluggable subprogram policy baseline)
+- Added `SubprogramPolicy` interface and `DefaultSubprogramPolicy`:
+  - target-resolution hook for subprogram calls
+  - unresolved-target policy hook (`error|warning|ignore`)
+- Updated `AilExecutor` to use policy-driven subprogram target resolution while
+  keeping existing constructor options backward-compatible.
+- Added executor test coverage for explicit policy override of call-target
+  resolution.
+
+SPEC sections / tests:
+- SPEC: Section 6.1 (subprogram call runtime boundary)
+- Tests: `test/ail_executor_tests.cpp`
+
+Known limitations:
+- Default policy still resolves against in-program labels only; multi-file
+  MPF/SPF program-manager lookup remains out of scope.
+
+How to reproduce locally (commands):
+- `./dev/check.sh`
+
 ## 2026-03-04 (T-050 slice 6: subprogram search-policy baseline)
 - Added executor subprogram search policy control:
   - `SubprogramSearchPolicy::ExactOnly` (default)

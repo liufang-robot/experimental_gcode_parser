@@ -2,11 +2,13 @@
 #include <functional>
 #include <memory>
 #include <string>
+#include <unordered_map>
 #include <vector>
 
 #include "gtest/gtest.h"
 
 #include "ail.h"
+#include "subprogram_policy.h"
 #include "tool_policy.h"
 
 namespace {
@@ -38,6 +40,31 @@ private:
   Resolver resolver_;
   gcode::ErrorPolicy unresolved_policy_ = gcode::ErrorPolicy::Error;
   gcode::ErrorPolicy ambiguous_policy_ = gcode::ErrorPolicy::Error;
+};
+
+class StubSubprogramPolicy final : public gcode::SubprogramPolicy {
+public:
+  using Resolver = std::function<gcode::SubprogramResolution(
+      const std::string &,
+      const std::unordered_map<std::string, std::vector<size_t>> &)>;
+
+  StubSubprogramPolicy(Resolver resolver, gcode::ErrorPolicy unresolved_policy)
+      : resolver_(std::move(resolver)), unresolved_policy_(unresolved_policy) {}
+
+  gcode::SubprogramResolution
+  resolveTarget(const std::string &requested_target,
+                const std::unordered_map<std::string, std::vector<size_t>>
+                    &label_positions) const override {
+    return resolver_(requested_target, label_positions);
+  }
+
+  gcode::ErrorPolicy unresolvedPolicy() const override {
+    return unresolved_policy_;
+  }
+
+private:
+  Resolver resolver_;
+  gcode::ErrorPolicy unresolved_policy_ = gcode::ErrorPolicy::Error;
 };
 
 TEST(AilExecutorTest, ResolvesGotoAndCompletes) {
@@ -349,6 +376,83 @@ TEST(AilExecutorTest, SubprogramSearchPolicyCanFallbackToBareName) {
   EXPECT_NE(exec.diagnostics().front().message.find("bare-name fallback"),
             std::string::npos);
   EXPECT_EQ(exec.state().call_stack_depth, 0u);
+  EXPECT_EQ(exec.state().status, gcode::ExecutorStatus::Completed);
+}
+
+TEST(AilExecutorTest, SubprogramPolicyCanOverrideResolution) {
+  gcode::AilGotoInstruction goto_start;
+  goto_start.source.line = 1;
+  goto_start.opcode = "GOTO";
+  goto_start.target = "START";
+  goto_start.target_kind = "label";
+
+  gcode::AilSubprogramCallInstruction call;
+  call.source.line = 5;
+  call.target = "ALIAS";
+
+  gcode::AilLabelInstruction label;
+  label.source.line = 2;
+  label.name = "REAL";
+
+  gcode::AilReturnBoundaryInstruction ret;
+  ret.source.line = 3;
+  ret.opcode = "RET";
+
+  gcode::AilLabelInstruction start_label;
+  start_label.source.line = 4;
+  start_label.name = "START";
+
+  gcode::AilLinearMoveInstruction move;
+  move.source.line = 6;
+  move.opcode = "G1";
+  move.target_pose.x = 1.0;
+
+  std::vector<gcode::AilInstruction> instructions;
+  instructions.push_back(goto_start);
+  instructions.push_back(label);
+  instructions.push_back(ret);
+  instructions.push_back(start_label);
+  instructions.push_back(call);
+  instructions.push_back(move);
+
+  const auto policy = std::make_shared<StubSubprogramPolicy>(
+      [](const std::string &requested_target,
+         const std::unordered_map<std::string, std::vector<size_t>> &) {
+        gcode::SubprogramResolution r;
+        if (requested_target == "ALIAS") {
+          r.resolved = true;
+          r.resolved_target = "REAL";
+          r.message = "subprogram alias resolved by policy";
+          return r;
+        }
+        r.resolved = false;
+        r.resolved_target = requested_target;
+        return r;
+      },
+      gcode::ErrorPolicy::Error);
+
+  gcode::AilExecutor exec(instructions, gcode::ErrorPolicy::Error,
+                          gcode::ErrorPolicy::Error, nullptr,
+                          gcode::ErrorPolicy::Error,
+                          gcode::SubprogramSearchPolicy::ExactOnly, policy);
+
+  const auto resolver = [](const gcode::Condition &,
+                           const gcode::SourceInfo &) {
+    gcode::ConditionResolution r;
+    r.kind = gcode::ConditionResolutionKind::False;
+    return r;
+  };
+
+  ASSERT_TRUE(exec.step(0, resolver)); // goto start
+  ASSERT_TRUE(exec.step(0, resolver)); // start label
+  ASSERT_TRUE(exec.step(0, resolver)); // call
+  ASSERT_FALSE(exec.diagnostics().empty());
+  EXPECT_NE(exec.diagnostics().back().message.find("alias resolved"),
+            std::string::npos);
+  ASSERT_TRUE(exec.step(0, resolver)); // label REAL
+  ASSERT_TRUE(exec.step(0, resolver)); // RET
+  ASSERT_TRUE(exec.step(0, resolver)); // move
+  ASSERT_TRUE(exec.step(0, resolver)); // complete
   EXPECT_EQ(exec.state().status, gcode::ExecutorStatus::Completed);
 }
 

@@ -576,6 +576,8 @@ N130 G01 X20 Y20
     - `ExactOnly` (default): resolve only exact label match
     - `ExactThenBareName`: try exact target first, then bare-name fallback
       (substring after last `/` or `\`)
+  - executor uses pluggable `SubprogramPolicy`; default policy implements the
+    two search modes above and unresolved-target policy (`error|warning|ignore`)
   - when `repeat_count > 1`, executor loops call/return on same target until
     repeat count is exhausted
   - `repeat_count <= 0` is ignored with warning
