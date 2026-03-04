@@ -1,5 +1,25 @@
 #CHANGELOG_AGENT
 
+## 2026-03-04 (T-050 slice 6: subprogram search-policy baseline)
+- Added executor subprogram search policy control:
+  - `SubprogramSearchPolicy::ExactOnly` (default)
+  - `SubprogramSearchPolicy::ExactThenBareName` (fallback from
+    `DIR/SPF1000` -> `SPF1000`)
+- Added runtime warning when bare-name fallback path is used to resolve a
+  target.
+- Added executor unit test covering fallback resolution and call/return flow.
+
+SPEC sections / tests:
+- SPEC: Section 6.1 (subprogram call runtime boundary)
+- Tests: `test/ail_executor_tests.cpp`
+
+Known limitations:
+- Search policy currently resolves only in-program labels; multi-file MPF/SPF
+  filesystem lookup remains out of scope for this slice.
+
+How to reproduce locally (commands):
+- `./dev/check.sh`
+
 ## 2026-03-04 (T-050 slice 5: ISO M98 gating + unresolved-call policy)
 - Added ISO-compatible subprogram call gating for `M98 P...`:
   - parser reports deterministic diagnostic unless ISO mode is enabled
