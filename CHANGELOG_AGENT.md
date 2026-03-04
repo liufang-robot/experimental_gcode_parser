@@ -1,5 +1,23 @@
 # CHANGELOG_AGENT
 
+## 2026-03-04 (Dev tooling: fast local clang-tidy mode)
+- Updated `dev/check.sh` to support `--fast` mode for local development.
+- In `--fast` mode, `clang-tidy` runs only on changed/untracked C++ files under
+  `src/` and `test/` (instead of the full repository set).
+- Added parallel `clang-tidy` execution (configurable via
+  `CLANG_TIDY_JOBS`, defaulting to CPU count) to reduce local wait time.
+
+SPEC sections / tests:
+- SPEC: no behavior contract change (tooling-only update)
+- Tests: manual script validation (`./dev/check.sh --fast`)
+
+Known limitations:
+- `--fast` mode intentionally trades coverage for speed and should not replace
+  full checks before merge/CI.
+
+How to reproduce locally (commands):
+- `./dev/check.sh --fast`
+
 ## 2026-03-04 (T-050 slice 4: runtime repeat_count semantics for subprogram_call)
 - Implemented runtime handling for `subprogram_call.repeat_count`:
   - call frame tracks remaining repeats
