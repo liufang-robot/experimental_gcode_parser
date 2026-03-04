@@ -253,6 +253,8 @@ Planned Siemens compatibility extension:
   - executor call baseline:
     - `subprogram_call` resolves target against in-program labels, pushes return
       PC, and transfers control to target label
+    - `repeat_count` (`P<count>` / `P=<count>`) re-enters target until count is
+      exhausted before resuming caller
     - `return_boundary` pops return PC and resumes caller
     - unresolved call target or return with empty call stack is a runtime fault
 - Parser/lowering responsibility:
@@ -565,6 +567,9 @@ N130 G01 X20 Y20
     `subprogram_call`
   - executor resolves target by label in current instruction stream, pushes
     return PC, and transfers control to target label
+  - when `repeat_count > 1`, executor loops call/return on same target until
+    repeat count is exhausted
+  - `repeat_count <= 0` is ignored with warning
   - unresolved subprogram target is a runtime fault
 - Tool runtime boundary (current):
   - `tool_select` / `tool_change` instructions are explicit executable control
