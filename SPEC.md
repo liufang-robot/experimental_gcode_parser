@@ -283,6 +283,27 @@ Planned Siemens compatibility extension:
   - no downstream geometric remapping of arc/tool-compensation behavior is
     applied in v0
 
+### 3.13 Tool Selector Syntax (baseline, mode-aware parse validation)
+- Machine mode flag:
+  - parser option `tool_management` controls selector-form validation.
+- When `tool_management=false` (default):
+  - accepted forms:
+    - `T<number>` (for example `T12`)
+    - `T=<number>` (for example `T=7`)
+    - `T<n>=<number>` (for example `T1=99`)
+  - rejected examples:
+    - `T=DRILL` (non-numeric value)
+    - `T1` (indexed form missing `=` and value)
+- When `tool_management=true`:
+  - accepted forms:
+    - `T=<location|name>` (for example `T=DRILL_10`)
+    - `T<n>=<location|name>` (for example `T1=LOC_A5`)
+  - rejected examples:
+    - `T12` (legacy numeric shortcut without `=`)
+- Current scope:
+  - parse/semantic validation only; no tool-change runtime execution semantics
+    in this slice.
+
 ### 3.7 Control Flow Syntax (parse-only in v0)
 - Jump directions:
   - `GOTOF <target>`: forward search direction

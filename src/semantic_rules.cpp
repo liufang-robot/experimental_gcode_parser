@@ -1,6 +1,7 @@
 #include "semantic_rules.h"
 
 #include <cctype>
+#include <cmath>
 #include <cstdint>
 #include <limits>
 #include <memory>
@@ -357,6 +358,123 @@ public:
   }
 };
 
+class ToolSelectorShapeRule final : public LineSemanticRule {
+public:
+  explicit ToolSelectorShapeRule(bool tool_management)
+      : tool_management_(tool_management) {}
+
+  void apply(const Line &line,
+             std::vector<Diagnostic> *diagnostics) const override {
+    if (line.assignment.has_value() &&
+        isToolSelectorHead(line.assignment->lhs)) {
+      if (!isValidToolSelectorAssignment(*line.assignment)) {
+        addDiagnostic(diagnostics, line.assignment->location,
+                      invalidSelectorMessage());
+      }
+      return;
+    }
+
+    for (const auto &item : line.items) {
+      if (!std::holds_alternative<Word>(item)) {
+        continue;
+      }
+      const auto &word = std::get<Word>(item);
+      if (!isToolSelectorHead(word.head)) {
+        continue;
+      }
+      if (isValidToolSelector(word)) {
+        continue;
+      }
+      addDiagnostic(diagnostics, word.location, invalidSelectorMessage());
+      return;
+    }
+  }
+
+private:
+  static bool isDigits(std::string_view text) {
+    if (text.empty()) {
+      return false;
+    }
+    for (char c : text) {
+      if (!std::isdigit(static_cast<unsigned char>(c))) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  static bool isToolSelectorHead(const std::string &head) {
+    if (head == "T") {
+      return true;
+    }
+    if (head.size() <= 1 || head[0] != 'T') {
+      return false;
+    }
+    return isDigits(std::string_view(head).substr(1));
+  }
+
+  bool isValidToolSelector(const Word &word) const {
+    if (!word.value.has_value()) {
+      return false;
+    }
+    const bool has_index = word.head.size() > 1;
+    const std::string_view value_text(*word.value);
+
+    if (tool_management_) {
+      if (!word.has_equal) {
+        return false;
+      }
+      return !value_text.empty();
+    }
+
+    if (has_index) {
+      return word.has_equal && isDigits(value_text);
+    }
+    if (!isDigits(value_text)) {
+      return false;
+    }
+    return true;
+  }
+
+  std::string invalidSelectorMessage() const {
+    if (tool_management_) {
+      return "tool-management selector requires '=' forms: "
+             "T=<location|name> or T<n>=<location|name>";
+    }
+    return "tool selector requires numeric forms: "
+           "T<number>, T=<number>, or T<n>=<number>";
+  }
+
+  bool isValidToolSelectorAssignment(const Assignment &assignment) const {
+    const auto value_text = assignmentValueText(*assignment.rhs);
+    if (!value_text.has_value()) {
+      return false;
+    }
+
+    if (tool_management_) {
+      return !value_text->empty();
+    }
+
+    return isDigits(*value_text);
+  }
+
+  static std::optional<std::string> assignmentValueText(const ExprNode &node) {
+    if (auto *literal = std::get_if<ExprLiteral>(&node.node)) {
+      if (std::floor(literal->value) != literal->value) {
+        return std::to_string(literal->value);
+      }
+      const auto as_int = static_cast<int64_t>(literal->value);
+      return std::to_string(as_int);
+    }
+    if (auto *var = std::get_if<ExprVariable>(&node.node)) {
+      return var->name;
+    }
+    return std::nullopt;
+  }
+
+  bool tool_management_ = false;
+};
+
 class DoubleSlashCommentRule final : public LineSemanticRule {
 public:
   explicit DoubleSlashCommentRule(bool enabled) : enabled_(enabled) {}
@@ -385,7 +503,7 @@ private:
 };
 
 std::vector<std::unique_ptr<LineSemanticRule>>
-makeRules(bool enable_double_slash_comments) {
+makeRules(bool enable_double_slash_comments, bool tool_management) {
   std::vector<std::unique_ptr<LineSemanticRule>> rules;
   rules.push_back(std::make_unique<G4BlockRule>());
   rules.push_back(std::make_unique<MotionExclusivityRule>());
@@ -394,6 +512,7 @@ makeRules(bool enable_double_slash_comments) {
   rules.push_back(std::make_unique<BlockSkipLevelRule>());
   rules.push_back(std::make_unique<AssignmentShapeRule>());
   rules.push_back(std::make_unique<MCodeShapeRule>());
+  rules.push_back(std::make_unique<ToolSelectorShapeRule>(tool_management));
   rules.push_back(
       std::make_unique<DoubleSlashCommentRule>(enable_double_slash_comments));
   return rules;
@@ -402,8 +521,9 @@ makeRules(bool enable_double_slash_comments) {
 } // namespace
 
 void addSemanticDiagnostics(ParseResult &result,
-                            bool enable_double_slash_comments) {
-  auto rules = makeRules(enable_double_slash_comments);
+                            bool enable_double_slash_comments,
+                            bool tool_management) {
+  auto rules = makeRules(enable_double_slash_comments, tool_management);
   std::unordered_map<int, Location> first_line_number_at;
   bool has_line_number_target_jump = false;
   for (const auto &line : result.program.lines) {

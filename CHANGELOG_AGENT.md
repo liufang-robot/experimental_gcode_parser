@@ -1,5 +1,26 @@
 # CHANGELOG_AGENT
 
+## 2026-03-04 (T-051 slice: tool selector normalization + mode-aware validation)
+- Added parser option `tool_management` and semantic validation for normalized
+  Siemens `T...` selector forms.
+- Added baseline selector validation rules:
+  - `tool_management=false`: `T<number>`, `T=<number>`, `T<n>=<number>`
+  - `tool_management=true`: `T=<location|name>`, `T<n>=<location|name>`
+- Added parser tests for accepted/rejected forms in both modes.
+- Updated SPEC with baseline tool selector syntax contract (Section 3.13).
+- Marked `T-051` as done in backlog as local/unmerged.
+
+SPEC sections / tests:
+- SPEC: Section 3.13
+- Tests: `test/parser_tests.cpp`
+
+Known limitations:
+- This slice validates selector syntax only; no `M6`/pending-tool runtime
+  behavior is implemented here.
+
+How to reproduce locally (commands):
+- `./dev/check.sh`
+
 ## 2026-03-04 (T-038 design: tool-change architecture)
 - Added a dedicated architecture page for Siemens tool-change semantics:
   - direct `T` change vs deferred `T`+`M6` execution model

@@ -316,4 +316,49 @@ TEST(ParserSyntaxBaselineTest, ReportsExtendedMAddressForProhibitedFunctions) {
             std::string::npos);
 }
 
+TEST(ParserToolSelectorTest, AcceptsNumericFormsWhenToolManagementDisabled) {
+  gcode::ParseOptions options;
+  options.tool_management = false;
+  const auto result = gcode::parse("T12\nT=7\nT1=99\n", options);
+  EXPECT_TRUE(result.diagnostics.empty());
+}
+
+TEST(ParserToolSelectorTest,
+     RejectsNonNumericOrMissingEqualFormsWhenToolManagementDisabled) {
+  {
+    gcode::ParseOptions options;
+    options.tool_management = false;
+    const auto result = gcode::parse("T=DRILL\n", options);
+    ASSERT_EQ(result.diagnostics.size(), 1u);
+    EXPECT_NE(result.diagnostics[0].message.find("numeric forms"),
+              std::string::npos);
+  }
+  {
+    gcode::ParseOptions options;
+    options.tool_management = false;
+    const auto result = gcode::parse("T1=DRILL\n", options);
+    ASSERT_EQ(result.diagnostics.size(), 1u);
+    EXPECT_NE(result.diagnostics[0].message.find("numeric forms"),
+              std::string::npos);
+  }
+}
+
+TEST(ParserToolSelectorTest,
+     AcceptsEqualFormsWhenToolManagementEnabledIncludingIndexed) {
+  gcode::ParseOptions options;
+  options.tool_management = true;
+  const auto result = gcode::parse("T=DRILL_10\nT1=LOC_A5\n", options);
+  EXPECT_TRUE(result.diagnostics.empty());
+}
+
+TEST(ParserToolSelectorTest,
+     RejectsLegacyNumericShortcutWhenToolManagementEnabled) {
+  gcode::ParseOptions options;
+  options.tool_management = true;
+  const auto result = gcode::parse("T12\n", options);
+  ASSERT_EQ(result.diagnostics.size(), 1u);
+  EXPECT_NE(result.diagnostics[0].message.find("requires '=' forms"),
+            std::string::npos);
+}
+
 } // namespace

@@ -591,7 +591,8 @@ ParseResult parse(std::string_view input, const ParseOptions &options) {
   }
 
   addBlockLengthDiagnostics(input, &result.diagnostics);
-  addSemanticDiagnostics(result, options.enable_double_slash_comments);
+  addSemanticDiagnostics(result, options.enable_double_slash_comments,
+                         options.tool_management);
   return result;
 }
 
