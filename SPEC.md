@@ -234,6 +234,11 @@ Planned Siemens compatibility extension:
   - advanced/procedural forms (planned):
     - `PROC <name>(<typed_params>)`
     - call with arguments `<name>(<args...>)`
+- Current baseline implemented in v0:
+  - `RET` and `M17` lower to explicit AIL `return_boundary` instructions.
+  - packet stage does not emit standalone packets for `return_boundary`.
+  - executor treats `return_boundary` as an executable control-flow boundary
+    instruction (placeholder until call-stack runtime is added).
 - Parser/lowering responsibility:
   - preserve call target, repeat count, and argument list structure
   - preserve declaration signatures and return statements
@@ -525,12 +530,18 @@ N130 G01 X20 Y20
 - M-function runtime boundary (v0):
   - `m_function` instructions are present in AIL and seen by executor
   - known predefined Siemens M values:
-    - `M0/M1/M2/M3/M4/M5/M6/M17/M19/M30/M40..M45/M70`
+    - `M0/M1/M2/M3/M4/M5/M6/M19/M30/M40..M45/M70`
     are accepted without machine-actuation side effects in v0
   - unknown M values are handled by executor policy:
     - `error` => fault
     - `warning` => warning diagnostic and continue
     - `ignore` => continue silently
+- Return boundary runtime boundary (v0 baseline):
+  - `RET` and `M17` emit explicit `return_boundary` AIL instructions
+  - packet stage does not emit standalone motion packets for
+    `return_boundary`
+  - executor currently advances through `return_boundary` without call-stack
+    side effects (call-stack return semantics are a follow-up slice)
 - Tool runtime boundary (current):
   - `tool_select` / `tool_change` instructions are explicit executable control
     instructions in AIL

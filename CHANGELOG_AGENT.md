@@ -1,5 +1,25 @@
 # CHANGELOG_AGENT
 
+## 2026-03-04 (T-050 slice 1: explicit return-boundary instruction for RET/M17)
+- Added explicit AIL `return_boundary` instruction emission for `RET` and
+  `M17` (instead of representing `M17` as generic `m_function`).
+- Wired `return_boundary` through AIL JSON/debug output, executor stepping, and
+  packet lowering (no standalone motion packet/warning).
+- Added unit tests covering lowering/JSON shape, executor progression, and
+  packet behavior for return-boundary instructions.
+
+SPEC sections / tests:
+- SPEC: Section 3.9, Section 6.1
+- Tests: `test/ail_tests.cpp`, `test/ail_executor_tests.cpp`,
+  `test/packet_tests.cpp`
+
+Known limitations:
+- Call-stack return semantics (matching call/return frames, unresolved return
+  diagnostics/policies) are not implemented in this slice.
+
+How to reproduce locally (commands):
+- `./dev/check.sh`
+
 ## 2026-03-04 (T-054 follow-up: remove magic marker policy behavior)
 - Removed deterministic magic marker handling from `DefaultToolPolicy`
   (`999991`/`999992` and marker parsing paths).

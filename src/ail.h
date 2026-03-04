@@ -82,6 +82,11 @@ struct AilToolChangeInstruction {
   ToolActionTiming timing = ToolActionTiming::DeferredUntilM6;
 };
 
+struct AilReturnBoundaryInstruction {
+  SourceInfo source;
+  std::string opcode = "RET";
+};
+
 // Placeholder variants for upcoming non-motion semantics.
 struct AilAssignInstruction {
   SourceInfo source;
@@ -118,8 +123,8 @@ using AilInstruction =
                  AilDwellInstruction, AilMCodeInstruction,
                  AilRapidTraverseModeInstruction, AilToolRadiusCompInstruction,
                  AilWorkingPlaneInstruction, AilToolSelectInstruction,
-                 AilToolChangeInstruction, AilAssignInstruction,
-                 AilLabelInstruction, AilGotoInstruction,
+                 AilToolChangeInstruction, AilReturnBoundaryInstruction,
+                 AilAssignInstruction, AilLabelInstruction, AilGotoInstruction,
                  AilBranchIfInstruction, AilSyncInstruction>;
 
 struct AilResult {

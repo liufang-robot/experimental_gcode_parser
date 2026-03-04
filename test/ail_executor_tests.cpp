@@ -221,6 +221,26 @@ TEST(AilExecutorTest, KnownMFunctionAdvancesWithoutFault) {
   EXPECT_EQ(exec.state().status, gcode::ExecutorStatus::Completed);
 }
 
+TEST(AilExecutorTest, ReturnBoundaryInstructionsAdvanceWithoutFault) {
+  const auto lowered = gcode::parseAndLowerAil("RET\nM17\nG1 X1\n");
+  gcode::AilExecutor exec(lowered.instructions);
+
+  const auto resolver = [](const gcode::Condition &,
+                           const gcode::SourceInfo &) {
+    gcode::ConditionResolution r;
+    r.kind = gcode::ConditionResolutionKind::False;
+    return r;
+  };
+
+  ASSERT_TRUE(exec.step(0, resolver)); // RET
+  EXPECT_EQ(exec.state().status, gcode::ExecutorStatus::Ready);
+  ASSERT_TRUE(exec.step(0, resolver)); // M17
+  EXPECT_EQ(exec.state().status, gcode::ExecutorStatus::Ready);
+  ASSERT_TRUE(exec.step(0, resolver)); // G1
+  ASSERT_TRUE(exec.step(0, resolver)); // complete
+  EXPECT_EQ(exec.state().status, gcode::ExecutorStatus::Completed);
+}
+
 TEST(AilExecutorTest, UnknownMFunctionFaultsByDefaultPolicy) {
   const auto lowered = gcode::parseAndLowerAil("M123456\n");
   gcode::AilExecutor exec(lowered.instructions);

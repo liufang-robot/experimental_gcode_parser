@@ -77,6 +77,10 @@ PacketResult lowerAilToPackets(const AilResult &ail_result) {
                                std::is_same_v<T, AilToolChangeInstruction>) {
             // Tool-select/tool-change instructions are non-motion control
             // state and do not produce standalone packets.
+          } else if constexpr (std::is_same_v<T,
+                                              AilReturnBoundaryInstruction>) {
+            // Return-boundary instructions are runtime control flow and do not
+            // produce standalone motion packets.
           } else if constexpr (std::is_same_v<T, AilLabelInstruction>) {
             result.diagnostics.push_back(
                 makeSkippedInstructionWarning(inst.source, "label"));

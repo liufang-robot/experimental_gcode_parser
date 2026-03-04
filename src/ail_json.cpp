@@ -232,6 +232,10 @@ nlohmann::json instructionToJson(const AilInstruction &instruction) {
           j["opcode"] = "M6";
           j["source"] = sourceToJson(inst.source);
           j["timing"] = toolActionTimingToString(inst.timing);
+        } else if constexpr (std::is_same_v<T, AilReturnBoundaryInstruction>) {
+          j["kind"] = "return_boundary";
+          j["opcode"] = inst.opcode;
+          j["source"] = sourceToJson(inst.source);
         } else if constexpr (std::is_same_v<T, AilAssignInstruction>) {
           j["kind"] = "assign";
           j["source"] = sourceToJson(inst.source);
