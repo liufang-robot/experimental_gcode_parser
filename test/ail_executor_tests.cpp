@@ -308,4 +308,32 @@ TEST(AilExecutorTest, TracksToolRadiusCompStateFromG40G41G42) {
             gcode::ToolRadiusCompMode::Off);
 }
 
+TEST(AilExecutorTest, TracksWorkingPlaneStateFromG17G18G19) {
+  const auto lowered = gcode::parseAndLowerAil("G17\nG1 X1\nG18\nG19\n");
+  gcode::AilExecutor exec(lowered.instructions);
+
+  const auto resolver = [](const gcode::Condition &,
+                           const gcode::SourceInfo &) {
+    gcode::ConditionResolution r;
+    r.kind = gcode::ConditionResolutionKind::False;
+    return r;
+  };
+
+  ASSERT_TRUE(exec.step(0, resolver)); // G17
+  ASSERT_TRUE(exec.state().working_plane_current.has_value());
+  EXPECT_EQ(*exec.state().working_plane_current, gcode::WorkingPlane::XY);
+
+  ASSERT_TRUE(exec.step(0, resolver)); // G1
+  ASSERT_TRUE(exec.state().working_plane_current.has_value());
+  EXPECT_EQ(*exec.state().working_plane_current, gcode::WorkingPlane::XY);
+
+  ASSERT_TRUE(exec.step(0, resolver)); // G18
+  ASSERT_TRUE(exec.state().working_plane_current.has_value());
+  EXPECT_EQ(*exec.state().working_plane_current, gcode::WorkingPlane::ZX);
+
+  ASSERT_TRUE(exec.step(0, resolver)); // G19
+  ASSERT_TRUE(exec.state().working_plane_current.has_value());
+  EXPECT_EQ(*exec.state().working_plane_current, gcode::WorkingPlane::YZ);
+}
+
 } // namespace

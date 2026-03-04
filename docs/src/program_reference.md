@@ -33,6 +33,7 @@ Current Siemens-aligned baseline for supported functions:
 | `G0` rapid baseline | Implemented | Emits `G0Message` with target pose + feed. |
 | `RTLION` / `RTLIOF` rapid interpolation mode | Partial | Lowered to AIL `rapid_mode`; packet/runtime interpolation semantics pending. |
 | `G40` / `G41` / `G42` tool radius compensation | Partial | Lowered to AIL `tool_radius_comp`; executor tracks modal state only. |
+| `G17` / `G18` / `G19` working plane | Partial | Lowered to AIL `working_plane`; executor tracks active plane state only. |
 | `G1` linear | Implemented | Emits `G1Message` with target pose + feed. |
 | `G2` arc CW | Implemented | Emits `G2Message` with endpoint + arc fields + feed. |
 | `G3` arc CCW | Implemented | Emits `G3Message` with endpoint + arc fields + feed. |
@@ -171,6 +172,28 @@ Current limitations:
 
 - Cutter-path geometric compensation is not implemented in v0.
 - Packetization does not emit standalone packets for `tool_radius_comp`.
+
+## G17 / G18 / G19 (Group 6 baseline)
+
+Syntax examples:
+
+- `G17`
+- `G18`
+- `G19`
+
+Current behavior:
+
+- Lowering emits AIL `kind=working_plane`.
+- JSON shape includes:
+  - `opcode`: `G17` or `G18` or `G19`
+  - `plane`: `xy` / `zx` / `yz`
+- `AilExecutor` tracks the active value in `working_plane_current`.
+
+Current limitations:
+
+- Plane-dependent geometric behavior changes (arc interpretation/tool-comp
+  coupling) are not implemented in v0.
+- Packetization does not emit standalone packets for `working_plane`.
 
 ## G2 / G3
 

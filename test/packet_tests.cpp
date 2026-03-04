@@ -146,6 +146,15 @@ TEST(PacketTest, ToolRadiusCompInstructionDoesNotEmitPacketOrWarning) {
   EXPECT_TRUE(result.diagnostics.empty());
 }
 
+TEST(PacketTest, WorkingPlaneInstructionDoesNotEmitPacketOrWarning) {
+  const auto result = gcode::parseLowerAndPacketize("G17\nG1 X10\n");
+
+  ASSERT_EQ(result.packets.size(), 1u);
+  EXPECT_EQ(result.packets[0].type, gcode::PacketType::LinearMove);
+  EXPECT_EQ(result.packets[0].source.line, 2);
+  EXPECT_TRUE(result.diagnostics.empty());
+}
+
 TEST(PacketTest, JsonContainsStableSchema) {
   const auto result = gcode::parseLowerAndPacketize("G1 X10\nG4 F3\n");
   const auto json = nlohmann::json::parse(gcode::packetToJsonString(result));

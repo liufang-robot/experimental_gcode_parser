@@ -17,6 +17,7 @@ namespace gcode {
 
 enum class RapidInterpolationMode { Linear, NonLinear };
 enum class ToolRadiusCompMode { Off, Left, Right };
+enum class WorkingPlane { XY, ZX, YZ };
 
 struct AilLinearMoveInstruction {
   SourceInfo source;
@@ -59,6 +60,11 @@ struct AilToolRadiusCompInstruction {
   ToolRadiusCompMode mode = ToolRadiusCompMode::Off;
 };
 
+struct AilWorkingPlaneInstruction {
+  SourceInfo source;
+  WorkingPlane plane = WorkingPlane::XY;
+};
+
 // Placeholder variants for upcoming non-motion semantics.
 struct AilAssignInstruction {
   SourceInfo source;
@@ -94,7 +100,8 @@ using AilInstruction =
     std::variant<AilLinearMoveInstruction, AilArcMoveInstruction,
                  AilDwellInstruction, AilMCodeInstruction,
                  AilRapidTraverseModeInstruction, AilToolRadiusCompInstruction,
-                 AilAssignInstruction, AilLabelInstruction, AilGotoInstruction,
+                 AilWorkingPlaneInstruction, AilAssignInstruction,
+                 AilLabelInstruction, AilGotoInstruction,
                  AilBranchIfInstruction, AilSyncInstruction>;
 
 struct AilResult {
@@ -135,6 +142,7 @@ struct ExecutorState {
   size_t pc = 0;
   std::optional<RapidInterpolationMode> rapid_mode_current;
   std::optional<ToolRadiusCompMode> tool_radius_comp_current;
+  std::optional<WorkingPlane> working_plane_current;
   std::optional<ExecutorBlockedState> blocked;
   std::optional<std::string> fault_message;
 };

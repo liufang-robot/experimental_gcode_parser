@@ -203,6 +203,39 @@ TEST(AilTest, EmitsToolRadiusCompInstructionsForG40G41G42) {
   EXPECT_EQ(json["instructions"][2]["mode"], "right");
 }
 
+TEST(AilTest, EmitsWorkingPlaneInstructionsForG17G18G19) {
+  const auto result = gcode::parseAndLowerAil("G17\nG18\nG19\nG1 X1\n");
+  ASSERT_TRUE(result.diagnostics.empty());
+  ASSERT_TRUE(result.rejected_lines.empty());
+  ASSERT_EQ(result.instructions.size(), 4u);
+
+  ASSERT_TRUE(std::holds_alternative<gcode::AilWorkingPlaneInstruction>(
+      result.instructions[0]));
+  ASSERT_TRUE(std::holds_alternative<gcode::AilWorkingPlaneInstruction>(
+      result.instructions[1]));
+  ASSERT_TRUE(std::holds_alternative<gcode::AilWorkingPlaneInstruction>(
+      result.instructions[2]));
+
+  const auto &p0 =
+      std::get<gcode::AilWorkingPlaneInstruction>(result.instructions[0]);
+  EXPECT_EQ(p0.plane, gcode::WorkingPlane::XY);
+  const auto &p1 =
+      std::get<gcode::AilWorkingPlaneInstruction>(result.instructions[1]);
+  EXPECT_EQ(p1.plane, gcode::WorkingPlane::ZX);
+  const auto &p2 =
+      std::get<gcode::AilWorkingPlaneInstruction>(result.instructions[2]);
+  EXPECT_EQ(p2.plane, gcode::WorkingPlane::YZ);
+
+  const auto json = nlohmann::json::parse(gcode::ailToJsonString(result));
+  EXPECT_EQ(json["instructions"][0]["kind"], "working_plane");
+  EXPECT_EQ(json["instructions"][0]["opcode"], "G17");
+  EXPECT_EQ(json["instructions"][0]["plane"], "xy");
+  EXPECT_EQ(json["instructions"][1]["opcode"], "G18");
+  EXPECT_EQ(json["instructions"][1]["plane"], "zx");
+  EXPECT_EQ(json["instructions"][2]["opcode"], "G19");
+  EXPECT_EQ(json["instructions"][2]["plane"], "yz");
+}
+
 TEST(AilTest, AppliesCurrentRapidModeToFollowingG0Instructions) {
   const auto result =
       gcode::parseAndLowerAil("G0 X1\nRTLIOF\nG0 X2\nRTLION\nG0 X3\n");
