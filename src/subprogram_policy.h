@@ -21,6 +21,7 @@ struct SubprogramResolution {
 struct SubprogramPolicyOptions {
   SubprogramSearchPolicy search_policy = SubprogramSearchPolicy::ExactOnly;
   ErrorPolicy on_unresolved_target = ErrorPolicy::Error;
+  std::unordered_map<std::string, std::string> alias_map;
 };
 
 class SubprogramPolicy {

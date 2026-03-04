@@ -25,6 +25,20 @@ SubprogramResolution DefaultSubprogramPolicy::resolveTarget(
     return resolution;
   }
 
+  const auto alias_it = options_.alias_map.find(requested_target);
+  if (alias_it != options_.alias_map.end()) {
+    const auto resolved_alias_it = label_positions.find(alias_it->second);
+    if (resolved_alias_it != label_positions.end() &&
+        !resolved_alias_it->second.empty()) {
+      resolution.resolved = true;
+      resolution.resolved_target = alias_it->second;
+      resolution.message =
+          "subprogram target resolved by alias map: " + requested_target +
+          " -> " + alias_it->second;
+      return resolution;
+    }
+  }
+
   if (options_.search_policy == SubprogramSearchPolicy::ExactThenBareName) {
     const std::string fallback = bareSubprogramName(requested_target);
     if (fallback != requested_target) {
