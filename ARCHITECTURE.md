@@ -133,6 +133,8 @@ classDiagram
 - v1 scope:
   - deterministic prefix/suffix merge semantics and API behavior
   - parser-internal tree-reuse optimization is a later performance enhancement
+- Detailed API/merge design:
+  - [docs/src/design/incremental_session.md](/home/liufang/optcnc/gcode/docs/src/design/incremental_session.md)
 
 ```mermaid
 stateDiagram-v2
@@ -172,6 +174,8 @@ stateDiagram-v2
   - [docs/src/design/mcode_architecture.md](/home/liufang/optcnc/gcode/docs/src/design/mcode_architecture.md)
 - Detailed rapid-traverse architecture note:
   - [docs/src/design/rapid_traverse_architecture.md](/home/liufang/optcnc/gcode/docs/src/design/rapid_traverse_architecture.md)
+- Detailed incremental parse-session API architecture note:
+  - [docs/src/design/incremental_session.md](/home/liufang/optcnc/gcode/docs/src/design/incremental_session.md)
 - Planned:
   - modal groups 6/7/8/10/11/12/13/14/15 full state model
   - tool management behaviors

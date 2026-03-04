@@ -13,4 +13,5 @@ Pages in this section are split by topic for easier review:
 - exact-stop/continuous-path modes (Groups 10/11/12)
 - Siemens M-code model and execution boundaries
 - rapid traverse model (`G0`, `RTLION`, `RTLIOF`)
+- incremental parse session API
 - implementation phases and task ordering

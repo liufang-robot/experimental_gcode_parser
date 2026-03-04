@@ -56,6 +56,24 @@ Known limitations:
 - No new runtime override implementation in this slice.
 - Dynamics/planner internals remain out of scope.
 
+## 2026-03-04 (T-047 design: incremental parse session API architecture)
+- Added a dedicated design doc for incremental `ParseSession` API:
+  - line-edit contract (`replace/insert/delete`)
+  - resume selectors (`from_line`, `from_first_error`)
+- deterministic prefix/suffix merge semantics for diagnostics and outputs
+  - fail-fast and first-error-line recovery workflow
+- Linked the new design page into docs navigation and architecture references.
+- Marked `T-047` as done in backlog as local/unmerged.
+
+SPEC sections / tests:
+- SPEC target: Section 6 (incremental/resume contract)
+- This PR is architecture/docs only; implementation tests are listed as follow-up
+  slices in the new design document.
+
+Known limitations:
+- No parser-internal incremental parse-tree reuse optimization yet.
+- No runtime/API code changes in this slice.
+
 How to reproduce locally (commands):
 - `./dev/check.sh`
 
