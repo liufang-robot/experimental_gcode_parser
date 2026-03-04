@@ -484,11 +484,11 @@ TEST(AilExecutorTest, SubprogramPolicyCanOverrideResolution) {
 
 TEST(AilExecutorTest, DefaultSubprogramPolicyAliasMapResolvesTarget) {
   gcode::SubprogramPolicyOptions options;
-  options.alias_map["LALIAS"] = "LREAL";
+  options.alias_map["ALIAS"] = "REAL";
   const auto policy = std::make_shared<gcode::DefaultSubprogramPolicy>(options);
 
   const auto lowered =
-      gcode::parseAndLowerAil("GOTO START\nLREAL:\nRET\nSTART:\nLALIAS\n");
+      gcode::parseAndLowerAil("GOTO START\nREAL:\nRET\nSTART:\nALIAS\n");
   gcode::AilExecutor exec(lowered.instructions, gcode::ErrorPolicy::Error,
                           gcode::ErrorPolicy::Error, nullptr,
                           gcode::ErrorPolicy::Error,

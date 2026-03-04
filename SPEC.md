@@ -248,6 +248,8 @@ Planned Siemens compatibility extension:
     - `"<subprogram_name>"`
     - `<subprogram_name> P<count>`
     - `P=<count> <subprogram_name>`
+  - standalone unquoted identifier targets (for example `ALIAS`) are accepted
+    as direct call forms in v0 baseline.
   - ISO compatibility call `M98 P<id>` is supported when
     `enable_iso_m98_calls=true`; otherwise parser reports a deterministic
     diagnostic.
