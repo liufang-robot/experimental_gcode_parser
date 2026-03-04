@@ -200,6 +200,12 @@ std::string formatAilDebug(const gcode::AilResult &result) {
                                               gcode::AilArcMoveInstruction>) {
             out << " kind=motion_arc opcode=" << (i.clockwise ? "G2" : "G3");
             appendModal(out, i.modal);
+            out << " plane="
+                << (i.plane_effective == gcode::WorkingPlane::XY
+                        ? "xy"
+                        : (i.plane_effective == gcode::WorkingPlane::ZX
+                               ? "zx"
+                               : "yz"));
             appendOptionalDouble(out, "x", i.target_pose.x);
             appendOptionalDouble(out, "y", i.target_pose.y);
             appendOptionalDouble(out, "z", i.target_pose.z);
@@ -358,6 +364,12 @@ std::string formatPacketDebug(const gcode::PacketResult &result) {
             appendOptionalDouble(out, "feed", payload.feed);
           } else if constexpr (std::is_same_v<T, gcode::MotionArcPayload>) {
             out << " clockwise=" << boolText(payload.clockwise);
+            out << " plane="
+                << (payload.plane_effective == gcode::WorkingPlane::XY
+                        ? "xy"
+                        : (payload.plane_effective == gcode::WorkingPlane::ZX
+                               ? "zx"
+                               : "yz"));
             appendOptionalDouble(out, "x", payload.target_pose.x);
             appendOptionalDouble(out, "y", payload.target_pose.y);
             appendOptionalDouble(out, "z", payload.target_pose.z);

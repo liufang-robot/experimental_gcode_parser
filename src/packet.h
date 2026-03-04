@@ -20,6 +20,7 @@ struct MotionLinearPayload {
 
 struct MotionArcPayload {
   bool clockwise = true;
+  WorkingPlane plane_effective = WorkingPlane::XY;
   Pose6 target_pose;
   ArcParams arc;
   std::optional<double> feed;

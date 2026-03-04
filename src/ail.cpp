@@ -264,6 +264,7 @@ AilResult lowerToAil(const Program &program,
   std::vector<IfLowerContext> if_stack;
   int generated_label_counter = 0;
   std::optional<RapidInterpolationMode> current_rapid_mode;
+  WorkingPlane current_working_plane = WorkingPlane::XY;
   const auto makeInternalLabel = [&](const std::string &prefix) {
     ++generated_label_counter;
     return "__CF_" + prefix + "_" + std::to_string(generated_label_counter);
@@ -431,6 +432,7 @@ AilResult lowerToAil(const Program &program,
       }
       const auto working_plane = workingPlaneFromWord(word, source);
       if (working_plane.has_value()) {
+        current_working_plane = working_plane->plane;
         result.instructions.push_back(*working_plane);
       }
       const auto mcode = mCodeFromWord(word, source);
@@ -447,6 +449,9 @@ AilResult lowerToAil(const Program &program,
         if (linear.opcode == "G0") {
           linear.rapid_mode_effective = current_rapid_mode;
         }
+      } else if (std::holds_alternative<AilArcMoveInstruction>(lowered_inst)) {
+        auto &arc = std::get<AilArcMoveInstruction>(lowered_inst);
+        arc.plane_effective = current_working_plane;
       }
       result.instructions.push_back(std::move(lowered_inst));
     }

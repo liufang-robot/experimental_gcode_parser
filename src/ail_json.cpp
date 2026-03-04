@@ -164,6 +164,7 @@ nlohmann::json instructionToJson(const AilInstruction &instruction) {
           j["kind"] = "motion_arc";
           j["opcode"] = inst.clockwise ? "G2" : "G3";
           j["clockwise"] = inst.clockwise;
+          j["plane_effective"] = workingPlaneToString(inst.plane_effective);
           j["source"] = sourceToJson(inst.source);
           j["modal"] = modalToJson(inst.modal);
           j["target_pose"] = poseToJson(inst.target_pose);

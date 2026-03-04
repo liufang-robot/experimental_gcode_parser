@@ -41,6 +41,7 @@ TEST(AilTest, LowersMotionSubsetIntoAilInstructions) {
       std::get<gcode::AilArcMoveInstruction>(result.instructions[1]);
   EXPECT_TRUE(l1.clockwise);
   EXPECT_EQ(l1.modal.code, "G2");
+  EXPECT_EQ(l1.plane_effective, gcode::WorkingPlane::XY);
   ASSERT_TRUE(l1.arc.i.has_value());
   EXPECT_TRUE(closeEnough(*l1.arc.i, 6.0));
 
@@ -234,6 +235,21 @@ TEST(AilTest, EmitsWorkingPlaneInstructionsForG17G18G19) {
   EXPECT_EQ(json["instructions"][1]["plane"], "zx");
   EXPECT_EQ(json["instructions"][2]["opcode"], "G19");
   EXPECT_EQ(json["instructions"][2]["plane"], "yz");
+}
+
+TEST(AilTest, AppliesCurrentWorkingPlaneToArcInstructions) {
+  const auto result = gcode::parseAndLowerAil("G18\nG2 X10 Z20 I1 K2 F100\n");
+  ASSERT_TRUE(result.diagnostics.empty());
+  ASSERT_EQ(result.instructions.size(), 2u);
+  ASSERT_TRUE(std::holds_alternative<gcode::AilArcMoveInstruction>(
+      result.instructions[1]));
+  const auto &arc =
+      std::get<gcode::AilArcMoveInstruction>(result.instructions[1]);
+  EXPECT_EQ(arc.plane_effective, gcode::WorkingPlane::ZX);
+
+  const auto json = nlohmann::json::parse(gcode::ailToJsonString(result));
+  EXPECT_EQ(json["instructions"][1]["kind"], "motion_arc");
+  EXPECT_EQ(json["instructions"][1]["plane_effective"], "zx");
 }
 
 TEST(AilTest, AppliesCurrentRapidModeToFollowingG0Instructions) {

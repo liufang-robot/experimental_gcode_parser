@@ -1,5 +1,24 @@
 # CHANGELOG_AGENT
 
+## 2026-03-04 (T-040 slice 3: carry effective working plane on arc outputs)
+- Added `plane_effective` on AIL arc instructions and packet arc payloads.
+- `plane_effective` is derived from active/same-block `G17/G18/G19` state in
+  lowering and propagated to JSON/debug outputs.
+- Added tests for AIL and packet plane metadata on arcs.
+- Updated SPEC/program-reference docs for arc `plane_effective` output.
+
+SPEC sections / tests:
+- SPEC: Section 3.4
+- Tests: `test/ail_tests.cpp`, `test/packet_tests.cpp`, `./dev/check.sh`
+
+Known limitations:
+- Arc geometry execution is still baseline; `plane_effective` is metadata for
+  downstream runtime/planner consumers.
+
+How to reproduce locally (commands):
+- `ctest --test-dir build --output-on-failure -R \"AilTest|PacketTest\"`
+- `./dev/check.sh`
+
 ## 2026-03-04 (T-040 slice 2: enforce G2/G3 center words by working plane)
 - Added lowering-stage validation that `G2/G3` center words match the
   effective working plane (`G17`: `I/J`, `G18`: `I/K`, `G19`: `J/K`).
