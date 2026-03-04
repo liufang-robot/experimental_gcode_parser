@@ -378,7 +378,7 @@ Use this template for new backlog items:
 
 ## In Progress
 (List tasks currently being worked on; only one assignee/task per PR)
-- (none)
+- T-046 (docs/t-046-mcode-architecture)
 
 ## Done
 (Move completed tasks here with PR link)

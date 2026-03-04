@@ -10,4 +10,5 @@ Source-of-truth files in repo root:
 Pages in this section are split by topic for easier review:
 - pipeline/modules
 - modal/context strategy
+- Siemens M-code model and execution boundaries
 - implementation phases and task ordering

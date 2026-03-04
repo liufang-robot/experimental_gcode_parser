@@ -1,5 +1,27 @@
 # CHANGELOG_AGENT
 
+## 2026-03-04 (T-046 design: Siemens M-code model and execution boundaries)
+- Added a dedicated architecture page for Siemens M functions:
+  - syntax/validation model for `M<value>` and `M<ext>=<value>`
+  - runtime classification model (program-flow/spindle/tool/gearbox/custom)
+  - post-motion timing model for `M0/M1/M2/M17/M30`
+  - machine profile/policy hooks and output schema expectations
+- Added implementation slice plan and test matrix for follow-up PRs.
+- Linked the new design page into docs navigation and root architecture
+  references.
+- Marked `T-046` as in progress in backlog for this PR slice.
+
+SPEC sections / tests:
+- SPEC target: M-function syntax/runtime sections (future implementation slices)
+- This PR is architecture/docs only; no runtime behavior change.
+
+Known limitations:
+- No new parser/executor implementation in this slice.
+- PLC or machine-I/O integration remains out of scope.
+
+How to reproduce locally (commands):
+- `./dev/check.sh`
+
 ## 2026-03-04 (T-040 slice 3: carry effective working plane on arc outputs)
 - Added `plane_effective` on AIL arc instructions and packet arc payloads.
 - `plane_effective` is derived from active/same-block `G17/G18/G19` state in
