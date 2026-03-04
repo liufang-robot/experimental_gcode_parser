@@ -572,6 +572,10 @@ N130 G01 X20 Y20
     `subprogram_call`
   - executor resolves target by label in current instruction stream, pushes
     return PC, and transfers control to target label
+  - subprogram target search policy is configurable:
+    - `ExactOnly` (default): resolve only exact label match
+    - `ExactThenBareName`: try exact target first, then bare-name fallback
+      (substring after last `/` or `\`)
   - when `repeat_count > 1`, executor loops call/return on same target until
     repeat count is exhausted
   - `repeat_count <= 0` is ignored with warning
