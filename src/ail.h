@@ -2,6 +2,7 @@
 
 #include <cstdint>
 #include <functional>
+#include <memory>
 #include <optional>
 #include <string>
 #include <string_view>
@@ -12,8 +13,10 @@
 
 #include "machine_profile.h"
 #include "messages.h"
+#include "tool_selection.h"
 
 namespace gcode {
+class ToolPolicy;
 
 enum class RapidInterpolationMode { Linear, NonLinear };
 enum class ToolRadiusCompMode { Off, Left, Right };
@@ -77,11 +80,6 @@ struct AilToolSelectInstruction {
 struct AilToolChangeInstruction {
   SourceInfo source;
   ToolActionTiming timing = ToolActionTiming::DeferredUntilM6;
-};
-
-struct ToolSelectionState {
-  std::optional<int64_t> selector_index;
-  std::string selector_value;
 };
 
 // Placeholder variants for upcoming non-motion semantics.
@@ -174,7 +172,8 @@ public:
   explicit AilExecutor(
       std::vector<AilInstruction> instructions,
       ErrorPolicy unknown_mcode_policy = ErrorPolicy::Error,
-      ErrorPolicy m6_without_pending_policy = ErrorPolicy::Error);
+      ErrorPolicy m6_without_pending_policy = ErrorPolicy::Error,
+      std::shared_ptr<const ToolPolicy> tool_policy = nullptr);
 
   const ExecutorState &state() const { return state_; }
   const std::vector<Diagnostic> &diagnostics() const { return diagnostics_; }
@@ -199,6 +198,7 @@ private:
   std::unordered_set<std::string> pending_events_;
   ErrorPolicy unknown_mcode_policy_ = ErrorPolicy::Error;
   ErrorPolicy m6_without_pending_policy_ = ErrorPolicy::Error;
+  std::shared_ptr<const ToolPolicy> tool_policy_;
   ExecutorState state_;
   std::vector<Diagnostic> diagnostics_;
 };

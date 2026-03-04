@@ -1,10 +1,12 @@
 #include <algorithm>
+#include <memory>
 #include <string>
 #include <vector>
 
 #include "gtest/gtest.h"
 
 #include "ail.h"
+#include "tool_policy.h"
 
 namespace {
 
@@ -448,6 +450,87 @@ TEST(AilExecutorTest, M6WithoutPendingSelectionWarningPolicyContinues) {
   ASSERT_TRUE(exec.step(0, resolver)); // G1
   ASSERT_TRUE(exec.step(0, resolver)); // complete
   EXPECT_EQ(exec.state().status, gcode::ExecutorStatus::Completed);
+}
+
+TEST(AilExecutorTest, ToolPolicySubstitutesPendingSelectionDuringM6) {
+  gcode::ToolPolicyOptions policy_options;
+  policy_options.allow_substitution = true;
+  policy_options.substitution_map["12"] = "7";
+  const auto policy =
+      std::make_shared<gcode::DefaultToolPolicy>(policy_options);
+
+  gcode::LowerOptions options;
+  options.tool_change_mode = gcode::ToolChangeMode::DeferredM6;
+  const auto lowered = gcode::parseAndLowerAil("T12\nM6\n", options);
+  gcode::AilExecutor exec(lowered.instructions, gcode::ErrorPolicy::Error,
+                          gcode::ErrorPolicy::Error, policy);
+
+  const auto resolver = [](const gcode::Condition &,
+                           const gcode::SourceInfo &) {
+    gcode::ConditionResolution r;
+    r.kind = gcode::ConditionResolutionKind::False;
+    return r;
+  };
+
+  ASSERT_TRUE(exec.step(0, resolver)); // T12
+  ASSERT_TRUE(exec.step(0, resolver)); // M6
+  ASSERT_TRUE(exec.state().active_tool_selection.has_value());
+  EXPECT_EQ(exec.state().active_tool_selection->selector_value, "7");
+  ASSERT_FALSE(exec.diagnostics().empty());
+  EXPECT_EQ(exec.diagnostics().back().severity,
+            gcode::Diagnostic::Severity::Warning);
+}
+
+TEST(AilExecutorTest, ToolPolicyFallbackResolvesUnresolvedSelection) {
+  gcode::ToolPolicyOptions policy_options;
+  policy_options.fallback_selection =
+      gcode::ToolSelectionState{std::nullopt, "7"};
+  const auto policy =
+      std::make_shared<gcode::DefaultToolPolicy>(policy_options);
+
+  gcode::LowerOptions options;
+  options.tool_change_mode = gcode::ToolChangeMode::DeferredM6;
+  const auto lowered = gcode::parseAndLowerAil("T999991\nM6\n", options);
+  gcode::AilExecutor exec(lowered.instructions, gcode::ErrorPolicy::Error,
+                          gcode::ErrorPolicy::Error, policy);
+
+  const auto resolver = [](const gcode::Condition &,
+                           const gcode::SourceInfo &) {
+    gcode::ConditionResolution r;
+    r.kind = gcode::ConditionResolutionKind::False;
+    return r;
+  };
+
+  ASSERT_TRUE(exec.step(0, resolver));
+  ASSERT_TRUE(exec.step(0, resolver));
+  ASSERT_TRUE(exec.state().active_tool_selection.has_value());
+  EXPECT_EQ(exec.state().active_tool_selection->selector_value, "7");
+  ASSERT_FALSE(exec.diagnostics().empty());
+  EXPECT_EQ(exec.diagnostics().back().severity,
+            gcode::Diagnostic::Severity::Warning);
+}
+
+TEST(AilExecutorTest, ToolPolicyAmbiguousSelectionFaultsByDefault) {
+  const auto policy = std::make_shared<gcode::DefaultToolPolicy>();
+
+  gcode::LowerOptions options;
+  options.tool_change_mode = gcode::ToolChangeMode::DirectT;
+  const auto lowered = gcode::parseAndLowerAil("T999992\n", options);
+  gcode::AilExecutor exec(lowered.instructions, gcode::ErrorPolicy::Error,
+                          gcode::ErrorPolicy::Error, policy);
+
+  const auto resolver = [](const gcode::Condition &,
+                           const gcode::SourceInfo &) {
+    gcode::ConditionResolution r;
+    r.kind = gcode::ConditionResolutionKind::False;
+    return r;
+  };
+
+  ASSERT_TRUE(exec.step(0, resolver));
+  EXPECT_EQ(exec.state().status, gcode::ExecutorStatus::Fault);
+  ASSERT_FALSE(exec.diagnostics().empty());
+  EXPECT_NE(exec.diagnostics().back().message.find("ambiguous"),
+            std::string::npos);
 }
 
 } // namespace

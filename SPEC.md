@@ -322,6 +322,12 @@ Planned Siemens compatibility extension:
     - before `M6`, last valid deferred selection wins
     - `M6` without pending selection uses policy
       (`error|warning|ignore`)
+    - tool resolution policy supports outcomes:
+      - `resolved`
+      - `unresolved`
+      - `ambiguous`
+      with configurable handling (`error|warning|ignore`) and optional fallback
+      selection/substitution mapping
 
 ### 3.7 Control Flow Syntax (parse-only in v0)
 - Jump directions:
@@ -538,7 +544,9 @@ N130 G01 X20 Y20
     - `tool_change` consumes pending selection when present
     - `M6` without pending selection follows configurable policy
       (`error|warning|ignore`)
-  - tool resolver/substitution policy integration remains follow-up work
+  - executor integrates pluggable tool policy (`ToolPolicy`) with default policy
+    implementation (`DefaultToolPolicy`) for unresolved/ambiguous/substitution
+    outcomes
 - Unresolved non-`GOTOC` target is runtime fault.
 
 ## 7. Testing Expectations

@@ -1,5 +1,31 @@
 # CHANGELOG_AGENT
 
+## 2026-03-04 (T-054 slice: tool policy resolver/substitution integration)
+- Added tool policy interface + default implementation:
+  - `ToolPolicy` / `DefaultToolPolicy`
+  - resolution outcomes: `resolved|unresolved|ambiguous`
+  - options for substitution map, ambiguous/unresolved handling, and fallback
+    selection
+- Integrated tool policy into `AilExecutor` tool activation path for both
+  direct (`T...`) and deferred (`T...` + `M6`) execution.
+- Added executor integration tests for:
+  - substitution during deferred `M6` activation
+  - unresolved selection with fallback selection
+  - ambiguous selection fault behavior by policy
+- Updated SPEC Sections 3.13 and 6.1 for current policy/runtime boundary.
+
+SPEC sections / tests:
+- SPEC: Section 3.13, Section 6.1
+- Tests: `test/ail_executor_tests.cpp`
+
+Known limitations:
+- Default policy includes deterministic placeholder unresolved/ambiguous marker
+  handling; production controller resolver backends remain machine-specific.
+- No hardware adapter/PLC integration in this slice.
+
+How to reproduce locally (commands):
+- `./dev/check.sh`
+
 ## 2026-03-04 (T-053 slice: executor tool pending/active semantics)
 - Added runtime tool state to `AilExecutor`:
   - `active_tool_selection`
