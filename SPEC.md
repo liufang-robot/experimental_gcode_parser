@@ -134,6 +134,9 @@ G1 X10 AP=90 RP=10   ; mixed modes should error
 - Intermediate point: `CIP` with `I1/J1/K1`
   - Optional `=` and `AC(...)`
 - Tangential circle: `CT` with `X/Y/Z`
+- Effective plane metadata:
+  - AIL arc instructions include `plane_effective` (`xy|zx|yz`)
+  - packet arc payloads include `plane_effective` (`xy|zx|yz`)
 
 Examples (from `testdata/g2g3_samples.ngc`):
 ```

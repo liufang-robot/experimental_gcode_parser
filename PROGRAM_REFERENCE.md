@@ -226,6 +226,8 @@ Lowering output:
   - `target_pose`: optional `x/y/z/a/b/c`
   - `arc`: optional `i/j/k/r`
   - `feed`: optional `F`
+- AIL/packet output also carries `plane_effective` for arc moves (`xy|zx|yz`)
+  based on active working plane.
 
 Diagnostics:
 - Warning for unsupported arc words in lowering, while still emitting supported

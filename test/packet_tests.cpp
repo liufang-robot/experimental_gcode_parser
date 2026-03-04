@@ -71,6 +71,7 @@ TEST(PacketTest, ConvertsAilMotionInstructionsToPackets) {
       result.packets[1].payload));
   const auto &p1 = std::get<gcode::MotionArcPayload>(result.packets[1].payload);
   EXPECT_TRUE(p1.clockwise);
+  EXPECT_EQ(p1.plane_effective, gcode::WorkingPlane::XY);
   ASSERT_TRUE(p1.arc.i.has_value());
   EXPECT_TRUE(closeEnough(*p1.arc.i, 6.0));
 
@@ -153,6 +154,21 @@ TEST(PacketTest, WorkingPlaneInstructionDoesNotEmitPacketOrWarning) {
   EXPECT_EQ(result.packets[0].type, gcode::PacketType::LinearMove);
   EXPECT_EQ(result.packets[0].source.line, 2);
   EXPECT_TRUE(result.diagnostics.empty());
+}
+
+TEST(PacketTest, ArcPacketIncludesEffectiveWorkingPlane) {
+  const auto result = gcode::parseLowerAndPacketize("G19\nG3 Y10 Z20 J1 K2\n");
+
+  ASSERT_EQ(result.packets.size(), 1u);
+  EXPECT_EQ(result.packets[0].type, gcode::PacketType::ArcMove);
+  ASSERT_TRUE(std::holds_alternative<gcode::MotionArcPayload>(
+      result.packets[0].payload));
+  const auto &payload =
+      std::get<gcode::MotionArcPayload>(result.packets[0].payload);
+  EXPECT_EQ(payload.plane_effective, gcode::WorkingPlane::YZ);
+
+  const auto json = nlohmann::json::parse(gcode::packetToJsonString(result));
+  EXPECT_EQ(json["packets"][0]["payload"]["plane_effective"], "yz");
 }
 
 TEST(PacketTest, JsonContainsStableSchema) {

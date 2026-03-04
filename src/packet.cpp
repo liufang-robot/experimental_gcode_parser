@@ -44,8 +44,9 @@ PacketResult lowerAilToPackets(const AilResult &ail_result) {
             packet.type = PacketType::ArcMove;
             packet.source = inst.source;
             packet.modal = inst.modal;
-            packet.payload = MotionArcPayload{inst.clockwise, inst.target_pose,
-                                              inst.arc, inst.feed};
+            packet.payload =
+                MotionArcPayload{inst.clockwise, inst.plane_effective,
+                                 inst.target_pose, inst.arc, inst.feed};
             result.packets.push_back(std::move(packet));
           } else if constexpr (std::is_same_v<T, AilDwellInstruction>) {
             MotionPacket packet;

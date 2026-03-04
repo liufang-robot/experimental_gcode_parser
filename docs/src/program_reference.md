@@ -214,6 +214,8 @@ Output fields:
 - target_pose: optional `x/y/z/a/b/c`
 - arc: optional `i/j/k/r`
 - feed: optional `F`
+- AIL/packet arc output carries `plane_effective` (`xy|zx|yz`) derived from
+  active working plane.
 
 ## G4
 

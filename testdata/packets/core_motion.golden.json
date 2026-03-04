@@ -42,6 +42,7 @@
         },
         "clockwise": true,
         "feed": 8.0,
+        "plane_effective": "xy",
         "target_pose": {
           "a": null,
           "b": null,

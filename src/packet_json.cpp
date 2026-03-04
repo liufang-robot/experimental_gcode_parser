@@ -35,6 +35,16 @@ std::string rapidModeToString(RapidInterpolationMode mode) {
   return mode == RapidInterpolationMode::Linear ? "linear" : "nonlinear";
 }
 
+std::string workingPlaneToString(WorkingPlane plane) {
+  if (plane == WorkingPlane::XY) {
+    return "xy";
+  }
+  if (plane == WorkingPlane::ZX) {
+    return "zx";
+  }
+  return "yz";
+}
+
 nlohmann::json locationToJson(const Location &location) {
   nlohmann::json j;
   j["line"] = location.line;
@@ -117,6 +127,7 @@ nlohmann::json payloadToJson(const PacketPayload &payload) {
           }
         } else if constexpr (std::is_same_v<T, MotionArcPayload>) {
           j["clockwise"] = p.clockwise;
+          j["plane_effective"] = workingPlaneToString(p.plane_effective);
           j["target_pose"] = poseToJson(p.target_pose);
           j["arc"] = arcToJson(p.arc);
           j["feed"] = optionalDoubleToJson(p.feed);
