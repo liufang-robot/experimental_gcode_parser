@@ -257,6 +257,101 @@ TEST(AilExecutorTest, SubprogramCallFaultsWhenTargetMissing) {
             std::string::npos);
 }
 
+TEST(AilExecutorTest, SubprogramCallWarningPolicyContinuesOnMissingTarget) {
+  const auto lowered = gcode::parseAndLowerAil("L1000\nG1 X1\n");
+  gcode::AilExecutor exec(lowered.instructions, gcode::ErrorPolicy::Error,
+                          gcode::ErrorPolicy::Error, nullptr,
+                          gcode::ErrorPolicy::Warning);
+
+  const auto resolver = [](const gcode::Condition &,
+                           const gcode::SourceInfo &) {
+    gcode::ConditionResolution r;
+    r.kind = gcode::ConditionResolutionKind::False;
+    return r;
+  };
+
+  ASSERT_TRUE(exec.step(0, resolver)); // unresolved call (warn)
+  EXPECT_EQ(exec.state().status, gcode::ExecutorStatus::Ready);
+  ASSERT_FALSE(exec.diagnostics().empty());
+  EXPECT_EQ(exec.diagnostics().back().severity,
+            gcode::Diagnostic::Severity::Warning);
+  ASSERT_TRUE(exec.step(0, resolver)); // G1
+  ASSERT_TRUE(exec.step(0, resolver)); // complete
+  EXPECT_EQ(exec.state().status, gcode::ExecutorStatus::Completed);
+}
+
+TEST(AilExecutorTest, SubprogramSearchPolicyCanFallbackToBareName) {
+  gcode::AilGotoInstruction goto_start;
+  goto_start.source.line = 1;
+  goto_start.opcode = "GOTO";
+  goto_start.target = "START";
+  goto_start.target_kind = "label";
+
+  gcode::AilLabelInstruction subprogram_label;
+  subprogram_label.source.line = 2;
+  subprogram_label.name = "SPF1000";
+
+  gcode::AilReturnBoundaryInstruction ret;
+  ret.source.line = 3;
+  ret.opcode = "RET";
+
+  gcode::AilLabelInstruction start_label;
+  start_label.source.line = 4;
+  start_label.name = "START";
+
+  gcode::AilSubprogramCallInstruction call;
+  call.source.line = 5;
+  call.target = "DIR/SPF1000";
+
+  gcode::AilGotoInstruction goto_end;
+  goto_end.source.line = 6;
+  goto_end.opcode = "GOTO";
+  goto_end.target = "END";
+  goto_end.target_kind = "label";
+
+  gcode::AilLabelInstruction end_label;
+  end_label.source.line = 7;
+  end_label.name = "END";
+
+  gcode::AilLinearMoveInstruction move;
+  move.source.line = 8;
+  move.opcode = "G1";
+  move.target_pose.x = 1.0;
+
+  std::vector<gcode::AilInstruction> instructions;
+  instructions.push_back(goto_start);
+  instructions.push_back(subprogram_label);
+  instructions.push_back(ret);
+  instructions.push_back(start_label);
+  instructions.push_back(call);
+  instructions.push_back(goto_end);
+  instructions.push_back(end_label);
+  instructions.push_back(move);
+
+  gcode::AilExecutor exec(instructions, gcode::ErrorPolicy::Error,
+                          gcode::ErrorPolicy::Error, nullptr,
+                          gcode::ErrorPolicy::Error,
+                          gcode::SubprogramSearchPolicy::ExactThenBareName);
+
+  const auto resolver = [](const gcode::Condition &,
+                           const gcode::SourceInfo &) {
+    gcode::ConditionResolution r;
+    r.kind = gcode::ConditionResolutionKind::False;
+    return r;
+  };
+
+  int guard = 0;
+  while (exec.state().status == gcode::ExecutorStatus::Ready && guard < 16) {
+    ASSERT_TRUE(exec.step(0, resolver));
+    ++guard;
+  }
+  ASSERT_FALSE(exec.diagnostics().empty());
+  EXPECT_NE(exec.diagnostics().front().message.find("bare-name fallback"),
+            std::string::npos);
+  EXPECT_EQ(exec.state().call_stack_depth, 0u);
+  EXPECT_EQ(exec.state().status, gcode::ExecutorStatus::Completed);
+}
+
 TEST(AilExecutorTest, SubprogramCallAndReturnUseCallStack) {
   const auto lowered = gcode::parseAndLowerAil(
       "GOTO START\nL1000:\nG1 X1\nRET\nSTART:\nL1000\nGOTO END\nEND:\nG1 X2\n");

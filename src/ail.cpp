@@ -5,6 +5,7 @@
 #include <cmath>
 #include <limits>
 #include <optional>
+#include <string>
 #include <type_traits>
 #include <unordered_map>
 
@@ -354,7 +355,8 @@ std::string subprogramTargetFromWord(const Word &word) {
 }
 
 std::optional<AilSubprogramCallInstruction>
-subprogramCallFromLine(const Line &line, const SourceInfo &source) {
+subprogramCallFromLine(const Line &line, const SourceInfo &source,
+                       const LowerOptions &options) {
   std::vector<const Word *> words;
   words.reserve(line.items.size());
   for (const auto &item : line.items) {
@@ -376,6 +378,18 @@ subprogramCallFromLine(const Line &line, const SourceInfo &source) {
 
   if (words.size() != 2) {
     return std::nullopt;
+  }
+
+  const auto is_m98_word = [](const Word &word) {
+    return word.head == "M" && !word.has_equal && word.value.has_value() &&
+           *word.value == "98";
+  };
+  if (options.enable_iso_m98_calls && is_m98_word(*words[0]) &&
+      words[1]->head == "P" && words[1]->value.has_value()) {
+    AilSubprogramCallInstruction inst;
+    inst.source = source;
+    inst.target = toUpper(*words[1]->value);
+    return inst;
   }
 
   AilSubprogramCallInstruction inst;
@@ -412,6 +426,14 @@ bool isSkipLevelActive(const LowerOptions &options, int level) {
   return std::find(options.active_skip_levels.begin(),
                    options.active_skip_levels.end(),
                    level) != options.active_skip_levels.end();
+}
+
+std::string bareSubprogramName(const std::string &target) {
+  const auto pos = target.find_last_of("/\\");
+  if (pos == std::string::npos || pos + 1 >= target.size()) {
+    return target;
+  }
+  return target.substr(pos + 1);
 }
 
 bool shouldSkipLine(const Line &line, const LowerOptions &options) {
@@ -621,7 +643,7 @@ AilResult lowerToAil(const Program &program,
       continue;
     }
     const auto source = sourceFromLine(line, options);
-    if (const auto call = subprogramCallFromLine(line, source);
+    if (const auto call = subprogramCallFromLine(line, source, options);
         call.has_value()) {
       result.instructions.push_back(*call);
       continue;
@@ -702,17 +724,23 @@ AilResult lowerToAil(const Program &program,
 
 AilResult parseAndLowerAil(std::string_view input,
                            const LowerOptions &options) {
-  const auto parsed = parse(input);
+  ParseOptions parse_options;
+  parse_options.enable_iso_m98_calls = options.enable_iso_m98_calls;
+  const auto parsed = parse(input, parse_options);
   return lowerToAil(parsed.program, parsed.diagnostics, options);
 }
 
 AilExecutor::AilExecutor(std::vector<AilInstruction> instructions,
                          ErrorPolicy unknown_mcode_policy,
                          ErrorPolicy m6_without_pending_policy,
-                         std::shared_ptr<const ToolPolicy> tool_policy)
+                         std::shared_ptr<const ToolPolicy> tool_policy,
+                         ErrorPolicy unresolved_subprogram_policy,
+                         SubprogramSearchPolicy subprogram_search_policy)
     : instructions_(std::move(instructions)),
       unknown_mcode_policy_(unknown_mcode_policy),
       m6_without_pending_policy_(m6_without_pending_policy),
+      unresolved_subprogram_policy_(unresolved_subprogram_policy),
+      subprogram_search_policy_(subprogram_search_policy),
       tool_policy_(std::move(tool_policy)) {
   if (!tool_policy_) {
     tool_policy_ = std::make_shared<DefaultToolPolicy>();
@@ -731,6 +759,19 @@ AilExecutor::AilExecutor(std::vector<AilInstruction> instructions,
         },
         inst);
   }
+}
+
+std::vector<std::string>
+AilExecutor::subprogramTargetCandidates(const std::string &target) const {
+  std::vector<std::string> candidates;
+  candidates.push_back(target);
+  if (subprogram_search_policy_ == SubprogramSearchPolicy::ExactThenBareName) {
+    const std::string fallback = bareSubprogramName(target);
+    if (fallback != target) {
+      candidates.push_back(fallback);
+    }
+  }
+  return candidates;
 }
 
 void AilExecutor::notifyEvent(const std::string &wait_key) {
@@ -1138,14 +1179,39 @@ bool AilExecutor::advanceOneInstruction(int64_t now_ms,
   }
   if (std::holds_alternative<AilSubprogramCallInstruction>(inst)) {
     const auto &call = std::get<AilSubprogramCallInstruction>(inst);
-    auto it = label_positions_.find(call.target);
-    if (it == label_positions_.end() || it->second.empty()) {
-      addFault(call.source, "unresolved subprogram target: " + call.target);
+    const auto targets = subprogramTargetCandidates(call.target);
+    std::string resolved_target;
+    std::vector<size_t> *positions = nullptr;
+    for (const auto &candidate : targets) {
+      auto it = label_positions_.find(candidate);
+      if (it != label_positions_.end() && !it->second.empty()) {
+        resolved_target = candidate;
+        positions = &it->second;
+        break;
+      }
+    }
+
+    if (positions == nullptr) {
+      const std::string message =
+          "unresolved subprogram target: " + call.target;
+      if (unresolved_subprogram_policy_ == ErrorPolicy::Error) {
+        addFault(call.source, message);
+        return true;
+      }
+      if (unresolved_subprogram_policy_ == ErrorPolicy::Warning) {
+        addWarning(call.source, message + "; ignored by policy");
+      }
+      ++state_.pc;
       return true;
     }
-    if (it->second.size() > 1) {
+    if (resolved_target != call.target) {
+      addWarning(call.source, "subprogram target resolved by bare-name "
+                              "fallback: " +
+                                  call.target + " -> " + resolved_target);
+    }
+    if (positions->size() > 1) {
       addWarning(call.source, "duplicate subprogram target labels for " +
-                                  call.target + "; using first definition");
+                                  resolved_target + "; using first definition");
     }
     const int64_t repeat_count = call.repeat_count.value_or(1);
     if (repeat_count <= 0) {
@@ -1157,7 +1223,7 @@ bool AilExecutor::advanceOneInstruction(int64_t now_ms,
     }
     SubprogramCallFrame frame;
     frame.return_pc = state_.pc + 1;
-    frame.target_pc = it->second.front();
+    frame.target_pc = positions->front();
     frame.remaining_repeats = repeat_count;
     call_stack_frames_.push_back(frame);
     state_.call_stack_depth = call_stack_frames_.size();

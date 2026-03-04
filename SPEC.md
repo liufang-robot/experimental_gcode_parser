@@ -247,6 +247,9 @@ Planned Siemens compatibility extension:
     - `<subprogram_name>`
     - `<subprogram_name> P<count>`
     - `P=<count> <subprogram_name>`
+  - ISO compatibility call `M98 P<id>` is supported when
+    `enable_iso_m98_calls=true`; otherwise parser reports a deterministic
+    diagnostic.
   - `RET` and `M17` lower to explicit AIL `return_boundary` instructions.
   - packet stage does not emit standalone packets for `subprogram_call`.
   - packet stage does not emit standalone packets for `return_boundary`.
@@ -563,14 +566,24 @@ N130 G01 X20 Y20
 - Subprogram call runtime boundary (v0 baseline):
   - direct call forms emit explicit `subprogram_call` AIL instructions with
     optional `repeat_count`
+  - ISO call form `M98 P<id>` emits explicit `subprogram_call` when ISO mode is
+    enabled
   - packet stage does not emit standalone motion packets for
     `subprogram_call`
   - executor resolves target by label in current instruction stream, pushes
     return PC, and transfers control to target label
+  - subprogram target search policy is configurable:
+    - `ExactOnly` (default): resolve only exact label match
+    - `ExactThenBareName`: try exact target first, then bare-name fallback
+      (substring after last `/` or `\`)
   - when `repeat_count > 1`, executor loops call/return on same target until
     repeat count is exhausted
   - `repeat_count <= 0` is ignored with warning
   - unresolved subprogram target is a runtime fault
+  - unresolved subprogram target policy is configurable:
+    - `error` => fault
+    - `warning` => warning diagnostic and continue
+    - `ignore` => continue silently
 - Tool runtime boundary (current):
   - `tool_select` / `tool_change` instructions are explicit executable control
     instructions in AIL

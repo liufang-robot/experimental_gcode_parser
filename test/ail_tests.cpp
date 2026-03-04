@@ -253,6 +253,20 @@ TEST(AilTest, EmitsSubprogramCallInstructionsForDirectAndPRepeatForms) {
   EXPECT_EQ(json["instructions"][2]["repeat_count"], 2);
 }
 
+TEST(AilTest, EmitsIsoM98SubprogramCallWhenEnabled) {
+  gcode::LowerOptions options;
+  options.enable_iso_m98_calls = true;
+  const auto result = gcode::parseAndLowerAil("M98 P1000\n", options);
+  ASSERT_TRUE(result.diagnostics.empty());
+  ASSERT_EQ(result.instructions.size(), 1u);
+  ASSERT_TRUE(std::holds_alternative<gcode::AilSubprogramCallInstruction>(
+      result.instructions[0]));
+  const auto &call =
+      std::get<gcode::AilSubprogramCallInstruction>(result.instructions[0]);
+  EXPECT_EQ(call.target, "1000");
+  EXPECT_FALSE(call.repeat_count.has_value());
+}
+
 TEST(AilTest, EmitsRapidTraverseModeInstructionsForRTLIONAndRTLIOF) {
   const auto result = gcode::parseAndLowerAil("RTLION\nG0 X1\nRTLIOF\nG0 X2\n");
   ASSERT_TRUE(result.diagnostics.empty());

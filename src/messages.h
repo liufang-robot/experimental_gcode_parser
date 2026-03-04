@@ -92,6 +92,7 @@ struct LowerOptions {
   std::optional<std::string> filename;
   std::vector<int> active_skip_levels;
   std::optional<ToolChangeMode> tool_change_mode;
+  bool enable_iso_m98_calls = false;
 };
 
 struct MessageResult {
