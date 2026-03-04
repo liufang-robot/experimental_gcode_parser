@@ -17,6 +17,8 @@ Principles:
 - Then add one feature family per slice.
 - Keep strict test-first and `./dev/check.sh` green at each step.
 - PRs are created only; merge after explicit user approval.
+- Model every machine-carried behavior as an explicit executable instruction;
+  decide per-instruction execution transport (motion packet vs runtime control).
 
 ## 3. Phase Plan
 

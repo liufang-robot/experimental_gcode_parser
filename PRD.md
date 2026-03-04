@@ -110,6 +110,22 @@ Output access points:
 - improved syntax coverage and diagnostics detail.
 - API facade hardening and file-based API convenience.
 
+### 5.2.1 Executable-Action Modeling Contract
+Product-level rule for architecture and implementation slices:
+- Every machine-carried action must be represented as an explicit executable
+  instruction in IR (AIL or equivalent typed runtime IR).
+- Packetization is not mandatory for every instruction:
+  - motion-family instructions may be lowered to motion packets
+  - non-motion instructions may execute through a control-command/runtime path
+- Parse-only metadata (comments, labels, static annotations) may remain
+  non-executable as long as they are not machine-action semantics.
+
+Acceptance expectation:
+- each new machine-action feature defines:
+  - instruction kind and payload contract
+  - execution path (`packet` or runtime control-command path)
+  - deterministic diagnostics/policy behavior
+
 ### 5.3 Siemens Comment Syntax Requirement (New)
 Requirement intent:
 - Match Siemens-style comment behavior used in Sinumerik-style programs.

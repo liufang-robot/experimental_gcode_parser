@@ -18,6 +18,7 @@ namespace gcode {
 enum class RapidInterpolationMode { Linear, NonLinear };
 enum class ToolRadiusCompMode { Off, Left, Right };
 enum class WorkingPlane { XY, ZX, YZ };
+enum class ToolActionTiming { Immediate, DeferredUntilM6 };
 
 struct AilLinearMoveInstruction {
   SourceInfo source;
@@ -66,6 +67,18 @@ struct AilWorkingPlaneInstruction {
   WorkingPlane plane = WorkingPlane::XY;
 };
 
+struct AilToolSelectInstruction {
+  SourceInfo source;
+  std::optional<int64_t> selector_index;
+  std::string selector_value;
+  ToolActionTiming timing = ToolActionTiming::DeferredUntilM6;
+};
+
+struct AilToolChangeInstruction {
+  SourceInfo source;
+  ToolActionTiming timing = ToolActionTiming::DeferredUntilM6;
+};
+
 // Placeholder variants for upcoming non-motion semantics.
 struct AilAssignInstruction {
   SourceInfo source;
@@ -101,7 +114,8 @@ using AilInstruction =
     std::variant<AilLinearMoveInstruction, AilArcMoveInstruction,
                  AilDwellInstruction, AilMCodeInstruction,
                  AilRapidTraverseModeInstruction, AilToolRadiusCompInstruction,
-                 AilWorkingPlaneInstruction, AilAssignInstruction,
+                 AilWorkingPlaneInstruction, AilToolSelectInstruction,
+                 AilToolChangeInstruction, AilAssignInstruction,
                  AilLabelInstruction, AilGotoInstruction,
                  AilBranchIfInstruction, AilSyncInstruction>;
 

@@ -1,5 +1,49 @@
 # CHANGELOG_AGENT
 
+## 2026-03-04 (Docs alignment: executable-action instruction contract)
+- Clarified cross-document contract that machine-carried actions must be
+  represented as explicit executable instructions in IR (AIL).
+- Updated PRD/SPEC/architecture docs to distinguish execution path from
+  packetization:
+  - motion instructions may emit packets
+  - non-motion control instructions execute via runtime control path
+- Updated tool-change design and backlog `T-053` acceptance to require explicit
+  execution-path wiring for `tool_select`/`tool_change`.
+
+SPEC sections / tests:
+- SPEC: Section 2.2, Section 3.13, Section 6.1
+- Tests: no code-path change in this slice (documentation/planning update only)
+
+Known limitations:
+- Runtime hardware actuation path for tool instructions is still pending
+  follow-up implementation in `T-053`/`T-054`.
+
+How to reproduce locally (commands):
+- `./dev/check.sh`
+
+## 2026-03-04 (T-052 slice: AIL tool_select/tool_change instruction split)
+- Added explicit AIL instruction types for tool semantics:
+  - `tool_select` (selector index/value + timing metadata)
+  - `tool_change` (`M6` trigger + timing metadata)
+- Updated lowering to emit tool instructions from `T...` selectors and `M6`,
+  with timing determined by `LowerOptions.tool_change_mode` (default deferred).
+- Updated AIL JSON/debug output and packet behavior to treat tool instructions
+  as non-motion control state (no standalone packets/warnings).
+- Added tests for AIL, CLI JSON/debug schema, and packet behavior.
+- Updated SPEC Section 3.13 to include AIL tool instruction contract.
+- Marked `T-052` as done in backlog as local/unmerged.
+
+SPEC sections / tests:
+- SPEC: Section 3.13
+- Tests: `test/ail_tests.cpp`, `test/cli_tests.cpp`, `test/packet_tests.cpp`
+
+Known limitations:
+- Executor pending-tool state and direct/deferred execution semantics are not
+  implemented in this slice (follow-up `T-053`).
+
+How to reproduce locally (commands):
+- `./dev/check.sh`
+
 ## 2026-03-04 (T-051 slice: tool selector normalization + mode-aware validation)
 - Added parser option `tool_management` and semantic validation for normalized
   Siemens `T...` selector forms.

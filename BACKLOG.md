@@ -408,9 +408,15 @@ Architecture planning queue for PRD Section 5 requirements:
   - executor state for `active_tool` and `pending_tool_selection`
   - behavior rules for direct mode, deferred mode, and last-selection-wins
   - `M6` without pending selection policy hook
+  - runtime execution-path wiring for `tool_select`/`tool_change` as executable
+    control instructions (non-motion path; no standalone motion packets)
 - `Acceptance Criteria`:
   - executor behavior is deterministic across direct/deferred configurations
   - diagnostics/policy behavior is explicit for `M6` without pending tool
+  - execution boundary is documented and test-covered:
+    - instruction exists in AIL
+    - runtime path executes it
+    - packet stage remains motion-focused
 - `Out of Scope`:
   - tool database substitution resolution internals
 - `SPEC Sections`:
@@ -506,3 +512,4 @@ Use this template for new backlog items:
 - T-042 (local, unmerged)
 - T-038 (local, unmerged)
 - T-051 (local, unmerged)
+- T-052 (local, unmerged)
