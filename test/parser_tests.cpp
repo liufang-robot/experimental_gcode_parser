@@ -320,6 +320,18 @@ TEST(ParserSyntaxBaselineTest, ParsesQuotedSubprogramCallTarget) {
   EXPECT_EQ(word.text, "DIR/SPF1000");
 }
 
+TEST(ParserSyntaxBaselineTest, ParsesAlphabeticSubprogramCallTarget) {
+  const auto result = gcode::parse("ALIAS\n");
+  ASSERT_TRUE(result.diagnostics.empty());
+  ASSERT_EQ(result.program.lines.size(), 1u);
+  ASSERT_EQ(result.program.lines[0].items.size(), 1u);
+  ASSERT_TRUE(
+      std::holds_alternative<gcode::Word>(result.program.lines[0].items[0]));
+  const auto &word = std::get<gcode::Word>(result.program.lines[0].items[0]);
+  EXPECT_FALSE(word.quoted);
+  EXPECT_EQ(word.text, "ALIAS");
+}
+
 TEST(ParserSyntaxBaselineTest, M98CallRequiresIsoCompatibilityMode) {
   {
     const auto result = gcode::parse("M98 P1000\n");

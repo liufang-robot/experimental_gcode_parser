@@ -340,13 +340,15 @@ bool isSubprogramTargetWord(const Word &word) {
   if (word.has_equal || word.text.empty() || word.head.empty()) {
     return false;
   }
-  const char first = word.head.front();
-  if (first == 'G' || first == 'M' || first == 'T' || first == 'P' ||
-      first == 'N' || first == 'X' || first == 'Y' || first == 'Z' ||
-      first == 'A' || first == 'B' || first == 'C' || first == 'I' ||
-      first == 'J' || first == 'K' || first == 'F' || first == 'S' ||
-      first == 'R') {
-    return false;
+  if (word.value.has_value()) {
+    const char first = word.head.front();
+    if (first == 'G' || first == 'M' || first == 'T' || first == 'P' ||
+        first == 'N' || first == 'X' || first == 'Y' || first == 'Z' ||
+        first == 'A' || first == 'B' || first == 'C' || first == 'I' ||
+        first == 'J' || first == 'K' || first == 'F' || first == 'S' ||
+        first == 'R') {
+      return false;
+    }
   }
   if (word.head == "RET" || word.head == "RTLION" || word.head == "RTLIOF") {
     return false;

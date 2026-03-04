@@ -1,5 +1,25 @@
 #CHANGELOG_AGENT
 
+## 2026-03-04 (T-050 slice 10: broaden direct call target shape baseline)
+- Updated subprogram-call target detection to accept standalone unquoted
+  identifier targets like `ALIAS` as direct calls (while still rejecting
+  reserved boundary keywords such as `RET`/`RTLION`/`RTLIOF`).
+- Added parser/AIL coverage for unquoted alphabetic target call form.
+- Updated alias-map executor test to use non-`L` prefixed identifier names,
+  verifying alias-map behavior with broader target-shape baseline.
+
+SPEC sections / tests:
+- SPEC: Section 3.9, Section 6.1
+- Tests: `test/parser_tests.cpp`, `test/ail_tests.cpp`,
+  `test/ail_executor_tests.cpp`
+
+Known limitations:
+- Target-shape acceptance is still lexical/heuristic in this slice; no full
+  symbol-table name classification is implemented yet.
+
+How to reproduce locally (commands):
+- `./dev/check.sh`
+
 ## 2026-03-04 (T-050 slice 9: default subprogram alias-map policy)
 - Extended `DefaultSubprogramPolicy` with `alias_map` support:
   - requested target can be deterministically remapped to another in-program
