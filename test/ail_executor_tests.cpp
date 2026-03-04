@@ -482,6 +482,36 @@ TEST(AilExecutorTest, SubprogramPolicyCanOverrideResolution) {
   EXPECT_EQ(exec.state().status, gcode::ExecutorStatus::Completed);
 }
 
+TEST(AilExecutorTest, DefaultSubprogramPolicyAliasMapResolvesTarget) {
+  gcode::SubprogramPolicyOptions options;
+  options.alias_map["LALIAS"] = "LREAL";
+  const auto policy = std::make_shared<gcode::DefaultSubprogramPolicy>(options);
+
+  const auto lowered =
+      gcode::parseAndLowerAil("GOTO START\nLREAL:\nRET\nSTART:\nLALIAS\n");
+  gcode::AilExecutor exec(lowered.instructions, gcode::ErrorPolicy::Error,
+                          gcode::ErrorPolicy::Error, nullptr,
+                          gcode::ErrorPolicy::Error,
+                          gcode::SubprogramSearchPolicy::ExactOnly, policy);
+
+  const auto resolver = [](const gcode::Condition &,
+                           const gcode::SourceInfo &) {
+    gcode::ConditionResolution r;
+    r.kind = gcode::ConditionResolutionKind::False;
+    return r;
+  };
+
+  int guard = 0;
+  while (exec.state().status == gcode::ExecutorStatus::Ready && guard < 16) {
+    ASSERT_TRUE(exec.step(0, resolver));
+    ++guard;
+  }
+  EXPECT_EQ(exec.state().status, gcode::ExecutorStatus::Completed);
+  ASSERT_FALSE(exec.diagnostics().empty());
+  EXPECT_NE(exec.diagnostics().front().message.find("alias map"),
+            std::string::npos);
+}
+
 TEST(AilExecutorTest, SubprogramCallAndReturnUseCallStack) {
   const auto lowered = gcode::parseAndLowerAil(
       "GOTO START\nL1000:\nG1 X1\nRET\nSTART:\nL1000\nGOTO END\nEND:\nG1 X2\n");

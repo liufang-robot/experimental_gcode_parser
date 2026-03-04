@@ -1,5 +1,23 @@
 #CHANGELOG_AGENT
 
+## 2026-03-04 (T-050 slice 9: default subprogram alias-map policy)
+- Extended `DefaultSubprogramPolicy` with `alias_map` support:
+  - requested target can be deterministically remapped to another in-program
+    label target (`requested -> resolved`)
+- Added runtime diagnostic message when alias-map resolution is used.
+- Added executor test coverage for default alias-map resolution flow.
+
+SPEC sections / tests:
+- SPEC: Section 6.1 (subprogram call runtime boundary)
+- Tests: `test/ail_executor_tests.cpp`
+
+Known limitations:
+- Alias-map currently resolves only to labels in the current lowered program;
+  no multi-file MPF/SPF program lookup in this slice.
+
+How to reproduce locally (commands):
+- `./dev/check.sh`
+
 ## 2026-03-04 (T-050 slice 8: quoted subprogram call compatibility form)
 - Added parser support for quoted subprogram-call target items:
   - `"SUBPROGRAM_NAME"`
