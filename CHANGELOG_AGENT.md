@@ -1,5 +1,26 @@
 # CHANGELOG_AGENT
 
+## 2026-03-03 (T-045 slice 5: packetization ignores standalone rapid_mode)
+- Updated packetization behavior for `rapid_mode` instructions to avoid
+  emitting skip-warning diagnostics for standalone `RTLION`/`RTLIOF`.
+- `rapid_mode` still does not emit standalone packets; its effect remains
+  represented through `rapid_mode_effective` on `G0` linear payloads.
+- Updated packet tests and program-reference docs to reflect warning-free
+  packetization behavior for rapid-mode instructions.
+
+SPEC sections / tests:
+- SPEC: no behavior-contract section change required (packet warning policy
+  adjustment only)
+- Tests: `test/packet_tests.cpp`, `./dev/check.sh`
+
+Known limitations:
+- Packet layer still does not emit dedicated packets for `rapid_mode`; only
+  `G0` payload metadata carries effective rapid mode.
+
+How to reproduce locally (commands):
+- `ctest --test-dir build --output-on-failure -R \"PacketTest\"`
+- `./dev/check.sh`
+
 ## 2026-03-03 (T-045 slice 4: executor tracks rapid-mode state)
 - Added `ExecutorState.rapid_mode_current` and executor handling for
   `rapid_mode` instructions so `AilExecutor` now tracks current `RTLION`/`RTLIOF`
