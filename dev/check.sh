@@ -27,10 +27,7 @@ cmake -S "$ROOT_DIR" -B "$ROOT_DIR/build"
 echo "==> cmake build"
 cmake --build "$ROOT_DIR/build" -j
 
-echo "==> clang-tidy"
-for file in "${format_targets[@]}"; do
-  clang-tidy -p "$ROOT_DIR/build" "$file"
-done
+"$ROOT_DIR/dev/clang_tidy_targets.sh" "${CLANG_TIDY_SCOPE:-all}" "$ROOT_DIR/build"
 
 echo "==> ctest"
 ctest --test-dir "$ROOT_DIR/build" --output-on-failure

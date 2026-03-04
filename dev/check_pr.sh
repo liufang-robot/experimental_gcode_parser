@@ -22,6 +22,8 @@ cmake -S "$ROOT_DIR" -B "$ROOT_DIR/build"
 echo "==> cmake build"
 cmake --build "$ROOT_DIR/build" -j
 
+"$ROOT_DIR/dev/clang_tidy_targets.sh" changed "$ROOT_DIR/build"
+
 echo "==> ctest"
 ctest --test-dir "$ROOT_DIR/build" --output-on-failure
 

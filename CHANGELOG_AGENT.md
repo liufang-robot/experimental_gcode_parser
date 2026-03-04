@@ -1,5 +1,30 @@
 # CHANGELOG_AGENT
 
+## 2026-03-04 (CI/tooling: faster clang-tidy via changed-file scope + parallel)
+- Added `dev/clang_tidy_targets.sh` to run clang-tidy in two scopes:
+  - `all` (full set under `src/` + `test/`)
+  - `changed` (diff-targeted files only)
+- Added parallel clang-tidy execution (`CLANG_TIDY_JOBS`, default `nproc`).
+- Updated `dev/check.sh` to call the helper (scope configurable via
+  `CLANG_TIDY_SCOPE`, default `all`).
+- Updated `dev/check_pr.sh` to run clang-tidy on changed files.
+- Updated CI checkout to `fetch-depth: 0` so changed-file diff selection is
+  reliable in pull-request jobs.
+
+SPEC sections / tests:
+- SPEC: no parser behavior contract change (tooling/CI only)
+- Validation: `./dev/check_pr.sh`, `./dev/check.sh`
+
+Known limitations:
+- Changed-file detection depends on git history availability and base-ref
+  resolution; helper falls back progressively (`origin/<base>`, `origin/main`,
+  `HEAD~1`).
+
+How to reproduce locally (commands):
+- `./dev/check_pr.sh`
+- `CLANG_TIDY_SCOPE=all ./dev/check.sh`
+- `CLANG_TIDY_SCOPE=changed ./dev/check.sh`
+
 ## 2026-03-04 (T-040 slice 3: carry effective working plane on arc outputs)
 - Added `plane_effective` on AIL arc instructions and packet arc payloads.
 - `plane_effective` is derived from active/same-block `G17/G18/G19` state in
