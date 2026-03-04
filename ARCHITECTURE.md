@@ -170,6 +170,8 @@ stateDiagram-v2
   - [docs/src/design/exactstop_contpath_architecture.md](/home/liufang/optcnc/gcode/docs/src/design/exactstop_contpath_architecture.md)
 - Detailed M-code architecture note:
   - [docs/src/design/mcode_architecture.md](/home/liufang/optcnc/gcode/docs/src/design/mcode_architecture.md)
+- Detailed rapid-traverse architecture note:
+  - [docs/src/design/rapid_traverse_architecture.md](/home/liufang/optcnc/gcode/docs/src/design/rapid_traverse_architecture.md)
 - Planned:
   - modal groups 6/7/8/10/11/12/13/14/15 full state model
   - tool management behaviors

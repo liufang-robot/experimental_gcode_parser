@@ -378,7 +378,7 @@ Use this template for new backlog items:
 
 ## In Progress
 (List tasks currently being worked on; only one assignee/task per PR)
-- T-046 (docs/t-046-mcode-architecture)
+- (none)
 
 ## Done
 (Move completed tasks here with PR link)
@@ -419,3 +419,5 @@ Use this template for new backlog items:
 - T-035 (local, unmerged)
 - T-036 (local, unmerged)
 - T-044 (local, unmerged)
+- T-046 (local, unmerged)
+- T-045 (local, unmerged)
