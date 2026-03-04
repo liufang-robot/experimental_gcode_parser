@@ -133,6 +133,8 @@ classDiagram
 - v1 scope:
   - deterministic prefix/suffix merge semantics and API behavior
   - parser-internal tree-reuse optimization is a later performance enhancement
+- Detailed API/merge design:
+  - [docs/src/design/incremental_session.md](/home/liufang/optcnc/gcode/docs/src/design/incremental_session.md)
 
 ```mermaid
 stateDiagram-v2
