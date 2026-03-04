@@ -1,5 +1,25 @@
 #CHANGELOG_AGENT
 
+## 2026-03-04 (T-050 slice 11: baseline PROC declaration compatibility)
+- Added lowering support for `PROC <name>` declaration lines:
+  - lowers to `AilLabelInstruction` marker (non-motion declaration boundary)
+  - enables runtime subprogram-call target resolution against PROC-declared
+    names without introducing executable side effects
+- Added parser/AIL/executor tests for PROC declaration surface syntax and
+  call/return flow resolving against PROC declaration labels.
+
+SPEC sections / tests:
+- SPEC: Section 3.9, Section 6.1
+- Tests: `test/parser_tests.cpp`, `test/ail_tests.cpp`,
+  `test/ail_executor_tests.cpp`
+
+Known limitations:
+- Only baseline `PROC <name>` shape is covered in this slice; typed parameter
+  signatures and call-argument parsing remain planned.
+
+How to reproduce locally (commands):
+- `./dev/check.sh`
+
 ## 2026-03-04 (T-050 slice 10: broaden direct call target shape baseline)
 - Updated subprogram-call target detection to accept standalone unquoted
   identifier targets like `ALIAS` as direct calls (while still rejecting

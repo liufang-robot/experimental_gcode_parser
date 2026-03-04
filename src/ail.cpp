@@ -360,6 +360,32 @@ std::string subprogramTargetFromWord(const Word &word) {
   return toUpper(word.text);
 }
 
+std::optional<AilLabelInstruction>
+subprogramDeclarationFromLine(const Line &line, const SourceInfo &source) {
+  std::vector<const Word *> words;
+  words.reserve(line.items.size());
+  for (const auto &item : line.items) {
+    if (!std::holds_alternative<Word>(item)) {
+      continue;
+    }
+    words.push_back(&std::get<Word>(item));
+  }
+  if (words.size() != 2) {
+    return std::nullopt;
+  }
+  if (words[0]->head != "PROC" || words[0]->value.has_value() ||
+      words[0]->has_equal) {
+    return std::nullopt;
+  }
+  if (!isSubprogramTargetWord(*words[1])) {
+    return std::nullopt;
+  }
+  AilLabelInstruction inst;
+  inst.source = source;
+  inst.name = subprogramTargetFromWord(*words[1]);
+  return inst;
+}
+
 std::optional<AilSubprogramCallInstruction>
 subprogramCallFromLine(const Line &line, const SourceInfo &source,
                        const LowerOptions &options) {
@@ -641,6 +667,11 @@ AilResult lowerToAil(const Program &program,
       continue;
     }
     const auto source = sourceFromLine(line, options);
+    if (const auto decl = subprogramDeclarationFromLine(line, source);
+        decl.has_value()) {
+      result.instructions.push_back(*decl);
+      continue;
+    }
     if (const auto call = subprogramCallFromLine(line, source, options);
         call.has_value()) {
       result.instructions.push_back(*call);

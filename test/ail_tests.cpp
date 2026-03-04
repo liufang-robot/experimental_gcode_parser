@@ -291,6 +291,17 @@ TEST(AilTest, EmitsUnquotedAlphabeticSubprogramCallInstruction) {
   EXPECT_FALSE(call.repeat_count.has_value());
 }
 
+TEST(AilTest, EmitsProcDeclarationAsLabelInstruction) {
+  const auto result = gcode::parseAndLowerAil("PROC MAIN\n");
+  ASSERT_TRUE(result.diagnostics.empty());
+  ASSERT_EQ(result.instructions.size(), 1u);
+  ASSERT_TRUE(std::holds_alternative<gcode::AilLabelInstruction>(
+      result.instructions[0]));
+  const auto &decl =
+      std::get<gcode::AilLabelInstruction>(result.instructions[0]);
+  EXPECT_EQ(decl.name, "MAIN");
+}
+
 TEST(AilTest, EmitsRapidTraverseModeInstructionsForRTLIONAndRTLIOF) {
   const auto result = gcode::parseAndLowerAil("RTLION\nG0 X1\nRTLIOF\nG0 X2\n");
   ASSERT_TRUE(result.diagnostics.empty());

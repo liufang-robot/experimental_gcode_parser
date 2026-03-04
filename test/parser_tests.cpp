@@ -332,6 +332,21 @@ TEST(ParserSyntaxBaselineTest, ParsesAlphabeticSubprogramCallTarget) {
   EXPECT_EQ(word.text, "ALIAS");
 }
 
+TEST(ParserSyntaxBaselineTest, ParsesProcDeclarationSurfaceSyntax) {
+  const auto result = gcode::parse("PROC MAIN\n");
+  ASSERT_TRUE(result.diagnostics.empty());
+  ASSERT_EQ(result.program.lines.size(), 1u);
+  ASSERT_EQ(result.program.lines[0].items.size(), 2u);
+  ASSERT_TRUE(
+      std::holds_alternative<gcode::Word>(result.program.lines[0].items[0]));
+  ASSERT_TRUE(
+      std::holds_alternative<gcode::Word>(result.program.lines[0].items[1]));
+  const auto &kw = std::get<gcode::Word>(result.program.lines[0].items[0]);
+  const auto &name = std::get<gcode::Word>(result.program.lines[0].items[1]);
+  EXPECT_EQ(kw.head, "PROC");
+  EXPECT_EQ(name.text, "MAIN");
+}
+
 TEST(ParserSyntaxBaselineTest, M98CallRequiresIsoCompatibilityMode) {
   {
     const auto result = gcode::parse("M98 P1000\n");
