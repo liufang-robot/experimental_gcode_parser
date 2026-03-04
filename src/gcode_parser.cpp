@@ -465,6 +465,22 @@ private:
           line.items.emplace_back(std::move(word));
           continue;
         }
+        if (auto *quoted_word_node = item_ctx->QUOTED_WORD()) {
+          auto *token = quoted_word_node->getSymbol();
+          Word word;
+          word.text = token->getText();
+          if (word.text.size() >= 2 && word.text.front() == '"' &&
+              word.text.back() == '"') {
+            word.text = word.text.substr(1, word.text.size() - 2);
+          }
+          word.location = locationFromToken(token);
+          word.head = toUpper(word.text);
+          word.value = std::nullopt;
+          word.has_equal = false;
+          word.quoted = true;
+          line.items.emplace_back(std::move(word));
+          continue;
+        }
         if (auto *line_number_node = item_ctx->LINE_NUMBER()) {
           auto *token = line_number_node->getSymbol();
           Word word;

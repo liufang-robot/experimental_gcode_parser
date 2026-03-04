@@ -334,6 +334,9 @@ std::optional<int64_t> parseSubprogramRepeatCount(const Word &word) {
 }
 
 bool isSubprogramTargetWord(const Word &word) {
+  if (word.quoted) {
+    return !word.text.empty();
+  }
   if (word.has_equal || word.text.empty() || word.head.empty()) {
     return false;
   }

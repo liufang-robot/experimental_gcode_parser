@@ -379,6 +379,32 @@ TEST(AilExecutorTest, SubprogramSearchPolicyCanFallbackToBareName) {
   EXPECT_EQ(exec.state().status, gcode::ExecutorStatus::Completed);
 }
 
+TEST(AilExecutorTest, QuotedSubprogramCallUsesBareNameFallbackPolicy) {
+  const auto lowered = gcode::parseAndLowerAil(
+      "GOTO START\nSPF1000:\nRET\nSTART:\n\"DIR/SPF1000\"\nG1 X1\n");
+  gcode::AilExecutor exec(lowered.instructions, gcode::ErrorPolicy::Error,
+                          gcode::ErrorPolicy::Error, nullptr,
+                          gcode::ErrorPolicy::Error,
+                          gcode::SubprogramSearchPolicy::ExactThenBareName);
+
+  const auto resolver = [](const gcode::Condition &,
+                           const gcode::SourceInfo &) {
+    gcode::ConditionResolution r;
+    r.kind = gcode::ConditionResolutionKind::False;
+    return r;
+  };
+
+  int guard = 0;
+  while (exec.state().status == gcode::ExecutorStatus::Ready && guard < 16) {
+    ASSERT_TRUE(exec.step(0, resolver));
+    ++guard;
+  }
+  EXPECT_EQ(exec.state().status, gcode::ExecutorStatus::Completed);
+  ASSERT_FALSE(exec.diagnostics().empty());
+  EXPECT_NE(exec.diagnostics().front().message.find("bare-name fallback"),
+            std::string::npos);
+}
+
 TEST(AilExecutorTest, SubprogramPolicyCanOverrideResolution) {
   gcode::AilGotoInstruction goto_start;
   goto_start.source.line = 1;

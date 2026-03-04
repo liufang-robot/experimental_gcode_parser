@@ -25,6 +25,7 @@ struct Word {
   std::string head;
   std::optional<std::string> value;
   bool has_equal = false;
+  bool quoted = false;
   Location location;
 };
 
