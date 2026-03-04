@@ -11,6 +11,8 @@
 namespace gcode {
 namespace {
 
+enum class WorkingPlaneState { XY, ZX, YZ };
+
 bool lineHasError(const std::vector<Diagnostic> &diagnostics, int line) {
   for (const auto &diag : diagnostics) {
     if (diag.severity == Diagnostic::Severity::Error &&
@@ -57,6 +59,70 @@ int motionCode(const Word &word) {
     return std::stoi(*word.value);
   } catch (...) {
     return -1;
+  }
+}
+
+std::optional<WorkingPlaneState> planeFromWord(const Word &word) {
+  if (word.head != "G" || !word.value.has_value()) {
+    return std::nullopt;
+  }
+  try {
+    const int code = std::stoi(*word.value);
+    if (code == 17) {
+      return WorkingPlaneState::XY;
+    }
+    if (code == 18) {
+      return WorkingPlaneState::ZX;
+    }
+    if (code == 19) {
+      return WorkingPlaneState::YZ;
+    }
+  } catch (...) {
+    return std::nullopt;
+  }
+  return std::nullopt;
+}
+
+void addErrorDiagnostic(std::vector<Diagnostic> *diagnostics,
+                        const Location &location, const std::string &message) {
+  Diagnostic diag;
+  diag.severity = Diagnostic::Severity::Error;
+  diag.message = message;
+  diag.location = location;
+  diagnostics->push_back(std::move(diag));
+}
+
+void validateArcPlaneWords(const Line &line, WorkingPlaneState plane,
+                           std::vector<Diagnostic> *diagnostics) {
+  for (const auto &item : line.items) {
+    if (!isWord(item)) {
+      continue;
+    }
+    const auto &word = std::get<Word>(item);
+    if ((word.head != "I" && word.head != "J" && word.head != "K") ||
+        !word.value.has_value()) {
+      continue;
+    }
+
+    bool allowed = false;
+    if (plane == WorkingPlaneState::XY) {
+      allowed = (word.head == "I" || word.head == "J");
+    } else if (plane == WorkingPlaneState::ZX) {
+      allowed = (word.head == "I" || word.head == "K");
+    } else {
+      allowed = (word.head == "J" || word.head == "K");
+    }
+
+    if (!allowed) {
+      const char *plane_name =
+          plane == WorkingPlaneState::XY
+              ? "G17 (XY)"
+              : (plane == WorkingPlaneState::ZX ? "G18 (ZX)" : "G19 (YZ)");
+      addErrorDiagnostic(diagnostics, word.location,
+                         "arc center word '" + word.head +
+                             "' does not match active working plane " +
+                             plane_name);
+    }
   }
 }
 
@@ -114,6 +180,7 @@ MessageResult lowerToMessages(const Program &program,
   result.diagnostics = parse_diagnostics;
   const auto lowerers = createMotionFamilyLowerers();
   const auto indexed_lowerers = indexLowerers(lowerers);
+  WorkingPlaneState current_plane = WorkingPlaneState::XY;
 
   for (const auto &line : program.lines) {
     if (shouldSkipLine(line, options)) {
@@ -135,11 +202,16 @@ MessageResult lowerToMessages(const Program &program,
 
     bool has_motion = false;
     int found_motion = 0;
+    std::optional<WorkingPlaneState> line_plane_override;
     for (const auto &item : line.items) {
       if (!isWord(item)) {
         continue;
       }
       const auto &word = std::get<Word>(item);
+      const auto parsed_plane = planeFromWord(word);
+      if (parsed_plane.has_value()) {
+        line_plane_override = *parsed_plane;
+      }
       const int code = motionCode(word);
       if (code >= 0 && code <= 4) {
         if (has_motion && code != found_motion) {
@@ -152,15 +224,43 @@ MessageResult lowerToMessages(const Program &program,
     }
 
     if (!has_motion) {
+      if (line_plane_override.has_value()) {
+        current_plane = *line_plane_override;
+      }
       continue;
+    }
+
+    const WorkingPlaneState effective_plane =
+        line_plane_override.value_or(current_plane);
+
+    if (found_motion == 2 || found_motion == 3) {
+      validateArcPlaneWords(line, effective_plane, &result.diagnostics);
+      if (lineHasError(result.diagnostics, line.line_index)) {
+        MessageResult::RejectedLine rejected;
+        rejected.source.filename = options.filename;
+        rejected.source.line = line.line_index;
+        if (line.line_number.has_value()) {
+          rejected.source.line_number = line.line_number->value;
+        }
+        rejected.reasons =
+            collectLineErrors(result.diagnostics, line.line_index);
+        result.rejected_lines.push_back(std::move(rejected));
+        break;
+      }
     }
 
     const auto found = indexed_lowerers.find(found_motion);
     if (found == indexed_lowerers.end()) {
+      if (line_plane_override.has_value()) {
+        current_plane = *line_plane_override;
+      }
       continue;
     }
     result.messages.push_back(
         found->second->lower(line, options, &result.diagnostics));
+    if (line_plane_override.has_value()) {
+      current_plane = *line_plane_override;
+    }
   }
 
   return result;
@@ -179,6 +279,7 @@ bool lowerToMessagesStream(const Program &program,
                            const StreamOptions &stream_options) {
   const auto lowerers = createMotionFamilyLowerers();
   const auto indexed_lowerers = indexLowerers(lowerers);
+  WorkingPlaneState current_plane = WorkingPlaneState::XY;
 
   size_t lines_seen = 0;
   size_t messages_seen = 0;
@@ -218,11 +319,16 @@ bool lowerToMessagesStream(const Program &program,
 
     bool has_motion = false;
     int found_motion = 0;
+    std::optional<WorkingPlaneState> line_plane_override;
     for (const auto &item : line.items) {
       if (!isWord(item)) {
         continue;
       }
       const auto &word = std::get<Word>(item);
+      const auto parsed_plane = planeFromWord(word);
+      if (parsed_plane.has_value()) {
+        line_plane_override = *parsed_plane;
+      }
       const int code = motionCode(word);
       if (code >= 0 && code <= 4) {
         if (has_motion && code != found_motion) {
@@ -235,10 +341,45 @@ bool lowerToMessagesStream(const Program &program,
     }
 
     if (!has_motion) {
+      if (line_plane_override.has_value()) {
+        current_plane = *line_plane_override;
+      }
       continue;
+    }
+    const WorkingPlaneState effective_plane =
+        line_plane_override.value_or(current_plane);
+    if (found_motion == 2 || found_motion == 3) {
+      std::vector<Diagnostic> plane_diags;
+      validateArcPlaneWords(line, effective_plane, &plane_diags);
+      for (const auto &diag : plane_diags) {
+        if (callbacks.on_diagnostic) {
+          callbacks.on_diagnostic(diag);
+        }
+        ++diagnostics_seen;
+      }
+      const bool has_plane_error = std::any_of(
+          plane_diags.begin(), plane_diags.end(), [](const Diagnostic &diag) {
+            return diag.severity == Diagnostic::Severity::Error;
+          });
+      if (has_plane_error) {
+        MessageResult::RejectedLine rejected;
+        rejected.source.filename = options.filename;
+        rejected.source.line = line.line_index;
+        if (line.line_number.has_value()) {
+          rejected.source.line_number = line.line_number->value;
+        }
+        rejected.reasons = std::move(plane_diags);
+        if (callbacks.on_rejected_line) {
+          callbacks.on_rejected_line(rejected);
+        }
+        return false;
+      }
     }
     const auto found = indexed_lowerers.find(found_motion);
     if (found == indexed_lowerers.end()) {
+      if (line_plane_override.has_value()) {
+        current_plane = *line_plane_override;
+      }
       continue;
     }
 
@@ -262,6 +403,9 @@ bool lowerToMessagesStream(const Program &program,
                      diagnostics_seen)) {
         return false;
       }
+    }
+    if (line_plane_override.has_value()) {
+      current_plane = *line_plane_override;
     }
   }
 

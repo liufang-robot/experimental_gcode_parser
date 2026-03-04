@@ -83,8 +83,8 @@ TEST(MessagesJsonTest, InvalidJsonReturnsDiagnostic) {
 }
 
 TEST(MessagesJsonTest, RoundTripWithG2G3PreservesResult) {
-  const std::string input = "N1 G2 X10 Y20 I1 J2 K3 R4 F5\nN2 G3 X30 Y40 I6 J7 "
-                            "K8 CR=9 F10\n";
+  const std::string input =
+      "N1 G2 X10 Y20 I1 J2 R4 F5\nN2 G3 X30 Y40 I6 J7 CR=9 F10\n";
   gcode::LowerOptions options;
   options.filename = "arc_roundtrip.ngc";
   const auto result = gcode::parseAndLower(input, options);

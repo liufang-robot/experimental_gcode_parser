@@ -159,7 +159,7 @@ TEST(MessagesTest, StopAtFirstError) {
 
 TEST(MessagesTest, G2G3Extraction) {
   const std::string input =
-      "N20 G2 X10 Y20 I1 J2 K3 CR=40 F100\nN21 G3 X30 Y40 I4 J5 K6 R50 F200\n";
+      "N20 G2 X10 Y20 I1 J2 CR=40 F100\nN21 G3 X30 Y40 I4 J5 R50 F200\n";
   gcode::LowerOptions options;
   options.filename = "arc.ngc";
   const auto result = gcode::parseAndLower(input, options);
@@ -181,8 +181,7 @@ TEST(MessagesTest, G2G3Extraction) {
   EXPECT_TRUE(closeEnough(*g2->arc.i, 1.0));
   ASSERT_TRUE(g2->arc.j.has_value());
   EXPECT_TRUE(closeEnough(*g2->arc.j, 2.0));
-  ASSERT_TRUE(g2->arc.k.has_value());
-  EXPECT_TRUE(closeEnough(*g2->arc.k, 3.0));
+  EXPECT_FALSE(g2->arc.k.has_value());
   ASSERT_TRUE(g2->arc.r.has_value());
   EXPECT_TRUE(closeEnough(*g2->arc.r, 40.0));
   ASSERT_TRUE(g2->feed.has_value());
@@ -204,8 +203,7 @@ TEST(MessagesTest, G2G3Extraction) {
   EXPECT_TRUE(closeEnough(*g3->arc.i, 4.0));
   ASSERT_TRUE(g3->arc.j.has_value());
   EXPECT_TRUE(closeEnough(*g3->arc.j, 5.0));
-  ASSERT_TRUE(g3->arc.k.has_value());
-  EXPECT_TRUE(closeEnough(*g3->arc.k, 6.0));
+  EXPECT_FALSE(g3->arc.k.has_value());
   ASSERT_TRUE(g3->arc.r.has_value());
   EXPECT_TRUE(closeEnough(*g3->arc.r, 50.0));
   ASSERT_TRUE(g3->feed.has_value());
@@ -213,6 +211,32 @@ TEST(MessagesTest, G2G3Extraction) {
   EXPECT_EQ(g3->modal.group, gcode::ModalGroupId::Motion);
   EXPECT_EQ(g3->modal.code, "G3");
   EXPECT_TRUE(g3->modal.updates_state);
+}
+
+TEST(MessagesTest, ArcCenterWordsMustMatchActiveWorkingPlane) {
+  const std::string input = "G18\nG2 X10 Z20 I1 J2 F100\nG1 X99\n";
+  const auto result = gcode::parseAndLower(input);
+
+  ASSERT_TRUE(result.messages.empty());
+  ASSERT_EQ(result.rejected_lines.size(), 1u);
+  EXPECT_EQ(result.rejected_lines[0].source.line, 2);
+  ASSERT_FALSE(result.rejected_lines[0].reasons.empty());
+  EXPECT_NE(result.rejected_lines[0].reasons[0].message.find("working plane"),
+            std::string::npos);
+}
+
+TEST(MessagesTest, ArcCenterWordsCanUsePlaneDeclaredInSameBlock) {
+  const std::string input = "G18 G2 X10 Z20 I1 K2 F100\n";
+  const auto result = gcode::parseAndLower(input);
+
+  EXPECT_TRUE(result.diagnostics.empty());
+  EXPECT_TRUE(result.rejected_lines.empty());
+  ASSERT_EQ(result.messages.size(), 1u);
+  const auto *g2 = asG2(result.messages[0]);
+  ASSERT_NE(g2, nullptr);
+  ASSERT_TRUE(g2->arc.i.has_value());
+  ASSERT_TRUE(g2->arc.k.has_value());
+  EXPECT_FALSE(g2->arc.j.has_value());
 }
 
 TEST(MessagesTest, ArcUnsupportedWordsEmitWarningsButKeepMessage) {
