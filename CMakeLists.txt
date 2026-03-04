@@ -90,7 +90,8 @@ add_library(
                       src/lowering_family_g2.cpp src/lowering_family_g3.cpp
                       src/lowering_family_g4.cpp src/messages_json.cpp
                       src/session.cpp src/message_diff.cpp src/tool_policy.cpp
-                      src/machine_profile.cpp src/modal_registry.cpp)
+                      src/subprogram_policy.cpp src/machine_profile.cpp
+                      src/modal_registry.cpp)
 target_include_directories(gcode_parser PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/src
                                             ${GENERATED_DIR})
 target_link_libraries(gcode_parser PUBLIC gcode_antlr)
