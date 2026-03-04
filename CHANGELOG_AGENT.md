@@ -1,5 +1,28 @@
 # CHANGELOG_AGENT
 
+## 2026-03-04 (T-042 design: dimensions and units architecture)
+- Added a dedicated architecture page for dimensions/units semantics:
+  - Group 14 modal distance model (`G90/G91`)
+  - Group 13 unit-scope model (`G70/G71/G700/G710`)
+  - value-level overrides (`AC/IC`), rotary targeting (`DC/ACP/ACN`), and
+    turning diameter/radius policy hooks (`DIAM*`, `DAC/DIC/RAC/RIC`)
+- Defined precedence, unit-scope boundaries, and integration points with feed,
+  plane/compensation, and work-offset states.
+- Added implementation slices and test matrix for follow-up behavior PRs.
+- Linked the design page into docs navigation and root architecture.
+- Marked `T-042` as done in backlog as local/unmerged.
+
+SPEC sections / tests:
+- SPEC target: dimensions/units/modal behavior sections (future implementation)
+- This PR is architecture/docs only; no parser/runtime behavior change.
+
+Known limitations:
+- No new parser/lowering/executor implementation in this slice.
+- Full machine-data/kinematic internals remain out of scope.
+
+How to reproduce locally (commands):
+- `./dev/check.sh`
+
 ## 2026-03-04 (T-043 design: work-offset architecture)
 - Added a dedicated architecture page for Siemens work-offset semantics:
   - Group 8 modal selection model (`G500`, `G54..G57`, `G505..G599`)

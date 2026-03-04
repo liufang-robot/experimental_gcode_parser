@@ -15,4 +15,5 @@ Pages in this section are split by topic for easier review:
 - rapid traverse model (`G0`, `RTLION`, `RTLIOF`)
 - incremental parse session API
 - work-offset model (Group 8 + suppression commands)
+- dimensions/units model (Groups 13/14 + `AC/IC` + `DIAM*`)
 - implementation phases and task ordering

@@ -10,5 +10,6 @@
 - [Design: Rapid Traverse Architecture](design/rapid_traverse_architecture.md)
 - [Design: Incremental Session](design/incremental_session.md)
 - [Design: Work-Offset Architecture](design/work_offset_architecture.md)
+- [Design: Dimensions Architecture](design/dimensions_architecture.md)
 - [Design: Implementation Plan](design/implementation_plan.md)
 - [Program Reference](program_reference.md)

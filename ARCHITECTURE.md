@@ -178,6 +178,8 @@ stateDiagram-v2
   - [docs/src/design/incremental_session.md](/home/liufang/optcnc/gcode/docs/src/design/incremental_session.md)
 - Detailed work-offset architecture note:
   - [docs/src/design/work_offset_architecture.md](/home/liufang/optcnc/gcode/docs/src/design/work_offset_architecture.md)
+- Detailed dimensions/units architecture note:
+  - [docs/src/design/dimensions_architecture.md](/home/liufang/optcnc/gcode/docs/src/design/dimensions_architecture.md)
 - Planned:
   - modal groups 6/7/8/10/11/12/13/14/15 full state model
   - tool management behaviors
