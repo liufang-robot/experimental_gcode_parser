@@ -2,7 +2,6 @@
 
 #include <optional>
 #include <string>
-#include <string_view>
 #include <unordered_map>
 #include <utility>
 
@@ -53,10 +52,6 @@ public:
   }
 
 private:
-  static bool startsWith(std::string_view text, std::string_view prefix);
-  static std::optional<ToolSelectionState>
-  parseAmbiguousFirstCandidate(const ToolSelectionState &selection);
-
   ToolPolicyOptions options_;
 };
 
