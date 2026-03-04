@@ -198,6 +198,11 @@ bool isKnownPredefinedMFunction(int64_t value) {
   return value >= 40 && value <= 45;
 }
 
+bool isDeselectSelector(const ToolSelectionState &selection) {
+  return !selection.selector_index.has_value() &&
+         selection.selector_value == "0";
+}
+
 std::string toUpper(std::string value) {
   std::transform(
       value.begin(), value.end(), value.begin(),
@@ -592,9 +597,11 @@ AilResult parseAndLowerAil(std::string_view input,
 }
 
 AilExecutor::AilExecutor(std::vector<AilInstruction> instructions,
-                         ErrorPolicy unknown_mcode_policy)
+                         ErrorPolicy unknown_mcode_policy,
+                         ErrorPolicy m6_without_pending_policy)
     : instructions_(std::move(instructions)),
-      unknown_mcode_policy_(unknown_mcode_policy) {
+      unknown_mcode_policy_(unknown_mcode_policy),
+      m6_without_pending_policy_(m6_without_pending_policy) {
   for (size_t i = 0; i < instructions_.size(); ++i) {
     const auto &inst = instructions_[i];
     std::visit(
@@ -841,6 +848,56 @@ bool AilExecutor::handleMCodeAtPc() {
   return true;
 }
 
+bool AilExecutor::handleToolSelectAtPc() {
+  const auto &inst =
+      std::get<AilToolSelectInstruction>(instructions_[state_.pc]);
+  ToolSelectionState selection;
+  selection.selector_index = inst.selector_index;
+  selection.selector_value = inst.selector_value;
+
+  if (inst.timing == ToolActionTiming::Immediate) {
+    if (isDeselectSelector(selection)) {
+      state_.active_tool_selection.reset();
+    } else {
+      state_.active_tool_selection = std::move(selection);
+    }
+    state_.pending_tool_selection.reset();
+    ++state_.pc;
+    return true;
+  }
+
+  // Deferred mode keeps only the most recent selection before M6.
+  state_.pending_tool_selection = std::move(selection);
+  ++state_.pc;
+  return true;
+}
+
+bool AilExecutor::handleToolChangeAtPc() {
+  const auto &inst =
+      std::get<AilToolChangeInstruction>(instructions_[state_.pc]);
+  if (state_.pending_tool_selection.has_value()) {
+    if (isDeselectSelector(*state_.pending_tool_selection)) {
+      state_.active_tool_selection.reset();
+    } else {
+      state_.active_tool_selection = state_.pending_tool_selection;
+    }
+    state_.pending_tool_selection.reset();
+    ++state_.pc;
+    return true;
+  }
+
+  const std::string message = "M6 requested with no pending tool selection";
+  if (m6_without_pending_policy_ == ErrorPolicy::Error) {
+    addFault(inst.source, message);
+    return true;
+  }
+  if (m6_without_pending_policy_ == ErrorPolicy::Warning) {
+    addWarning(inst.source, message + "; ignored by policy");
+  }
+  ++state_.pc;
+  return true;
+}
+
 bool AilExecutor::advanceOneInstruction(int64_t now_ms,
                                         const ConditionResolver &resolver) {
   if (state_.pc >= instructions_.size()) {
@@ -887,10 +944,11 @@ bool AilExecutor::advanceOneInstruction(int64_t now_ms,
     ++state_.pc;
     return true;
   }
-  if (std::holds_alternative<AilToolSelectInstruction>(inst) ||
-      std::holds_alternative<AilToolChangeInstruction>(inst)) {
-    ++state_.pc;
-    return true;
+  if (std::holds_alternative<AilToolSelectInstruction>(inst)) {
+    return handleToolSelectAtPc();
+  }
+  if (std::holds_alternative<AilToolChangeInstruction>(inst)) {
+    return handleToolChangeAtPc();
   }
   ++state_.pc;
   return true;

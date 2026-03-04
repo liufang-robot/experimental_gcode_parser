@@ -1,5 +1,30 @@
 # CHANGELOG_AGENT
 
+## 2026-03-04 (T-053 slice: executor tool pending/active semantics)
+- Added runtime tool state to `AilExecutor`:
+  - `active_tool_selection`
+  - `pending_tool_selection`
+- Implemented `tool_select` / `tool_change` execution baseline:
+  - deferred mode: `T...` updates pending selection, `M6` activates it
+  - direct mode: `T...` activates immediately
+  - repeated deferred `T...` before `M6`: last selection wins
+- Added configurable policy for `M6` with no pending selection:
+  `error|warning|ignore` (default `error`).
+- Added executor tests for deferred/direct behavior and no-pending-`M6` policy.
+- Updated SPEC Sections 3.13 and 6.1 for current runtime boundary.
+
+SPEC sections / tests:
+- SPEC: Section 3.13, Section 6.1
+- Tests: `test/ail_executor_tests.cpp`
+
+Known limitations:
+- No tool resolver/substitution policy integration yet (follow-up `T-054`).
+- No hardware adapter/actuation backend in this slice; executor models runtime
+  state transitions and diagnostics only.
+
+How to reproduce locally (commands):
+- `./dev/check.sh`
+
 ## 2026-03-04 (Docs alignment: executable-action instruction contract)
 - Clarified cross-document contract that machine-carried actions must be
   represented as explicit executable instructions in IR (AIL).

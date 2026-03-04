@@ -316,7 +316,12 @@ Planned Siemens compatibility extension:
   - packet stage does not emit standalone packets for tool instructions
     (tool instructions are executable control instructions, routed to runtime
     control path rather than motion packets).
-  - executor direct/deferred state behavior remains a follow-up slice.
+  - executor runtime baseline:
+    - deferred mode: `T...` updates `pending_tool_selection`, `M6` activates it
+    - direct mode: `T...` immediately updates `active_tool_selection`
+    - before `M6`, last valid deferred selection wins
+    - `M6` without pending selection uses policy
+      (`error|warning|ignore`)
 
 ### 3.7 Control Flow Syntax (parse-only in v0)
 - Jump directions:
@@ -524,8 +529,16 @@ N130 G01 X20 Y20
   - `tool_select` / `tool_change` instructions are explicit executable control
     instructions in AIL
   - packet stage intentionally does not emit standalone motion packets for them
-  - direct/deferred activation semantics and pending-tool state execution are
-    tracked as follow-up runtime work
+  - executor tracks:
+    - `active_tool_selection`
+    - `pending_tool_selection`
+  - execution baseline:
+    - `tool_select(immediate)` updates `active_tool_selection`
+    - `tool_select(deferred)` updates `pending_tool_selection`
+    - `tool_change` consumes pending selection when present
+    - `M6` without pending selection follows configurable policy
+      (`error|warning|ignore`)
+  - tool resolver/substitution policy integration remains follow-up work
 - Unresolved non-`GOTOC` target is runtime fault.
 
 ## 7. Testing Expectations
