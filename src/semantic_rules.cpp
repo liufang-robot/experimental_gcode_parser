@@ -310,6 +310,9 @@ public:
 
 class MCodeShapeRule final : public LineSemanticRule {
 public:
+  explicit MCodeShapeRule(bool enable_iso_m98_calls)
+      : enable_iso_m98_calls_(enable_iso_m98_calls) {}
+
   void apply(const Line &line,
              std::vector<Diagnostic> *diagnostics) const override {
     constexpr int64_t kMCodeMin = 0;
@@ -354,8 +357,26 @@ public:
           return;
         }
       }
+
+      if (!enable_iso_m98_calls_ && *value == 98 && !has_extension) {
+        for (const auto &line_item : line.items) {
+          if (!std::holds_alternative<Word>(line_item)) {
+            continue;
+          }
+          const auto &candidate = std::get<Word>(line_item);
+          if (candidate.head == "P" && candidate.value.has_value()) {
+            addDiagnostic(
+                diagnostics, word.location,
+                "M98 subprogram call requires ISO compatibility mode");
+            return;
+          }
+        }
+      }
     }
   }
+
+private:
+  bool enable_iso_m98_calls_ = false;
 };
 
 class ToolSelectorShapeRule final : public LineSemanticRule {
@@ -503,7 +524,8 @@ private:
 };
 
 std::vector<std::unique_ptr<LineSemanticRule>>
-makeRules(bool enable_double_slash_comments, bool tool_management) {
+makeRules(bool enable_double_slash_comments, bool tool_management,
+          bool enable_iso_m98_calls) {
   std::vector<std::unique_ptr<LineSemanticRule>> rules;
   rules.push_back(std::make_unique<G4BlockRule>());
   rules.push_back(std::make_unique<MotionExclusivityRule>());
@@ -511,7 +533,7 @@ makeRules(bool enable_double_slash_comments, bool tool_management) {
   rules.push_back(std::make_unique<LineNumberWordRule>());
   rules.push_back(std::make_unique<BlockSkipLevelRule>());
   rules.push_back(std::make_unique<AssignmentShapeRule>());
-  rules.push_back(std::make_unique<MCodeShapeRule>());
+  rules.push_back(std::make_unique<MCodeShapeRule>(enable_iso_m98_calls));
   rules.push_back(std::make_unique<ToolSelectorShapeRule>(tool_management));
   rules.push_back(
       std::make_unique<DoubleSlashCommentRule>(enable_double_slash_comments));
@@ -522,8 +544,9 @@ makeRules(bool enable_double_slash_comments, bool tool_management) {
 
 void addSemanticDiagnostics(ParseResult &result,
                             bool enable_double_slash_comments,
-                            bool tool_management) {
-  auto rules = makeRules(enable_double_slash_comments, tool_management);
+                            bool tool_management, bool enable_iso_m98_calls) {
+  auto rules = makeRules(enable_double_slash_comments, tool_management,
+                         enable_iso_m98_calls);
   std::unordered_map<int, Location> first_line_number_at;
   bool has_line_number_target_jump = false;
   for (const auto &line : result.program.lines) {

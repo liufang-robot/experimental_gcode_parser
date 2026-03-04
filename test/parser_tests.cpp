@@ -308,6 +308,21 @@ TEST(ParserSyntaxBaselineTest, ParsesSubprogramCallAndReturnSurfaceSyntax) {
   ASSERT_EQ(result.program.lines.size(), 5u);
 }
 
+TEST(ParserSyntaxBaselineTest, M98CallRequiresIsoCompatibilityMode) {
+  {
+    const auto result = gcode::parse("M98 P1000\n");
+    ASSERT_EQ(result.diagnostics.size(), 1u);
+    EXPECT_NE(result.diagnostics[0].message.find("ISO compatibility"),
+              std::string::npos);
+  }
+  {
+    gcode::ParseOptions options;
+    options.enable_iso_m98_calls = true;
+    const auto result = gcode::parse("M98 P1000\n", options);
+    EXPECT_TRUE(result.diagnostics.empty());
+  }
+}
+
 TEST(ParserSyntaxBaselineTest, ReportsMCodeValueOutOfRange) {
   const auto result = gcode::parse("M2147483648\n");
   ASSERT_EQ(result.diagnostics.size(), 1u);

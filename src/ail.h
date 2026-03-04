@@ -186,7 +186,8 @@ public:
       std::vector<AilInstruction> instructions,
       ErrorPolicy unknown_mcode_policy = ErrorPolicy::Error,
       ErrorPolicy m6_without_pending_policy = ErrorPolicy::Error,
-      std::shared_ptr<const ToolPolicy> tool_policy = nullptr);
+      std::shared_ptr<const ToolPolicy> tool_policy = nullptr,
+      ErrorPolicy unresolved_subprogram_policy = ErrorPolicy::Error);
 
   const ExecutorState &state() const { return state_; }
   const std::vector<Diagnostic> &diagnostics() const { return diagnostics_; }
@@ -218,6 +219,7 @@ private:
   std::unordered_set<std::string> pending_events_;
   ErrorPolicy unknown_mcode_policy_ = ErrorPolicy::Error;
   ErrorPolicy m6_without_pending_policy_ = ErrorPolicy::Error;
+  ErrorPolicy unresolved_subprogram_policy_ = ErrorPolicy::Error;
   std::shared_ptr<const ToolPolicy> tool_policy_;
   ExecutorState state_;
   std::vector<Diagnostic> diagnostics_;

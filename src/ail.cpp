@@ -354,7 +354,8 @@ std::string subprogramTargetFromWord(const Word &word) {
 }
 
 std::optional<AilSubprogramCallInstruction>
-subprogramCallFromLine(const Line &line, const SourceInfo &source) {
+subprogramCallFromLine(const Line &line, const SourceInfo &source,
+                       const LowerOptions &options) {
   std::vector<const Word *> words;
   words.reserve(line.items.size());
   for (const auto &item : line.items) {
@@ -376,6 +377,18 @@ subprogramCallFromLine(const Line &line, const SourceInfo &source) {
 
   if (words.size() != 2) {
     return std::nullopt;
+  }
+
+  const auto is_m98_word = [](const Word &word) {
+    return word.head == "M" && !word.has_equal && word.value.has_value() &&
+           *word.value == "98";
+  };
+  if (options.enable_iso_m98_calls && is_m98_word(*words[0]) &&
+      words[1]->head == "P" && words[1]->value.has_value()) {
+    AilSubprogramCallInstruction inst;
+    inst.source = source;
+    inst.target = toUpper(*words[1]->value);
+    return inst;
   }
 
   AilSubprogramCallInstruction inst;
@@ -621,7 +634,7 @@ AilResult lowerToAil(const Program &program,
       continue;
     }
     const auto source = sourceFromLine(line, options);
-    if (const auto call = subprogramCallFromLine(line, source);
+    if (const auto call = subprogramCallFromLine(line, source, options);
         call.has_value()) {
       result.instructions.push_back(*call);
       continue;
@@ -702,17 +715,21 @@ AilResult lowerToAil(const Program &program,
 
 AilResult parseAndLowerAil(std::string_view input,
                            const LowerOptions &options) {
-  const auto parsed = parse(input);
+  ParseOptions parse_options;
+  parse_options.enable_iso_m98_calls = options.enable_iso_m98_calls;
+  const auto parsed = parse(input, parse_options);
   return lowerToAil(parsed.program, parsed.diagnostics, options);
 }
 
 AilExecutor::AilExecutor(std::vector<AilInstruction> instructions,
                          ErrorPolicy unknown_mcode_policy,
                          ErrorPolicy m6_without_pending_policy,
-                         std::shared_ptr<const ToolPolicy> tool_policy)
+                         std::shared_ptr<const ToolPolicy> tool_policy,
+                         ErrorPolicy unresolved_subprogram_policy)
     : instructions_(std::move(instructions)),
       unknown_mcode_policy_(unknown_mcode_policy),
       m6_without_pending_policy_(m6_without_pending_policy),
+      unresolved_subprogram_policy_(unresolved_subprogram_policy),
       tool_policy_(std::move(tool_policy)) {
   if (!tool_policy_) {
     tool_policy_ = std::make_shared<DefaultToolPolicy>();
@@ -1140,7 +1157,16 @@ bool AilExecutor::advanceOneInstruction(int64_t now_ms,
     const auto &call = std::get<AilSubprogramCallInstruction>(inst);
     auto it = label_positions_.find(call.target);
     if (it == label_positions_.end() || it->second.empty()) {
-      addFault(call.source, "unresolved subprogram target: " + call.target);
+      const std::string message =
+          "unresolved subprogram target: " + call.target;
+      if (unresolved_subprogram_policy_ == ErrorPolicy::Error) {
+        addFault(call.source, message);
+        return true;
+      }
+      if (unresolved_subprogram_policy_ == ErrorPolicy::Warning) {
+        addWarning(call.source, message + "; ignored by policy");
+      }
+      ++state_.pc;
       return true;
     }
     if (it->second.size() > 1) {

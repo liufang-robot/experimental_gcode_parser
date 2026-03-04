@@ -257,6 +257,29 @@ TEST(AilExecutorTest, SubprogramCallFaultsWhenTargetMissing) {
             std::string::npos);
 }
 
+TEST(AilExecutorTest, SubprogramCallWarningPolicyContinuesOnMissingTarget) {
+  const auto lowered = gcode::parseAndLowerAil("L1000\nG1 X1\n");
+  gcode::AilExecutor exec(lowered.instructions, gcode::ErrorPolicy::Error,
+                          gcode::ErrorPolicy::Error, nullptr,
+                          gcode::ErrorPolicy::Warning);
+
+  const auto resolver = [](const gcode::Condition &,
+                           const gcode::SourceInfo &) {
+    gcode::ConditionResolution r;
+    r.kind = gcode::ConditionResolutionKind::False;
+    return r;
+  };
+
+  ASSERT_TRUE(exec.step(0, resolver)); // unresolved call (warn)
+  EXPECT_EQ(exec.state().status, gcode::ExecutorStatus::Ready);
+  ASSERT_FALSE(exec.diagnostics().empty());
+  EXPECT_EQ(exec.diagnostics().back().severity,
+            gcode::Diagnostic::Severity::Warning);
+  ASSERT_TRUE(exec.step(0, resolver)); // G1
+  ASSERT_TRUE(exec.step(0, resolver)); // complete
+  EXPECT_EQ(exec.state().status, gcode::ExecutorStatus::Completed);
+}
+
 TEST(AilExecutorTest, SubprogramCallAndReturnUseCallStack) {
   const auto lowered = gcode::parseAndLowerAil(
       "GOTO START\nL1000:\nG1 X1\nRET\nSTART:\nL1000\nGOTO END\nEND:\nG1 X2\n");

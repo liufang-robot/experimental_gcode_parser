@@ -1,4 +1,27 @@
-# CHANGELOG_AGENT
+#CHANGELOG_AGENT
+
+## 2026-03-04 (T-050 slice 5: ISO M98 gating + unresolved-call policy)
+- Added ISO-compatible subprogram call gating for `M98 P...`:
+  - parser reports deterministic diagnostic unless ISO mode is enabled
+    (`ParseOptions.enable_iso_m98_calls`)
+  - AIL lowering emits `subprogram_call` for `M98 P<id>` when enabled
+    (`LowerOptions.enable_iso_m98_calls`)
+- Added executor unresolved-subprogram policy control:
+  `error|warning|ignore` (default `error`).
+- Added parser/AIL/executor tests for ISO gating and unresolved-call warning
+  continuation behavior.
+
+SPEC sections / tests:
+- SPEC: Section 3.9, Section 6.1
+- Tests: `test/parser_tests.cpp`, `test/ail_tests.cpp`,
+  `test/ail_executor_tests.cpp`
+
+Known limitations:
+- ISO `M98` target is currently modeled as in-program call target ID only; no
+  external program-file lookup integration in this slice.
+
+How to reproduce locally (commands):
+- `./dev/check.sh`
 
 ## 2026-03-04 (Dev tooling: fast local clang-tidy mode)
 - Updated `dev/check.sh` to support `--fast` mode for local development.
