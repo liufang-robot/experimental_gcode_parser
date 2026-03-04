@@ -1,4 +1,27 @@
-# CHANGELOG_AGENT
+#CHANGELOG_AGENT
+
+## 2026-03-04 (T-050 slice 3: executor call-stack baseline for call/return)
+- Added executor call-stack runtime behavior for subprogram boundaries:
+  - `subprogram_call` resolves to label target, pushes return PC, and jumps
+  - `return_boundary` (`RET`/`M17`) pops and resumes caller
+- Added runtime fault behavior:
+  - unresolved subprogram call target
+  - return boundary with empty call stack
+- Added executor state visibility for `call_stack_depth` and tests for
+  call/return flow and fault cases.
+
+SPEC sections / tests:
+- SPEC: Section 3.9, Section 6.1
+- Tests: `test/ail_executor_tests.cpp`
+
+Known limitations:
+- Subprogram target resolution is currently label-based within current lowered
+  program only (no multi-file MPF/SPF search-path resolution yet).
+- `repeat_count` in `subprogram_call` is parsed/lowered but repeat-loop runtime
+  semantics are not implemented in this slice.
+
+How to reproduce locally (commands):
+- `./dev/check.sh`
 
 ## 2026-03-04 (T-050 slice 2: explicit subprogram call instruction baseline)
 - Added explicit AIL `subprogram_call` instruction emission for direct Siemens

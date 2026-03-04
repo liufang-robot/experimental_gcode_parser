@@ -1118,11 +1118,32 @@ bool AilExecutor::advanceOneInstruction(int64_t now_ms,
     return handleToolChangeAtPc();
   }
   if (std::holds_alternative<AilReturnBoundaryInstruction>(inst)) {
-    ++state_.pc;
+    const auto &ret = std::get<AilReturnBoundaryInstruction>(inst);
+    if (call_stack_return_pcs_.empty()) {
+      addFault(ret.source,
+               "return boundary encountered with empty call stack: " +
+                   ret.opcode);
+      return true;
+    }
+    state_.pc = call_stack_return_pcs_.back();
+    call_stack_return_pcs_.pop_back();
+    state_.call_stack_depth = call_stack_return_pcs_.size();
     return true;
   }
   if (std::holds_alternative<AilSubprogramCallInstruction>(inst)) {
-    ++state_.pc;
+    const auto &call = std::get<AilSubprogramCallInstruction>(inst);
+    auto it = label_positions_.find(call.target);
+    if (it == label_positions_.end() || it->second.empty()) {
+      addFault(call.source, "unresolved subprogram target: " + call.target);
+      return true;
+    }
+    if (it->second.size() > 1) {
+      addWarning(call.source, "duplicate subprogram target labels for " +
+                                  call.target + "; using first definition");
+    }
+    call_stack_return_pcs_.push_back(state_.pc + 1);
+    state_.call_stack_depth = call_stack_return_pcs_.size();
+    state_.pc = it->second.front();
     return true;
   }
   ++state_.pc;
