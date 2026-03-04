@@ -10,4 +10,5 @@ Source-of-truth files in repo root:
 Pages in this section are split by topic for easier review:
 - pipeline/modules
 - modal/context strategy
+- exact-stop/continuous-path modes (Groups 10/11/12)
 - implementation phases and task ordering

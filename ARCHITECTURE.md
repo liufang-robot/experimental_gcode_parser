@@ -166,6 +166,8 @@ stateDiagram-v2
   - `G0` rapid semantics
   - M-code semantics
   - comment compatibility extensions
+- Detailed exact-stop/continuous-path architecture note:
+  - [docs/src/design/exactstop_contpath_architecture.md](/home/liufang/optcnc/gcode/docs/src/design/exactstop_contpath_architecture.md)
 - Planned:
   - modal groups 6/7/8/10/11/12/13/14/15 full state model
   - tool management behaviors

@@ -1,5 +1,27 @@
 # CHANGELOG_AGENT
 
+## 2026-03-04 (T-044 design: exact-stop and continuous-path architecture)
+- Added a dedicated architecture page for Groups 10/11/12:
+  - Group 10 modal family (`G60`, `G64..G645`)
+  - Group 11 non-modal exact-stop (`G9`) block-scope precedence
+  - Group 12 exact-stop criteria (`G601/G602/G603`) applicability model
+  - `G641` coupling with `ADIS`/`ADISPOS`
+- Defined precedence/applicability rules and runtime output expectations.
+- Added implementation slices and test matrix for follow-up PRs.
+- Linked the design page into docs navigation and root architecture.
+- Marked `T-044` as done in backlog as local/unmerged.
+
+SPEC sections / tests:
+- SPEC target: transition mode syntax/runtime sections (follow-up implementation)
+- This PR is architecture/docs only; no runtime behavior change.
+
+Known limitations:
+- No new modal-engine or executor behavior implemented in this slice.
+- Servo/lookahead internals remain out of scope.
+
+How to reproduce locally (commands):
+- `./dev/check.sh`
+
 ## 2026-03-04 (T-040 slice 3: carry effective working plane on arc outputs)
 - Added `plane_effective` on AIL arc instructions and packet arc payloads.
 - `plane_effective` is derived from active/same-block `G17/G18/G19` state in
