@@ -9,6 +9,7 @@
 #include <unordered_map>
 
 #include "gcode_parser.h"
+#include "tool_policy.h"
 
 namespace gcode {
 namespace {
@@ -598,10 +599,15 @@ AilResult parseAndLowerAil(std::string_view input,
 
 AilExecutor::AilExecutor(std::vector<AilInstruction> instructions,
                          ErrorPolicy unknown_mcode_policy,
-                         ErrorPolicy m6_without_pending_policy)
+                         ErrorPolicy m6_without_pending_policy,
+                         std::shared_ptr<const ToolPolicy> tool_policy)
     : instructions_(std::move(instructions)),
       unknown_mcode_policy_(unknown_mcode_policy),
-      m6_without_pending_policy_(m6_without_pending_policy) {
+      m6_without_pending_policy_(m6_without_pending_policy),
+      tool_policy_(std::move(tool_policy)) {
+  if (!tool_policy_) {
+    tool_policy_ = std::make_shared<DefaultToolPolicy>();
+  }
   for (size_t i = 0; i < instructions_.size(); ++i) {
     const auto &inst = instructions_[i];
     std::visit(
@@ -856,10 +862,34 @@ bool AilExecutor::handleToolSelectAtPc() {
   selection.selector_value = inst.selector_value;
 
   if (inst.timing == ToolActionTiming::Immediate) {
-    if (isDeselectSelector(selection)) {
-      state_.active_tool_selection.reset();
+    const auto resolved = tool_policy_->resolveSelection(selection);
+    if (resolved.kind == ToolSelectionResolutionKind::Resolved) {
+      if (resolved.substituted) {
+        const std::string suffix =
+            resolved.message.empty() ? "" : " (" + resolved.message + ")";
+        addWarning(inst.source,
+                   "tool selection substituted: " + selection.selector_value +
+                       " -> " + resolved.selection.selector_value + suffix);
+      }
+      if (isDeselectSelector(resolved.selection)) {
+        state_.active_tool_selection.reset();
+      } else {
+        state_.active_tool_selection = resolved.selection;
+      }
     } else {
-      state_.active_tool_selection = std::move(selection);
+      const bool unresolved =
+          resolved.kind == ToolSelectionResolutionKind::Unresolved;
+      const ErrorPolicy policy = unresolved ? tool_policy_->unresolvedPolicy()
+                                            : tool_policy_->ambiguousPolicy();
+      const std::string reason =
+          unresolved ? "tool selection unresolved" : "tool selection ambiguous";
+      const std::string detail =
+          resolved.message.empty() ? reason : reason + ": " + resolved.message;
+      if (policy == ErrorPolicy::Error) {
+        addFault(inst.source, detail);
+      } else if (policy == ErrorPolicy::Warning) {
+        addWarning(inst.source, detail + "; ignored by policy");
+      }
     }
     state_.pending_tool_selection.reset();
     ++state_.pc;
@@ -876,10 +906,38 @@ bool AilExecutor::handleToolChangeAtPc() {
   const auto &inst =
       std::get<AilToolChangeInstruction>(instructions_[state_.pc]);
   if (state_.pending_tool_selection.has_value()) {
-    if (isDeselectSelector(*state_.pending_tool_selection)) {
-      state_.active_tool_selection.reset();
+    const ToolSelectionState pending = *state_.pending_tool_selection;
+    const auto resolved = tool_policy_->resolveSelection(pending);
+    if (resolved.kind == ToolSelectionResolutionKind::Resolved) {
+      if (resolved.substituted) {
+        const std::string suffix =
+            resolved.message.empty() ? "" : " (" + resolved.message + ")";
+        addWarning(inst.source,
+                   "tool selection substituted: " + pending.selector_value +
+                       " -> " + resolved.selection.selector_value + suffix);
+      }
+      if (isDeselectSelector(resolved.selection)) {
+        state_.active_tool_selection.reset();
+      } else {
+        state_.active_tool_selection = resolved.selection;
+      }
     } else {
-      state_.active_tool_selection = state_.pending_tool_selection;
+      const bool unresolved =
+          resolved.kind == ToolSelectionResolutionKind::Unresolved;
+      const ErrorPolicy policy = unresolved ? tool_policy_->unresolvedPolicy()
+                                            : tool_policy_->ambiguousPolicy();
+      const std::string reason =
+          unresolved ? "tool selection unresolved" : "tool selection ambiguous";
+      const std::string detail =
+          resolved.message.empty() ? reason : reason + ": " + resolved.message;
+      if (policy == ErrorPolicy::Error) {
+        state_.pending_tool_selection.reset();
+        addFault(inst.source, detail);
+        return true;
+      }
+      if (policy == ErrorPolicy::Warning) {
+        addWarning(inst.source, detail + "; ignored by policy");
+      }
     }
     state_.pending_tool_selection.reset();
     ++state_.pc;
