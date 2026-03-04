@@ -1,5 +1,27 @@
 # CHANGELOG_AGENT
 
+## 2026-03-04 (T-040 slice 2: enforce G2/G3 center words by working plane)
+- Added lowering-stage validation that `G2/G3` center words match the
+  effective working plane (`G17`: `I/J`, `G18`: `I/K`, `G19`: `J/K`).
+- Validation uses modal plane state with same-block plane overrides supported
+  (e.g., `G18 G2 ... I... K...`).
+- Added message-level tests for valid/invalid combinations and updated JSON
+  roundtrip and golden fixture inputs for plane-compatible arc-center words.
+- Updated SPEC/program-reference docs to reflect the new validation behavior.
+
+SPEC sections / tests:
+- SPEC: Section 3.12
+- Tests: `test/messages_tests.cpp`, `test/messages_json_tests.cpp`,
+  `testdata/messages/lowering_g2g3_failfast.*`, `./dev/check.sh`
+
+Known limitations:
+- Arc geometry remapping by plane is still limited to center-word validation;
+  full plane-dependent arc computation behavior is not implemented yet.
+
+How to reproduce locally (commands):
+- `ctest --test-dir build --output-on-failure -R \"MessagesTest|MessagesJsonTest\"`
+- `./dev/check.sh`
+
 ## 2026-03-04 (T-040 slice 1: Group 6 working-plane AIL/executor baseline)
 - Added AIL instruction emission for `G17/G18/G19` as `working_plane` with
   normalized plane values (`xy|zx|yz`).

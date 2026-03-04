@@ -271,6 +271,10 @@ Planned Siemens compatibility extension:
 - Current scope:
   - parse + AIL emission (`working_plane`)
   - executor state tracking (`working_plane_current`)
+  - lowering validation for `G2/G3` arc-center words against effective plane:
+    - `G17`: `I/J` allowed, `K` rejected
+    - `G18`: `I/K` allowed, `J` rejected
+    - `G19`: `J/K` allowed, `I` rejected
   - packet stage does not emit standalone packets for this modal instruction
 - Current limitation:
   - no downstream geometric remapping of arc/tool-compensation behavior is

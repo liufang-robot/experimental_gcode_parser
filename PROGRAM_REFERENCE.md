@@ -196,6 +196,11 @@ Current lowering output:
   - `opcode`: `G17` or `G18` or `G19`
   - `plane`: `xy` (`G17`), `zx` (`G18`), `yz` (`G19`)
 - `AilExecutor` tracks current value in `working_plane_current`
+- `G2/G3` lowering validates center words against effective plane:
+  - `G17` -> `I/J`
+  - `G18` -> `I/K`
+  - `G19` -> `J/K`
+  Invalid center words are rejected with line diagnostics.
 
 Current limitation:
 - No downstream geometric behavior remap is applied yet for arcs/tool

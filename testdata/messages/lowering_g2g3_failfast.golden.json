@@ -1,90 +1,90 @@
 {
-  "schema_version": 1,
+  "diagnostics": [
+    {
+      "location": {
+        "column": 8,
+        "line": 3
+      },
+      "message": "multiple motion commands in one line; choose only one of G0/G1/G2/G3",
+      "severity": "error"
+    }
+  ],
   "messages": [
     {
-      "type": "G2",
+      "arc": {
+        "i": 1.0,
+        "j": 2.0,
+        "k": null,
+        "r": 40.0
+      },
+      "feed": 100.0,
+      "modal": {
+        "code": "G2",
+        "group": "GGroup1",
+        "updates_state": true
+      },
       "source": {
         "filename": "lowering_g2g3_failfast.ngc",
         "line": 1,
         "line_number": 10
       },
       "target_pose": {
-        "x": 10.0,
-        "y": 20.0,
-        "z": null,
         "a": null,
         "b": null,
-        "c": null
+        "c": null,
+        "x": 10.0,
+        "y": 20.0,
+        "z": null
       },
-      "arc": {
-        "i": 1.0,
-        "j": 2.0,
-        "k": 3.0,
-        "r": 40.0
-      },
-      "feed": 100.0,
-      "modal": {
-        "group": "GGroup1",
-        "code": "G2",
-        "updates_state": true
-      }
+      "type": "G2"
     },
     {
-      "type": "G3",
+      "arc": {
+        "i": 4.0,
+        "j": 5.0,
+        "k": null,
+        "r": 50.0
+      },
+      "feed": 200.0,
+      "modal": {
+        "code": "G3",
+        "group": "GGroup1",
+        "updates_state": true
+      },
       "source": {
         "filename": "lowering_g2g3_failfast.ngc",
         "line": 2,
         "line_number": 11
       },
       "target_pose": {
-        "x": 30.0,
-        "y": 40.0,
-        "z": null,
         "a": null,
         "b": null,
-        "c": null
+        "c": null,
+        "x": 30.0,
+        "y": 40.0,
+        "z": null
       },
-      "arc": {
-        "i": 4.0,
-        "j": 5.0,
-        "k": 6.0,
-        "r": 50.0
-      },
-      "feed": 200.0,
-      "modal": {
-        "group": "GGroup1",
-        "code": "G3",
-        "updates_state": true
-      }
-    }
-  ],
-  "diagnostics": [
-    {
-      "severity": "error",
-      "message": "multiple motion commands in one line; choose only one of G0/G1/G2/G3",
-      "location": {
-        "line": 3,
-        "column": 8
-      }
+      "type": "G3"
     }
   ],
   "rejected_lines": [
     {
+      "reasons": [
+        {
+          "location": {
+            "column": 8,
+            "line": 3
+          },
+          "message": "multiple motion commands in one line; choose only one of G0/G1/G2/G3",
+          "severity": "error"
+        }
+      ],
       "source": {
         "filename": "lowering_g2g3_failfast.ngc",
         "line": 3,
         "line_number": 12
-      },
-      "reasons": [
-        {
-          "severity": "error",
-          "message": "multiple motion commands in one line; choose only one of G0/G1/G2/G3",
-          "location": {
-            "line": 3,
-            "column": 8
-          }
-        }
-      ]
+      }
     }
-  ]
+  ],
+  "schema_version": 1
 }
