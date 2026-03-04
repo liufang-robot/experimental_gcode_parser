@@ -235,7 +235,12 @@ Planned Siemens compatibility extension:
     - `PROC <name>(<typed_params>)`
     - call with arguments `<name>(<args...>)`
 - Current baseline implemented in v0:
+  - direct subprogram call forms lower to explicit AIL `subprogram_call`:
+    - `<subprogram_name>`
+    - `<subprogram_name> P<count>`
+    - `P=<count> <subprogram_name>`
   - `RET` and `M17` lower to explicit AIL `return_boundary` instructions.
+  - packet stage does not emit standalone packets for `subprogram_call`.
   - packet stage does not emit standalone packets for `return_boundary`.
   - executor treats `return_boundary` as an executable control-flow boundary
     instruction (placeholder until call-stack runtime is added).
@@ -542,6 +547,13 @@ N130 G01 X20 Y20
     `return_boundary`
   - executor currently advances through `return_boundary` without call-stack
     side effects (call-stack return semantics are a follow-up slice)
+- Subprogram call runtime boundary (v0 baseline):
+  - direct call forms emit explicit `subprogram_call` AIL instructions with
+    optional `repeat_count`
+  - packet stage does not emit standalone motion packets for
+    `subprogram_call`
+  - executor currently advances through `subprogram_call` without call-stack
+    side effects (target resolution/call-stack execution are follow-up slices)
 - Tool runtime boundary (current):
   - `tool_select` / `tool_change` instructions are explicit executable control
     instructions in AIL

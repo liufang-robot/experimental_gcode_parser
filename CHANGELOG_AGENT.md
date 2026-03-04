@@ -1,5 +1,28 @@
 # CHANGELOG_AGENT
 
+## 2026-03-04 (T-050 slice 2: explicit subprogram call instruction baseline)
+- Added explicit AIL `subprogram_call` instruction emission for direct Siemens
+  call forms:
+  - `<subprogram_name>`
+  - `<subprogram_name> P<count>`
+  - `P=<count> <subprogram_name>`
+- Wired `subprogram_call` through AIL JSON/debug output, executor stepping, and
+  packet lowering (no standalone motion packet/warning).
+- Added parser/AIL/executor/packet tests for call syntax and call instruction
+  baseline behavior.
+
+SPEC sections / tests:
+- SPEC: Section 3.9, Section 6.1
+- Tests: `test/parser_tests.cpp`, `test/ail_tests.cpp`,
+  `test/ail_executor_tests.cpp`, `test/packet_tests.cpp`
+
+Known limitations:
+- Subprogram target resolution and call-stack execution/return semantics are
+  not implemented in this slice.
+
+How to reproduce locally (commands):
+- `./dev/check.sh`
+
 ## 2026-03-04 (T-050 slice 1: explicit return-boundary instruction for RET/M17)
 - Added explicit AIL `return_boundary` instruction emission for `RET` and
   `M17` (instead of representing `M17` as generic `m_function`).

@@ -81,6 +81,10 @@ PacketResult lowerAilToPackets(const AilResult &ail_result) {
                                               AilReturnBoundaryInstruction>) {
             // Return-boundary instructions are runtime control flow and do not
             // produce standalone motion packets.
+          } else if constexpr (std::is_same_v<T,
+                                              AilSubprogramCallInstruction>) {
+            // Subprogram-call instructions are runtime control flow and do not
+            // produce standalone motion packets.
           } else if constexpr (std::is_same_v<T, AilLabelInstruction>) {
             result.diagnostics.push_back(
                 makeSkippedInstructionWarning(inst.source, "label"));
