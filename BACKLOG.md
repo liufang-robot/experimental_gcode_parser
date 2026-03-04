@@ -378,7 +378,7 @@ Use this template for new backlog items:
 
 ## In Progress
 (List tasks currently being worked on; only one assignee/task per PR)
-- (none)
+- T-045 (docs/t-045-rapid-traverse-architecture)
 
 ## Done
 (Move completed tasks here with PR link)

@@ -1,5 +1,26 @@
 # CHANGELOG_AGENT
 
+## 2026-03-04 (T-045 design: rapid traverse architecture)
+- Added a dedicated architecture page for rapid traverse semantics:
+  - state model for `RTLION`/`RTLIOF`
+  - declared vs effective rapid behavior for `G0`
+  - forced-linear override precedence model
+  - machine profile/policy hooks for runtime resolution
+- Added implementation slices and test matrix for follow-up behavior PRs.
+- Linked the new design page into docs navigation and root architecture.
+- Marked `T-045` as in progress in backlog for this PR slice.
+
+SPEC sections / tests:
+- SPEC target: rapid-traverse syntax/runtime sections (follow-up implementation)
+- This PR is architecture/docs only; no parser/runtime behavior change.
+
+Known limitations:
+- No new runtime override implementation in this slice.
+- Dynamics/planner internals remain out of scope.
+
+How to reproduce locally (commands):
+- `./dev/check.sh`
+
 ## 2026-03-04 (T-040 slice 3: carry effective working plane on arc outputs)
 - Added `plane_effective` on AIL arc instructions and packet arc payloads.
 - `plane_effective` is derived from active/same-block `G17/G18/G19` state in
