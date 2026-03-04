@@ -1,5 +1,27 @@
 # CHANGELOG_AGENT
 
+## 2026-03-04 (T-043 design: work-offset architecture)
+- Added a dedicated architecture page for Siemens work-offset semantics:
+  - Group 8 modal selection model (`G500`, `G54..G57`, `G505..G599`)
+  - non-modal suppression context model (`G53`, `G153`, `SUPA`)
+  - profile-driven offset-range/variant configuration hooks
+- Defined precedence/scope rules for modal selection vs block suppression and
+  outlined coordinate-pipeline integration boundaries.
+- Added implementation slices and test matrix for follow-up behavior PRs.
+- Linked the design page into docs navigation and root architecture.
+- Marked `T-043` as done in backlog as local/unmerged.
+
+SPEC sections / tests:
+- SPEC target: work-offset syntax/runtime sections (future implementation)
+- This PR is architecture/docs only; no parser/runtime behavior change.
+
+Known limitations:
+- No new parser/lowering/executor implementation in this slice.
+- Frame-chain math and machine-specific transform internals remain out of scope.
+
+How to reproduce locally (commands):
+- `./dev/check.sh`
+
 ## 2026-03-04 (T-044 design: exact-stop and continuous-path architecture)
 - Added a dedicated architecture page for Groups 10/11/12:
   - Group 10 modal family (`G60`, `G64..G645`)

@@ -14,4 +14,5 @@ Pages in this section are split by topic for easier review:
 - Siemens M-code model and execution boundaries
 - rapid traverse model (`G0`, `RTLION`, `RTLIOF`)
 - incremental parse session API
+- work-offset model (Group 8 + suppression commands)
 - implementation phases and task ordering
