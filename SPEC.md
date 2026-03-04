@@ -231,7 +231,7 @@ Planned Siemens compatibility extension:
 - Planned syntax support:
   - direct call by program name:
     - `<subprogram_name>`
-    - `\"<subprogram_name>\"` (quoted form compatibility)
+    - `"<subprogram_name>"` (quoted form compatibility)
     - `<subprogram_name> P<count>`
     - `P=<count> <subprogram_name>`
   - optional ISO-compatibility call:
@@ -245,6 +245,7 @@ Planned Siemens compatibility extension:
 - Current baseline implemented in v0:
   - direct subprogram call forms lower to explicit AIL `subprogram_call`:
     - `<subprogram_name>`
+    - `"<subprogram_name>"`
     - `<subprogram_name> P<count>`
     - `P=<count> <subprogram_name>`
   - ISO compatibility call `M98 P<id>` is supported when

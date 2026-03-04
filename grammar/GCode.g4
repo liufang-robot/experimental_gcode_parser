@@ -166,6 +166,7 @@ line_number
 
 item
     : WORD
+    | QUOTED_WORD
     | LINE_NUMBER
     | COMMENT
     ;
@@ -296,6 +297,10 @@ ENDLOOP_KW
 
 WORD
     : WORD_HEAD (EQUAL WORD_VALUE | WORD_VALUE)?
+    ;
+
+QUOTED_WORD
+    : '"' ~(["\r\n])* '"'
     ;
 
 SYSTEM_VAR

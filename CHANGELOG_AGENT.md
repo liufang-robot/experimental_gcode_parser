@@ -1,5 +1,26 @@
 #CHANGELOG_AGENT
 
+## 2026-03-04 (T-050 slice 8: quoted subprogram call compatibility form)
+- Added parser support for quoted subprogram-call target items:
+  - `"SUBPROGRAM_NAME"`
+  - quoted text is normalized as target text without quote delimiters
+- Added AIL lowering support so quoted call form emits `subprogram_call`
+  instruction like existing direct call forms.
+- Added parser/AIL/executor tests for quoted call parsing and runtime fallback
+  behavior with `ExactThenBareName`.
+
+SPEC sections / tests:
+- SPEC: Section 3.9, Section 6.1
+- Tests: `test/parser_tests.cpp`, `test/ail_tests.cpp`,
+  `test/ail_executor_tests.cpp`
+
+Known limitations:
+- Quoted targets are currently supported for direct call item form only; full
+  procedural `PROC` signature/argument parsing remains out of scope.
+
+How to reproduce locally (commands):
+- `./dev/check.sh`
+
 ## 2026-03-04 (T-050 slice 7: pluggable subprogram policy baseline)
 - Added `SubprogramPolicy` interface and `DefaultSubprogramPolicy`:
   - target-resolution hook for subprogram calls
