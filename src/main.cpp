@@ -275,6 +275,26 @@ std::string formatAilDebug(const gcode::AilResult &result) {
                 << (i.plane == gcode::WorkingPlane::XY
                         ? "xy"
                         : (i.plane == gcode::WorkingPlane::ZX ? "zx" : "yz"));
+          } else if constexpr (std::is_same_v<
+                                   std::decay_t<decltype(i)>,
+                                   gcode::AilToolSelectInstruction>) {
+            out << " kind=tool_select";
+            if (i.selector_index.has_value()) {
+              out << " selector_index=" << *i.selector_index;
+            }
+            out << " selector_value=" << i.selector_value;
+            out << " timing="
+                << (i.timing == gcode::ToolActionTiming::Immediate
+                        ? "immediate"
+                        : "deferred_until_m6");
+          } else if constexpr (std::is_same_v<
+                                   std::decay_t<decltype(i)>,
+                                   gcode::AilToolChangeInstruction>) {
+            out << " kind=tool_change opcode=M6";
+            out << " timing="
+                << (i.timing == gcode::ToolActionTiming::Immediate
+                        ? "immediate"
+                        : "deferred_until_m6");
           } else if constexpr (std::is_same_v<std::decay_t<decltype(i)>,
                                               gcode::AilAssignInstruction>) {
             out << " kind=assign lhs=" << i.lhs << " rhs=\""

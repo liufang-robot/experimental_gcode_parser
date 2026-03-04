@@ -183,6 +183,43 @@ TEST(CliFormatTest, AilDebugOutputsSummaryLines) {
             std::string::npos);
 }
 
+TEST(CliFormatTest, AilModeOutputsToolSelectAndToolChangeSchema) {
+  const auto temp_file =
+      std::filesystem::temp_directory_path() / "gcode_cli_tool_test.ngc";
+  {
+    std::ofstream out(temp_file, std::ios::out | std::ios::trunc);
+    ASSERT_TRUE(out.is_open());
+    out << "N10 T12\nN20 M6\n";
+  }
+
+  const std::string json_cmd = std::string("\"") + GCODE_PARSE_BIN +
+                               "\" --mode ail --format json \"" +
+                               temp_file.string() + "\"";
+  const auto json_result = runCommand(json_cmd);
+  EXPECT_EQ(json_result.exit_code, 0);
+  EXPECT_TRUE(json_result.stderr_text.empty());
+  const auto parsed = nlohmann::json::parse(json_result.stdout_text);
+  ASSERT_EQ(parsed["instructions"].size(), 2u);
+  EXPECT_EQ(parsed["instructions"][0]["kind"], "tool_select");
+  EXPECT_EQ(parsed["instructions"][0]["selector_value"], "12");
+  EXPECT_EQ(parsed["instructions"][0]["timing"], "deferred_until_m6");
+  EXPECT_EQ(parsed["instructions"][1]["kind"], "tool_change");
+  EXPECT_EQ(parsed["instructions"][1]["opcode"], "M6");
+
+  const std::string debug_cmd = std::string("\"") + GCODE_PARSE_BIN +
+                                "\" --mode ail --format debug \"" +
+                                temp_file.string() + "\"";
+  const auto debug_result = runCommand(debug_cmd);
+  std::error_code ec;
+  std::filesystem::remove(temp_file, ec);
+  EXPECT_EQ(debug_result.exit_code, 0);
+  EXPECT_TRUE(debug_result.stderr_text.empty());
+  EXPECT_NE(debug_result.stdout_text.find("kind=tool_select"),
+            std::string::npos);
+  EXPECT_NE(debug_result.stdout_text.find("kind=tool_change"),
+            std::string::npos);
+}
+
 TEST(CliFormatTest, AilModeHandlesAssignmentExpression) {
   const auto temp_file =
       std::filesystem::temp_directory_path() / "gcode_cli_assign_test.ngc";

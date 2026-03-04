@@ -134,6 +134,11 @@ std::string workingPlaneToString(WorkingPlane plane) {
   return "yz";
 }
 
+std::string toolActionTimingToString(ToolActionTiming timing) {
+  return timing == ToolActionTiming::Immediate ? "immediate"
+                                               : "deferred_until_m6";
+}
+
 nlohmann::json rejectedLineToJson(const MessageResult::RejectedLine &line) {
   nlohmann::json j;
   j["source"] = sourceToJson(line.source);
@@ -214,6 +219,19 @@ nlohmann::json instructionToJson(const AilInstruction &instruction) {
           }
           j["source"] = sourceToJson(inst.source);
           j["plane"] = workingPlaneToString(inst.plane);
+        } else if constexpr (std::is_same_v<T, AilToolSelectInstruction>) {
+          j["kind"] = "tool_select";
+          j["source"] = sourceToJson(inst.source);
+          j["selector_index"] = inst.selector_index.has_value()
+                                    ? nlohmann::json(*inst.selector_index)
+                                    : nlohmann::json(nullptr);
+          j["selector_value"] = inst.selector_value;
+          j["timing"] = toolActionTimingToString(inst.timing);
+        } else if constexpr (std::is_same_v<T, AilToolChangeInstruction>) {
+          j["kind"] = "tool_change";
+          j["opcode"] = "M6";
+          j["source"] = sourceToJson(inst.source);
+          j["timing"] = toolActionTimingToString(inst.timing);
         } else if constexpr (std::is_same_v<T, AilAssignInstruction>) {
           j["kind"] = "assign";
           j["source"] = sourceToJson(inst.source);

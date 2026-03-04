@@ -9,6 +9,7 @@
 #include <vector>
 
 #include "ast.h"
+#include "machine_profile.h"
 
 namespace gcode {
 
@@ -90,6 +91,7 @@ using ParsedMessage =
 struct LowerOptions {
   std::optional<std::string> filename;
   std::vector<int> active_skip_levels;
+  std::optional<ToolChangeMode> tool_change_mode;
 };
 
 struct MessageResult {

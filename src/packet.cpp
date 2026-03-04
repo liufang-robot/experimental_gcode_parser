@@ -73,6 +73,10 @@ PacketResult lowerAilToPackets(const AilResult &ail_result) {
           } else if constexpr (std::is_same_v<T, AilWorkingPlaneInstruction>) {
             // Working-plane instructions are modal state and do not produce
             // standalone packets.
+          } else if constexpr (std::is_same_v<T, AilToolSelectInstruction> ||
+                               std::is_same_v<T, AilToolChangeInstruction>) {
+            // Tool-select/tool-change instructions are non-motion control
+            // state and do not produce standalone packets.
           } else if constexpr (std::is_same_v<T, AilLabelInstruction>) {
             result.diagnostics.push_back(
                 makeSkippedInstructionWarning(inst.source, "label"));

@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <cctype>
+#include <cmath>
 #include <limits>
 #include <optional>
 #include <type_traits>
@@ -197,6 +198,104 @@ bool isKnownPredefinedMFunction(int64_t value) {
   return value >= 40 && value <= 45;
 }
 
+std::string toUpper(std::string value) {
+  std::transform(
+      value.begin(), value.end(), value.begin(),
+      [](unsigned char c) { return static_cast<char>(std::toupper(c)); });
+  return value;
+}
+
+bool isDigits(std::string_view text) {
+  if (text.empty()) {
+    return false;
+  }
+  for (char c : text) {
+    if (!std::isdigit(static_cast<unsigned char>(c))) {
+      return false;
+    }
+  }
+  return true;
+}
+
+bool isToolSelectorHead(std::string_view head) {
+  if (head == "T") {
+    return true;
+  }
+  if (head.size() <= 1 || head.front() != 'T') {
+    return false;
+  }
+  return isDigits(head.substr(1));
+}
+
+ToolActionTiming timingFromOptions(const LowerOptions &options) {
+  const ToolChangeMode mode =
+      options.tool_change_mode.value_or(ToolChangeMode::DeferredM6);
+  return mode == ToolChangeMode::DirectT ? ToolActionTiming::Immediate
+                                         : ToolActionTiming::DeferredUntilM6;
+}
+
+std::optional<int64_t> parseSelectorIndex(std::string_view head) {
+  if (head.size() <= 1) {
+    return std::nullopt;
+  }
+  return parseUnsignedInt64Strict(head.substr(1));
+}
+
+std::optional<std::string> selectorTextFromExpr(const ExprNode &node) {
+  if (auto *literal = std::get_if<ExprLiteral>(&node.node)) {
+    if (std::floor(literal->value) == literal->value) {
+      return std::to_string(static_cast<int64_t>(literal->value));
+    }
+    return std::to_string(literal->value);
+  }
+  if (auto *var = std::get_if<ExprVariable>(&node.node)) {
+    return var->name;
+  }
+  return std::nullopt;
+}
+
+std::optional<AilToolSelectInstruction>
+toolSelectFromWord(const Word &word, const SourceInfo &source,
+                   const LowerOptions &options) {
+  if (!isToolSelectorHead(word.head) || !word.value.has_value()) {
+    return std::nullopt;
+  }
+  AilToolSelectInstruction inst;
+  inst.source = source;
+  inst.selector_index = parseSelectorIndex(word.head);
+  inst.selector_value = *word.value;
+  inst.timing = timingFromOptions(options);
+  return inst;
+}
+
+std::optional<AilToolSelectInstruction>
+toolSelectFromAssignment(const Assignment &assignment, const SourceInfo &source,
+                         const LowerOptions &options) {
+  if (!isToolSelectorHead(assignment.lhs) || !assignment.rhs) {
+    return std::nullopt;
+  }
+  const auto selector = selectorTextFromExpr(*assignment.rhs);
+  if (!selector.has_value()) {
+    return std::nullopt;
+  }
+  AilToolSelectInstruction inst;
+  inst.source = source;
+  inst.selector_index = parseSelectorIndex(assignment.lhs);
+  inst.selector_value = toUpper(*selector);
+  inst.timing = timingFromOptions(options);
+  return inst;
+}
+
+std::optional<AilToolChangeInstruction>
+toolChangeFromMCode(const AilMCodeInstruction &mcode) {
+  if (mcode.value != 6 || mcode.address_extension.has_value()) {
+    return std::nullopt;
+  }
+  AilToolChangeInstruction inst;
+  inst.source = mcode.source;
+  return inst;
+}
+
 } // namespace
 
 bool lineHasError(const std::vector<Diagnostic> &diagnostics, int line) {
@@ -289,6 +388,12 @@ AilResult lowerToAil(const Program &program,
       continue;
     }
     if (line.assignment.has_value()) {
+      if (const auto tool_select = toolSelectFromAssignment(
+              *line.assignment, sourceFromLine(line, options), options);
+          tool_select.has_value()) {
+        result.instructions.push_back(*tool_select);
+        continue;
+      }
       AilAssignInstruction inst;
       inst.source = sourceFromLine(line, options);
       inst.lhs = line.assignment->lhs;
@@ -435,8 +540,18 @@ AilResult lowerToAil(const Program &program,
         current_working_plane = working_plane->plane;
         result.instructions.push_back(*working_plane);
       }
+      const auto tool_select = toolSelectFromWord(word, source, options);
+      if (tool_select.has_value()) {
+        result.instructions.push_back(*tool_select);
+      }
       const auto mcode = mCodeFromWord(word, source);
       if (!mcode.has_value()) {
+        continue;
+      }
+      auto tool_change = toolChangeFromMCode(*mcode);
+      if (tool_change.has_value()) {
+        tool_change->timing = timingFromOptions(options);
+        result.instructions.push_back(std::move(*tool_change));
         continue;
       }
       result.instructions.push_back(*mcode);
@@ -769,6 +884,11 @@ bool AilExecutor::advanceOneInstruction(int64_t now_ms,
   if (std::holds_alternative<AilWorkingPlaneInstruction>(inst)) {
     const auto &plane = std::get<AilWorkingPlaneInstruction>(inst);
     state_.working_plane_current = plane.plane;
+    ++state_.pc;
+    return true;
+  }
+  if (std::holds_alternative<AilToolSelectInstruction>(inst) ||
+      std::holds_alternative<AilToolChangeInstruction>(inst)) {
     ++state_.pc;
     return true;
   }

@@ -301,8 +301,13 @@ Planned Siemens compatibility extension:
   - rejected examples:
     - `T12` (legacy numeric shortcut without `=`)
 - Current scope:
-  - parse/semantic validation only; no tool-change runtime execution semantics
-    in this slice.
+  - parse/semantic validation
+  - AIL emits explicit tool instructions:
+    - `tool_select` with `selector_index?`, `selector_value`, and
+      `timing` (`immediate|deferred_until_m6`)
+    - `tool_change` for `M6` with `timing`
+  - packet stage does not emit standalone packets for tool instructions.
+  - executor direct/deferred state behavior remains a follow-up slice.
 
 ### 3.7 Control Flow Syntax (parse-only in v0)
 - Jump directions:

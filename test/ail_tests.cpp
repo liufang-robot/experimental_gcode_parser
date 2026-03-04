@@ -138,6 +138,61 @@ TEST(AilTest, EmitsMFunctionInstructionsInAilAndJson) {
   EXPECT_EQ(json["instructions"][2]["value"], 5);
 }
 
+TEST(AilTest, EmitsToolSelectAndToolChangeInstructionsWithDeferredTiming) {
+  gcode::LowerOptions options;
+  options.tool_change_mode = gcode::ToolChangeMode::DeferredM6;
+  const auto result =
+      gcode::parseAndLowerAil("N10 T12\nN20 M6\nN30 T1=99\n", options);
+  ASSERT_TRUE(result.diagnostics.empty());
+  ASSERT_TRUE(result.rejected_lines.empty());
+  ASSERT_EQ(result.instructions.size(), 3u);
+
+  ASSERT_TRUE(std::holds_alternative<gcode::AilToolSelectInstruction>(
+      result.instructions[0]));
+  ASSERT_TRUE(std::holds_alternative<gcode::AilToolChangeInstruction>(
+      result.instructions[1]));
+  ASSERT_TRUE(std::holds_alternative<gcode::AilToolSelectInstruction>(
+      result.instructions[2]));
+
+  const auto &select0 =
+      std::get<gcode::AilToolSelectInstruction>(result.instructions[0]);
+  EXPECT_EQ(select0.selector_value, "12");
+  EXPECT_FALSE(select0.selector_index.has_value());
+  EXPECT_EQ(select0.timing, gcode::ToolActionTiming::DeferredUntilM6);
+
+  const auto &change =
+      std::get<gcode::AilToolChangeInstruction>(result.instructions[1]);
+  EXPECT_EQ(change.timing, gcode::ToolActionTiming::DeferredUntilM6);
+
+  const auto &select1 =
+      std::get<gcode::AilToolSelectInstruction>(result.instructions[2]);
+  ASSERT_TRUE(select1.selector_index.has_value());
+  EXPECT_EQ(*select1.selector_index, 1);
+  EXPECT_EQ(select1.selector_value, "99");
+  EXPECT_EQ(select1.timing, gcode::ToolActionTiming::DeferredUntilM6);
+
+  const auto json = nlohmann::json::parse(gcode::ailToJsonString(result));
+  EXPECT_EQ(json["instructions"][0]["kind"], "tool_select");
+  EXPECT_EQ(json["instructions"][0]["selector_value"], "12");
+  EXPECT_EQ(json["instructions"][0]["timing"], "deferred_until_m6");
+  EXPECT_EQ(json["instructions"][1]["kind"], "tool_change");
+  EXPECT_EQ(json["instructions"][1]["opcode"], "M6");
+  EXPECT_EQ(json["instructions"][1]["timing"], "deferred_until_m6");
+}
+
+TEST(AilTest, EmitsToolSelectImmediateTimingWhenDirectModeConfigured) {
+  gcode::LowerOptions options;
+  options.tool_change_mode = gcode::ToolChangeMode::DirectT;
+  const auto result = gcode::parseAndLowerAil("T12\n", options);
+  ASSERT_TRUE(result.diagnostics.empty());
+  ASSERT_EQ(result.instructions.size(), 1u);
+  ASSERT_TRUE(std::holds_alternative<gcode::AilToolSelectInstruction>(
+      result.instructions[0]));
+  const auto &select =
+      std::get<gcode::AilToolSelectInstruction>(result.instructions[0]);
+  EXPECT_EQ(select.timing, gcode::ToolActionTiming::Immediate);
+}
+
 TEST(AilTest, EmitsRapidTraverseModeInstructionsForRTLIONAndRTLIOF) {
   const auto result = gcode::parseAndLowerAil("RTLION\nG0 X1\nRTLIOF\nG0 X2\n");
   ASSERT_TRUE(result.diagnostics.empty());
