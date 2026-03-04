@@ -35,6 +35,7 @@ All emitted messages include:
 |---|---|---|
 | `G0` rapid baseline | Implemented | Lowered as linear motion with modal code `G0`. |
 | `RTLION` / `RTLIOF` rapid interpolation mode | Partial | Lowered to AIL `rapid_mode` instructions; packet/runtime override semantics pending. |
+| `G40` / `G41` / `G42` tool radius compensation | Partial | Lowered to AIL `tool_radius_comp`; executor tracks modal state only. |
 | `G1` linear | Implemented | Lowers to `G1Message` with pose/feed. |
 | `G2` arc CW | Implemented | Lowers to `G2Message` with pose/arc/feed. |
 | `G3` arc CCW | Implemented | Lowers to `G3Message` with pose/arc/feed. |
@@ -157,6 +158,27 @@ Current limitation:
   apply interpolation override behavior to machine actuation.
 - Packet stage does not emit standalone packets for `rapid_mode` instructions,
   and preserves `rapid_mode_effective` on `G0` linear payloads.
+
+## `G40` / `G41` / `G42` Tool Radius Compensation (Group 7 baseline)
+
+Status:
+- `Partial`
+
+Syntax:
+- `G40`
+- `G41`
+- `G42`
+
+Current lowering output:
+- Emits AIL instruction kind `tool_radius_comp` with:
+  - `opcode`: `G40` or `G41` or `G42`
+  - `mode`: `off` (`G40`), `left` (`G41`), `right` (`G42`)
+- `AilExecutor` tracks current value in `tool_radius_comp_current`
+
+Current limitation:
+- No cutter-path geometric compensation is applied in v0.
+- Packet stage does not emit standalone packets for `tool_radius_comp`
+  instructions.
 
 ## `G2` / `G3` Circular Interpolation
 

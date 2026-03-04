@@ -1,5 +1,28 @@
 # CHANGELOG_AGENT
 
+## 2026-03-04 (T-039 slice 1: Group 7 tool-radius-comp AIL/executor baseline)
+- Added AIL instruction emission for `G40/G41/G42` as `tool_radius_comp` with
+  normalized mode values (`off|left|right`).
+- Added `AilExecutor` state tracking via `tool_radius_comp_current`.
+- Updated AIL JSON/debug output and packet behavior so tool-radius-comp
+  instructions are preserved in AIL and ignored as standalone packet events.
+- Added tests for AIL emission, executor state tracking, and packet behavior.
+- Updated SPEC/program-reference docs for current Group 7 baseline scope.
+
+SPEC sections / tests:
+- SPEC: Section 3.11
+- Tests: `test/ail_tests.cpp`, `test/ail_executor_tests.cpp`,
+  `test/packet_tests.cpp`, `./dev/check.sh`
+
+Known limitations:
+- No geometric cutter compensation path adjustment is implemented in v0.
+- Packet output still carries only motion/dwell packets; Group 7 remains modal
+  state metadata.
+
+How to reproduce locally (commands):
+- `ctest --test-dir build --output-on-failure -R \"AilTest|AilExecutorTest|PacketTest\"`
+- `./dev/check.sh`
+
 ## 2026-03-03 (T-045 slice 5: packetization ignores standalone rapid_mode)
 - Updated packetization behavior for `rapid_mode` instructions to avoid
   emitting skip-warning diagnostics for standalone `RTLION`/`RTLIOF`.

@@ -32,6 +32,7 @@ Current Siemens-aligned baseline for supported functions:
 |---|---|---|
 | `G0` rapid baseline | Implemented | Emits `G0Message` with target pose + feed. |
 | `RTLION` / `RTLIOF` rapid interpolation mode | Partial | Lowered to AIL `rapid_mode`; packet/runtime interpolation semantics pending. |
+| `G40` / `G41` / `G42` tool radius compensation | Partial | Lowered to AIL `tool_radius_comp`; executor tracks modal state only. |
 | `G1` linear | Implemented | Emits `G1Message` with target pose + feed. |
 | `G2` arc CW | Implemented | Emits `G2Message` with endpoint + arc fields + feed. |
 | `G3` arc CCW | Implemented | Emits `G3Message` with endpoint + arc fields + feed. |
@@ -149,6 +150,27 @@ Current limitations:
   override behavior for machine actuation is not implemented yet.
 - Packetization does not emit standalone packets for `rapid_mode`, while
   preserving `rapid_mode_effective` on `G0` linear payloads.
+
+## G40 / G41 / G42 (Group 7 baseline)
+
+Syntax examples:
+
+- `G40`
+- `G41`
+- `G42`
+
+Current behavior:
+
+- Lowering emits AIL `kind=tool_radius_comp`.
+- JSON shape includes:
+  - `opcode`: `G40` or `G41` or `G42`
+  - `mode`: `off` / `left` / `right`
+- `AilExecutor` tracks the active mode in `tool_radius_comp_current`.
+
+Current limitations:
+
+- Cutter-path geometric compensation is not implemented in v0.
+- Packetization does not emit standalone packets for `tool_radius_comp`.
 
 ## G2 / G3
 

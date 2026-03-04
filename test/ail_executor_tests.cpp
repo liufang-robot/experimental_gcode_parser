@@ -276,4 +276,36 @@ TEST(AilExecutorTest, TracksRapidModeStateFromRTLIONAndRTLIOF) {
             gcode::RapidInterpolationMode::Linear);
 }
 
+TEST(AilExecutorTest, TracksToolRadiusCompStateFromG40G41G42) {
+  const auto lowered = gcode::parseAndLowerAil("G41\nG1 X1\nG42\nG40\n");
+  gcode::AilExecutor exec(lowered.instructions);
+
+  const auto resolver = [](const gcode::Condition &,
+                           const gcode::SourceInfo &) {
+    gcode::ConditionResolution r;
+    r.kind = gcode::ConditionResolutionKind::False;
+    return r;
+  };
+
+  ASSERT_TRUE(exec.step(0, resolver)); // G41
+  ASSERT_TRUE(exec.state().tool_radius_comp_current.has_value());
+  EXPECT_EQ(*exec.state().tool_radius_comp_current,
+            gcode::ToolRadiusCompMode::Left);
+
+  ASSERT_TRUE(exec.step(0, resolver)); // G1
+  ASSERT_TRUE(exec.state().tool_radius_comp_current.has_value());
+  EXPECT_EQ(*exec.state().tool_radius_comp_current,
+            gcode::ToolRadiusCompMode::Left);
+
+  ASSERT_TRUE(exec.step(0, resolver)); // G42
+  ASSERT_TRUE(exec.state().tool_radius_comp_current.has_value());
+  EXPECT_EQ(*exec.state().tool_radius_comp_current,
+            gcode::ToolRadiusCompMode::Right);
+
+  ASSERT_TRUE(exec.step(0, resolver)); // G40
+  ASSERT_TRUE(exec.state().tool_radius_comp_current.has_value());
+  EXPECT_EQ(*exec.state().tool_radius_comp_current,
+            gcode::ToolRadiusCompMode::Off);
+}
+
 } // namespace
