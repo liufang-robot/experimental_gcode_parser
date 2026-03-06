@@ -560,6 +560,30 @@ TEST(AilTest, AcceptsEmptyInlineSubprogramCallArgumentsWithoutWarning) {
   EXPECT_TRUE(result.diagnostics.empty());
 }
 
+TEST(AilTest,
+     AcceptsEmptyInlineLowercaseSubprogramCallArgumentsWithoutWarning) {
+  const auto result = gcode::parseAndLowerAil("main()\n");
+  ASSERT_EQ(result.instructions.size(), 1u);
+  ASSERT_TRUE(std::holds_alternative<gcode::AilSubprogramCallInstruction>(
+      result.instructions[0]));
+  const auto &call =
+      std::get<gcode::AilSubprogramCallInstruction>(result.instructions[0]);
+  EXPECT_EQ(call.target, "MAIN");
+  EXPECT_TRUE(result.diagnostics.empty());
+}
+
+TEST(AilTest,
+     AcceptsEmptyInlineMixedCaseSubprogramCallArgumentsWithoutWarning) {
+  const auto result = gcode::parseAndLowerAil("mAiN()\n");
+  ASSERT_EQ(result.instructions.size(), 1u);
+  ASSERT_TRUE(std::holds_alternative<gcode::AilSubprogramCallInstruction>(
+      result.instructions[0]));
+  const auto &call =
+      std::get<gcode::AilSubprogramCallInstruction>(result.instructions[0]);
+  EXPECT_EQ(call.target, "MAIN");
+  EXPECT_TRUE(result.diagnostics.empty());
+}
+
 TEST(AilTest, AcceptsEmptyInlineSubprogramCallArgumentsWithWhitespace) {
   const auto result = gcode::parseAndLowerAil("MAIN ()\n");
   ASSERT_EQ(result.instructions.size(), 1u);
@@ -573,6 +597,38 @@ TEST(AilTest, AcceptsEmptyInlineSubprogramCallArgumentsWithWhitespace) {
 
 TEST(AilTest, WarnsWhenInlineSubprogramCallArgumentsAreIgnored) {
   const auto result = gcode::parseAndLowerAil("MAIN(R1)\n");
+  ASSERT_EQ(result.instructions.size(), 1u);
+  ASSERT_TRUE(std::holds_alternative<gcode::AilSubprogramCallInstruction>(
+      result.instructions[0]));
+  const auto &call =
+      std::get<gcode::AilSubprogramCallInstruction>(result.instructions[0]);
+  EXPECT_EQ(call.target, "MAIN");
+
+  ASSERT_FALSE(result.diagnostics.empty());
+  EXPECT_EQ(result.diagnostics.back().severity,
+            gcode::Diagnostic::Severity::Warning);
+  EXPECT_NE(result.diagnostics.back().message.find("call arguments"),
+            std::string::npos);
+}
+
+TEST(AilTest, WarnsWhenLowercaseInlineSubprogramCallArgumentsAreIgnored) {
+  const auto result = gcode::parseAndLowerAil("main(r1)\n");
+  ASSERT_EQ(result.instructions.size(), 1u);
+  ASSERT_TRUE(std::holds_alternative<gcode::AilSubprogramCallInstruction>(
+      result.instructions[0]));
+  const auto &call =
+      std::get<gcode::AilSubprogramCallInstruction>(result.instructions[0]);
+  EXPECT_EQ(call.target, "MAIN");
+
+  ASSERT_FALSE(result.diagnostics.empty());
+  EXPECT_EQ(result.diagnostics.back().severity,
+            gcode::Diagnostic::Severity::Warning);
+  EXPECT_NE(result.diagnostics.back().message.find("call arguments"),
+            std::string::npos);
+}
+
+TEST(AilTest, WarnsWhenMixedCaseInlineSubprogramCallArgumentsAreIgnored) {
+  const auto result = gcode::parseAndLowerAil("mAiN(R1)\n");
   ASSERT_EQ(result.instructions.size(), 1u);
   ASSERT_TRUE(std::holds_alternative<gcode::AilSubprogramCallInstruction>(
       result.instructions[0]));
