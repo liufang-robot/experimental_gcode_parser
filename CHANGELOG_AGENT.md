@@ -1,5 +1,24 @@
 #CHANGELOG_AGENT
 
+## 2026-03-06 (T-050 slice 24: parser malformed PROC diagnostic location coverage)
+- Added parser diagnostic-location assertions for malformed `PROC` declaration
+  forms to lock deterministic first-offending-token reporting:
+  - `PROC=MAIN` -> column 1
+  - `PROC` -> column 1
+  - `PROC G1` -> column 6
+  - `PROC MAIN P2` -> column 11
+- No runtime behavior change; this is parser-contract hardening coverage.
+
+SPEC sections / tests:
+- SPEC: Section 3.9
+- Tests: `test/parser_tests.cpp`
+
+Known limitations:
+- Baseline still does not parse structured procedural parameter lists into AST.
+
+How to reproduce locally (commands):
+- `./dev/check.sh`
+
 ## 2026-03-06 (T-050 slice 23: parse-stage malformed PROC shape parity)
 - Extended parse-stage semantic checks for `PROC` declaration shape to match
   lowering behavior:
