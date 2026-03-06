@@ -475,6 +475,16 @@ TEST(ParserSyntaxBaselineTest,
   EXPECT_EQ(result.diagnostics.back().location.column, 6);
 }
 
+TEST(ParserSyntaxBaselineTest,
+     ReportsSyntaxErrorForMixedCaseProcQuotedEqualForm) {
+  const auto result = gcode::parse("PrOc=\"DIR/SPF1000\"\n");
+  ASSERT_FALSE(result.diagnostics.empty());
+  EXPECT_NE(result.diagnostics.back().message.find("syntax error"),
+            std::string::npos);
+  EXPECT_EQ(result.diagnostics.back().location.line, 1);
+  EXPECT_EQ(result.diagnostics.back().location.column, 6);
+}
+
 TEST(ParserSyntaxBaselineTest, M98CallRequiresIsoCompatibilityMode) {
   {
     const auto result = gcode::parse("M98 P1000\n");
