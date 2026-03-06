@@ -1,5 +1,25 @@
 #CHANGELOG_AGENT
 
+## 2026-03-06 (docs: enable Mermaid rendering in mdBook)
+- Configured `docs/book.toml` to run the `mdbook-mermaid` preprocessor and load
+  Mermaid runtime assets in generated HTML output.
+- Updated CI docs jobs to install `mdbook-mermaid` before `mdbook build docs`
+  so published docs render diagrams correctly.
+- Documented the local `mdbook-mermaid` prerequisite in `README.md`.
+
+SPEC sections / tests:
+- SPEC: Section 9
+- Validation: `mdbook build docs`, `./dev/check.sh`
+
+Known limitations:
+- Mermaid rendering still depends on the `mdbook-mermaid` binary being
+  available in local developer environments.
+
+How to reproduce locally (commands):
+- `cargo install mdbook mdbook-mermaid`
+- `mdbook build docs`
+- `./dev/check.sh`
+
 ## 2026-03-06 (T-050 slice 31: case-parity PROC signature suffix coverage)
 - Added AIL coverage showing lowercase and mixed-case `PROC` declarations keep
   the same inline signature-suffix behavior as uppercase baseline forms.

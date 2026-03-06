@@ -716,6 +716,9 @@ Requirements:
 - If `SPEC.md` adds planned behavior not yet implemented, docs must mark
   it as `Planned` until code/tests are merged.
 - CI must build mdBook documentation and publish Pages content from `main`.
+- Mermaid diagrams in `docs/src/` must build through the configured mdBook
+  toolchain, including the `mdbook-mermaid` preprocessor and checked-in
+  runtime assets under `docs/`.
 
 PR gate expectation:
 - Feature PR description must list:

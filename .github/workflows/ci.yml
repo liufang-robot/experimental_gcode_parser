@@ -86,6 +86,9 @@ jobs:
         with:
           mdbook-version: "latest"
 
+      - name: Install mdbook-mermaid
+        run: cargo install mdbook-mermaid
+
       - name: Build docs
         run: |
           mdbook build docs
@@ -161,6 +164,9 @@ jobs:
         uses: peaceiris/actions-mdbook@v2
         with:
           mdbook-version: "latest"
+
+      - name: Install mdbook-mermaid
+        run: cargo install mdbook-mermaid
 
       - name: Build docs
         run: |
