@@ -313,6 +313,17 @@ TEST(AilTest, EmitsQuotedProcDeclarationAsLabelInstruction) {
   EXPECT_EQ(decl.name, "DIR/SPF1000");
 }
 
+TEST(AilTest, EmitsLowercaseProcDeclarationAsLabelInstruction) {
+  const auto result = gcode::parseAndLowerAil("proc main\n");
+  ASSERT_TRUE(result.diagnostics.empty());
+  ASSERT_EQ(result.instructions.size(), 1u);
+  ASSERT_TRUE(std::holds_alternative<gcode::AilLabelInstruction>(
+      result.instructions[0]));
+  const auto &decl =
+      std::get<gcode::AilLabelInstruction>(result.instructions[0]);
+  EXPECT_EQ(decl.name, "MAIN");
+}
+
 TEST(AilTest, ReportsErrorForProcWithoutTargetName) {
   const auto result = gcode::parseAndLowerAil("PROC\n");
   EXPECT_TRUE(result.instructions.empty());
