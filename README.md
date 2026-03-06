@@ -140,13 +140,13 @@ mdbook build docs
 mdbook serve docs --open
 ```
 
-Mermaid diagrams in `docs/src/design/*.md` require `mdbook-mermaid`. Without
-it, the generated book will show raw `mermaid` code blocks instead of rendered
-diagrams.
+Mermaid diagrams in `docs/src/development/design/*.md` require
+`mdbook-mermaid`. Without it, the generated book will show raw `mermaid` code
+blocks instead of rendered diagrams.
 
 Main pages:
 
-- `docs/src/development_reference.md`
+- `docs/src/development/index.md`
 - `docs/src/program_reference.md`
 
 GitHub Pages publishes `docs/book` on pushes to `main`.

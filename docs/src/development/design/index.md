@@ -1,7 +1,7 @@
-# Design
+# Architecture and Design
 
-This section mirrors repository design sources and keeps architecture decisions
-available in published docs.
+This section mirrors repository design sources and keeps developer-facing
+architecture decisions available in published docs.
 
 Source-of-truth files in repo root:
 - `ARCHITECTURE.md`

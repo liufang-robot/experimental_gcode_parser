@@ -1,5 +1,27 @@
 #CHANGELOG_AGENT
 
+## 2026-03-06 (docs: restructure development reference section)
+- Moved developer architecture/design pages under `docs/src/development/design/`
+  so they live under the development manual instead of as flat top-level
+  mdBook entries.
+- Replaced the single `development_reference.md` page with a structured
+  development section (`development/index.md`, `development/workflow.md`,
+  nested architecture/design index).
+- Updated mdBook navigation and repo docs references to the new development
+  subtree layout.
+
+SPEC sections / tests:
+- SPEC: Section 9
+- Validation: `mdbook build docs`, `./dev/check.sh`
+
+Known limitations:
+- Existing root changelog history still references the old paths for historical
+  PR entries.
+
+How to reproduce locally (commands):
+- `mdbook build docs`
+- `./dev/check.sh`
+
 ## 2026-03-06 (docs: enable Mermaid rendering in mdBook)
 - Configured `docs/book.toml` to run the `mdbook-mermaid` preprocessor and load
   Mermaid runtime assets in generated HTML output.
