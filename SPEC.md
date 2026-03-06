@@ -274,11 +274,13 @@ Planned Siemens compatibility extension:
       exhausted before resuming caller
     - `return_boundary` pops return PC and resumes caller
     - unresolved call target or return with empty call stack is a runtime fault
-- Parser/lowering responsibility:
+  - Parser/lowering responsibility:
   - preserve call target and repeat count structure
   - preserve declaration names and return statements
   - emit warning diagnostics when inline procedural signature/call argument
     suffixes are encountered but not modeled in baseline
+  - emit deterministic error for malformed declaration keyword form `PROC`
+    without target name
   - emit deterministic diagnostics for malformed call/declaration syntax
 - Runtime responsibility:
   - resolve target by configured search policy
