@@ -1,5 +1,21 @@
 #CHANGELOG_AGENT
 
+## 2026-03-06 (T-050 slice 17: quoted PROC declaration compatibility coverage)
+- Added explicit baseline coverage for quoted PROC declaration targets:
+  - AIL lowering emits declaration label for `PROC "DIR/SPF1000"`
+  - executor resolves quoted declaration target with quoted call form
+- Updated SPEC wording to clarify quoted declaration-target compatibility.
+
+SPEC sections / tests:
+- SPEC: Section 3.9
+- Tests: `test/ail_tests.cpp`, `test/ail_executor_tests.cpp`
+
+Known limitations:
+- Baseline still does not parse structured procedural parameter lists into AST.
+
+How to reproduce locally (commands):
+- `./dev/check.sh`
+
 ## 2026-03-06 (T-050 slice 16: deterministic error for malformed `PROC` declaration shapes)
 - Tightened malformed `PROC` declaration detection:
   - any `PROC ...` line that does not match baseline `PROC <name>` declaration
