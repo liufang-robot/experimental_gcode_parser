@@ -360,7 +360,36 @@ std::string subprogramTargetFromWord(const Word &word) {
   return toUpper(word.text);
 }
 
-std::optional<AilLabelInstruction>
+std::optional<Location>
+findInlineParenSuffixCommentLocation(const Line &line, const Word &anchor) {
+  const int expected_column =
+      anchor.location.column + static_cast<int>(anchor.text.size());
+  for (const auto &item : line.items) {
+    if (!std::holds_alternative<Comment>(item)) {
+      continue;
+    }
+    const auto &comment = std::get<Comment>(item);
+    if (comment.location.line != anchor.location.line ||
+        comment.location.column != expected_column || comment.text.size() < 2 ||
+        comment.text.front() != '(' || comment.text.back() != ')') {
+      continue;
+    }
+    return comment.location;
+  }
+  return std::nullopt;
+}
+
+struct SubprogramDeclarationMatch {
+  AilLabelInstruction instruction;
+  std::optional<Location> inline_signature_location;
+};
+
+struct SubprogramCallMatch {
+  AilSubprogramCallInstruction instruction;
+  std::optional<Location> inline_argument_location;
+};
+
+std::optional<SubprogramDeclarationMatch>
 subprogramDeclarationFromLine(const Line &line, const SourceInfo &source) {
   std::vector<const Word *> words;
   words.reserve(line.items.size());
@@ -380,13 +409,15 @@ subprogramDeclarationFromLine(const Line &line, const SourceInfo &source) {
   if (!isSubprogramTargetWord(*words[1])) {
     return std::nullopt;
   }
-  AilLabelInstruction inst;
-  inst.source = source;
-  inst.name = subprogramTargetFromWord(*words[1]);
-  return inst;
+  SubprogramDeclarationMatch match;
+  match.instruction.source = source;
+  match.instruction.name = subprogramTargetFromWord(*words[1]);
+  match.inline_signature_location =
+      findInlineParenSuffixCommentLocation(line, *words[1]);
+  return match;
 }
 
-std::optional<AilSubprogramCallInstruction>
+std::optional<SubprogramCallMatch>
 subprogramCallFromLine(const Line &line, const SourceInfo &source,
                        const LowerOptions &options) {
   std::vector<const Word *> words;
@@ -402,10 +433,12 @@ subprogramCallFromLine(const Line &line, const SourceInfo &source,
     if (!isSubprogramTargetWord(*words.front())) {
       return std::nullopt;
     }
-    AilSubprogramCallInstruction inst;
-    inst.source = source;
-    inst.target = subprogramTargetFromWord(*words.front());
-    return inst;
+    SubprogramCallMatch match;
+    match.instruction.source = source;
+    match.instruction.target = subprogramTargetFromWord(*words.front());
+    match.inline_argument_location =
+        findInlineParenSuffixCommentLocation(line, *words.front());
+    return match;
   }
 
   if (words.size() != 2) {
@@ -418,26 +451,30 @@ subprogramCallFromLine(const Line &line, const SourceInfo &source,
   };
   if (options.enable_iso_m98_calls && is_m98_word(*words[0]) &&
       words[1]->head == "P" && words[1]->value.has_value()) {
-    AilSubprogramCallInstruction inst;
-    inst.source = source;
-    inst.target = toUpper(*words[1]->value);
-    return inst;
+    SubprogramCallMatch match;
+    match.instruction.source = source;
+    match.instruction.target = toUpper(*words[1]->value);
+    return match;
   }
 
-  AilSubprogramCallInstruction inst;
-  inst.source = source;
+  SubprogramCallMatch match;
+  match.instruction.source = source;
 
   const auto first_repeat = parseSubprogramRepeatCount(*words[0]);
   const auto second_repeat = parseSubprogramRepeatCount(*words[1]);
   if (first_repeat.has_value() && isSubprogramTargetWord(*words[1])) {
-    inst.repeat_count = *first_repeat;
-    inst.target = subprogramTargetFromWord(*words[1]);
-    return inst;
+    match.instruction.repeat_count = *first_repeat;
+    match.instruction.target = subprogramTargetFromWord(*words[1]);
+    match.inline_argument_location =
+        findInlineParenSuffixCommentLocation(line, *words[1]);
+    return match;
   }
   if (second_repeat.has_value() && isSubprogramTargetWord(*words[0])) {
-    inst.repeat_count = *second_repeat;
-    inst.target = subprogramTargetFromWord(*words[0]);
-    return inst;
+    match.instruction.repeat_count = *second_repeat;
+    match.instruction.target = subprogramTargetFromWord(*words[0]);
+    match.inline_argument_location =
+        findInlineParenSuffixCommentLocation(line, *words[0]);
+    return match;
   }
   return std::nullopt;
 }
@@ -669,12 +706,30 @@ AilResult lowerToAil(const Program &program,
     const auto source = sourceFromLine(line, options);
     if (const auto decl = subprogramDeclarationFromLine(line, source);
         decl.has_value()) {
-      result.instructions.push_back(*decl);
+      result.instructions.push_back(decl->instruction);
+      if (decl->inline_signature_location.has_value()) {
+        Diagnostic diag;
+        diag.severity = Diagnostic::Severity::Warning;
+        diag.message =
+            "PROC signature parameters are not supported yet; inline "
+            "parenthesized suffix is ignored";
+        diag.location = *decl->inline_signature_location;
+        result.diagnostics.push_back(std::move(diag));
+      }
       continue;
     }
     if (const auto call = subprogramCallFromLine(line, source, options);
         call.has_value()) {
-      result.instructions.push_back(*call);
+      result.instructions.push_back(call->instruction);
+      if (call->inline_argument_location.has_value()) {
+        Diagnostic diag;
+        diag.severity = Diagnostic::Severity::Warning;
+        diag.message =
+            "subprogram call arguments are not supported yet; inline "
+            "parenthesized suffix is ignored";
+        diag.location = *call->inline_argument_location;
+        result.diagnostics.push_back(std::move(diag));
+      }
       continue;
     }
     for (const auto &item : line.items) {
