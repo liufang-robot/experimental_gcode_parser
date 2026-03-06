@@ -400,6 +400,17 @@ TEST(AilTest, ReportsSyntaxErrorForLowercaseProcQuotedEqualForm) {
   EXPECT_EQ(result.diagnostics.back().location.column, 6);
 }
 
+TEST(AilTest, ReportsSyntaxErrorForMixedCaseProcQuotedEqualForm) {
+  const auto result = gcode::parseAndLowerAil("PrOc=\"DIR/SPF1000\"\n");
+  EXPECT_TRUE(result.instructions.empty());
+  ASSERT_FALSE(result.diagnostics.empty());
+  EXPECT_EQ(result.diagnostics.back().severity,
+            gcode::Diagnostic::Severity::Error);
+  EXPECT_NE(result.diagnostics.back().message.find("syntax error"),
+            std::string::npos);
+  EXPECT_EQ(result.diagnostics.back().location.column, 6);
+}
+
 TEST(AilTest, ReportsErrorForMalformedProcDeclarationShape) {
   const auto result = gcode::parseAndLowerAil("PROC MAIN P2\n");
   EXPECT_TRUE(result.instructions.empty());
