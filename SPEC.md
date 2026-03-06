@@ -682,7 +682,7 @@ mdBook documentation under:
 - `docs/book.toml`
 - `docs/src/`
 - Program reference content in `docs/src/program_reference.md`
-- Development reference content in `docs/src/development_reference.md`
+- Development reference content in `docs/src/development/`
 - Product-level goals, scope, and public API expectations in `PRD.md`.
 
 Requirements:
@@ -711,7 +711,7 @@ Requirements:
   - at least one example
   - test references (unit/golden/regression names or files)
 - If code/API/function behavior changes, the same PR must update mdBook docs
-  (`docs/src/program_reference.md` and/or `docs/src/development_reference.md`
+  (`docs/src/program_reference.md` and/or `docs/src/development/`
   as appropriate).
 - If `SPEC.md` adds planned behavior not yet implemented, docs must mark
   it as `Planned` until code/tests are merged.
@@ -724,5 +724,5 @@ PR gate expectation:
 - Feature PR description must list:
   - updated sections in `SPEC.md`
   - updated sections in `docs/src/program_reference.md` and/or
-    `docs/src/development_reference.md`
+    `docs/src/development/`
   - tests proving the documented behavior

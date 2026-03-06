@@ -1,23 +1,21 @@
-# Development Reference
+# Development Workflow
 
 ## Repository Layout
 
 - `src/`: parser, AST, diagnostics, lowering, streaming APIs.
-- `test/`: GoogleTest unit/regression/fuzz-smoke suites.
+- `test/`: GoogleTest unit, regression, and fuzz-smoke suites.
 - `testdata/`: golden and fixture assets.
 - `dev/`: local scripts such as `check.sh` and `bench.sh`.
-- `docs/`: mdBook sources.
+- `docs/`: mdBook sources and checked-in Mermaid assets.
 
-## Local Workflow
-
-### Build
+## Build
 
 ```bash
 cmake -S . -B build
 cmake --build build -j
 ```
 
-### Quality Gate
+## Quality Gate
 
 ```bash
 ./dev/check.sh
@@ -26,7 +24,18 @@ cmake --build build -j
 `./dev/check.sh` runs format check, configure/build, tests, tidy checks, and
 sanitizer tests.
 
-### CLI Modes
+## Documentation Build
+
+```bash
+cargo install mdbook mdbook-mermaid
+mdbook build docs
+mdbook serve docs --open
+```
+
+Mermaid diagrams in `docs/src/development/design/*.md` require
+`mdbook-mermaid`.
+
+## CLI Modes
 
 `gcode_parse` supports:
 
@@ -39,23 +48,15 @@ sanitizer tests.
 
 ## OODA Development Loop
 
-1. Observe current repo + CI state.
+1. Observe current repo and CI state.
 2. Orient against `ROADMAP.md`, `BACKLOG.md`, and `SPEC.md`.
 3. Decide one scoped backlog slice.
-4. Act with code/tests/docs updates in one PR.
-
-## Design Docs
-
-See split design pages for architecture/planning details:
-- `Design`
-- `Design: Pipeline`
-- `Design: Modal Strategy`
-- `Design: Implementation Plan`
+4. Act with code, tests, and docs updates in one PR.
 
 ## Contribution Requirements
 
 - Keep C++17.
-- Add/adjust tests for every feature.
+- Add or adjust tests for every feature.
 - Update `SPEC.md` if behavior changes.
 - Update `CHANGELOG_AGENT.md` in every change.
 - Keep `docs/` aligned with implementation changes.
