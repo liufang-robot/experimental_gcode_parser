@@ -302,6 +302,16 @@ TEST(AilTest, EmitsProcDeclarationAsLabelInstruction) {
   EXPECT_EQ(decl.name, "MAIN");
 }
 
+TEST(AilTest, ReportsErrorForProcWithoutTargetName) {
+  const auto result = gcode::parseAndLowerAil("PROC\n");
+  EXPECT_TRUE(result.instructions.empty());
+  ASSERT_FALSE(result.diagnostics.empty());
+  EXPECT_EQ(result.diagnostics.back().severity,
+            gcode::Diagnostic::Severity::Error);
+  EXPECT_NE(result.diagnostics.back().message.find("requires target name"),
+            std::string::npos);
+}
+
 TEST(AilTest, AcceptsEmptyInlineProcSignatureSuffixWithoutWarning) {
   const auto result = gcode::parseAndLowerAil("PROC MAIN()\n");
   ASSERT_EQ(result.instructions.size(), 1u);

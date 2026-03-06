@@ -437,6 +437,22 @@ subprogramDeclarationFromLine(const Line &line, const SourceInfo &source) {
   return match;
 }
 
+std::optional<Location> malformedProcDeclarationFromLine(const Line &line) {
+  std::vector<const Word *> words;
+  words.reserve(line.items.size());
+  for (const auto &item : line.items) {
+    if (!std::holds_alternative<Word>(item)) {
+      continue;
+    }
+    words.push_back(&std::get<Word>(item));
+  }
+  if (words.size() == 1 && words[0]->head == "PROC" &&
+      !words[0]->value.has_value() && !words[0]->has_equal) {
+    return words[0]->location;
+  }
+  return std::nullopt;
+}
+
 std::optional<SubprogramCallMatch>
 subprogramCallFromLine(const Line &line, const SourceInfo &source,
                        const LowerOptions &options) {
@@ -721,6 +737,15 @@ AilResult lowerToAil(const Program &program,
       continue;
     }
     const auto source = sourceFromLine(line, options);
+    if (const auto malformed_proc = malformedProcDeclarationFromLine(line);
+        malformed_proc.has_value()) {
+      Diagnostic diag;
+      diag.severity = Diagnostic::Severity::Error;
+      diag.message = "PROC declaration requires target name";
+      diag.location = *malformed_proc;
+      result.diagnostics.push_back(std::move(diag));
+      continue;
+    }
     if (const auto decl = subprogramDeclarationFromLine(line, source);
         decl.has_value()) {
       result.instructions.push_back(decl->instruction);
