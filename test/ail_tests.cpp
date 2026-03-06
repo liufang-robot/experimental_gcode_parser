@@ -323,6 +323,17 @@ TEST(AilTest, ReportsErrorForProcWithoutTargetName) {
             std::string::npos);
 }
 
+TEST(AilTest, ReportsErrorForProcHeadWithEqualForm) {
+  const auto result = gcode::parseAndLowerAil("PROC=MAIN\n");
+  EXPECT_TRUE(result.instructions.empty());
+  ASSERT_FALSE(result.diagnostics.empty());
+  EXPECT_EQ(result.diagnostics.back().severity,
+            gcode::Diagnostic::Severity::Error);
+  EXPECT_NE(result.diagnostics.back().message.find("expected PROC <name>"),
+            std::string::npos);
+  EXPECT_EQ(result.diagnostics.back().location.column, 1);
+}
+
 TEST(AilTest, ReportsErrorForMalformedProcDeclarationShape) {
   const auto result = gcode::parseAndLowerAil("PROC MAIN P2\n");
   EXPECT_TRUE(result.instructions.empty());

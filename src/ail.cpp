@@ -446,9 +446,11 @@ std::optional<Location> malformedProcDeclarationFromLine(const Line &line) {
     }
     words.push_back(&std::get<Word>(item));
   }
-  if (words.empty() || words[0]->head != "PROC" ||
-      words[0]->value.has_value() || words[0]->has_equal) {
+  if (words.empty() || words[0]->head != "PROC") {
     return std::nullopt;
+  }
+  if (words[0]->value.has_value() || words[0]->has_equal) {
+    return words[0]->location;
   }
   if (words.size() == 1) {
     return words[0]->location;
@@ -613,6 +615,14 @@ AilResult lowerToAil(const Program &program,
       continue;
     }
     if (line.assignment.has_value()) {
+      if (toUpper(line.assignment->lhs) == "PROC") {
+        Diagnostic diag;
+        diag.severity = Diagnostic::Severity::Error;
+        diag.message = "malformed PROC declaration; expected PROC <name>";
+        diag.location = line.assignment->location;
+        result.diagnostics.push_back(std::move(diag));
+        continue;
+      }
       if (const auto tool_select = toolSelectFromAssignment(
               *line.assignment, sourceFromLine(line, options), options);
           tool_select.has_value()) {

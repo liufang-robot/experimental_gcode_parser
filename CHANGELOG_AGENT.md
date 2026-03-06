@@ -1,5 +1,20 @@
 #CHANGELOG_AGENT
 
+## 2026-03-06 (T-050 slice 21: malformed PROC-headed equal form diagnostic)
+- Extended malformed `PROC` declaration detection to cover PROC-headed equal
+  forms (for example `PROC=MAIN`) as deterministic declaration-shape errors.
+- Added AIL test coverage for malformed `PROC=...` diagnostic behavior.
+
+SPEC sections / tests:
+- SPEC: Section 3.9
+- Tests: `test/ail_tests.cpp`
+
+Known limitations:
+- Baseline still does not parse structured procedural parameter lists into AST.
+
+How to reproduce locally (commands):
+- `./dev/check.sh`
+
 ## 2026-03-06 (T-050 slice 20: precise malformed PROC diagnostic location)
 - Improved malformed `PROC` declaration diagnostic location precision in AIL
   lowering:

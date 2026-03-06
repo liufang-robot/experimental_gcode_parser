@@ -283,6 +283,7 @@ Planned Siemens compatibility extension:
     suffixes are encountered but not modeled in baseline
   - emit deterministic error for malformed declaration keyword form `PROC`
     that does not match baseline declaration shape `PROC <name>`
+    (including `PROC=<...>` headed forms)
   - emit deterministic diagnostics for malformed call/declaration syntax
 - Runtime responsibility:
   - resolve target by configured search policy
