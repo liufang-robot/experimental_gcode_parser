@@ -363,6 +363,13 @@ TEST(ParserSyntaxBaselineTest, ParsesQuotedProcDeclarationSurfaceSyntax) {
   EXPECT_EQ(name.text, "DIR/SPF1000");
 }
 
+TEST(ParserSyntaxBaselineTest, ReportsMalformedProcEqualForm) {
+  const auto result = gcode::parse("PROC=MAIN\n");
+  ASSERT_FALSE(result.diagnostics.empty());
+  EXPECT_NE(result.diagnostics.back().message.find("expected PROC <name>"),
+            std::string::npos);
+}
+
 TEST(ParserSyntaxBaselineTest, M98CallRequiresIsoCompatibilityMode) {
   {
     const auto result = gcode::parse("M98 P1000\n");

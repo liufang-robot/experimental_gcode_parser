@@ -70,6 +70,19 @@ bool isUnsignedIntegerText(const std::string &text) {
   return true;
 }
 
+bool equalsIgnoreAsciiCase(std::string_view lhs, std::string_view rhs) {
+  if (lhs.size() != rhs.size()) {
+    return false;
+  }
+  for (size_t i = 0; i < lhs.size(); ++i) {
+    if (std::toupper(static_cast<unsigned char>(lhs[i])) !=
+        std::toupper(static_cast<unsigned char>(rhs[i]))) {
+      return false;
+    }
+  }
+  return true;
+}
+
 std::optional<int64_t> parseInt64Strict(std::string_view text) {
   if (text.empty()) {
     return std::nullopt;
@@ -308,6 +321,32 @@ public:
   }
 };
 
+class ProcDeclarationShapeRule final : public LineSemanticRule {
+public:
+  void apply(const Line &line,
+             std::vector<Diagnostic> *diagnostics) const override {
+    if (line.assignment.has_value() &&
+        equalsIgnoreAsciiCase(line.assignment->lhs, "PROC")) {
+      addDiagnostic(diagnostics, line.assignment->location,
+                    "malformed PROC declaration; expected PROC <name>");
+      return;
+    }
+
+    for (const auto &item : line.items) {
+      if (!std::holds_alternative<Word>(item)) {
+        continue;
+      }
+      const auto &word = std::get<Word>(item);
+      if (word.head == "PROC" && (word.has_equal || word.value.has_value())) {
+        addDiagnostic(diagnostics, word.location,
+                      "malformed PROC declaration; expected PROC <name>");
+        return;
+      }
+      return;
+    }
+  }
+};
+
 class MCodeShapeRule final : public LineSemanticRule {
 public:
   explicit MCodeShapeRule(bool enable_iso_m98_calls)
@@ -532,6 +571,7 @@ makeRules(bool enable_double_slash_comments, bool tool_management,
   rules.push_back(std::make_unique<G1CoordinateModeRule>());
   rules.push_back(std::make_unique<LineNumberWordRule>());
   rules.push_back(std::make_unique<BlockSkipLevelRule>());
+  rules.push_back(std::make_unique<ProcDeclarationShapeRule>());
   rules.push_back(std::make_unique<AssignmentShapeRule>());
   rules.push_back(std::make_unique<MCodeShapeRule>(enable_iso_m98_calls));
   rules.push_back(std::make_unique<ToolSelectorShapeRule>(tool_management));

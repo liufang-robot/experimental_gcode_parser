@@ -1,5 +1,22 @@
 #CHANGELOG_AGENT
 
+## 2026-03-06 (T-050 slice 22: parse-stage PROC-headed malformed diagnostic)
+- Added semantic parse-rule coverage for malformed PROC-headed forms with `=`
+  (for example `PROC=MAIN`), emitting deterministic declaration-shape diagnostic
+  at parse stage.
+- Added parser test coverage for malformed `PROC=...` syntax.
+- Kept lowering-stage guard in place for defense-in-depth consistency.
+
+SPEC sections / tests:
+- SPEC: Section 3.9
+- Tests: `test/parser_tests.cpp`, `test/ail_tests.cpp`
+
+Known limitations:
+- Baseline still does not parse structured procedural parameter lists into AST.
+
+How to reproduce locally (commands):
+- `./dev/check.sh`
+
 ## 2026-03-06 (T-050 slice 21: malformed PROC-headed equal form diagnostic)
 - Extended malformed `PROC` declaration detection to cover PROC-headed equal
   forms (for example `PROC=MAIN`) as deterministic declaration-shape errors.
