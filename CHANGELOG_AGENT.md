@@ -1,5 +1,25 @@
 #CHANGELOG_AGENT
 
+## 2026-03-06 (T-050 slice 23: parse-stage malformed PROC shape parity)
+- Extended parse-stage semantic checks for `PROC` declaration shape to match
+  lowering behavior:
+  - missing target (`PROC`)
+  - invalid target word (`PROC G1`)
+  - extra trailing word (`PROC MAIN P2`)
+- Kept deterministic diagnostic text unchanged:
+  `malformed PROC declaration; expected PROC <name>`.
+- Added parser coverage for the malformed shape variants above.
+
+SPEC sections / tests:
+- SPEC: Section 3.9
+- Tests: `test/parser_tests.cpp`, `test/ail_tests.cpp`
+
+Known limitations:
+- Baseline still does not parse structured procedural parameter lists into AST.
+
+How to reproduce locally (commands):
+- `./dev/check.sh`
+
 ## 2026-03-06 (T-050 slice 22: parse-stage PROC-headed malformed diagnostic)
 - Added semantic parse-rule coverage for malformed PROC-headed forms with `=`
   (for example `PROC=MAIN`), emitting deterministic declaration-shape diagnostic

@@ -284,6 +284,9 @@ Planned Siemens compatibility extension:
   - emit deterministic error for malformed declaration keyword form `PROC`
     that does not match baseline declaration shape `PROC <name>`
     (including `PROC=<...>` headed forms)
+    - parse-stage semantic diagnostics cover malformed shapes including missing
+      target (`PROC`), invalid target word (`PROC G1`), and extra trailing
+      words (`PROC MAIN P2`)
   - emit deterministic diagnostics for malformed call/declaration syntax
 - Runtime responsibility:
   - resolve target by configured search policy

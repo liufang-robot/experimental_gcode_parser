@@ -83,6 +83,32 @@ bool equalsIgnoreAsciiCase(std::string_view lhs, std::string_view rhs) {
   return true;
 }
 
+bool isSubprogramTargetWord(const Word &word) {
+  if (word.quoted) {
+    return !word.text.empty();
+  }
+  if (word.has_equal || word.text.empty() || word.head.empty()) {
+    return false;
+  }
+  if (word.value.has_value()) {
+    const char first = static_cast<char>(
+        std::toupper(static_cast<unsigned char>(word.head.front())));
+    if (first == 'G' || first == 'M' || first == 'T' || first == 'P' ||
+        first == 'N' || first == 'X' || first == 'Y' || first == 'Z' ||
+        first == 'A' || first == 'B' || first == 'C' || first == 'I' ||
+        first == 'J' || first == 'K' || first == 'F' || first == 'S' ||
+        first == 'R') {
+      return false;
+    }
+  }
+  if (equalsIgnoreAsciiCase(word.head, "RET") ||
+      equalsIgnoreAsciiCase(word.head, "RTLION") ||
+      equalsIgnoreAsciiCase(word.head, "RTLIOF")) {
+    return false;
+  }
+  return true;
+}
+
 std::optional<int64_t> parseInt64Strict(std::string_view text) {
   if (text.empty()) {
     return std::nullopt;
@@ -332,16 +358,35 @@ public:
       return;
     }
 
+    std::vector<const Word *> words;
+    words.reserve(line.items.size());
     for (const auto &item : line.items) {
       if (!std::holds_alternative<Word>(item)) {
         continue;
       }
-      const auto &word = std::get<Word>(item);
-      if (word.head == "PROC" && (word.has_equal || word.value.has_value())) {
-        addDiagnostic(diagnostics, word.location,
-                      "malformed PROC declaration; expected PROC <name>");
-        return;
-      }
+      words.push_back(&std::get<Word>(item));
+    }
+    if (words.empty() || !equalsIgnoreAsciiCase(words[0]->head, "PROC")) {
+      return;
+    }
+    if (words[0]->has_equal || words[0]->value.has_value()) {
+      addDiagnostic(diagnostics, words[0]->location,
+                    "malformed PROC declaration; expected PROC <name>");
+      return;
+    }
+    if (words.size() == 1) {
+      addDiagnostic(diagnostics, words[0]->location,
+                    "malformed PROC declaration; expected PROC <name>");
+      return;
+    }
+    if (!isSubprogramTargetWord(*words[1])) {
+      addDiagnostic(diagnostics, words[1]->location,
+                    "malformed PROC declaration; expected PROC <name>");
+      return;
+    }
+    if (words.size() > 2) {
+      addDiagnostic(diagnostics, words[2]->location,
+                    "malformed PROC declaration; expected PROC <name>");
       return;
     }
   }
