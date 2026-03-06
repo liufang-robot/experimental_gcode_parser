@@ -1,5 +1,25 @@
 #CHANGELOG_AGENT
 
+## 2026-03-07 (T-050 slice 35: subprogram call whitespace case-parity coverage)
+- Added AIL coverage for lowercase and mixed-case whitespace-separated direct
+  subprogram call suffix forms.
+- Empty ` ()` remains accepted without warnings, and non-empty ` ( ... )`
+  remains ignored with deterministic call-arguments warnings across case
+  variants.
+- No behavior change in this slice; this captures existing case-insensitive
+  lowering behavior for whitespace-separated direct-call compatibility forms.
+
+SPEC sections / tests:
+- SPEC: Section 3.9
+- Tests: `test/ail_tests.cpp`
+
+Known limitations:
+- Inline subprogram call arguments remain compatibility-only syntax and are not
+  modeled in baseline AIL.
+
+How to reproduce locally (commands):
+- `./dev/check.sh`
+
 ## 2026-03-06 (T-050 slice 34: quoted subprogram call whitespace coverage)
 - Added AIL coverage for whitespace-separated quoted direct subprogram call
   suffix forms.
