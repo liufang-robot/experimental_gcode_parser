@@ -512,6 +512,28 @@ TEST(AilExecutorTest, DefaultSubprogramPolicyAliasMapResolvesTarget) {
             std::string::npos);
 }
 
+TEST(AilExecutorTest, ProcDeclarationLabelCanBeSubprogramCallTarget) {
+  const auto lowered = gcode::parseAndLowerAil(
+      "GOTO START\nPROC MAIN\nRET\nSTART:\nMAIN\nG1 X1\n");
+  gcode::AilExecutor exec(lowered.instructions);
+
+  const auto resolver = [](const gcode::Condition &,
+                           const gcode::SourceInfo &) {
+    gcode::ConditionResolution r;
+    r.kind = gcode::ConditionResolutionKind::False;
+    return r;
+  };
+
+  int guard = 0;
+  while (exec.state().status == gcode::ExecutorStatus::Ready && guard < 16) {
+    ASSERT_TRUE(exec.step(0, resolver));
+    ++guard;
+  }
+  EXPECT_EQ(exec.state().status, gcode::ExecutorStatus::Completed);
+  EXPECT_EQ(exec.state().call_stack_depth, 0u);
+  EXPECT_TRUE(exec.diagnostics().empty());
+}
+
 TEST(AilExecutorTest, SubprogramCallAndReturnUseCallStack) {
   const auto lowered = gcode::parseAndLowerAil(
       "GOTO START\nL1000:\nG1 X1\nRET\nSTART:\nL1000\nGOTO END\nEND:\nG1 X2\n");

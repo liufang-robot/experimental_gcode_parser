@@ -254,6 +254,8 @@ Planned Siemens compatibility extension:
     `enable_iso_m98_calls=true`; otherwise parser reports a deterministic
     diagnostic.
   - `RET` and `M17` lower to explicit AIL `return_boundary` instructions.
+  - baseline declaration compatibility: `PROC <name>` lowers to a non-motion
+    label marker (`AilLabelInstruction`) so subprogram calls can resolve to it.
   - packet stage does not emit standalone packets for `subprogram_call`.
   - packet stage does not emit standalone packets for `return_boundary`.
   - executor call baseline:
