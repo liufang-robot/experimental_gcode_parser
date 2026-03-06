@@ -1,5 +1,25 @@
 #CHANGELOG_AGENT
 
+## 2026-03-06 (T-050 slice 34: quoted subprogram call whitespace coverage)
+- Added AIL coverage for whitespace-separated quoted direct subprogram call
+  suffix forms.
+- Quoted targets now have explicit regression coverage for both compatibility
+  forms: empty ` ()` accepted without warnings and non-empty ` ( ... )`
+  continuing to emit deterministic call-arguments warnings.
+- No behavior change in this slice; this captures existing lowering behavior
+  for quoted whitespace-separated compatibility forms.
+
+SPEC sections / tests:
+- SPEC: Section 3.9
+- Tests: `test/ail_tests.cpp`
+
+Known limitations:
+- Inline subprogram call arguments remain compatibility-only syntax and are not
+  modeled in baseline AIL.
+
+How to reproduce locally (commands):
+- `./dev/check.sh`
+
 ## 2026-03-06 (T-050 slice 33: quoted subprogram call suffix coverage)
 - Added AIL coverage for quoted direct subprogram calls with inline
   parenthesized suffixes.
