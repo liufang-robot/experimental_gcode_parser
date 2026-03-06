@@ -368,6 +368,8 @@ TEST(ParserSyntaxBaselineTest, ReportsMalformedProcEqualForm) {
   ASSERT_FALSE(result.diagnostics.empty());
   EXPECT_NE(result.diagnostics.back().message.find("expected PROC <name>"),
             std::string::npos);
+  EXPECT_EQ(result.diagnostics.back().location.line, 1);
+  EXPECT_EQ(result.diagnostics.back().location.column, 1);
 }
 
 TEST(ParserSyntaxBaselineTest, ReportsMalformedProcMissingTarget) {
@@ -375,6 +377,8 @@ TEST(ParserSyntaxBaselineTest, ReportsMalformedProcMissingTarget) {
   ASSERT_FALSE(result.diagnostics.empty());
   EXPECT_NE(result.diagnostics.back().message.find("expected PROC <name>"),
             std::string::npos);
+  EXPECT_EQ(result.diagnostics.back().location.line, 1);
+  EXPECT_EQ(result.diagnostics.back().location.column, 1);
 }
 
 TEST(ParserSyntaxBaselineTest, ReportsMalformedProcInvalidTargetWord) {
@@ -382,6 +386,8 @@ TEST(ParserSyntaxBaselineTest, ReportsMalformedProcInvalidTargetWord) {
   ASSERT_FALSE(result.diagnostics.empty());
   EXPECT_NE(result.diagnostics.back().message.find("expected PROC <name>"),
             std::string::npos);
+  EXPECT_EQ(result.diagnostics.back().location.line, 1);
+  EXPECT_EQ(result.diagnostics.back().location.column, 6);
 }
 
 TEST(ParserSyntaxBaselineTest, ReportsMalformedProcWithExtraWord) {
@@ -389,6 +395,8 @@ TEST(ParserSyntaxBaselineTest, ReportsMalformedProcWithExtraWord) {
   ASSERT_FALSE(result.diagnostics.empty());
   EXPECT_NE(result.diagnostics.back().message.find("expected PROC <name>"),
             std::string::npos);
+  EXPECT_EQ(result.diagnostics.back().location.line, 1);
+  EXPECT_EQ(result.diagnostics.back().location.column, 11);
 }
 
 TEST(ParserSyntaxBaselineTest, M98CallRequiresIsoCompatibilityMode) {
