@@ -257,10 +257,12 @@ Planned Siemens compatibility extension:
   - baseline declaration compatibility: `PROC <name>` lowers to a non-motion
     label marker (`AilLabelInstruction`) so subprogram calls can resolve to it.
   - inline parenthesized suffixes on baseline procedural forms are currently
-    treated as non-executable comments and ignored with deterministic AIL
-    warnings:
-    - `PROC <name>(...)`
-    - `<subprogram_name>(...)`
+    treated as non-executable comments:
+    - empty suffix `()` is accepted as a no-argument compatibility form
+      without warnings
+    - non-empty suffix `(...)` is ignored with deterministic AIL warnings:
+      - `PROC <name>(...)`
+      - `<subprogram_name>(...)`
   - packet stage does not emit standalone packets for `subprogram_call`.
   - packet stage does not emit standalone packets for `return_boundary`.
   - executor call baseline:

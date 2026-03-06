@@ -1,5 +1,27 @@
 #CHANGELOG_AGENT
 
+## 2026-03-06 (T-050 slice 13: accept empty procedural suffix `()` without warning)
+- Refined inline procedural suffix handling in AIL lowering:
+  - `PROC <name>()` is accepted as an explicit no-argument compatibility form
+    without warning
+  - `<subprogram_name>()` is accepted as an explicit no-argument call form
+    without warning
+  - non-empty `(...)` suffixes still emit deterministic warnings and are
+    ignored in baseline model
+- Added AIL tests for empty-suffix no-warning behavior and non-empty-suffix
+  warning behavior.
+
+SPEC sections / tests:
+- SPEC: Section 3.9
+- Tests: `test/ail_tests.cpp`
+
+Known limitations:
+- Parenthesized procedural signatures/arguments are still not parsed into a
+  structured AST model in this slice.
+
+How to reproduce locally (commands):
+- `./dev/check.sh`
+
 ## 2026-03-06 (T-050 slice 12: explicit warnings for ignored inline procedural suffixes)
 - Added AIL-lowering warnings for baseline procedural compatibility forms that
   currently parse `(...)` as inline comments:
