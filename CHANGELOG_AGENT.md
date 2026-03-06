@@ -1,5 +1,28 @@
 #CHANGELOG_AGENT
 
+## 2026-03-06 (T-050 slice 12: explicit warnings for ignored inline procedural suffixes)
+- Added AIL-lowering warnings for baseline procedural compatibility forms that
+  currently parse `(...)` as inline comments:
+  - `PROC <name>(...)` now emits declaration label plus warning
+  - `<subprogram_name>(...)` now emits direct call plus warning
+- Kept baseline behavior non-breaking: call/declaration targets still lower and
+  execute as before; warning makes unsupported argument/signature modeling
+  explicit.
+- Added AIL tests covering warning emission for both declaration and call forms.
+
+SPEC sections / tests:
+- SPEC: Section 3.9
+- Tests: `test/ail_tests.cpp`
+
+Known limitations:
+- Parenthesized procedural signatures/arguments are still not parsed into a
+  structured AST model in this slice.
+- The warning path currently triggers for inline contiguous `(...)` suffixes
+  only.
+
+How to reproduce locally (commands):
+- `./dev/check.sh`
+
 ## 2026-03-04 (T-050 slice 11: baseline PROC declaration compatibility)
 - Added lowering support for `PROC <name>` declaration lines:
   - lowers to `AilLabelInstruction` marker (non-motion declaration boundary)

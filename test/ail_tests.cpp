@@ -302,6 +302,38 @@ TEST(AilTest, EmitsProcDeclarationAsLabelInstruction) {
   EXPECT_EQ(decl.name, "MAIN");
 }
 
+TEST(AilTest, WarnsWhenInlineProcSignatureSuffixIsIgnored) {
+  const auto result = gcode::parseAndLowerAil("PROC MAIN()\n");
+  ASSERT_EQ(result.instructions.size(), 1u);
+  ASSERT_TRUE(std::holds_alternative<gcode::AilLabelInstruction>(
+      result.instructions[0]));
+  const auto &decl =
+      std::get<gcode::AilLabelInstruction>(result.instructions[0]);
+  EXPECT_EQ(decl.name, "MAIN");
+
+  ASSERT_FALSE(result.diagnostics.empty());
+  EXPECT_EQ(result.diagnostics.back().severity,
+            gcode::Diagnostic::Severity::Warning);
+  EXPECT_NE(result.diagnostics.back().message.find("PROC signature parameters"),
+            std::string::npos);
+}
+
+TEST(AilTest, WarnsWhenInlineSubprogramCallArgumentsAreIgnored) {
+  const auto result = gcode::parseAndLowerAil("MAIN(R1)\n");
+  ASSERT_EQ(result.instructions.size(), 1u);
+  ASSERT_TRUE(std::holds_alternative<gcode::AilSubprogramCallInstruction>(
+      result.instructions[0]));
+  const auto &call =
+      std::get<gcode::AilSubprogramCallInstruction>(result.instructions[0]);
+  EXPECT_EQ(call.target, "MAIN");
+
+  ASSERT_FALSE(result.diagnostics.empty());
+  EXPECT_EQ(result.diagnostics.back().severity,
+            gcode::Diagnostic::Severity::Warning);
+  EXPECT_NE(result.diagnostics.back().message.find("call arguments"),
+            std::string::npos);
+}
+
 TEST(AilTest, EmitsRapidTraverseModeInstructionsForRTLIONAndRTLIOF) {
   const auto result = gcode::parseAndLowerAil("RTLION\nG0 X1\nRTLIOF\nG0 X2\n");
   ASSERT_TRUE(result.diagnostics.empty());

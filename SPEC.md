@@ -256,6 +256,11 @@ Planned Siemens compatibility extension:
   - `RET` and `M17` lower to explicit AIL `return_boundary` instructions.
   - baseline declaration compatibility: `PROC <name>` lowers to a non-motion
     label marker (`AilLabelInstruction`) so subprogram calls can resolve to it.
+  - inline parenthesized suffixes on baseline procedural forms are currently
+    treated as non-executable comments and ignored with deterministic AIL
+    warnings:
+    - `PROC <name>(...)`
+    - `<subprogram_name>(...)`
   - packet stage does not emit standalone packets for `subprogram_call`.
   - packet stage does not emit standalone packets for `return_boundary`.
   - executor call baseline:
@@ -266,8 +271,10 @@ Planned Siemens compatibility extension:
     - `return_boundary` pops return PC and resumes caller
     - unresolved call target or return with empty call stack is a runtime fault
 - Parser/lowering responsibility:
-  - preserve call target, repeat count, and argument list structure
-  - preserve declaration signatures and return statements
+  - preserve call target and repeat count structure
+  - preserve declaration names and return statements
+  - emit warning diagnostics when inline procedural signature/call argument
+    suffixes are encountered but not modeled in baseline
   - emit deterministic diagnostics for malformed call/declaration syntax
 - Runtime responsibility:
   - resolve target by configured search policy
