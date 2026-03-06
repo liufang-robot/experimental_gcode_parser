@@ -3,6 +3,7 @@
 - [Overview](index.md)
 - [Development Reference](development/index.md)
   - [Development: Workflow](development/workflow.md)
+  - [Development: G-code Text Flow](development/gcode_text_flow.md)
   - [Development: Architecture and Design](development/design/index.md)
     - [Development: Pipeline](development/design/pipeline.md)
     - [Development: Modal Strategy](development/design/modal_strategy.md)

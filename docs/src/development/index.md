@@ -11,4 +11,5 @@ Use this section for:
 
 Key subsections:
 - [Workflow](workflow.md)
+- [G-code Text Flow](gcode_text_flow.md)
 - [Architecture and Design](design/index.md)

@@ -1,5 +1,25 @@
 #CHANGELOG_AGENT
 
+## 2026-03-06 (docs: add dedicated G-code text flow page)
+- Added `docs/src/development/gcode_text_flow.md` to explain the end-to-end path
+  from input G-code text through parse, semantic rules, AIL, executor, packet,
+  and message outputs.
+- Linked the new page from the development section landing page and mdBook
+  sidebar.
+- No behavior change; this is documentation-only clarification.
+
+SPEC sections / tests:
+- SPEC: Section 9
+- Validation: `mdbook build docs`, `./dev/check.sh`
+
+Known limitations:
+- The page summarizes current implementation boundaries and intentionally links
+  to deeper design docs instead of duplicating all stage details.
+
+How to reproduce locally (commands):
+- `mdbook build docs`
+- `./dev/check.sh`
+
 ## 2026-03-06 (docs: restructure development reference section)
 - Moved developer architecture/design pages under `docs/src/development/design/`
   so they live under the development manual instead of as flat top-level
