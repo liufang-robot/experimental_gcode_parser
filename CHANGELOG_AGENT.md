@@ -1,5 +1,22 @@
 #CHANGELOG_AGENT
 
+## 2026-03-06 (T-050 slice 16: deterministic error for malformed `PROC` declaration shapes)
+- Tightened malformed `PROC` declaration detection:
+  - any `PROC ...` line that does not match baseline `PROC <name>` declaration
+    shape now emits deterministic lowering error
+  - prevents silent acceptance of malformed forms like `PROC MAIN P2`
+- Added AIL test coverage for malformed declaration shape diagnostic.
+
+SPEC sections / tests:
+- SPEC: Section 3.9
+- Tests: `test/ail_tests.cpp`
+
+Known limitations:
+- Baseline still does not parse structured procedural parameter lists into AST.
+
+How to reproduce locally (commands):
+- `./dev/check.sh`
+
 ## 2026-03-06 (T-050 slice 15: deterministic error for malformed `PROC` declaration)
 - Added AIL-lowering guard for malformed declaration keyword form `PROC`
   without target name:
