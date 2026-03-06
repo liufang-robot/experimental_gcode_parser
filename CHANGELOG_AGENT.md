@@ -1,5 +1,23 @@
 #CHANGELOG_AGENT
 
+## 2026-03-06 (T-050 slice 28: quoted PROC equal-form syntax coverage)
+- Added parser coverage for quoted equal-form `PROC` declaration input:
+  `PROC=\"DIR/SPF1000\"` currently surfaces a parse syntax error at the quote
+  position.
+- Added AIL coverage for the same quoted equal-form input to lock current
+  fail-fast syntax diagnostic behavior.
+- No behavior change in this slice; this captures current parser contract.
+
+SPEC sections / tests:
+- SPEC: Section 3.9
+- Tests: `test/parser_tests.cpp`, `test/ail_tests.cpp`
+
+Known limitations:
+- Baseline still does not parse structured procedural parameter lists into AST.
+
+How to reproduce locally (commands):
+- `./dev/check.sh`
+
 ## 2026-03-06 (T-050 slice 27: mixed-case PROC compatibility coverage)
 - Added parser compatibility coverage for mixed-case `PrOc` declaration
   surface syntax and malformed mixed-case equal-form diagnostics.
