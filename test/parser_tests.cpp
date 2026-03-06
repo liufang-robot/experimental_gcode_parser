@@ -378,6 +378,21 @@ TEST(ParserSyntaxBaselineTest, ParsesLowercaseProcDeclarationSurfaceSyntax) {
   EXPECT_EQ(name.text, "main");
 }
 
+TEST(ParserSyntaxBaselineTest, ParsesMixedCaseProcDeclarationSurfaceSyntax) {
+  const auto result = gcode::parse("PrOc Mix\n");
+  ASSERT_TRUE(result.diagnostics.empty());
+  ASSERT_EQ(result.program.lines.size(), 1u);
+  ASSERT_EQ(result.program.lines[0].items.size(), 2u);
+  ASSERT_TRUE(
+      std::holds_alternative<gcode::Word>(result.program.lines[0].items[0]));
+  ASSERT_TRUE(
+      std::holds_alternative<gcode::Word>(result.program.lines[0].items[1]));
+  const auto &kw = std::get<gcode::Word>(result.program.lines[0].items[0]);
+  const auto &name = std::get<gcode::Word>(result.program.lines[0].items[1]);
+  EXPECT_EQ(kw.head, "PROC");
+  EXPECT_EQ(name.text, "Mix");
+}
+
 TEST(ParserSyntaxBaselineTest, ReportsMalformedProcEqualForm) {
   const auto result = gcode::parse("PROC=MAIN\n");
   ASSERT_FALSE(result.diagnostics.empty());
@@ -425,6 +440,15 @@ TEST(ParserSyntaxBaselineTest, ReportsMalformedLowercaseProcWithExtraWord) {
 
 TEST(ParserSyntaxBaselineTest, ReportsMalformedLowercaseProcEqualForm) {
   const auto result = gcode::parse("proc=main\n");
+  ASSERT_FALSE(result.diagnostics.empty());
+  EXPECT_NE(result.diagnostics.back().message.find("expected PROC <name>"),
+            std::string::npos);
+  EXPECT_EQ(result.diagnostics.back().location.line, 1);
+  EXPECT_EQ(result.diagnostics.back().location.column, 1);
+}
+
+TEST(ParserSyntaxBaselineTest, ReportsMalformedMixedCaseProcEqualForm) {
+  const auto result = gcode::parse("PrOc=main\n");
   ASSERT_FALSE(result.diagnostics.empty());
   EXPECT_NE(result.diagnostics.back().message.find("expected PROC <name>"),
             std::string::npos);

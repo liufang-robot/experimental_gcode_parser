@@ -1,5 +1,23 @@
 #CHANGELOG_AGENT
 
+## 2026-03-06 (T-050 slice 27: mixed-case PROC compatibility coverage)
+- Added parser compatibility coverage for mixed-case `PrOc` declaration
+  surface syntax and malformed mixed-case equal-form diagnostics.
+- Added AIL coverage confirming mixed-case `PrOc` declarations lower to
+  baseline label form and malformed equal-form shape errors match baseline.
+- No behavior change in this slice; this is case-normalization contract
+  hardening.
+
+SPEC sections / tests:
+- SPEC: Section 3.9
+- Tests: `test/parser_tests.cpp`, `test/ail_tests.cpp`
+
+Known limitations:
+- Baseline still does not parse structured procedural parameter lists into AST.
+
+How to reproduce locally (commands):
+- `./dev/check.sh`
+
 ## 2026-03-06 (T-050 slice 26: lowercase PROC equal-form coverage)
 - Added parser coverage for malformed lowercase `proc` equal-form declaration:
   `proc=main` emits deterministic malformed `PROC <name>` diagnostic.
