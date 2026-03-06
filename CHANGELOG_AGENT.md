@@ -1,5 +1,23 @@
 #CHANGELOG_AGENT
 
+## 2026-03-06 (T-050 slice 29: lowercase quoted PROC equal-form syntax coverage)
+- Added parser coverage for lowercase quoted equal-form procedural input:
+  `proc=\"DIR/SPF1000\"` currently surfaces a parse syntax error at the quote
+  position.
+- Added AIL coverage for the same lowercase quoted equal-form input to lock the
+  current fail-fast syntax diagnostic behavior.
+- No behavior change in this slice; this captures current parser contract.
+
+SPEC sections / tests:
+- SPEC: Section 3.9
+- Tests: `test/parser_tests.cpp`, `test/ail_tests.cpp`
+
+Known limitations:
+- Baseline still does not parse structured procedural parameter lists into AST.
+
+How to reproduce locally (commands):
+- `./dev/check.sh`
+
 ## 2026-03-06 (T-050 slice 28: quoted PROC equal-form syntax coverage)
 - Added parser coverage for quoted equal-form `PROC` declaration input:
   `PROC=\"DIR/SPF1000\"` currently surfaces a parse syntax error at the quote
@@ -41,10 +59,11 @@ How to reproduce locally (commands):
   `proc=main` emits deterministic malformed `PROC <name>` diagnostic.
 - Added AIL coverage for malformed lowercase `proc=...` declaration shape,
   matching uppercase behavior and location contract.
-- No behavior change in this slice; this is case-compatibility contract
-  hardening.
+- No behavior change in this slice;
+this is case -compatibility contract hardening.
 
-SPEC sections / tests:
+    SPEC sections /
+    tests:
 - SPEC: Section 3.9
 - Tests: `test/parser_tests.cpp`, `test/ail_tests.cpp`
 
@@ -59,10 +78,11 @@ How to reproduce locally (commands):
   syntax and malformed lowercase extra-word shape diagnostics.
 - Added AIL lowering coverage confirming lowercase `proc` declaration lowers to
   baseline label instruction form.
-- No behavior change in this slice; this hardens keyword case-compatibility
-  contract coverage.
+- No behavior change in this slice;
+this hardens keyword case -compatibility contract coverage.
 
-SPEC sections / tests:
+    SPEC sections /
+    tests:
 - SPEC: Section 3.9
 - Tests: `test/parser_tests.cpp`, `test/ail_tests.cpp`
 
@@ -402,27 +422,38 @@ SPEC sections / tests:
 - Tests: `test/ail_executor_tests.cpp`
 
 Known limitations:
-- Default policy still resolves against in-program labels only; multi-file
-  MPF/SPF program-manager lookup remains out of scope.
+- Default policy still resolves against in-program labels only;
+  multi - file MPF / SPF program -
+          manager lookup remains out of scope
+                  .
 
-How to reproduce locally (commands):
-- `./dev/check.sh`
+              How to reproduce locally(commands)
+      : - `./ dev
+              /
+              check.sh`
 
-## 2026-03-04 (T-050 slice 6: subprogram search-policy baseline)
-- Added executor subprogram search policy control:
-  - `SubprogramSearchPolicy::ExactOnly` (default)
-  - `SubprogramSearchPolicy::ExactThenBareName` (fallback from
-    `DIR/SPF1000` -> `SPF1000`)
-- Added runtime warning when bare-name fallback path is used to resolve a
-  target.
-- Added executor unit test covering fallback resolution and call/return flow.
+              ##2026 -
+          03 - 04(T - 050 slice 6 : subprogram search - policy baseline) -
+          Added executor subprogram search policy control
+      : - `SubprogramSearchPolicy::ExactOnly` (
+            default) - `SubprogramSearchPolicy::ExactThenBareName` (fallback
+                                                                        from
+    `DIR / SPF1000` -> `SPF1000`) -
+        Added runtime warning when bare -
+        name fallback path is used to resolve a target.-
+        Added executor unit test covering fallback resolution
+      and call /
+                  return flow.
 
-SPEC sections / tests:
-- SPEC: Section 6.1 (subprogram call runtime boundary)
-- Tests: `test/ail_executor_tests.cpp`
+                  SPEC sections
+                  /
+                  tests : -SPEC
+      : Section 6.1(subprogram call runtime boundary)-Tests : `test
+      /
+      ail_executor_tests.cpp`
 
-Known limitations:
-- Search policy currently resolves only in-program labels; multi-file MPF/SPF
+      Known limitations : -Search policy currently resolves only in
+              - program labels; multi-file MPF/SPF
   filesystem lookup remains out of scope for this slice.
 
 How to reproduce locally (commands):
