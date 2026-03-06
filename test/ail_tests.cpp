@@ -324,6 +324,17 @@ TEST(AilTest, EmitsLowercaseProcDeclarationAsLabelInstruction) {
   EXPECT_EQ(decl.name, "MAIN");
 }
 
+TEST(AilTest, EmitsMixedCaseProcDeclarationAsLabelInstruction) {
+  const auto result = gcode::parseAndLowerAil("PrOc Mix\n");
+  ASSERT_TRUE(result.diagnostics.empty());
+  ASSERT_EQ(result.instructions.size(), 1u);
+  ASSERT_TRUE(std::holds_alternative<gcode::AilLabelInstruction>(
+      result.instructions[0]));
+  const auto &decl =
+      std::get<gcode::AilLabelInstruction>(result.instructions[0]);
+  EXPECT_EQ(decl.name, "MIX");
+}
+
 TEST(AilTest, ReportsErrorForProcWithoutTargetName) {
   const auto result = gcode::parseAndLowerAil("PROC\n");
   EXPECT_TRUE(result.instructions.empty());
@@ -347,6 +358,17 @@ TEST(AilTest, ReportsErrorForProcHeadWithEqualForm) {
 
 TEST(AilTest, ReportsErrorForLowercaseProcHeadWithEqualForm) {
   const auto result = gcode::parseAndLowerAil("proc=main\n");
+  EXPECT_TRUE(result.instructions.empty());
+  ASSERT_FALSE(result.diagnostics.empty());
+  EXPECT_EQ(result.diagnostics.back().severity,
+            gcode::Diagnostic::Severity::Error);
+  EXPECT_NE(result.diagnostics.back().message.find("expected PROC <name>"),
+            std::string::npos);
+  EXPECT_EQ(result.diagnostics.back().location.column, 1);
+}
+
+TEST(AilTest, ReportsErrorForMixedCaseProcHeadWithEqualForm) {
+  const auto result = gcode::parseAndLowerAil("PrOc=main\n");
   EXPECT_TRUE(result.instructions.empty());
   ASSERT_FALSE(result.diagnostics.empty());
   EXPECT_EQ(result.diagnostics.back().severity,
