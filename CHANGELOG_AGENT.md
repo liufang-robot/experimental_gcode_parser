@@ -1,5 +1,24 @@
 #CHANGELOG_AGENT
 
+## 2026-03-06 (T-050 slice 20: precise malformed PROC diagnostic location)
+- Improved malformed `PROC` declaration diagnostic location precision in AIL
+  lowering:
+  - points to first offending token (invalid target word or extra trailing word)
+    instead of always the `PROC` keyword
+- Added AIL tests covering location columns for:
+  - extra trailing token (`PROC MAIN P2`, `PROC "DIR/SPF1000" P2`)
+  - invalid target word shape (`PROC G1`)
+
+SPEC sections / tests:
+- SPEC: Section 3.9
+- Tests: `test/ail_tests.cpp`
+
+Known limitations:
+- Baseline still does not parse structured procedural parameter lists into AST.
+
+How to reproduce locally (commands):
+- `./dev/check.sh`
+
 ## 2026-03-06 (T-050 slice 19: malformed quoted PROC declaration coverage)
 - Added explicit AIL coverage for malformed quoted PROC declaration shape:
   - `PROC "DIR/SPF1000" P2` deterministically errors with expected baseline

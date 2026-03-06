@@ -450,10 +450,16 @@ std::optional<Location> malformedProcDeclarationFromLine(const Line &line) {
       words[0]->value.has_value() || words[0]->has_equal) {
     return std::nullopt;
   }
-  if (words.size() == 2 && isSubprogramTargetWord(*words[1])) {
+  if (words.size() == 1) {
+    return words[0]->location;
+  }
+  if (!isSubprogramTargetWord(*words[1])) {
+    return words[1]->location;
+  }
+  if (words.size() == 2) {
     return std::nullopt;
   }
-  return words[0]->location;
+  return words[2]->location;
 }
 
 std::optional<SubprogramCallMatch>

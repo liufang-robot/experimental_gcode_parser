@@ -331,6 +331,7 @@ TEST(AilTest, ReportsErrorForMalformedProcDeclarationShape) {
             gcode::Diagnostic::Severity::Error);
   EXPECT_NE(result.diagnostics.back().message.find("expected PROC <name>"),
             std::string::npos);
+  EXPECT_EQ(result.diagnostics.back().location.column, 11);
 }
 
 TEST(AilTest, ReportsErrorForMalformedQuotedProcDeclarationShape) {
@@ -341,6 +342,18 @@ TEST(AilTest, ReportsErrorForMalformedQuotedProcDeclarationShape) {
             gcode::Diagnostic::Severity::Error);
   EXPECT_NE(result.diagnostics.back().message.find("expected PROC <name>"),
             std::string::npos);
+  EXPECT_EQ(result.diagnostics.back().location.column, 20);
+}
+
+TEST(AilTest, ReportsErrorForInvalidProcTargetWordLocation) {
+  const auto result = gcode::parseAndLowerAil("PROC G1\n");
+  EXPECT_TRUE(result.instructions.empty());
+  ASSERT_FALSE(result.diagnostics.empty());
+  EXPECT_EQ(result.diagnostics.back().severity,
+            gcode::Diagnostic::Severity::Error);
+  EXPECT_NE(result.diagnostics.back().message.find("expected PROC <name>"),
+            std::string::npos);
+  EXPECT_EQ(result.diagnostics.back().location.column, 6);
 }
 
 TEST(AilTest, AcceptsEmptyInlineProcSignatureSuffixWithoutWarning) {
