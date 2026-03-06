@@ -423,6 +423,15 @@ TEST(ParserSyntaxBaselineTest, ReportsMalformedLowercaseProcWithExtraWord) {
   EXPECT_EQ(result.diagnostics.back().location.column, 11);
 }
 
+TEST(ParserSyntaxBaselineTest, ReportsMalformedLowercaseProcEqualForm) {
+  const auto result = gcode::parse("proc=main\n");
+  ASSERT_FALSE(result.diagnostics.empty());
+  EXPECT_NE(result.diagnostics.back().message.find("expected PROC <name>"),
+            std::string::npos);
+  EXPECT_EQ(result.diagnostics.back().location.line, 1);
+  EXPECT_EQ(result.diagnostics.back().location.column, 1);
+}
+
 TEST(ParserSyntaxBaselineTest, M98CallRequiresIsoCompatibilityMode) {
   {
     const auto result = gcode::parse("M98 P1000\n");

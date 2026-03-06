@@ -1,5 +1,23 @@
 #CHANGELOG_AGENT
 
+## 2026-03-06 (T-050 slice 26: lowercase PROC equal-form coverage)
+- Added parser coverage for malformed lowercase `proc` equal-form declaration:
+  `proc=main` emits deterministic malformed `PROC <name>` diagnostic.
+- Added AIL coverage for malformed lowercase `proc=...` declaration shape,
+  matching uppercase behavior and location contract.
+- No behavior change in this slice; this is case-compatibility contract
+  hardening.
+
+SPEC sections / tests:
+- SPEC: Section 3.9
+- Tests: `test/parser_tests.cpp`, `test/ail_tests.cpp`
+
+Known limitations:
+- Baseline still does not parse structured procedural parameter lists into AST.
+
+How to reproduce locally (commands):
+- `./dev/check.sh`
+
 ## 2026-03-06 (T-050 slice 25: lowercase PROC compatibility coverage)
 - Added parser compatibility coverage for lowercase `proc` declaration surface
   syntax and malformed lowercase extra-word shape diagnostics.
