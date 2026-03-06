@@ -1,5 +1,45 @@
 #CHANGELOG_AGENT
 
+## 2026-03-06 (docs: enable Mermaid rendering in mdBook)
+- Configured `docs/book.toml` to run the `mdbook-mermaid` preprocessor and load
+  Mermaid runtime assets in generated HTML output.
+- Updated CI docs jobs to install `mdbook-mermaid` before `mdbook build docs`
+  so published docs render diagrams correctly.
+- Documented the local `mdbook-mermaid` prerequisite in `README.md`.
+
+SPEC sections / tests:
+- SPEC: Section 9
+- Validation: `mdbook build docs`, `./dev/check.sh`
+
+Known limitations:
+- Mermaid rendering still depends on the `mdbook-mermaid` binary being
+  available in local developer environments.
+
+How to reproduce locally (commands):
+- `cargo install mdbook mdbook-mermaid`
+- `mdbook build docs`
+- `./dev/check.sh`
+
+## 2026-03-06 (T-050 slice 31: case-parity PROC signature suffix coverage)
+- Added AIL coverage showing lowercase and mixed-case `PROC` declarations keep
+  the same inline signature-suffix behavior as uppercase baseline forms.
+- Empty `()` suffix remains accepted without warnings; non-empty `(...)`
+  suffix still lowers the label and emits the deterministic unsupported-signature
+  warning.
+- No behavior change in this slice; this captures existing case-insensitive
+  lowering contract.
+
+SPEC sections / tests:
+- SPEC: Section 3.9
+- Tests: `test/ail_tests.cpp`
+
+Known limitations:
+- Baseline still ignores modeled `PROC` signature parameters and only preserves
+  declaration labels.
+
+How to reproduce locally (commands):
+- `./dev/check.sh`
+
 ## 2026-03-06 (T-050 slice 30: mixed-case quoted PROC equal-form syntax coverage)
 - Added parser coverage for mixed-case quoted equal-form procedural input:
   `PrOc=\"DIR/SPF1000\"` currently surfaces a parse syntax error at the quote

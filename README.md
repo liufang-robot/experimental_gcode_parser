@@ -40,7 +40,7 @@ Current source-of-truth docs:
 - `clang-format`, `clang-tidy`
 - `gtest`
 - `nlohmann/json`
-- `mdbook` (for docs)
+- `mdbook` and `mdbook-mermaid` (for docs)
 
 If ANTLR runtime is not in a default system path, set:
 
@@ -135,9 +135,14 @@ fuzz-smoke), tidy, and sanitizer tests.
 ## Documentation (mdBook)
 
 ```bash
+cargo install mdbook mdbook-mermaid
 mdbook build docs
 mdbook serve docs --open
 ```
+
+Mermaid diagrams in `docs/src/design/*.md` require `mdbook-mermaid`. Without
+it, the generated book will show raw `mermaid` code blocks instead of rendered
+diagrams.
 
 Main pages:
 
