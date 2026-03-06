@@ -446,11 +446,14 @@ std::optional<Location> malformedProcDeclarationFromLine(const Line &line) {
     }
     words.push_back(&std::get<Word>(item));
   }
-  if (words.size() == 1 && words[0]->head == "PROC" &&
-      !words[0]->value.has_value() && !words[0]->has_equal) {
-    return words[0]->location;
+  if (words.empty() || words[0]->head != "PROC" ||
+      words[0]->value.has_value() || words[0]->has_equal) {
+    return std::nullopt;
   }
-  return std::nullopt;
+  if (words.size() == 2 && isSubprogramTargetWord(*words[1])) {
+    return std::nullopt;
+  }
+  return words[0]->location;
 }
 
 std::optional<SubprogramCallMatch>
@@ -741,7 +744,7 @@ AilResult lowerToAil(const Program &program,
         malformed_proc.has_value()) {
       Diagnostic diag;
       diag.severity = Diagnostic::Severity::Error;
-      diag.message = "PROC declaration requires target name";
+      diag.message = "malformed PROC declaration; expected PROC <name>";
       diag.location = *malformed_proc;
       result.diagnostics.push_back(std::move(diag));
       continue;

@@ -280,7 +280,7 @@ Planned Siemens compatibility extension:
   - emit warning diagnostics when inline procedural signature/call argument
     suffixes are encountered but not modeled in baseline
   - emit deterministic error for malformed declaration keyword form `PROC`
-    without target name
+    that does not match baseline declaration shape `PROC <name>`
   - emit deterministic diagnostics for malformed call/declaration syntax
 - Runtime responsibility:
   - resolve target by configured search policy
