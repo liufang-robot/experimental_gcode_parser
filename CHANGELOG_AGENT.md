@@ -1,5 +1,25 @@
 #CHANGELOG_AGENT
 
+## 2026-03-06 (T-050 slice 32: subprogram call suffix case-parity coverage)
+- Added AIL coverage for lowercase and mixed-case direct subprogram calls with
+  inline parenthesized suffixes.
+- Empty `()` suffix remains accepted without warnings, and non-empty `(...)`
+  remains ignored with deterministic call-arguments warnings across case
+  variants.
+- No behavior change in this slice; this captures existing case-insensitive
+  lowering contract for baseline direct calls.
+
+SPEC sections / tests:
+- SPEC: Section 3.9
+- Tests: `test/ail_tests.cpp`
+
+Known limitations:
+- Inline subprogram call arguments are still not modeled in baseline AIL; they
+  remain compatibility-only syntax with warnings when non-empty.
+
+How to reproduce locally (commands):
+- `./dev/check.sh`
+
 ## 2026-03-06 (docs: add dedicated G-code text flow page)
 - Added `docs/src/development/gcode_text_flow.md` to explain the end-to-end path
   from input G-code text through parse, semantic rules, AIL, executor, packet,
