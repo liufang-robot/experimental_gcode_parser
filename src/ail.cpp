@@ -360,8 +360,13 @@ std::string subprogramTargetFromWord(const Word &word) {
   return toUpper(word.text);
 }
 
-std::optional<Location>
-findInlineParenSuffixCommentLocation(const Line &line, const Word &anchor) {
+struct InlineParenSuffixInfo {
+  Location location;
+  bool empty = false;
+};
+
+std::optional<InlineParenSuffixInfo>
+findInlineParenSuffixComment(const Line &line, const Word &anchor) {
   const int expected_column =
       anchor.location.column + static_cast<int>(anchor.text.size());
   for (const auto &item : line.items) {
@@ -374,19 +379,22 @@ findInlineParenSuffixCommentLocation(const Line &line, const Word &anchor) {
         comment.text.front() != '(' || comment.text.back() != ')') {
       continue;
     }
-    return comment.location;
+    InlineParenSuffixInfo info;
+    info.location = comment.location;
+    info.empty = comment.text == "()";
+    return info;
   }
   return std::nullopt;
 }
 
 struct SubprogramDeclarationMatch {
   AilLabelInstruction instruction;
-  std::optional<Location> inline_signature_location;
+  std::optional<InlineParenSuffixInfo> inline_signature;
 };
 
 struct SubprogramCallMatch {
   AilSubprogramCallInstruction instruction;
-  std::optional<Location> inline_argument_location;
+  std::optional<InlineParenSuffixInfo> inline_argument;
 };
 
 std::optional<SubprogramDeclarationMatch>
@@ -412,8 +420,7 @@ subprogramDeclarationFromLine(const Line &line, const SourceInfo &source) {
   SubprogramDeclarationMatch match;
   match.instruction.source = source;
   match.instruction.name = subprogramTargetFromWord(*words[1]);
-  match.inline_signature_location =
-      findInlineParenSuffixCommentLocation(line, *words[1]);
+  match.inline_signature = findInlineParenSuffixComment(line, *words[1]);
   return match;
 }
 
@@ -436,8 +443,7 @@ subprogramCallFromLine(const Line &line, const SourceInfo &source,
     SubprogramCallMatch match;
     match.instruction.source = source;
     match.instruction.target = subprogramTargetFromWord(*words.front());
-    match.inline_argument_location =
-        findInlineParenSuffixCommentLocation(line, *words.front());
+    match.inline_argument = findInlineParenSuffixComment(line, *words.front());
     return match;
   }
 
@@ -465,15 +471,13 @@ subprogramCallFromLine(const Line &line, const SourceInfo &source,
   if (first_repeat.has_value() && isSubprogramTargetWord(*words[1])) {
     match.instruction.repeat_count = *first_repeat;
     match.instruction.target = subprogramTargetFromWord(*words[1]);
-    match.inline_argument_location =
-        findInlineParenSuffixCommentLocation(line, *words[1]);
+    match.inline_argument = findInlineParenSuffixComment(line, *words[1]);
     return match;
   }
   if (second_repeat.has_value() && isSubprogramTargetWord(*words[0])) {
     match.instruction.repeat_count = *second_repeat;
     match.instruction.target = subprogramTargetFromWord(*words[0]);
-    match.inline_argument_location =
-        findInlineParenSuffixCommentLocation(line, *words[0]);
+    match.inline_argument = findInlineParenSuffixComment(line, *words[0]);
     return match;
   }
   return std::nullopt;
@@ -707,13 +711,14 @@ AilResult lowerToAil(const Program &program,
     if (const auto decl = subprogramDeclarationFromLine(line, source);
         decl.has_value()) {
       result.instructions.push_back(decl->instruction);
-      if (decl->inline_signature_location.has_value()) {
+      if (decl->inline_signature.has_value() &&
+          !decl->inline_signature->empty) {
         Diagnostic diag;
         diag.severity = Diagnostic::Severity::Warning;
         diag.message =
             "PROC signature parameters are not supported yet; inline "
             "parenthesized suffix is ignored";
-        diag.location = *decl->inline_signature_location;
+        diag.location = decl->inline_signature->location;
         result.diagnostics.push_back(std::move(diag));
       }
       continue;
@@ -721,13 +726,13 @@ AilResult lowerToAil(const Program &program,
     if (const auto call = subprogramCallFromLine(line, source, options);
         call.has_value()) {
       result.instructions.push_back(call->instruction);
-      if (call->inline_argument_location.has_value()) {
+      if (call->inline_argument.has_value() && !call->inline_argument->empty) {
         Diagnostic diag;
         diag.severity = Diagnostic::Severity::Warning;
         diag.message =
             "subprogram call arguments are not supported yet; inline "
             "parenthesized suffix is ignored";
-        diag.location = *call->inline_argument_location;
+        diag.location = call->inline_argument->location;
         result.diagnostics.push_back(std::move(diag));
       }
       continue;
