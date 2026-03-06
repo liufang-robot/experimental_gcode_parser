@@ -256,6 +256,8 @@ Planned Siemens compatibility extension:
   - `RET` and `M17` lower to explicit AIL `return_boundary` instructions.
   - baseline declaration compatibility: `PROC <name>` lowers to a non-motion
     label marker (`AilLabelInstruction`) so subprogram calls can resolve to it.
+    - quoted declaration target compatibility is supported:
+      `PROC "<subprogram_name_or_path>"`
   - inline parenthesized suffixes on baseline procedural forms are currently
     treated as non-executable comments:
     - empty suffix `()` is accepted as a no-argument compatibility form
