@@ -328,6 +328,33 @@ TEST(AilTest, WarnsWhenInlineProcSignatureSuffixHasParameters) {
             std::string::npos);
 }
 
+TEST(AilTest, AcceptsEmptyInlineProcSignatureSuffixWithWhitespace) {
+  const auto result = gcode::parseAndLowerAil("PROC MAIN ()\n");
+  ASSERT_EQ(result.instructions.size(), 1u);
+  ASSERT_TRUE(std::holds_alternative<gcode::AilLabelInstruction>(
+      result.instructions[0]));
+  const auto &decl =
+      std::get<gcode::AilLabelInstruction>(result.instructions[0]);
+  EXPECT_EQ(decl.name, "MAIN");
+  EXPECT_TRUE(result.diagnostics.empty());
+}
+
+TEST(AilTest, WarnsWhenInlineProcSignatureSuffixHasWhitespace) {
+  const auto result = gcode::parseAndLowerAil("PROC MAIN (R1)\n");
+  ASSERT_EQ(result.instructions.size(), 1u);
+  ASSERT_TRUE(std::holds_alternative<gcode::AilLabelInstruction>(
+      result.instructions[0]));
+  const auto &decl =
+      std::get<gcode::AilLabelInstruction>(result.instructions[0]);
+  EXPECT_EQ(decl.name, "MAIN");
+
+  ASSERT_FALSE(result.diagnostics.empty());
+  EXPECT_EQ(result.diagnostics.back().severity,
+            gcode::Diagnostic::Severity::Warning);
+  EXPECT_NE(result.diagnostics.back().message.find("PROC signature parameters"),
+            std::string::npos);
+}
+
 TEST(AilTest, AcceptsEmptyInlineSubprogramCallArgumentsWithoutWarning) {
   const auto result = gcode::parseAndLowerAil("MAIN()\n");
   ASSERT_EQ(result.instructions.size(), 1u);
@@ -339,8 +366,35 @@ TEST(AilTest, AcceptsEmptyInlineSubprogramCallArgumentsWithoutWarning) {
   EXPECT_TRUE(result.diagnostics.empty());
 }
 
+TEST(AilTest, AcceptsEmptyInlineSubprogramCallArgumentsWithWhitespace) {
+  const auto result = gcode::parseAndLowerAil("MAIN ()\n");
+  ASSERT_EQ(result.instructions.size(), 1u);
+  ASSERT_TRUE(std::holds_alternative<gcode::AilSubprogramCallInstruction>(
+      result.instructions[0]));
+  const auto &call =
+      std::get<gcode::AilSubprogramCallInstruction>(result.instructions[0]);
+  EXPECT_EQ(call.target, "MAIN");
+  EXPECT_TRUE(result.diagnostics.empty());
+}
+
 TEST(AilTest, WarnsWhenInlineSubprogramCallArgumentsAreIgnored) {
   const auto result = gcode::parseAndLowerAil("MAIN(R1)\n");
+  ASSERT_EQ(result.instructions.size(), 1u);
+  ASSERT_TRUE(std::holds_alternative<gcode::AilSubprogramCallInstruction>(
+      result.instructions[0]));
+  const auto &call =
+      std::get<gcode::AilSubprogramCallInstruction>(result.instructions[0]);
+  EXPECT_EQ(call.target, "MAIN");
+
+  ASSERT_FALSE(result.diagnostics.empty());
+  EXPECT_EQ(result.diagnostics.back().severity,
+            gcode::Diagnostic::Severity::Warning);
+  EXPECT_NE(result.diagnostics.back().message.find("call arguments"),
+            std::string::npos);
+}
+
+TEST(AilTest, WarnsWhenInlineSubprogramCallArgumentsHaveWhitespace) {
+  const auto result = gcode::parseAndLowerAil("MAIN (R1)\n");
   ASSERT_EQ(result.instructions.size(), 1u);
   ASSERT_TRUE(std::holds_alternative<gcode::AilSubprogramCallInstruction>(
       result.instructions[0]));

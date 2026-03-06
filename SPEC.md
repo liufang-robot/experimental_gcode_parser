@@ -260,6 +260,8 @@ Planned Siemens compatibility extension:
     treated as non-executable comments:
     - empty suffix `()` is accepted as a no-argument compatibility form
       without warnings
+      - both contiguous and whitespace-separated forms are accepted
+        (`MAIN()`, `MAIN ()`)
     - non-empty suffix `(...)` is ignored with deterministic AIL warnings:
       - `PROC <name>(...)`
       - `<subprogram_name>(...)`

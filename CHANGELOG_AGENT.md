@@ -1,5 +1,24 @@
 #CHANGELOG_AGENT
 
+## 2026-03-06 (T-050 slice 14: whitespace-separated procedural suffix compatibility)
+- Extended inline procedural suffix detection to support whitespace-separated
+  forms after declaration/call targets:
+  - no-warning no-arg compatibility: `PROC MAIN ()`, `MAIN ()`
+  - deterministic warnings for non-empty suffixes also apply with whitespace:
+    `PROC MAIN (R1)`, `MAIN (R1)`
+- Added AIL tests for contiguous and whitespace-separated suffix handling.
+
+SPEC sections / tests:
+- SPEC: Section 3.9
+- Tests: `test/ail_tests.cpp`
+
+Known limitations:
+- Parenthesized procedural signatures/arguments are still not parsed into a
+  structured AST model in this slice.
+
+How to reproduce locally (commands):
+- `./dev/check.sh`
+
 ## 2026-03-06 (T-050 slice 13: accept empty procedural suffix `()` without warning)
 - Refined inline procedural suffix handling in AIL lowering:
   - `PROC <name>()` is accepted as an explicit no-argument compatibility form

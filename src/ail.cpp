@@ -367,17 +367,30 @@ struct InlineParenSuffixInfo {
 
 std::optional<InlineParenSuffixInfo>
 findInlineParenSuffixComment(const Line &line, const Word &anchor) {
-  const int expected_column =
-      anchor.location.column + static_cast<int>(anchor.text.size());
+  bool anchor_seen = false;
   for (const auto &item : line.items) {
+    if (std::holds_alternative<Word>(item)) {
+      const auto &word = std::get<Word>(item);
+      if (!anchor_seen) {
+        if (&word == &anchor) {
+          anchor_seen = true;
+        }
+        continue;
+      }
+      // Suffix matching only applies if no additional word appears first.
+      return std::nullopt;
+    }
+    if (!anchor_seen) {
+      continue;
+    }
     if (!std::holds_alternative<Comment>(item)) {
       continue;
     }
     const auto &comment = std::get<Comment>(item);
     if (comment.location.line != anchor.location.line ||
-        comment.location.column != expected_column || comment.text.size() < 2 ||
-        comment.text.front() != '(' || comment.text.back() != ')') {
-      continue;
+        comment.text.size() < 2 || comment.text.front() != '(' ||
+        comment.text.back() != ')') {
+      return std::nullopt;
     }
     InlineParenSuffixInfo info;
     info.location = comment.location;
