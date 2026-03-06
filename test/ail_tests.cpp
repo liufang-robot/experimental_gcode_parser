@@ -560,6 +560,17 @@ TEST(AilTest, AcceptsEmptyInlineSubprogramCallArgumentsWithoutWarning) {
   EXPECT_TRUE(result.diagnostics.empty());
 }
 
+TEST(AilTest, AcceptsEmptyInlineQuotedSubprogramCallArgumentsWithoutWarning) {
+  const auto result = gcode::parseAndLowerAil("\"DIR/SPF1000\"()\n");
+  ASSERT_EQ(result.instructions.size(), 1u);
+  ASSERT_TRUE(std::holds_alternative<gcode::AilSubprogramCallInstruction>(
+      result.instructions[0]));
+  const auto &call =
+      std::get<gcode::AilSubprogramCallInstruction>(result.instructions[0]);
+  EXPECT_EQ(call.target, "DIR/SPF1000");
+  EXPECT_TRUE(result.diagnostics.empty());
+}
+
 TEST(AilTest,
      AcceptsEmptyInlineLowercaseSubprogramCallArgumentsWithoutWarning) {
   const auto result = gcode::parseAndLowerAil("main()\n");
@@ -603,6 +614,22 @@ TEST(AilTest, WarnsWhenInlineSubprogramCallArgumentsAreIgnored) {
   const auto &call =
       std::get<gcode::AilSubprogramCallInstruction>(result.instructions[0]);
   EXPECT_EQ(call.target, "MAIN");
+
+  ASSERT_FALSE(result.diagnostics.empty());
+  EXPECT_EQ(result.diagnostics.back().severity,
+            gcode::Diagnostic::Severity::Warning);
+  EXPECT_NE(result.diagnostics.back().message.find("call arguments"),
+            std::string::npos);
+}
+
+TEST(AilTest, WarnsWhenQuotedInlineSubprogramCallArgumentsAreIgnored) {
+  const auto result = gcode::parseAndLowerAil("\"DIR/SPF1000\"(R1)\n");
+  ASSERT_EQ(result.instructions.size(), 1u);
+  ASSERT_TRUE(std::holds_alternative<gcode::AilSubprogramCallInstruction>(
+      result.instructions[0]));
+  const auto &call =
+      std::get<gcode::AilSubprogramCallInstruction>(result.instructions[0]);
+  EXPECT_EQ(call.target, "DIR/SPF1000");
 
   ASSERT_FALSE(result.diagnostics.empty());
   EXPECT_EQ(result.diagnostics.back().severity,
