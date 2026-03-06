@@ -333,6 +333,16 @@ TEST(AilTest, ReportsErrorForMalformedProcDeclarationShape) {
             std::string::npos);
 }
 
+TEST(AilTest, ReportsErrorForMalformedQuotedProcDeclarationShape) {
+  const auto result = gcode::parseAndLowerAil("PROC \"DIR/SPF1000\" P2\n");
+  EXPECT_TRUE(result.instructions.empty());
+  ASSERT_FALSE(result.diagnostics.empty());
+  EXPECT_EQ(result.diagnostics.back().severity,
+            gcode::Diagnostic::Severity::Error);
+  EXPECT_NE(result.diagnostics.back().message.find("expected PROC <name>"),
+            std::string::npos);
+}
+
 TEST(AilTest, AcceptsEmptyInlineProcSignatureSuffixWithoutWarning) {
   const auto result = gcode::parseAndLowerAil("PROC MAIN()\n");
   ASSERT_EQ(result.instructions.size(), 1u);

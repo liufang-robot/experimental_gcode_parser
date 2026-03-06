@@ -1,5 +1,22 @@
 #CHANGELOG_AGENT
 
+## 2026-03-06 (T-050 slice 19: malformed quoted PROC declaration coverage)
+- Added explicit AIL coverage for malformed quoted PROC declaration shape:
+  - `PROC "DIR/SPF1000" P2` deterministically errors with expected baseline
+    declaration-shape diagnostic
+- No runtime behavior change in this slice; this hardens malformed-shape
+  contract coverage for quoted declaration forms.
+
+SPEC sections / tests:
+- SPEC: Section 3.9
+- Tests: `test/ail_tests.cpp`
+
+Known limitations:
+- Baseline still does not parse structured procedural parameter lists into AST.
+
+How to reproduce locally (commands):
+- `./dev/check.sh`
+
 ## 2026-03-06 (T-050 slice 18: parser coverage for quoted PROC declaration syntax)
 - Added parser baseline coverage for quoted PROC declaration surface syntax:
   - `PROC "DIR/SPF1000"` parses as keyword + quoted target word
