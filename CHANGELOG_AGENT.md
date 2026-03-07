@@ -1,5 +1,24 @@
 #CHANGELOG_AGENT
 
+## 2026-03-07 (T-050 slice 39: bare repeat-call case-parity coverage)
+- Added parser coverage for lowercase and mixed-case bare alphabetic
+  subprogram calls using both trailing and leading repeat-count forms.
+- Added AIL coverage showing those forms normalize to the existing uppercase
+  target representation while preserving `repeat_count`.
+- No behavior change in this slice; this locks case-insensitive repeat-call
+  parity for bare alphabetic targets.
+
+SPEC sections / tests:
+- SPEC: Section 3.9
+- Tests: `test/parser_tests.cpp`, `test/ail_tests.cpp`
+
+Known limitations:
+- Inline subprogram call arguments remain compatibility-only syntax and are not
+  modeled in baseline AIL.
+
+How to reproduce locally (commands):
+- `./dev/check.sh`
+
 ## 2026-03-07 (T-050 slice 38: quoted repeat-call executor coverage)
 - Added executor coverage for quoted subprogram calls with repeat counts.
 - Added executor coverage for quoted zero-repeat calls to preserve the existing

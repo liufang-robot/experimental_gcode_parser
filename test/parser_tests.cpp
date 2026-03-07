@@ -370,6 +370,38 @@ TEST(ParserSyntaxBaselineTest, ParsesMixedCaseAlphabeticSubprogramCallTarget) {
   EXPECT_EQ(word.text, "mAiN");
 }
 
+TEST(ParserSyntaxBaselineTest,
+     ParsesLowercaseAlphabeticSubprogramCallWithTrailingRepeat) {
+  const auto result = gcode::parse("main P3\n");
+  ASSERT_TRUE(result.diagnostics.empty());
+  ASSERT_EQ(result.program.lines.size(), 1u);
+  ASSERT_EQ(result.program.lines[0].items.size(), 2u);
+}
+
+TEST(ParserSyntaxBaselineTest,
+     ParsesMixedCaseAlphabeticSubprogramCallWithTrailingRepeat) {
+  const auto result = gcode::parse("mAiN P3\n");
+  ASSERT_TRUE(result.diagnostics.empty());
+  ASSERT_EQ(result.program.lines.size(), 1u);
+  ASSERT_EQ(result.program.lines[0].items.size(), 2u);
+}
+
+TEST(ParserSyntaxBaselineTest,
+     ParsesLowercaseAlphabeticSubprogramCallWithLeadingRepeat) {
+  const auto result = gcode::parse("P=2 main\n");
+  ASSERT_TRUE(result.diagnostics.empty());
+  ASSERT_EQ(result.program.lines.size(), 1u);
+  ASSERT_EQ(result.program.lines[0].items.size(), 2u);
+}
+
+TEST(ParserSyntaxBaselineTest,
+     ParsesMixedCaseAlphabeticSubprogramCallWithLeadingRepeat) {
+  const auto result = gcode::parse("P=2 mAiN\n");
+  ASSERT_TRUE(result.diagnostics.empty());
+  ASSERT_EQ(result.program.lines.size(), 1u);
+  ASSERT_EQ(result.program.lines[0].items.size(), 2u);
+}
+
 TEST(ParserSyntaxBaselineTest, ParsesProcDeclarationSurfaceSyntax) {
   const auto result = gcode::parse("PROC MAIN\n");
   ASSERT_TRUE(result.diagnostics.empty());

@@ -341,6 +341,62 @@ TEST(AilTest, EmitsMixedCaseAlphabeticSubprogramCallInstruction) {
   EXPECT_FALSE(call.repeat_count.has_value());
 }
 
+TEST(AilTest,
+     EmitsLowercaseAlphabeticSubprogramCallInstructionWithTrailingRepeat) {
+  const auto result = gcode::parseAndLowerAil("main P3\n");
+  ASSERT_TRUE(result.diagnostics.empty());
+  ASSERT_EQ(result.instructions.size(), 1u);
+  ASSERT_TRUE(std::holds_alternative<gcode::AilSubprogramCallInstruction>(
+      result.instructions[0]));
+  const auto &call =
+      std::get<gcode::AilSubprogramCallInstruction>(result.instructions[0]);
+  EXPECT_EQ(call.target, "MAIN");
+  ASSERT_TRUE(call.repeat_count.has_value());
+  EXPECT_EQ(*call.repeat_count, 3);
+}
+
+TEST(AilTest,
+     EmitsMixedCaseAlphabeticSubprogramCallInstructionWithTrailingRepeat) {
+  const auto result = gcode::parseAndLowerAil("mAiN P3\n");
+  ASSERT_TRUE(result.diagnostics.empty());
+  ASSERT_EQ(result.instructions.size(), 1u);
+  ASSERT_TRUE(std::holds_alternative<gcode::AilSubprogramCallInstruction>(
+      result.instructions[0]));
+  const auto &call =
+      std::get<gcode::AilSubprogramCallInstruction>(result.instructions[0]);
+  EXPECT_EQ(call.target, "MAIN");
+  ASSERT_TRUE(call.repeat_count.has_value());
+  EXPECT_EQ(*call.repeat_count, 3);
+}
+
+TEST(AilTest,
+     EmitsLowercaseAlphabeticSubprogramCallInstructionWithLeadingRepeat) {
+  const auto result = gcode::parseAndLowerAil("P=2 main\n");
+  ASSERT_TRUE(result.diagnostics.empty());
+  ASSERT_EQ(result.instructions.size(), 1u);
+  ASSERT_TRUE(std::holds_alternative<gcode::AilSubprogramCallInstruction>(
+      result.instructions[0]));
+  const auto &call =
+      std::get<gcode::AilSubprogramCallInstruction>(result.instructions[0]);
+  EXPECT_EQ(call.target, "MAIN");
+  ASSERT_TRUE(call.repeat_count.has_value());
+  EXPECT_EQ(*call.repeat_count, 2);
+}
+
+TEST(AilTest,
+     EmitsMixedCaseAlphabeticSubprogramCallInstructionWithLeadingRepeat) {
+  const auto result = gcode::parseAndLowerAil("P=2 mAiN\n");
+  ASSERT_TRUE(result.diagnostics.empty());
+  ASSERT_EQ(result.instructions.size(), 1u);
+  ASSERT_TRUE(std::holds_alternative<gcode::AilSubprogramCallInstruction>(
+      result.instructions[0]));
+  const auto &call =
+      std::get<gcode::AilSubprogramCallInstruction>(result.instructions[0]);
+  EXPECT_EQ(call.target, "MAIN");
+  ASSERT_TRUE(call.repeat_count.has_value());
+  EXPECT_EQ(*call.repeat_count, 2);
+}
+
 TEST(AilTest, EmitsProcDeclarationAsLabelInstruction) {
   const auto result = gcode::parseAndLowerAil("PROC MAIN\n");
   ASSERT_TRUE(result.diagnostics.empty());
