@@ -320,6 +320,20 @@ TEST(ParserSyntaxBaselineTest, ParsesQuotedSubprogramCallTarget) {
   EXPECT_EQ(word.text, "DIR/SPF1000");
 }
 
+TEST(ParserSyntaxBaselineTest, ParsesQuotedSubprogramCallWithTrailingRepeat) {
+  const auto result = gcode::parse("\"DIR/SPF1000\" P3\n");
+  ASSERT_TRUE(result.diagnostics.empty());
+  ASSERT_EQ(result.program.lines.size(), 1u);
+  ASSERT_EQ(result.program.lines[0].items.size(), 2u);
+}
+
+TEST(ParserSyntaxBaselineTest, ParsesQuotedSubprogramCallWithLeadingRepeat) {
+  const auto result = gcode::parse("P=2 \"DIR/SPF1000\"\n");
+  ASSERT_TRUE(result.diagnostics.empty());
+  ASSERT_EQ(result.program.lines.size(), 1u);
+  ASSERT_EQ(result.program.lines[0].items.size(), 2u);
+}
+
 TEST(ParserSyntaxBaselineTest, ParsesAlphabeticSubprogramCallTarget) {
   const auto result = gcode::parse("ALIAS\n");
   ASSERT_TRUE(result.diagnostics.empty());
