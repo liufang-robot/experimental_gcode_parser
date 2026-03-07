@@ -792,6 +792,66 @@ TEST(AilExecutorTest, UnknownMFunctionFaultsByDefaultPolicy) {
             std::string::npos);
 }
 
+TEST(AilExecutorTest, IsoM98CallUsesExecutorCallStackWhenEnabled) {
+  gcode::LowerOptions options;
+  options.enable_iso_m98_calls = true;
+  const auto lowered = gcode::parseAndLowerAil("M98 P1000\n", options);
+  ASSERT_TRUE(lowered.diagnostics.empty());
+  ASSERT_EQ(lowered.instructions.size(), 1u);
+  ASSERT_TRUE(std::holds_alternative<gcode::AilSubprogramCallInstruction>(
+      lowered.instructions[0]));
+
+  std::vector<gcode::AilInstruction> instructions;
+
+  gcode::AilGotoInstruction goto_start;
+  goto_start.opcode = "GOTO";
+  goto_start.target = "START";
+  goto_start.target_kind = "label";
+  goto_start.source.line = 1;
+  instructions.push_back(goto_start);
+
+  gcode::AilLabelInstruction subprogram_label;
+  subprogram_label.name = "1000";
+  subprogram_label.source.line = 2;
+  instructions.push_back(subprogram_label);
+
+  gcode::AilReturnBoundaryInstruction ret;
+  ret.opcode = "RET";
+  ret.source.line = 3;
+  instructions.push_back(ret);
+
+  gcode::AilLabelInstruction start_label;
+  start_label.name = "START";
+  start_label.source.line = 4;
+  instructions.push_back(start_label);
+
+  instructions.push_back(lowered.instructions[0]);
+
+  gcode::AilMCodeInstruction known_mcode;
+  known_mcode.value = 3;
+  known_mcode.source.line = 5;
+  instructions.push_back(known_mcode);
+
+  gcode::AilExecutor exec(instructions);
+
+  const auto resolver = [](const gcode::Condition &,
+                           const gcode::SourceInfo &) {
+    gcode::ConditionResolution r;
+    r.kind = gcode::ConditionResolutionKind::False;
+    return r;
+  };
+
+  int guard = 0;
+  while (exec.state().status == gcode::ExecutorStatus::Ready && guard < 32) {
+    ASSERT_TRUE(exec.step(0, resolver));
+    ++guard;
+  }
+
+  EXPECT_EQ(exec.state().status, gcode::ExecutorStatus::Completed);
+  EXPECT_EQ(exec.state().call_stack_depth, 0u);
+  EXPECT_TRUE(exec.diagnostics().empty());
+}
+
 TEST(AilExecutorTest, UnknownMFunctionWarningPolicyContinuesExecution) {
   const auto lowered = gcode::parseAndLowerAil("M123456\nG1 X1\n");
   gcode::AilExecutor exec(lowered.instructions, gcode::ErrorPolicy::Warning);

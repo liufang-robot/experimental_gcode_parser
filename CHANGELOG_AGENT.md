@@ -1,5 +1,24 @@
 #CHANGELOG_AGENT
 
+## 2026-03-07 (T-050 slice 41: ISO M98 executor coverage)
+- Added executor coverage for ISO-enabled `M98 P...` lowering to confirm the
+  resulting `subprogram_call` uses the normal call stack at runtime.
+- Kept the slice runtime-focused by reusing the lowered `M98` instruction and a
+  minimal synthetic AIL program scaffold.
+- No behavior change in this slice; this locks the enabled-path runtime
+  contract for ISO compatibility calls.
+
+SPEC sections / tests:
+- SPEC: Section 6.1
+- Tests: `test/ail_executor_tests.cpp`
+
+Known limitations:
+- Inline subprogram call arguments remain compatibility-only syntax and are not
+  modeled in baseline AIL.
+
+How to reproduce locally (commands):
+- `./dev/check.sh`
+
 ## 2026-03-07 (T-050 slice 40: bare repeat-call executor case parity)
 - Added executor coverage for lowercase and mixed-case bare alphabetic
   subprogram calls with repeat counts.
