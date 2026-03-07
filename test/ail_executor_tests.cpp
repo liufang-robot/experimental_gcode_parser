@@ -892,6 +892,55 @@ TEST(AilExecutorTest, IsoM98CallUsesExecutorCallStackWhenEnabled) {
   EXPECT_TRUE(exec.diagnostics().empty());
 }
 
+TEST(AilExecutorTest, IsoM98CallFaultsWhenTargetMissing) {
+  gcode::LowerOptions options;
+  options.enable_iso_m98_calls = true;
+  const auto lowered = gcode::parseAndLowerAil("M98 P1000\n", options);
+  ASSERT_TRUE(lowered.diagnostics.empty());
+
+  gcode::AilExecutor exec(lowered.instructions);
+
+  const auto resolver = [](const gcode::Condition &,
+                           const gcode::SourceInfo &) {
+    gcode::ConditionResolution r;
+    r.kind = gcode::ConditionResolutionKind::False;
+    return r;
+  };
+
+  ASSERT_TRUE(exec.step(0, resolver));
+  EXPECT_EQ(exec.state().status, gcode::ExecutorStatus::Fault);
+  ASSERT_FALSE(exec.diagnostics().empty());
+  EXPECT_NE(exec.diagnostics().back().message.find("unresolved subprogram"),
+            std::string::npos);
+}
+
+TEST(AilExecutorTest, IsoM98CallWarningPolicyContinuesWhenTargetMissing) {
+  gcode::LowerOptions options;
+  options.enable_iso_m98_calls = true;
+  const auto lowered = gcode::parseAndLowerAil("M98 P1000\nG1 X1\n", options);
+  ASSERT_TRUE(lowered.diagnostics.empty());
+
+  gcode::AilExecutor exec(lowered.instructions, gcode::ErrorPolicy::Error,
+                          gcode::ErrorPolicy::Error, nullptr,
+                          gcode::ErrorPolicy::Warning);
+
+  const auto resolver = [](const gcode::Condition &,
+                           const gcode::SourceInfo &) {
+    gcode::ConditionResolution r;
+    r.kind = gcode::ConditionResolutionKind::False;
+    return r;
+  };
+
+  ASSERT_TRUE(exec.step(0, resolver));
+  EXPECT_EQ(exec.state().status, gcode::ExecutorStatus::Ready);
+  ASSERT_FALSE(exec.diagnostics().empty());
+  EXPECT_EQ(exec.diagnostics().back().severity,
+            gcode::Diagnostic::Severity::Warning);
+  ASSERT_TRUE(exec.step(0, resolver));
+  ASSERT_TRUE(exec.step(0, resolver));
+  EXPECT_EQ(exec.state().status, gcode::ExecutorStatus::Completed);
+}
+
 TEST(AilExecutorTest, UnknownMFunctionWarningPolicyContinuesExecution) {
   const auto lowered = gcode::parseAndLowerAil("M123456\nG1 X1\n");
   gcode::AilExecutor exec(lowered.instructions, gcode::ErrorPolicy::Warning);
