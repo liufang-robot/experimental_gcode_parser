@@ -1,5 +1,23 @@
 #CHANGELOG_AGENT
 
+## 2026-03-07 (T-050 slice 38: quoted repeat-call executor coverage)
+- Added executor coverage for quoted subprogram calls with repeat counts.
+- Added executor coverage for quoted zero-repeat calls to preserve the existing
+  warning-and-ignore behavior.
+- No behavior change in this slice; this locks quoted repeat execution parity
+  with unquoted call targets.
+
+SPEC sections / tests:
+- SPEC: Section 6.1
+- Tests: `test/ail_executor_tests.cpp`
+
+Known limitations:
+- Inline subprogram call arguments remain compatibility-only syntax and are not
+  modeled in baseline AIL.
+
+How to reproduce locally (commands):
+- `./dev/check.sh`
+
 ## 2026-03-07 (T-050 slice 37: quoted repeat-call coverage)
 - Added parser coverage for quoted subprogram calls using both trailing and
   leading repeat-count forms.
