@@ -1,5 +1,24 @@
 #CHANGELOG_AGENT
 
+## 2026-03-07 (T-050 slice 37: quoted repeat-call coverage)
+- Added parser coverage for quoted subprogram calls using both trailing and
+  leading repeat-count forms.
+- Added AIL coverage for quoted repeat-call forms to preserve the existing
+  target string and explicit `repeat_count`.
+- No behavior change in this slice; this locks the current quoted repeat-call
+  baseline.
+
+SPEC sections / tests:
+- SPEC: Section 3.9
+- Tests: `test/parser_tests.cpp`, `test/ail_tests.cpp`
+
+Known limitations:
+- Inline subprogram call arguments remain compatibility-only syntax and are not
+  modeled in baseline AIL.
+
+How to reproduce locally (commands):
+- `./dev/check.sh`
+
 ## 2026-03-07 (T-050 slice 36: bare subprogram call case-parity coverage)
 - Added parser coverage for lowercase and mixed-case bare alphabetic
   subprogram call targets.

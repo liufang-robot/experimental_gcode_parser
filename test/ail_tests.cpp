@@ -279,6 +279,32 @@ TEST(AilTest, EmitsQuotedSubprogramCallInstruction) {
   EXPECT_FALSE(call.repeat_count.has_value());
 }
 
+TEST(AilTest, EmitsQuotedSubprogramCallInstructionWithTrailingRepeat) {
+  const auto result = gcode::parseAndLowerAil("\"DIR/SPF1000\" P3\n");
+  ASSERT_TRUE(result.diagnostics.empty());
+  ASSERT_EQ(result.instructions.size(), 1u);
+  ASSERT_TRUE(std::holds_alternative<gcode::AilSubprogramCallInstruction>(
+      result.instructions[0]));
+  const auto &call =
+      std::get<gcode::AilSubprogramCallInstruction>(result.instructions[0]);
+  EXPECT_EQ(call.target, "DIR/SPF1000");
+  ASSERT_TRUE(call.repeat_count.has_value());
+  EXPECT_EQ(*call.repeat_count, 3);
+}
+
+TEST(AilTest, EmitsQuotedSubprogramCallInstructionWithLeadingRepeat) {
+  const auto result = gcode::parseAndLowerAil("P=2 \"DIR/SPF1000\"\n");
+  ASSERT_TRUE(result.diagnostics.empty());
+  ASSERT_EQ(result.instructions.size(), 1u);
+  ASSERT_TRUE(std::holds_alternative<gcode::AilSubprogramCallInstruction>(
+      result.instructions[0]));
+  const auto &call =
+      std::get<gcode::AilSubprogramCallInstruction>(result.instructions[0]);
+  EXPECT_EQ(call.target, "DIR/SPF1000");
+  ASSERT_TRUE(call.repeat_count.has_value());
+  EXPECT_EQ(*call.repeat_count, 2);
+}
+
 TEST(AilTest, EmitsUnquotedAlphabeticSubprogramCallInstruction) {
   const auto result = gcode::parseAndLowerAil("ALIAS\n");
   ASSERT_TRUE(result.diagnostics.empty());
