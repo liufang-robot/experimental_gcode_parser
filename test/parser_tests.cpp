@@ -332,6 +332,30 @@ TEST(ParserSyntaxBaselineTest, ParsesAlphabeticSubprogramCallTarget) {
   EXPECT_EQ(word.text, "ALIAS");
 }
 
+TEST(ParserSyntaxBaselineTest, ParsesLowercaseAlphabeticSubprogramCallTarget) {
+  const auto result = gcode::parse("main\n");
+  ASSERT_TRUE(result.diagnostics.empty());
+  ASSERT_EQ(result.program.lines.size(), 1u);
+  ASSERT_EQ(result.program.lines[0].items.size(), 1u);
+  ASSERT_TRUE(
+      std::holds_alternative<gcode::Word>(result.program.lines[0].items[0]));
+  const auto &word = std::get<gcode::Word>(result.program.lines[0].items[0]);
+  EXPECT_FALSE(word.quoted);
+  EXPECT_EQ(word.text, "main");
+}
+
+TEST(ParserSyntaxBaselineTest, ParsesMixedCaseAlphabeticSubprogramCallTarget) {
+  const auto result = gcode::parse("mAiN\n");
+  ASSERT_TRUE(result.diagnostics.empty());
+  ASSERT_EQ(result.program.lines.size(), 1u);
+  ASSERT_EQ(result.program.lines[0].items.size(), 1u);
+  ASSERT_TRUE(
+      std::holds_alternative<gcode::Word>(result.program.lines[0].items[0]));
+  const auto &word = std::get<gcode::Word>(result.program.lines[0].items[0]);
+  EXPECT_FALSE(word.quoted);
+  EXPECT_EQ(word.text, "mAiN");
+}
+
 TEST(ParserSyntaxBaselineTest, ParsesProcDeclarationSurfaceSyntax) {
   const auto result = gcode::parse("PROC MAIN\n");
   ASSERT_TRUE(result.diagnostics.empty());

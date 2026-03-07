@@ -291,6 +291,30 @@ TEST(AilTest, EmitsUnquotedAlphabeticSubprogramCallInstruction) {
   EXPECT_FALSE(call.repeat_count.has_value());
 }
 
+TEST(AilTest, EmitsLowercaseAlphabeticSubprogramCallInstruction) {
+  const auto result = gcode::parseAndLowerAil("main\n");
+  ASSERT_TRUE(result.diagnostics.empty());
+  ASSERT_EQ(result.instructions.size(), 1u);
+  ASSERT_TRUE(std::holds_alternative<gcode::AilSubprogramCallInstruction>(
+      result.instructions[0]));
+  const auto &call =
+      std::get<gcode::AilSubprogramCallInstruction>(result.instructions[0]);
+  EXPECT_EQ(call.target, "MAIN");
+  EXPECT_FALSE(call.repeat_count.has_value());
+}
+
+TEST(AilTest, EmitsMixedCaseAlphabeticSubprogramCallInstruction) {
+  const auto result = gcode::parseAndLowerAil("mAiN\n");
+  ASSERT_TRUE(result.diagnostics.empty());
+  ASSERT_EQ(result.instructions.size(), 1u);
+  ASSERT_TRUE(std::holds_alternative<gcode::AilSubprogramCallInstruction>(
+      result.instructions[0]));
+  const auto &call =
+      std::get<gcode::AilSubprogramCallInstruction>(result.instructions[0]);
+  EXPECT_EQ(call.target, "MAIN");
+  EXPECT_FALSE(call.repeat_count.has_value());
+}
+
 TEST(AilTest, EmitsProcDeclarationAsLabelInstruction) {
   const auto result = gcode::parseAndLowerAil("PROC MAIN\n");
   ASSERT_TRUE(result.diagnostics.empty());
