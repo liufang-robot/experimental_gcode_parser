@@ -130,6 +130,14 @@ bool hasNameBodyCharacter(std::string_view text) {
   return false;
 }
 
+bool startsWithNameCharacter(std::string_view text) {
+  if (text.empty()) {
+    return false;
+  }
+  const unsigned char ch = static_cast<unsigned char>(text.front());
+  return std::isalnum(ch) || ch == '"';
+}
+
 std::string stripTrailingMetadataComment(std::string_view text) {
   const std::string trimmed = trimWhitespace(text);
   const size_t semicolon = trimmed.find(';');
@@ -178,7 +186,9 @@ std::optional<ProgramName> parseLeadingProgramName(std::string_view input,
         hasNonWhitespaceText(text.substr(1))) {
       const std::string normalized_name =
           stripTrailingMetadataComment(text.substr(1));
-      if (normalized_name.empty() || !hasNameBodyCharacter(normalized_name)) {
+      if (normalized_name.empty() ||
+          !startsWithNameCharacter(normalized_name) ||
+          !hasNameBodyCharacter(normalized_name)) {
         return std::nullopt;
       }
       ProgramName name;
