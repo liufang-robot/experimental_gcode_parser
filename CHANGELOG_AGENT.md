@@ -1,5 +1,43 @@
 #CHANGELOG_AGENT
 
+## 2026-03-07 (T-050 slice 43: ISO M98 unresolved-target policy parity)
+- Added executor coverage showing ISO-enabled `M98 P...` faults on unresolved
+  targets under the default runtime policy.
+- Added executor coverage showing ISO-enabled `M98 P...` continues with a
+  warning when unresolved-target policy is configured to warn.
+- No behavior change in this slice; this locks runtime policy parity between
+  ISO `M98` calls and direct subprogram-call syntax.
+
+SPEC sections / tests:
+- SPEC: Section 6.1
+- Tests: `test/ail_executor_tests.cpp`
+
+Known limitations:
+- Inline subprogram call arguments remain compatibility-only syntax and are not
+  modeled in baseline AIL.
+
+How to reproduce locally (commands):
+- `./dev/check.sh`
+
+## 2026-03-07 (T-050 slice 42: M17 executor parity coverage)
+- Added executor coverage showing `M17` faults with an empty call stack just
+  like `RET`.
+- Added executor coverage showing a subprogram terminated by `M17` resumes the
+  caller just like `RET`.
+- No behavior change in this slice; this locks runtime parity between the two
+  return-boundary opcodes.
+
+SPEC sections / tests:
+- SPEC: Section 6.1
+- Tests: `test/ail_executor_tests.cpp`
+
+Known limitations:
+- Inline subprogram call arguments remain compatibility-only syntax and are not
+  modeled in baseline AIL.
+
+How to reproduce locally (commands):
+- `./dev/check.sh`
+
 ## 2026-03-07 (T-050 slice 41: ISO M98 executor coverage)
 - Added executor coverage for ISO-enabled `M98 P...` lowering to confirm the
   resulting `subprogram_call` uses the normal call stack at runtime.
