@@ -257,6 +257,16 @@ TEST(ParserSyntaxBaselineTest, PercentProgramNameAppearsInJsonOutput) {
   EXPECT_EQ(json["program"]["program_name"]["location"]["line"], 1);
 }
 
+TEST(ParserSyntaxBaselineTest, RejectsBlankPercentProgramNameMetadata) {
+  const auto result = gcode::parse("% \nG1 X1\n");
+  EXPECT_FALSE(result.program.program_name.has_value());
+  ASSERT_FALSE(result.diagnostics.empty());
+  EXPECT_EQ(result.diagnostics[0].location.line, 1);
+  EXPECT_EQ(result.diagnostics[0].location.column, 1);
+  EXPECT_NE(result.diagnostics[0].message.find("syntax error"),
+            std::string::npos);
+}
+
 TEST(ParserSyntaxBaselineTest, ReportsBlockLengthOverflow) {
   std::string input = "N10 ";
   input.append(510, 'X');

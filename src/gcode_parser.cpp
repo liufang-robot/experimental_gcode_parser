@@ -90,6 +90,15 @@ bool isBlankLine(std::string_view line) {
   return true;
 }
 
+bool hasNonWhitespaceText(std::string_view text) {
+  for (char ch : text) {
+    if (ch != ' ' && ch != '\t' && ch != '\r') {
+      return true;
+    }
+  }
+  return false;
+}
+
 std::optional<ProgramName> parseLeadingProgramName(std::string_view input,
                                                    size_t *consumed_chars) {
   if (!consumed_chars) {
@@ -112,7 +121,8 @@ std::optional<ProgramName> parseLeadingProgramName(std::string_view input,
       ++line;
       continue;
     }
-    if (!text.empty() && text.front() == '%' && text.size() > 1) {
+    if (!text.empty() && text.front() == '%' &&
+        hasNonWhitespaceText(text.substr(1))) {
       ProgramName name;
       name.raw_text = std::string(text);
       name.name = std::string(text.substr(1));
