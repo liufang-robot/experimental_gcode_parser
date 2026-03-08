@@ -275,6 +275,22 @@ TEST(ParserSyntaxBaselineTest, TrimsTrailingWhitespaceFromPercentProgramName) {
   EXPECT_EQ(result.program.program_name->name, "MPF1000");
 }
 
+TEST(ParserSyntaxBaselineTest, TrimsLeadingWhitespaceFromPercentProgramName) {
+  const auto result = gcode::parse("%   MPF1000\nG1 X1\n");
+  ASSERT_TRUE(result.diagnostics.empty());
+  ASSERT_TRUE(result.program.program_name.has_value());
+  EXPECT_EQ(result.program.program_name->raw_text, "%   MPF1000");
+  EXPECT_EQ(result.program.program_name->name, "MPF1000");
+}
+
+TEST(ParserSyntaxBaselineTest, TrimsLeadingTabFromPercentProgramName) {
+  const auto result = gcode::parse("%\tMPF1000\nG1 X1\n");
+  ASSERT_TRUE(result.diagnostics.empty());
+  ASSERT_TRUE(result.program.program_name.has_value());
+  EXPECT_EQ(result.program.program_name->raw_text, "%\tMPF1000");
+  EXPECT_EQ(result.program.program_name->name, "MPF1000");
+}
+
 TEST(ParserSyntaxBaselineTest, ReportsBlockLengthOverflow) {
   std::string input = "N10 ";
   input.append(510, 'X');
