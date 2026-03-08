@@ -242,6 +242,8 @@ Planned Siemens compatibility extension:
         name for external `%...` metadata (for example `_`, `-`, `.`)
       - adjacent punctuation runs inside the normalized name are rejected as
         syntax-invalid
+      - trailing punctuation at the end of the normalized name is rejected as
+        syntax-invalid
     - normalized metadata names exclude trailing inline comment text introduced
       by `;` or parenthesized comments after whitespace
       - adjacent parenthesized suffix text without separating whitespace is
