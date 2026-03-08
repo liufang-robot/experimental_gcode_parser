@@ -225,7 +225,8 @@ Planned Siemens compatibility extension:
     non-blank text after `%` is accepted as program metadata.
   - parser preserves:
     - raw program-name text including `%`
-    - normalized name text without the leading `%`
+    - normalized name text without the leading `%` and without trailing
+      whitespace
     - source location
   - the leading `%...` metadata line is not lowered as a normal executable
     block line.

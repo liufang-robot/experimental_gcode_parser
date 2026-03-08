@@ -1,5 +1,24 @@
 #CHANGELOG_AGENT
 
+## 2026-03-08 (T-049 slice 6: normalize trailing whitespace in percent program names)
+- Normalized leading `%...` metadata names by trimming trailing whitespace from
+  the stored effective program name while preserving raw line text exactly.
+- Added parser coverage for `%MPF1000   ` so downstream consumers get a stable
+  normalized name and unchanged raw text.
+- Updated SPEC section 3.8 to state that normalized metadata names exclude
+  trailing whitespace.
+
+SPEC sections / tests:
+- SPEC: Section 3.8
+- Tests: `test/parser_tests.cpp`
+
+Known limitations:
+- Internal Siemens program-name forms and stricter invalid-name diagnostics are
+  still planned follow-up work.
+
+How to reproduce locally (commands):
+- `./dev/check.sh`
+
 ## 2026-03-08 (T-049 slice 5: reject blank percent program-name metadata)
 - Tightened leading `%...` metadata parsing so `%` followed only by whitespace
   is no longer accepted as a valid program name.

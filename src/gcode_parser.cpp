@@ -99,6 +99,18 @@ bool hasNonWhitespaceText(std::string_view text) {
   return false;
 }
 
+std::string trimTrailingWhitespace(std::string_view text) {
+  size_t end = text.size();
+  while (end > 0) {
+    const char ch = text[end - 1];
+    if (ch != ' ' && ch != '\t' && ch != '\r') {
+      break;
+    }
+    --end;
+  }
+  return std::string(text.substr(0, end));
+}
+
 std::optional<ProgramName> parseLeadingProgramName(std::string_view input,
                                                    size_t *consumed_chars) {
   if (!consumed_chars) {
@@ -125,7 +137,7 @@ std::optional<ProgramName> parseLeadingProgramName(std::string_view input,
         hasNonWhitespaceText(text.substr(1))) {
       ProgramName name;
       name.raw_text = std::string(text);
-      name.name = std::string(text.substr(1));
+      name.name = trimTrailingWhitespace(text.substr(1));
       name.external_percent = true;
       name.location = {line, 1};
       *consumed_chars =
