@@ -238,6 +238,8 @@ Planned Siemens compatibility extension:
       whitespace
       - quoted-name characters are currently preserved verbatim in the
         normalized name for external `%...` metadata
+      - interior punctuation currently remains preserved in the normalized
+        name for external `%...` metadata (for example `_`, `-`, `.`)
     - normalized metadata names exclude trailing inline comment text introduced
       by `;` or parenthesized comments after whitespace
       - adjacent parenthesized suffix text without separating whitespace is

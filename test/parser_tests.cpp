@@ -267,6 +267,31 @@ TEST(ParserSyntaxBaselineTest, PreservesQuotedPercentProgramNameText) {
   EXPECT_EQ(result.program.lines[0].line_index, 2);
 }
 
+TEST(ParserSyntaxBaselineTest,
+     PreservesUnderscoreInsidePercentProgramNameText) {
+  const auto result = gcode::parse("%A_B\nG1 X1\n");
+  ASSERT_TRUE(result.diagnostics.empty());
+  ASSERT_TRUE(result.program.program_name.has_value());
+  EXPECT_EQ(result.program.program_name->raw_text, "%A_B");
+  EXPECT_EQ(result.program.program_name->name, "A_B");
+}
+
+TEST(ParserSyntaxBaselineTest, PreservesHyphenInsidePercentProgramNameText) {
+  const auto result = gcode::parse("%A-B\nG1 X1\n");
+  ASSERT_TRUE(result.diagnostics.empty());
+  ASSERT_TRUE(result.program.program_name.has_value());
+  EXPECT_EQ(result.program.program_name->raw_text, "%A-B");
+  EXPECT_EQ(result.program.program_name->name, "A-B");
+}
+
+TEST(ParserSyntaxBaselineTest, PreservesDotInsidePercentProgramNameText) {
+  const auto result = gcode::parse("%A.B\nG1 X1\n");
+  ASSERT_TRUE(result.diagnostics.empty());
+  ASSERT_TRUE(result.program.program_name.has_value());
+  EXPECT_EQ(result.program.program_name->raw_text, "%A.B");
+  EXPECT_EQ(result.program.program_name->name, "A.B");
+}
+
 TEST(ParserSyntaxBaselineTest, RejectsBlankPercentProgramNameMetadata) {
   const auto result = gcode::parse("% \nG1 X1\n");
   EXPECT_FALSE(result.program.program_name.has_value());
