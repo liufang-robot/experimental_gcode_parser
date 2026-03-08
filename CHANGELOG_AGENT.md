@@ -1,5 +1,25 @@
 #CHANGELOG_AGENT
 
+## 2026-03-08 (T-048 slice 1: lock simple system-variable baseline)
+- Added parser coverage showing simple `$...` system variables are accepted in
+  assignment expressions and control-flow conditions, and that selector forms
+  like `$A_IN[1]` remain unsupported syntax in v0.
+- Added AIL JSON coverage showing lowered assignment expressions preserve
+  `system_variable` node kind for simple `$...` operands.
+- Updated SPEC section 3.6 baseline wording for simple system variables
+  versus selector-form follow-up work.
+
+SPEC sections / tests:
+- SPEC: Section 3.6
+- Tests: `test/parser_tests.cpp`, `test/ail_tests.cpp`
+
+Known limitations:
+- Selector-style system variables such as `$A_IN[1]` and
+  `$P_UIFR[1,X,TR]` are still unsupported syntax in v0.
+
+How to reproduce locally (commands):
+- `./dev/check.sh`
+
 ## 2026-03-08 (T-049 slice 16: reject trailing punctuation in percent names)
 - Tightened `%...` external metadata parsing so trailing punctuation at the end
   of the normalized name is rejected; examples now rejected include `%A.`,
