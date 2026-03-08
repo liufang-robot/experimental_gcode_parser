@@ -227,6 +227,8 @@ Planned Siemens compatibility extension:
     - raw program-name text including `%`
     - normalized name text without the leading `%` and without surrounding
       whitespace
+    - normalized metadata names exclude trailing inline comment text introduced
+      by `;` or parenthesized comments after whitespace
     - source location
   - the leading `%...` metadata line is not lowered as a normal executable
     block line.

@@ -291,6 +291,23 @@ TEST(ParserSyntaxBaselineTest, TrimsLeadingTabFromPercentProgramName) {
   EXPECT_EQ(result.program.program_name->name, "MPF1000");
 }
 
+TEST(ParserSyntaxBaselineTest, StripsSemicolonCommentFromPercentProgramName) {
+  const auto result = gcode::parse("%MPF1000 ; trailing\nG1 X1\n");
+  ASSERT_TRUE(result.diagnostics.empty());
+  ASSERT_TRUE(result.program.program_name.has_value());
+  EXPECT_EQ(result.program.program_name->raw_text, "%MPF1000 ; trailing");
+  EXPECT_EQ(result.program.program_name->name, "MPF1000");
+}
+
+TEST(ParserSyntaxBaselineTest,
+     StripsParenthesizedCommentFromPercentProgramName) {
+  const auto result = gcode::parse("%MPF1000 (note)\nG1 X1\n");
+  ASSERT_TRUE(result.diagnostics.empty());
+  ASSERT_TRUE(result.program.program_name.has_value());
+  EXPECT_EQ(result.program.program_name->raw_text, "%MPF1000 (note)");
+  EXPECT_EQ(result.program.program_name->name, "MPF1000");
+}
+
 TEST(ParserSyntaxBaselineTest, ReportsBlockLengthOverflow) {
   std::string input = "N10 ";
   input.append(510, 'X');

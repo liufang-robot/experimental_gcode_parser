@@ -1,5 +1,24 @@
 #CHANGELOG_AGENT
 
+## 2026-03-08 (T-049 slice 8: strip inline comments from percent program names)
+- Normalized leading `%...` metadata names by stripping trailing inline
+  semicolon and parenthesized comments from the stored effective program name.
+- Added parser coverage for `%MPF1000 ; trailing` and `%MPF1000 (note)` while
+  preserving exact raw line text.
+- Updated SPEC section 3.8 to state that normalized metadata names exclude
+  trailing inline comment text.
+
+SPEC sections / tests:
+- SPEC: Section 3.8
+- Tests: `test/parser_tests.cpp`
+
+Known limitations:
+- Internal Siemens program-name forms and stricter invalid-name diagnostics are
+  still planned follow-up work.
+
+How to reproduce locally (commands):
+- `./dev/check.sh`
+
 ## 2026-03-08 (T-049 slice 7: normalize leading whitespace in percent program names)
 - Normalized leading `%...` metadata names by trimming leading whitespace after
   `%` from the stored effective program name while preserving raw line text.
