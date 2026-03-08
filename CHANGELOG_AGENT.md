@@ -1,5 +1,22 @@
 #CHANGELOG_AGENT
 
+## 2026-03-08 (T-049 slice 9: lock whitespace-sensitive percent comment stripping)
+- Added parser coverage showing `%MPF1000(note)` keeps the adjacent
+  parenthesized suffix in the normalized external `%...` program name.
+- Updated SPEC section 3.8 to state that `(` comment stripping applies only
+  when the comment is separated by whitespace.
+
+SPEC sections / tests:
+- SPEC: Section 3.8
+- Tests: `test/parser_tests.cpp`
+
+Known limitations:
+- `%...` metadata still has only baseline normalization; stricter Siemens
+  name-shape validation is still planned follow-up work.
+
+How to reproduce locally (commands):
+- `./dev/check.sh`
+
 ## 2026-03-08 (T-049 slice 8: strip inline comments from percent program names)
 - Normalized leading `%...` metadata names by stripping trailing inline
   semicolon and parenthesized comments from the stored effective program name.

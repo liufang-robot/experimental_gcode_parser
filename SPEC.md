@@ -229,6 +229,8 @@ Planned Siemens compatibility extension:
       whitespace
     - normalized metadata names exclude trailing inline comment text introduced
       by `;` or parenthesized comments after whitespace
+      - adjacent parenthesized suffix text without separating whitespace is
+        currently preserved as part of the normalized name
     - source location
   - the leading `%...` metadata line is not lowered as a normal executable
     block line.
