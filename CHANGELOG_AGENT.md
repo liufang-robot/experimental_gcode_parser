@@ -1,5 +1,21 @@
 #CHANGELOG_AGENT
 
+## 2026-03-08 (T-040: working-plane architecture note)
+- Added a dedicated architecture note for Siemens Group 6 working-plane semantics (`G17/G18/G19`).
+- Documented current baseline behavior, plane-aware arc/compensation coupling, and the migration path toward fuller plane metadata contracts.
+- No behavior change in this slice; this is planning/documentation groundwork for future Group 6 evolution.
+
+SPEC sections / tests:
+- SPEC: future Group 6 modal/metadata behavior sections (planning-only task)
+- Tests: planning-only task; follow-up implementation tests split into later PRs
+
+Known limitations:
+- Current runtime models declared plane state and arc coupling baseline but does not yet expose the full future declared-vs-effective plane contract across all consumers.
+
+How to reproduce locally (commands):
+- `mdbook build docs`
+- `./dev/check.sh`
+
 ## 2026-03-08 (T-039: Group 7 architecture note)
 - Added a dedicated architecture note for Siemens Group 7 tool-radius-compensation semantics (`G40/G41/G42`).
 - Documented current baseline behavior, modal-state ownership, declared-vs-effective behavior boundaries, and follow-up implementation slices.
