@@ -194,8 +194,11 @@ N50 X60
   - system variables (for example `$P_ACT_X`)
 - Current system-variable scope in v0:
   - simple token form only (for example `$P_ACT_X`)
+  - simple token form is accepted in both assignment expressions and
+    control-flow conditions
   - bracketed selector forms (for example `$P_UIFR[1,X,TR]`, `$A_IN[1]`) are
-    reserved for Siemens-compatibility extension tasks
+    remain unsupported syntax in v0 and are reserved for
+    Siemens-compatibility extension tasks
 - Supported operators:
   - unary: `+`, `-`
   - binary: `+`, `-`, `*`, `/`

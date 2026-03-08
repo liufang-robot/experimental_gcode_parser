@@ -80,6 +80,22 @@ TEST(ParserExpressionTest, ParsesAssignmentExpressionIntoAst) {
   EXPECT_EQ(result.program.lines[0].assignment->lhs, "R1");
 }
 
+TEST(ParserExpressionTest, MarksSimpleSystemVariableOperandInAssignmentAst) {
+  const auto result = gcode::parse("R1 = $P_ACT_X + 1\n");
+  ASSERT_TRUE(result.diagnostics.empty());
+  ASSERT_EQ(result.program.lines.size(), 1u);
+  ASSERT_TRUE(result.program.lines[0].assignment.has_value());
+  ASSERT_TRUE(result.program.lines[0].assignment->rhs != nullptr);
+
+  const auto *binary = std::get_if<gcode::ExprBinary>(
+      &result.program.lines[0].assignment->rhs->node);
+  ASSERT_NE(binary, nullptr);
+  const auto *lhs = std::get_if<gcode::ExprVariable>(&binary->lhs->node);
+  ASSERT_NE(lhs, nullptr);
+  EXPECT_TRUE(lhs->is_system);
+  EXPECT_EQ(lhs->name, "$P_ACT_X");
+}
+
 TEST(ParserExpressionTest, ReportsExpressionSyntaxErrorLocation) {
   const auto result = gcode::parse("R1 = $P_ACT_X + * 2\n");
   ASSERT_FALSE(result.diagnostics.empty());
@@ -133,6 +149,29 @@ TEST(ParserControlFlowTest, ParsesGotoTargetKinds) {
   EXPECT_EQ(result.program.lines[2].goto_statement->target_kind,
             "system_variable");
   EXPECT_EQ(result.program.lines[2].goto_statement->target, "$DEST");
+}
+
+TEST(ParserControlFlowTest, ParsesIfConditionWithSimpleSystemVariable) {
+  const auto result = gcode::parse("IF $P_ACT_X == 1 GOTOF LBL\n");
+  ASSERT_TRUE(result.diagnostics.empty());
+  ASSERT_EQ(result.program.lines.size(), 1u);
+  ASSERT_TRUE(result.program.lines[0].if_goto_statement.has_value());
+
+  const auto &cond = result.program.lines[0].if_goto_statement->condition;
+  ASSERT_TRUE(cond.lhs != nullptr);
+  const auto *lhs = std::get_if<gcode::ExprVariable>(&cond.lhs->node);
+  ASSERT_NE(lhs, nullptr);
+  EXPECT_TRUE(lhs->is_system);
+  EXPECT_EQ(lhs->name, "$P_ACT_X");
+}
+
+TEST(ParserExpressionTest, RejectsSystemVariableSelectorFormInAssignment) {
+  const auto result = gcode::parse("R1 = $A_IN[1]\n");
+  ASSERT_FALSE(result.diagnostics.empty());
+  EXPECT_EQ(result.diagnostics[0].location.line, 1);
+  EXPECT_EQ(result.diagnostics[0].location.column, 11);
+  EXPECT_NE(result.diagnostics[0].message.find("syntax error"),
+            std::string::npos);
 }
 
 TEST(ParserControlFlowTest, ParsesLineNumberAtBlockStart) {

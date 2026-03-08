@@ -1038,6 +1038,8 @@ TEST(AilTest, AssignmentProducesTypedExpressionTree) {
   EXPECT_EQ(json["instructions"][0]["kind"], "assign");
   EXPECT_EQ(json["instructions"][0]["lhs"], "R1");
   EXPECT_EQ(json["instructions"][0]["rhs"]["kind"], "binary");
+  EXPECT_EQ(json["instructions"][0]["rhs"]["lhs"]["kind"], "system_variable");
+  EXPECT_EQ(json["instructions"][0]["rhs"]["lhs"]["name"], "$P_ACT_X");
 }
 
 TEST(AilTest, LowersControlFlowInstructions) {
