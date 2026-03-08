@@ -221,8 +221,8 @@ Planned Siemens compatibility extension:
 
 ### 3.8 Program Naming and Metadata (planned Siemens compatibility)
 - Current baseline implemented in v0:
-  - a leading external transfer name line that starts with `%` is accepted as
-    program metadata.
+  - a leading external transfer name line that starts with `%` and has
+    non-blank text after `%` is accepted as program metadata.
   - parser preserves:
     - raw program-name text including `%`
     - normalized name text without the leading `%`
