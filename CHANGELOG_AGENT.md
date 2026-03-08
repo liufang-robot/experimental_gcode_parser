@@ -1,5 +1,22 @@
 #CHANGELOG_AGENT
 
+## 2026-03-08 (T-049 slice 14: lock interior punctuation percent-name baseline)
+- Added parser coverage showing current external `%...` metadata preserves
+  interior underscore, hyphen, and dot characters in the normalized name.
+- Updated SPEC section 3.8 to state that interior punctuation is currently
+  preserved for the baseline `%...` metadata model.
+
+SPEC sections / tests:
+- SPEC: Section 3.8
+- Tests: `test/parser_tests.cpp`
+
+Known limitations:
+- `%...` metadata still uses a baseline compatibility model; stricter Siemens
+  naming constraints remain future work.
+
+How to reproduce locally (commands):
+- `./dev/check.sh`
+
 ## 2026-03-08 (T-049 slice 13: reject punctuation-prefixed percent program names)
 - Tightened `%...` external metadata parsing so the normalized name must start
   with an alphanumeric character or a quote; punctuation-prefixed payloads
