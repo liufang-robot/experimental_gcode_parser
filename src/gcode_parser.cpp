@@ -152,6 +152,10 @@ bool hasAdjacentNamePunctuation(std::string_view text) {
   return false;
 }
 
+bool endsWithNamePunctuation(std::string_view text) {
+  return !text.empty() && isNamePunctuation(text.back());
+}
+
 std::string stripTrailingMetadataComment(std::string_view text) {
   const std::string trimmed = trimWhitespace(text);
   const size_t semicolon = trimmed.find(';');
@@ -203,7 +207,8 @@ std::optional<ProgramName> parseLeadingProgramName(std::string_view input,
       if (normalized_name.empty() ||
           !startsWithNameCharacter(normalized_name) ||
           !hasNameBodyCharacter(normalized_name) ||
-          hasAdjacentNamePunctuation(normalized_name)) {
+          hasAdjacentNamePunctuation(normalized_name) ||
+          endsWithNamePunctuation(normalized_name)) {
         return std::nullopt;
       }
       ProgramName name;

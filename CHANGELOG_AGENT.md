@@ -1,5 +1,23 @@
 #CHANGELOG_AGENT
 
+## 2026-03-08 (T-049 slice 16: reject trailing punctuation in percent names)
+- Tightened `%...` external metadata parsing so trailing punctuation at the end
+  of the normalized name is rejected; examples now rejected include `%A.`,
+  `%A-`, and `%A_`.
+- Added parser coverage for trailing dot, hyphen, and underscore rejection and
+  updated SPEC section 3.8.
+
+SPEC sections / tests:
+- SPEC: Section 3.8
+- Tests: `test/parser_tests.cpp`
+
+Known limitations:
+- `%...` metadata still uses a baseline compatibility model rather than full
+  Siemens naming rules.
+
+How to reproduce locally (commands):
+- `./dev/check.sh`
+
 ## 2026-03-08 (T-049 slice 15: reject adjacent punctuation runs in percent names)
 - Tightened `%...` external metadata parsing so adjacent punctuation runs in
   normalized names are rejected; examples now rejected include `%A..B`,
