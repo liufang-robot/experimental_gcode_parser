@@ -1,5 +1,22 @@
 #CHANGELOG_AGENT
 
+## 2026-03-08 (T-049 slice 10: lock quoted percent program-name baseline)
+- Added parser coverage showing `%\"MPF1000\"` is accepted as external `%...`
+  metadata and the normalized `name` currently preserves the quote characters.
+- Updated SPEC section 3.8 to state that quoted-name characters are preserved
+  verbatim in the current external metadata baseline.
+
+SPEC sections / tests:
+- SPEC: Section 3.8
+- Tests: `test/parser_tests.cpp`
+
+Known limitations:
+- `%...` metadata still has only baseline normalization; stricter Siemens
+  quoted-name semantics and invalid-name diagnostics remain follow-up work.
+
+How to reproduce locally (commands):
+- `./dev/check.sh`
+
 ## 2026-03-08 (T-049 slice 9: lock whitespace-sensitive percent comment stripping)
 - Added parser coverage showing `%MPF1000(note)` keeps the adjacent
   parenthesized suffix in the normalized external `%...` program name.

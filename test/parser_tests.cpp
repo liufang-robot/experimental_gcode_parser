@@ -257,6 +257,16 @@ TEST(ParserSyntaxBaselineTest, PercentProgramNameAppearsInJsonOutput) {
   EXPECT_EQ(json["program"]["program_name"]["location"]["line"], 1);
 }
 
+TEST(ParserSyntaxBaselineTest, PreservesQuotedPercentProgramNameText) {
+  const auto result = gcode::parse("%\"MPF1000\"\nG1 X1\n");
+  ASSERT_TRUE(result.diagnostics.empty());
+  ASSERT_TRUE(result.program.program_name.has_value());
+  EXPECT_EQ(result.program.program_name->raw_text, "%\"MPF1000\"");
+  EXPECT_EQ(result.program.program_name->name, "\"MPF1000\"");
+  ASSERT_EQ(result.program.lines.size(), 1u);
+  EXPECT_EQ(result.program.lines[0].line_index, 2);
+}
+
 TEST(ParserSyntaxBaselineTest, RejectsBlankPercentProgramNameMetadata) {
   const auto result = gcode::parse("% \nG1 X1\n");
   EXPECT_FALSE(result.program.program_name.has_value());
