@@ -1,5 +1,23 @@
 #CHANGELOG_AGENT
 
+## 2026-03-08 (T-049 slice 12: reject symbol-only percent program names)
+- Tightened `%...` external metadata parsing so the normalized name must
+  contain at least one alphanumeric character; symbol-only payloads like `%%`,
+  `%""`, and `%/` are now rejected.
+- Added parser coverage for percent-only, quoted-empty, and symbol-only
+  external `%...` program-name metadata rejection and updated SPEC section 3.8.
+
+SPEC sections / tests:
+- SPEC: Section 3.8
+- Tests: `test/parser_tests.cpp`
+
+Known limitations:
+- `%...` metadata still uses a baseline shape check only; full Siemens naming
+  constraints remain future work.
+
+How to reproduce locally (commands):
+- `./dev/check.sh`
+
 ## 2026-03-08 (T-049 slice 11: reject empty percent names after comment stripping)
 - Tightened `%...` external metadata parsing so comment-only forms like
   `% ;comment` and `% (note)` are rejected instead of producing an empty
