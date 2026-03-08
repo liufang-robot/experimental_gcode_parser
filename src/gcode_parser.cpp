@@ -121,6 +121,28 @@ std::string trimWhitespace(std::string_view text) {
   return std::string(text.substr(begin, end - begin));
 }
 
+std::string stripTrailingMetadataComment(std::string_view text) {
+  const std::string trimmed = trimWhitespace(text);
+  const size_t semicolon = trimmed.find(';');
+  const size_t paren = trimmed.find('(');
+
+  size_t cut = std::string::npos;
+  if (semicolon != std::string::npos &&
+      (semicolon == 0 || trimmed[semicolon - 1] == ' ' ||
+       trimmed[semicolon - 1] == '\t')) {
+    cut = semicolon;
+  }
+  if (paren != std::string::npos &&
+      (paren == 0 || trimmed[paren - 1] == ' ' || trimmed[paren - 1] == '\t')) {
+    cut = cut == std::string::npos ? paren : std::min(cut, paren);
+  }
+
+  if (cut == std::string::npos) {
+    return trimmed;
+  }
+  return trimWhitespace(std::string_view(trimmed).substr(0, cut));
+}
+
 std::optional<ProgramName> parseLeadingProgramName(std::string_view input,
                                                    size_t *consumed_chars) {
   if (!consumed_chars) {
@@ -145,9 +167,14 @@ std::optional<ProgramName> parseLeadingProgramName(std::string_view input,
     }
     if (!text.empty() && text.front() == '%' &&
         hasNonWhitespaceText(text.substr(1))) {
+      const std::string normalized_name =
+          stripTrailingMetadataComment(text.substr(1));
+      if (normalized_name.empty()) {
+        return std::nullopt;
+      }
       ProgramName name;
       name.raw_text = std::string(text);
-      name.name = trimWhitespace(text.substr(1));
+      name.name = normalized_name;
       name.external_percent = true;
       name.location = {line, 1};
       *consumed_chars =

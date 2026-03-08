@@ -220,13 +220,22 @@ Planned Siemens compatibility extension:
 - extend assignment/value-shape support for full Siemens expression forms.
 
 ### 3.8 Program Naming and Metadata (planned Siemens compatibility)
-- Current baseline implemented in v0:
+  - Current baseline implemented in v0:
   - a leading external transfer name line that starts with `%` and has
     non-blank text after `%` is accepted as program metadata.
+  - after baseline normalization/comment stripping, the effective external
+    metadata name must remain non-empty; otherwise the line is rejected as
+    syntax-invalid instead of producing an empty `program_name`.
   - parser preserves:
     - raw program-name text including `%`
     - normalized name text without the leading `%` and without surrounding
       whitespace
+      - quoted-name characters are currently preserved verbatim in the
+        normalized name for external `%...` metadata
+    - normalized metadata names exclude trailing inline comment text introduced
+      by `;` or parenthesized comments after whitespace
+      - adjacent parenthesized suffix text without separating whitespace is
+        currently preserved as part of the normalized name
     - source location
   - the leading `%...` metadata line is not lowered as a normal executable
     block line.
