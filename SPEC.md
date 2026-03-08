@@ -226,6 +226,9 @@ Planned Siemens compatibility extension:
   - after baseline normalization/comment stripping, the effective external
     metadata name must remain non-empty; otherwise the line is rejected as
     syntax-invalid instead of producing an empty `program_name`.
+  - the effective external metadata name must contain at least one
+    alphanumeric character after normalization; symbol-only payloads are
+    rejected as syntax-invalid.
   - parser preserves:
     - raw program-name text including `%`
     - normalized name text without the leading `%` and without surrounding

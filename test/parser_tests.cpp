@@ -277,6 +277,36 @@ TEST(ParserSyntaxBaselineTest, RejectsBlankPercentProgramNameMetadata) {
             std::string::npos);
 }
 
+TEST(ParserSyntaxBaselineTest, RejectsPercentOnlyProgramNameMetadata) {
+  const auto result = gcode::parse("%%\nG1 X1\n");
+  EXPECT_FALSE(result.program.program_name.has_value());
+  ASSERT_FALSE(result.diagnostics.empty());
+  EXPECT_EQ(result.diagnostics[0].location.line, 1);
+  EXPECT_EQ(result.diagnostics[0].location.column, 1);
+  EXPECT_NE(result.diagnostics[0].message.find("syntax error"),
+            std::string::npos);
+}
+
+TEST(ParserSyntaxBaselineTest, RejectsQuotedEmptyPercentProgramNameMetadata) {
+  const auto result = gcode::parse("%\"\"\nG1 X1\n");
+  EXPECT_FALSE(result.program.program_name.has_value());
+  ASSERT_FALSE(result.diagnostics.empty());
+  EXPECT_EQ(result.diagnostics[0].location.line, 1);
+  EXPECT_EQ(result.diagnostics[0].location.column, 1);
+  EXPECT_NE(result.diagnostics[0].message.find("syntax error"),
+            std::string::npos);
+}
+
+TEST(ParserSyntaxBaselineTest, RejectsSymbolOnlyPercentProgramNameMetadata) {
+  const auto result = gcode::parse("%/\nG1 X1\n");
+  EXPECT_FALSE(result.program.program_name.has_value());
+  ASSERT_FALSE(result.diagnostics.empty());
+  EXPECT_EQ(result.diagnostics[0].location.line, 1);
+  EXPECT_EQ(result.diagnostics[0].location.column, 1);
+  EXPECT_NE(result.diagnostics[0].message.find("syntax error"),
+            std::string::npos);
+}
+
 TEST(ParserSyntaxBaselineTest, RejectsCommentOnlyPercentProgramNameMetadata) {
   const auto result = gcode::parse("% ;comment\nG1 X1\n");
   EXPECT_FALSE(result.program.program_name.has_value());
