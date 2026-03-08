@@ -174,6 +174,24 @@ TEST(ParserExpressionTest, RejectsSystemVariableSelectorFormInAssignment) {
             std::string::npos);
 }
 
+TEST(ParserControlFlowTest, RejectsSystemVariableSelectorFormInCondition) {
+  const auto result = gcode::parse("IF $A_IN[1] == 1 GOTOF LBL\n");
+  ASSERT_FALSE(result.diagnostics.empty());
+  EXPECT_EQ(result.diagnostics[0].location.line, 1);
+  EXPECT_EQ(result.diagnostics[0].location.column, 9);
+  EXPECT_NE(result.diagnostics[0].message.find("syntax error"),
+            std::string::npos);
+}
+
+TEST(ParserExpressionTest, RejectsMultiPartSystemVariableSelectorForm) {
+  const auto result = gcode::parse("R1 = $P_UIFR[1,X,TR]\n");
+  ASSERT_FALSE(result.diagnostics.empty());
+  EXPECT_EQ(result.diagnostics[0].location.line, 1);
+  EXPECT_EQ(result.diagnostics[0].location.column, 13);
+  EXPECT_NE(result.diagnostics[0].message.find("syntax error"),
+            std::string::npos);
+}
+
 TEST(ParserControlFlowTest, ParsesLineNumberAtBlockStart) {
   const auto result = gcode::parse("N100 G1 X1\n");
   ASSERT_TRUE(result.diagnostics.empty());

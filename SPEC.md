@@ -197,8 +197,11 @@ N50 X60
   - simple token form is accepted in both assignment expressions and
     control-flow conditions
   - bracketed selector forms (for example `$P_UIFR[1,X,TR]`, `$A_IN[1]`) are
-    remain unsupported syntax in v0 and are reserved for
+    unsupported syntax in v0 and are reserved for
     Siemens-compatibility extension tasks
+  - malformed selector attempts currently fail as parser syntax diagnostics at
+    the first unsupported bracket/comma token; v0 does not yet provide a
+    structured selector-specific diagnostic family
 - Supported operators:
   - unary: `+`, `-`
   - binary: `+`, `-`, `*`, `/`

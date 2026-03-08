@@ -1,5 +1,24 @@
 #CHANGELOG_AGENT
 
+## 2026-03-08 (T-048 slice 2: lock selector-form diagnostic baseline)
+- Added parser coverage locking current syntax-diagnostic locations for
+  unsupported selector-style system variables in both control-flow conditions
+  and multipart selector expressions.
+- Clarified SPEC section 3.6 that selector attempts currently fail at the
+  first unsupported bracket/comma token rather than through a structured
+  selector diagnostic family.
+
+SPEC sections / tests:
+- SPEC: Section 3.6
+- Tests: `test/parser_tests.cpp`
+
+Known limitations:
+- Selector-style system variables are still unsupported syntax in v0; the
+  parser does not yet expose structured selector diagnostics or AST nodes.
+
+How to reproduce locally (commands):
+- `./dev/check.sh`
+
 ## 2026-03-08 (T-048 slice 1: lock simple system-variable baseline)
 - Added parser coverage showing simple `$...` system variables are accepted in
   assignment expressions and control-flow conditions, and that selector forms
