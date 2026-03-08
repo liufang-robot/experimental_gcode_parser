@@ -9,6 +9,7 @@
     - [Development: Modal Strategy](development/design/modal_strategy.md)
     - [Development: Exact-Stop/Continuous-Path](development/design/exactstop_contpath_architecture.md)
     - [Development: Feed Model Architecture](development/design/feed_model_architecture.md)
+    - [Development: Group 7 Architecture](development/design/group7_architecture.md)
     - [Development: M-Code Architecture](development/design/mcode_architecture.md)
     - [Development: Rapid Traverse Architecture](development/design/rapid_traverse_architecture.md)
     - [Development: Incremental Session](development/design/incremental_session.md)

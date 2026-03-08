@@ -1,5 +1,21 @@
 #CHANGELOG_AGENT
 
+## 2026-03-08 (T-039: Group 7 architecture note)
+- Added a dedicated architecture note for Siemens Group 7 tool-radius-compensation semantics (`G40/G41/G42`).
+- Documented current baseline behavior, modal-state ownership, declared-vs-effective behavior boundaries, and follow-up implementation slices.
+- No behavior change in this slice; this is planning/documentation groundwork for future Group 7 evolution.
+
+SPEC sections / tests:
+- SPEC: future Group 7 modal/metadata behavior sections (planning-only task)
+- Tests: planning-only task; follow-up implementation tests split into later PRs
+
+Known limitations:
+- Current runtime tracks declared Group 7 state only and does not implement geometric cutter-compensation path adjustment.
+
+How to reproduce locally (commands):
+- `mdbook build docs`
+- `./dev/check.sh`
+
 ## 2026-03-08 (T-041: feed model architecture note)
 - Added a dedicated architecture note for Siemens Group 15 feed semantics, including `F`, `FGROUP`, `FGREF`, and `FL`.
 - Documented migration from the current scalar-feed baseline to explicit feed-state and policy-driven runtime resolution.
