@@ -167,9 +167,14 @@ std::optional<ProgramName> parseLeadingProgramName(std::string_view input,
     }
     if (!text.empty() && text.front() == '%' &&
         hasNonWhitespaceText(text.substr(1))) {
+      const std::string normalized_name =
+          stripTrailingMetadataComment(text.substr(1));
+      if (normalized_name.empty()) {
+        return std::nullopt;
+      }
       ProgramName name;
       name.raw_text = std::string(text);
-      name.name = stripTrailingMetadataComment(text.substr(1));
+      name.name = normalized_name;
       name.external_percent = true;
       name.location = {line, 1};
       *consumed_chars =

@@ -1,5 +1,23 @@
 #CHANGELOG_AGENT
 
+## 2026-03-08 (T-049 slice 11: reject empty percent names after comment stripping)
+- Tightened `%...` external metadata parsing so comment-only forms like
+  `% ;comment` and `% (note)` are rejected instead of producing an empty
+  normalized `program_name`.
+- Added parser coverage for comment-only `%...` metadata rejection and updated
+  SPEC section 3.8 to require a non-empty effective name after normalization.
+
+SPEC sections / tests:
+- SPEC: Section 3.8
+- Tests: `test/parser_tests.cpp`
+
+Known limitations:
+- `%...` metadata still uses baseline normalization only; broader Siemens name
+  validation rules remain follow-up work.
+
+How to reproduce locally (commands):
+- `./dev/check.sh`
+
 ## 2026-03-08 (T-049 slice 10: lock quoted percent program-name baseline)
 - Added parser coverage showing `%\"MPF1000\"` is accepted as external `%...`
   metadata and the normalized `name` currently preserves the quote characters.

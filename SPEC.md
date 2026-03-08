@@ -220,9 +220,12 @@ Planned Siemens compatibility extension:
 - extend assignment/value-shape support for full Siemens expression forms.
 
 ### 3.8 Program Naming and Metadata (planned Siemens compatibility)
-- Current baseline implemented in v0:
+  - Current baseline implemented in v0:
   - a leading external transfer name line that starts with `%` and has
     non-blank text after `%` is accepted as program metadata.
+  - after baseline normalization/comment stripping, the effective external
+    metadata name must remain non-empty; otherwise the line is rejected as
+    syntax-invalid instead of producing an empty `program_name`.
   - parser preserves:
     - raw program-name text including `%`
     - normalized name text without the leading `%` and without surrounding
