@@ -1,5 +1,24 @@
 #CHANGELOG_AGENT
 
+## 2026-03-08 (Backlog hygiene: mark merged architecture queue tasks done)
+- Removed the already-merged `T-037`..`T-047` architecture items from the ready
+  queue in `BACKLOG.md`.
+- Marked the merged architecture tasks and `T-050` as done in the backlog with
+  references to PRs or changelog entries.
+- No behavior change in this slice; this restores backlog/OODA accuracy after
+  the architecture series landed on `main`.
+
+SPEC sections / tests:
+- SPEC: none (backlog maintenance only)
+- Tests: `./dev/check.sh`
+
+Known limitations:
+- Some older backlog entries outside this cleanup still use `local, unmerged`
+  placeholders and may need separate reconciliation.
+
+How to reproduce locally (commands):
+- `./dev/check.sh`
+
 ## 2026-03-08 (T-040: working-plane architecture note)
 - Added a dedicated architecture note for Siemens Group 6 working-plane semantics (`G17/G18/G19`).
 - Documented current baseline behavior, plane-aware arc/compensation coupling, and the migration path toward fuller plane metadata contracts.
