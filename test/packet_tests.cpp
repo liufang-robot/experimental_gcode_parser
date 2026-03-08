@@ -183,6 +183,18 @@ TEST(PacketTest, SubprogramCallInstructionsDoNotEmitPacketsOrWarnings) {
   EXPECT_TRUE(result.diagnostics.empty());
 }
 
+TEST(PacketTest, IsoM98CallDoesNotEmitPacketsOrWarnings) {
+  gcode::LowerOptions options;
+  options.enable_iso_m98_calls = true;
+  const auto result =
+      gcode::parseLowerAndPacketize("M98 P1000\nG1 X1\n", options);
+
+  ASSERT_EQ(result.packets.size(), 1u);
+  EXPECT_EQ(result.packets[0].type, gcode::PacketType::LinearMove);
+  EXPECT_EQ(result.packets[0].source.line, 2);
+  EXPECT_TRUE(result.diagnostics.empty());
+}
+
 TEST(PacketTest, ArcPacketIncludesEffectiveWorkingPlane) {
   const auto result = gcode::parseLowerAndPacketize("G19\nG3 Y10 Z20 J1 K2\n");
 
