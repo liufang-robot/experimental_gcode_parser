@@ -585,6 +585,8 @@ N130 G01 X20 Y20
 - Runtime executor API evaluates `branch_if` conditions via callback contract:
   - callback result states: `true`, `false`, `pending`, `error`
   - `pending` may include `wait_key` and `retry_at` metadata
+  - this contract applies equally to simple system-variable-backed conditions
+    such as `IF $P_ACT_X == 1 ...`
 - Variable evaluation boundary:
   - parser/lowering does not resolve live system-variable values
   - runtime resolver is responsible for evaluating user/system-variable
