@@ -209,7 +209,8 @@
           "value": 50
         }
       }
-    ]
+    ],
+    "program_name": null
   },
   "schema_version": 1
 }

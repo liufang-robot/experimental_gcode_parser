@@ -220,12 +220,18 @@ Planned Siemens compatibility extension:
 - extend assignment/value-shape support for full Siemens expression forms.
 
 ### 3.8 Program Naming and Metadata (planned Siemens compatibility)
+- Current baseline implemented in v0:
+  - a leading external transfer name line that starts with `%` is accepted as
+    program metadata.
+  - parser preserves:
+    - raw program-name text including `%`
+    - normalized name text without the leading `%`
+    - source location
+  - the leading `%...` metadata line is not lowered as a normal executable
+    block line.
 - Planned syntax support:
   - Siemens-style program names (identifier constraints) for internal naming.
-  - external transfer name forms that start with `%` for compatibility parsing.
-- Parser responsibility:
-  - preserve raw program-name text and source location.
-  - report invalid name-shape diagnostics under Siemens-compatibility mode.
+  - additional invalid-name-shape diagnostics under Siemens-compatibility mode.
 
 ### 3.9 Subprogram Syntax (planned Siemens compatibility)
 - Planned syntax support:

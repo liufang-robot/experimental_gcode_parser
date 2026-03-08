@@ -3,6 +3,8 @@
 #include <sstream>
 #include <string>
 
+#include <nlohmann/json.hpp>
+
 #include "gtest/gtest.h"
 
 #include "ast_printer.h"
@@ -220,6 +222,39 @@ TEST(ParserSyntaxBaselineTest, ReportsInvalidSkipLevelRange) {
   EXPECT_EQ(result.diagnostics[0].severity, gcode::Diagnostic::Severity::Error);
   EXPECT_NE(result.diagnostics[0].message.find("skip level"),
             std::string::npos);
+}
+
+TEST(ParserSyntaxBaselineTest, ParsesLeadingPercentProgramNameMetadata) {
+  const auto result = gcode::parse("%MPF1000\nG1 X1\n");
+  ASSERT_TRUE(result.diagnostics.empty());
+  ASSERT_TRUE(result.program.program_name.has_value());
+  EXPECT_EQ(result.program.program_name->raw_text, "%MPF1000");
+  EXPECT_EQ(result.program.program_name->name, "MPF1000");
+  EXPECT_TRUE(result.program.program_name->external_percent);
+  EXPECT_EQ(result.program.program_name->location.line, 1);
+  EXPECT_EQ(result.program.program_name->location.column, 1);
+  ASSERT_EQ(result.program.lines.size(), 1u);
+  EXPECT_EQ(result.program.lines[0].line_index, 2);
+}
+
+TEST(ParserSyntaxBaselineTest, ParsesLeadingPercentProgramNameAfterBlankLine) {
+  const auto result = gcode::parse("\n%SPF1000\nG1 X1\n");
+  ASSERT_TRUE(result.diagnostics.empty());
+  ASSERT_TRUE(result.program.program_name.has_value());
+  EXPECT_EQ(result.program.program_name->raw_text, "%SPF1000");
+  EXPECT_EQ(result.program.program_name->name, "SPF1000");
+  EXPECT_EQ(result.program.program_name->location.line, 2);
+  ASSERT_EQ(result.program.lines.size(), 1u);
+  EXPECT_EQ(result.program.lines[0].line_index, 3);
+}
+
+TEST(ParserSyntaxBaselineTest, PercentProgramNameAppearsInJsonOutput) {
+  const auto result = gcode::parse("%MPF1000\n");
+  const auto json = nlohmann::json::parse(gcode::formatJson(result));
+  ASSERT_TRUE(json["program"]["program_name"].is_object());
+  EXPECT_EQ(json["program"]["program_name"]["raw"], "%MPF1000");
+  EXPECT_EQ(json["program"]["program_name"]["name"], "MPF1000");
+  EXPECT_EQ(json["program"]["program_name"]["location"]["line"], 1);
 }
 
 TEST(ParserSyntaxBaselineTest, ReportsBlockLengthOverflow) {
