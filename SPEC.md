@@ -229,6 +229,9 @@ Planned Siemens compatibility extension:
   - the effective external metadata name must contain at least one
     alphanumeric character after normalization; symbol-only payloads are
     rejected as syntax-invalid.
+  - the effective external metadata name must start with an alphanumeric
+    character or a quote after normalization; punctuation-prefixed payloads
+    are rejected as syntax-invalid.
   - parser preserves:
     - raw program-name text including `%`
     - normalized name text without the leading `%` and without surrounding
