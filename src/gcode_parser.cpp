@@ -138,6 +138,20 @@ bool startsWithNameCharacter(std::string_view text) {
   return std::isalnum(ch) || ch == '"';
 }
 
+bool isNamePunctuation(char ch) { return ch == '_' || ch == '-' || ch == '.'; }
+
+bool hasAdjacentNamePunctuation(std::string_view text) {
+  if (text.size() < 2) {
+    return false;
+  }
+  for (size_t i = 1; i < text.size(); ++i) {
+    if (isNamePunctuation(text[i - 1]) && isNamePunctuation(text[i])) {
+      return true;
+    }
+  }
+  return false;
+}
+
 std::string stripTrailingMetadataComment(std::string_view text) {
   const std::string trimmed = trimWhitespace(text);
   const size_t semicolon = trimmed.find(';');
@@ -188,7 +202,8 @@ std::optional<ProgramName> parseLeadingProgramName(std::string_view input,
           stripTrailingMetadataComment(text.substr(1));
       if (normalized_name.empty() ||
           !startsWithNameCharacter(normalized_name) ||
-          !hasNameBodyCharacter(normalized_name)) {
+          !hasNameBodyCharacter(normalized_name) ||
+          hasAdjacentNamePunctuation(normalized_name)) {
         return std::nullopt;
       }
       ProgramName name;

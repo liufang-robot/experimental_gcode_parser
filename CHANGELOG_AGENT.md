@@ -1,5 +1,23 @@
 #CHANGELOG_AGENT
 
+## 2026-03-08 (T-049 slice 15: reject adjacent punctuation runs in percent names)
+- Tightened `%...` external metadata parsing so adjacent punctuation runs in
+  normalized names are rejected; examples now rejected include `%A..B`,
+  `%A--B`, `%A__B`, and `%A.-B`.
+- Added parser coverage for repeated and mixed adjacent punctuation rejection
+  and updated SPEC section 3.8.
+
+SPEC sections / tests:
+- SPEC: Section 3.8
+- Tests: `test/parser_tests.cpp`
+
+Known limitations:
+- `%...` metadata still uses a baseline compatibility model rather than full
+  Siemens naming rules.
+
+How to reproduce locally (commands):
+- `./dev/check.sh`
+
 ## 2026-03-08 (T-049 slice 14: lock interior punctuation percent-name baseline)
 - Added parser coverage showing current external `%...` metadata preserves
   interior underscore, hyphen, and dot characters in the normalized name.
