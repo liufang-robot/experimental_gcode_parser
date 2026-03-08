@@ -117,6 +117,42 @@ TEST(AilExecutorTest, GotoFaultsWhenTargetMissing) {
   ASSERT_FALSE(exec.diagnostics().empty());
 }
 
+TEST(AilExecutorTest, GotoWithSystemVariableTargetFaultsAsUnresolved) {
+  const auto lowered = gcode::parseAndLowerAil("GOTO $DEST\n");
+  gcode::AilExecutor exec(lowered.instructions);
+
+  const auto resolver = [](const gcode::Condition &,
+                           const gcode::SourceInfo &) {
+    gcode::ConditionResolution r;
+    r.kind = gcode::ConditionResolutionKind::False;
+    return r;
+  };
+
+  ASSERT_TRUE(exec.step(0, resolver));
+  EXPECT_EQ(exec.state().status, gcode::ExecutorStatus::Fault);
+  ASSERT_FALSE(exec.diagnostics().empty());
+  EXPECT_NE(exec.diagnostics().back().message.find("unresolved goto target"),
+            std::string::npos);
+  EXPECT_NE(exec.diagnostics().back().message.find("$DEST"), std::string::npos);
+}
+
+TEST(AilExecutorTest, GotocWithSystemVariableTargetContinuesWhenUnresolved) {
+  const auto lowered = gcode::parseAndLowerAil("GOTOC $DEST\n");
+  gcode::AilExecutor exec(lowered.instructions);
+
+  const auto resolver = [](const gcode::Condition &,
+                           const gcode::SourceInfo &) {
+    gcode::ConditionResolution r;
+    r.kind = gcode::ConditionResolutionKind::False;
+    return r;
+  };
+
+  ASSERT_TRUE(exec.step(0, resolver));
+  ASSERT_TRUE(exec.step(0, resolver));
+  EXPECT_EQ(exec.state().status, gcode::ExecutorStatus::Completed);
+  EXPECT_TRUE(exec.diagnostics().empty());
+}
+
 TEST(AilExecutorTest, BranchCanBlockAndResumeOnEvent) {
   const auto lowered = gcode::parseAndLowerAil(
       "IF R1 == 1 GOTOF TARGET\nGOTO END\nTARGET:\nEND:\n");
@@ -146,6 +182,42 @@ TEST(AilExecutorTest, BranchCanBlockAndResumeOnEvent) {
   exec.notifyEvent("sensor_ready");
   ASSERT_TRUE(exec.step(10, resolver));
   EXPECT_EQ(exec.state().status, gcode::ExecutorStatus::Ready);
+}
+
+TEST(AilExecutorTest, BranchWithSystemVariableTargetFaultsWhenTaken) {
+  const auto lowered = gcode::parseAndLowerAil("IF R1 == 1 GOTOF $DEST\n");
+  gcode::AilExecutor exec(lowered.instructions);
+
+  const auto resolver = [](const gcode::Condition &,
+                           const gcode::SourceInfo &) {
+    gcode::ConditionResolution r;
+    r.kind = gcode::ConditionResolutionKind::True;
+    return r;
+  };
+
+  ASSERT_TRUE(exec.step(0, resolver));
+  EXPECT_EQ(exec.state().status, gcode::ExecutorStatus::Fault);
+  ASSERT_FALSE(exec.diagnostics().empty());
+  EXPECT_NE(exec.diagnostics().back().message.find("unresolved branch target"),
+            std::string::npos);
+  EXPECT_NE(exec.diagnostics().back().message.find("$DEST"), std::string::npos);
+}
+
+TEST(AilExecutorTest, BranchWithSystemVariableGotocTargetContinuesWhenTaken) {
+  const auto lowered = gcode::parseAndLowerAil("IF R1 == 1 GOTOC $DEST\n");
+  gcode::AilExecutor exec(lowered.instructions);
+
+  const auto resolver = [](const gcode::Condition &,
+                           const gcode::SourceInfo &) {
+    gcode::ConditionResolution r;
+    r.kind = gcode::ConditionResolutionKind::True;
+    return r;
+  };
+
+  ASSERT_TRUE(exec.step(0, resolver));
+  ASSERT_TRUE(exec.step(0, resolver));
+  EXPECT_EQ(exec.state().status, gcode::ExecutorStatus::Completed);
+  EXPECT_TRUE(exec.diagnostics().empty());
 }
 
 TEST(AilExecutorTest, StructuredIfElseExecutesSingleBranchAtRuntime) {

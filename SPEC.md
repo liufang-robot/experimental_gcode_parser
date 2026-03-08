@@ -608,6 +608,12 @@ N130 G01 X20 Y20
   - `GOTO`: forward first, then backward
   - `GOTOC`: same search behavior as `GOTO`, but unresolved target does not
     fault and execution continues
+- Simple system-variable control-flow targets are not resolved by the v0
+  executor:
+  - `GOTO/GOTOF/GOTOB $DEST` faults as unresolved target
+  - `GOTOC $DEST` continues without fault when unresolved
+  - taken `branch_if` paths using `$...` targets follow the same unresolved
+    target policy as the corresponding goto opcode
 - For `N`/numeric targets with multiple candidates in the chosen search
   direction, runtime selects nearest match and emits warning diagnostic.
 - M-function runtime boundary (v0):
