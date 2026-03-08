@@ -1,5 +1,22 @@
 #CHANGELOG_AGENT
 
+## 2026-03-08 (T-048 slice 3: lock AIL control-flow system-variable baseline)
+- Added AIL coverage showing simple system variables survive lowering in
+  `branch_if` conditions and indirect `goto` targets.
+- Clarified SPEC control-flow output wording so AIL JSON preserves
+  `system_variable` kind for these simple `$...` references.
+
+SPEC sections / tests:
+- SPEC: Section 6.1
+- Tests: `test/ail_tests.cpp`
+
+Known limitations:
+- Selector-style system variables are still unsupported syntax in v0, so AIL
+  coverage only applies to simple `$...` token forms.
+
+How to reproduce locally (commands):
+- `./dev/check.sh`
+
 ## 2026-03-08 (T-048 slice 2: lock selector-form diagnostic baseline)
 - Added parser coverage locking current syntax-diagnostic locations for
   unsupported selector-style system variables in both control-flow conditions
