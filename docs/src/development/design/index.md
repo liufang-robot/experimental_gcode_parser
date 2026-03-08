@@ -13,6 +13,7 @@ Pages in this section are split by topic for easier review:
 - exact-stop/continuous-path modes (Groups 10/11/12)
 - Siemens feedrate model (Modal Group 15)
 - Siemens modal Group 7 tool-radius compensation
+- Siemens working-plane modal semantics (Group 6)
 - Siemens M-code model and execution boundaries
 - rapid traverse model (`G0`, `RTLION`, `RTLIOF`)
 - incremental parse session API
