@@ -1,5 +1,24 @@
 #CHANGELOG_AGENT
 
+## 2026-03-08 (T-050 slice 44: ISO M98 packet-stage parity)
+- Added packet-stage coverage showing ISO-enabled `M98 P...` emits no
+  standalone packet and no warning, matching direct subprogram-call behavior.
+- Kept the slice packet-focused by validating that the following motion line is
+  still the only emitted packet.
+- No behavior change in this slice; this locks packet-stage parity between ISO
+  `M98` calls and direct subprogram-call syntax.
+
+SPEC sections / tests:
+- SPEC: Section 6.1
+- Tests: `test/packet_tests.cpp`
+
+Known limitations:
+- Inline subprogram call arguments remain compatibility-only syntax and are not
+  modeled in baseline AIL.
+
+How to reproduce locally (commands):
+- `./dev/check.sh`
+
 ## 2026-03-07 (T-050 slice 43: ISO M98 unresolved-target policy parity)
 - Added executor coverage showing ISO-enabled `M98 P...` faults on unresolved
   targets under the default runtime policy.
