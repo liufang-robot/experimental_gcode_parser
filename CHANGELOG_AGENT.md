@@ -1,5 +1,23 @@
 #CHANGELOG_AGENT
 
+## 2026-03-08 (T-048 slice 4: lock runtime unresolved system-variable targets)
+- Added executor coverage locking current runtime behavior for control-flow
+  targets that use simple system-variable tokens such as `$DEST`.
+- Clarified SPEC runtime wording that v0 executor does not resolve `$...`
+  control-flow targets and therefore applies the normal unresolved-target
+  policy (`fault` for `GOTO/GOTOF/GOTOB`, continue for `GOTOC`).
+
+SPEC sections / tests:
+- SPEC: Section 6.1
+- Tests: `test/ail_executor_tests.cpp`
+
+Known limitations:
+- The v0 executor does not evaluate system-variable control-flow targets at
+  runtime; selector-style system variables remain unsupported syntax.
+
+How to reproduce locally (commands):
+- `./dev/check.sh`
+
 ## 2026-03-08 (T-048 slice 3: lock AIL control-flow system-variable baseline)
 - Added AIL coverage showing simple system variables survive lowering in
   `branch_if` conditions and indirect `goto` targets.
