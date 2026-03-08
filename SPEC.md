@@ -447,6 +447,10 @@ Planned Siemens compatibility extension:
   become ambiguous and runtime uses directional nearest-match policy.
 - Parser behavior in v0 is syntax-only: labels are not resolved and control
   flow is not executed.
+- AIL JSON preserves simple system-variable control-flow references:
+  - `branch_if.condition.lhs.kind == "system_variable"` for conditions such as
+    `IF $P_ACT_X == 1 GOTOF END`
+  - `goto.target_kind == "system_variable"` for targets such as `GOTOF $DEST`
 
 Example:
 ```

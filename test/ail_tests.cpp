@@ -1063,6 +1063,34 @@ TEST(AilTest, LowersControlFlowInstructions) {
   EXPECT_EQ(json["instructions"][2]["kind"], "goto");
 }
 
+TEST(AilTest, PreservesSimpleSystemVariableInBranchIfConditionJson) {
+  const auto result =
+      gcode::parseAndLowerAil("IF $P_ACT_X == 1 GOTOF END\nEND:\n");
+  ASSERT_TRUE(result.diagnostics.empty());
+  ASSERT_EQ(result.instructions.size(), 2u);
+  ASSERT_TRUE(std::holds_alternative<gcode::AilBranchIfInstruction>(
+      result.instructions[0]));
+
+  const auto json = nlohmann::json::parse(gcode::ailToJsonString(result));
+  ASSERT_EQ(json["instructions"][0]["kind"], "branch_if");
+  EXPECT_EQ(json["instructions"][0]["condition"]["lhs"]["kind"],
+            "system_variable");
+  EXPECT_EQ(json["instructions"][0]["condition"]["lhs"]["name"], "$P_ACT_X");
+}
+
+TEST(AilTest, PreservesSystemVariableGotoTargetKindInJson) {
+  const auto result = gcode::parseAndLowerAil("GOTOF $DEST\n");
+  ASSERT_TRUE(result.diagnostics.empty());
+  ASSERT_EQ(result.instructions.size(), 1u);
+  ASSERT_TRUE(std::holds_alternative<gcode::AilGotoInstruction>(
+      result.instructions[0]));
+
+  const auto json = nlohmann::json::parse(gcode::ailToJsonString(result));
+  ASSERT_EQ(json["instructions"][0]["kind"], "goto");
+  EXPECT_EQ(json["instructions"][0]["target_kind"], "system_variable");
+  EXPECT_EQ(json["instructions"][0]["target"], "$DEST");
+}
+
 TEST(AilTest, BranchIfJsonIncludesLogicalAndConditionMetadata) {
   const auto result = gcode::parseAndLowerAil(
       "IF (R1 == 1) AND (R2 > 10) GOTOF TARGET\nTARGET:\n");
