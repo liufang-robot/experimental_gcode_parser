@@ -1,5 +1,21 @@
 #CHANGELOG_AGENT
 
+## 2026-03-08 (T-041: feed model architecture note)
+- Added a dedicated architecture note for Siemens Group 15 feed semantics, including `F`, `FGROUP`, `FGREF`, and `FL`.
+- Documented migration from the current scalar-feed baseline to explicit feed-state and policy-driven runtime resolution.
+- No behavior change in this slice; this is planning/documentation groundwork for future implementation PRs.
+
+SPEC sections / tests:
+- SPEC: future Group 15/feed behavior sections (planning-only task)
+- Tests: planning-only task; follow-up implementation tests split into later PRs
+
+Known limitations:
+- Current runtime still models feed as a simple scalar on motion instructions and does not yet implement full Group 15 semantics.
+
+How to reproduce locally (commands):
+- `mdbook build docs`
+- `./dev/check.sh`
+
 ## 2026-03-08 (T-050 slice 44: ISO M98 packet-stage parity)
 - Added packet-stage coverage showing ISO-enabled `M98 P...` emits no
   standalone packet and no warning, matching direct subprogram-call behavior.

@@ -11,6 +11,7 @@ Pages in this section are split by topic for easier review:
 - pipeline/modules
 - modal/context strategy
 - exact-stop/continuous-path modes (Groups 10/11/12)
+- Siemens feedrate model (Modal Group 15)
 - Siemens M-code model and execution boundaries
 - rapid traverse model (`G0`, `RTLION`, `RTLIOF`)
 - incremental parse session API
