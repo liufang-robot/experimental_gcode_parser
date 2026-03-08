@@ -81,6 +81,185 @@ std::optional<int> parseUnsignedIntStrict(std::string_view text) {
   }
 }
 
+bool isBlankLine(std::string_view line) {
+  for (char ch : line) {
+    if (ch != ' ' && ch != '\t' && ch != '\r') {
+      return false;
+    }
+  }
+  return true;
+}
+
+std::optional<ProgramName> parseLeadingProgramName(std::string_view input,
+                                                   size_t *consumed_chars) {
+  if (!consumed_chars) {
+    return std::nullopt;
+  }
+  *consumed_chars = 0;
+
+  size_t offset = 0;
+  int line = 1;
+  while (offset < input.size()) {
+    const size_t line_end = input.find('\n', offset);
+    const size_t span_end =
+        line_end == std::string_view::npos ? input.size() : line_end;
+    const std::string_view text = input.substr(offset, span_end - offset);
+    if (isBlankLine(text)) {
+      if (line_end == std::string_view::npos) {
+        return std::nullopt;
+      }
+      offset = line_end + 1;
+      ++line;
+      continue;
+    }
+    if (!text.empty() && text.front() == '%' && text.size() > 1) {
+      ProgramName name;
+      name.raw_text = std::string(text);
+      name.name = std::string(text.substr(1));
+      name.external_percent = true;
+      name.location = {line, 1};
+      *consumed_chars =
+          line_end == std::string_view::npos ? input.size() : line_end + 1;
+      return name;
+    }
+    return std::nullopt;
+  }
+
+  return std::nullopt;
+}
+
+void shiftLocationLines(Location *location, int delta) {
+  if (!location || delta == 0 || location->line == 0) {
+    return;
+  }
+  location->line += delta;
+}
+
+void shiftExprLines(const std::shared_ptr<ExprNode> &expr, int delta) {
+  if (!expr || delta == 0) {
+    return;
+  }
+  std::visit(
+      [&](auto &node) {
+        using T = std::decay_t<decltype(node)>;
+        shiftLocationLines(&node.location, delta);
+        if constexpr (std::is_same_v<T, ExprUnary>) {
+          shiftExprLines(node.operand, delta);
+        } else if constexpr (std::is_same_v<T, ExprBinary>) {
+          shiftExprLines(node.lhs, delta);
+          shiftExprLines(node.rhs, delta);
+        }
+      },
+      expr->node);
+}
+
+void shiftConditionLines(Condition *condition, int delta) {
+  if (!condition || delta == 0) {
+    return;
+  }
+  shiftLocationLines(&condition->location, delta);
+  shiftExprLines(condition->lhs, delta);
+  shiftExprLines(condition->rhs, delta);
+}
+
+void shiftProgramLines(Program *program, int delta) {
+  if (!program || delta == 0) {
+    return;
+  }
+  for (auto &line : program->lines) {
+    line.line_index += delta;
+    if (line.block_delete_location.has_value()) {
+      shiftLocationLines(&*line.block_delete_location, delta);
+    }
+    if (line.block_delete_level_location.has_value()) {
+      shiftLocationLines(&*line.block_delete_level_location, delta);
+    }
+    if (line.line_number.has_value()) {
+      shiftLocationLines(&line.line_number->location, delta);
+    }
+    for (auto &item : line.items) {
+      if (std::holds_alternative<Word>(item)) {
+        shiftLocationLines(&std::get<Word>(item).location, delta);
+      } else {
+        shiftLocationLines(&std::get<Comment>(item).location, delta);
+      }
+    }
+    if (line.assignment.has_value()) {
+      shiftLocationLines(&line.assignment->location, delta);
+      shiftExprLines(line.assignment->rhs, delta);
+    }
+    if (line.label_definition.has_value()) {
+      shiftLocationLines(&line.label_definition->location, delta);
+    }
+    if (line.goto_statement.has_value()) {
+      shiftLocationLines(&line.goto_statement->keyword_location, delta);
+      shiftLocationLines(&line.goto_statement->target_location, delta);
+    }
+    if (line.if_goto_statement.has_value()) {
+      shiftLocationLines(&line.if_goto_statement->keyword_location, delta);
+      shiftConditionLines(&line.if_goto_statement->condition, delta);
+      shiftLocationLines(&line.if_goto_statement->then_branch.keyword_location,
+                         delta);
+      shiftLocationLines(&line.if_goto_statement->then_branch.target_location,
+                         delta);
+      if (line.if_goto_statement->else_branch.has_value()) {
+        shiftLocationLines(
+            &line.if_goto_statement->else_branch->keyword_location, delta);
+        shiftLocationLines(
+            &line.if_goto_statement->else_branch->target_location, delta);
+      }
+    }
+    if (line.if_block_start_statement.has_value()) {
+      shiftLocationLines(&line.if_block_start_statement->keyword_location,
+                         delta);
+      shiftConditionLines(&line.if_block_start_statement->condition, delta);
+    }
+    if (line.else_statement.has_value()) {
+      shiftLocationLines(&line.else_statement->keyword_location, delta);
+    }
+    if (line.endif_statement.has_value()) {
+      shiftLocationLines(&line.endif_statement->keyword_location, delta);
+    }
+    if (line.while_statement.has_value()) {
+      shiftLocationLines(&line.while_statement->keyword_location, delta);
+      shiftConditionLines(&line.while_statement->condition, delta);
+    }
+    if (line.endwhile_statement.has_value()) {
+      shiftLocationLines(&line.endwhile_statement->keyword_location, delta);
+    }
+    if (line.for_statement.has_value()) {
+      shiftLocationLines(&line.for_statement->keyword_location, delta);
+      shiftExprLines(line.for_statement->start, delta);
+      shiftExprLines(line.for_statement->end, delta);
+    }
+    if (line.endfor_statement.has_value()) {
+      shiftLocationLines(&line.endfor_statement->keyword_location, delta);
+    }
+    if (line.repeat_statement.has_value()) {
+      shiftLocationLines(&line.repeat_statement->keyword_location, delta);
+    }
+    if (line.until_statement.has_value()) {
+      shiftLocationLines(&line.until_statement->keyword_location, delta);
+      shiftConditionLines(&line.until_statement->condition, delta);
+    }
+    if (line.loop_statement.has_value()) {
+      shiftLocationLines(&line.loop_statement->keyword_location, delta);
+    }
+    if (line.endloop_statement.has_value()) {
+      shiftLocationLines(&line.endloop_statement->keyword_location, delta);
+    }
+  }
+}
+
+void shiftDiagnosticLines(std::vector<Diagnostic> *diagnostics, int delta) {
+  if (!diagnostics || delta == 0) {
+    return;
+  }
+  for (auto &diagnostic : *diagnostics) {
+    shiftLocationLines(&diagnostic.location, delta);
+  }
+}
+
 class DiagnosticErrorListener : public antlr4::BaseErrorListener {
 public:
   explicit DiagnosticErrorListener(std::vector<Diagnostic> *out) : out_(out) {}
@@ -585,7 +764,17 @@ void addBlockLengthDiagnostics(std::string_view input,
 
 ParseResult parse(std::string_view input, const ParseOptions &options) {
   ParseResult result;
-  antlr4::ANTLRInputStream stream{std::string(input)};
+  size_t consumed_chars = 0;
+  if (const auto program_name = parseLeadingProgramName(input, &consumed_chars);
+      program_name.has_value()) {
+    result.program.program_name = *program_name;
+  }
+  const auto preserved_program_name = result.program.program_name;
+  const int skipped_lines = preserved_program_name.has_value()
+                                ? preserved_program_name->location.line
+                                : 0;
+  const std::string_view parse_input = input.substr(consumed_chars);
+  antlr4::ANTLRInputStream stream{std::string(parse_input)};
   GCodeLexer lexer(&stream);
   antlr4::CommonTokenStream tokens(&lexer);
   GCodeParser parser(&tokens);
@@ -603,9 +792,12 @@ ParseResult parse(std::string_view input, const ParseOptions &options) {
     auto program_any = builder.visitProgram(tree);
     if (auto *program_ptr = std::any_cast<Program>(&program_any)) {
       result.program = *program_ptr;
+      result.program.program_name = preserved_program_name;
+      shiftProgramLines(&result.program, skipped_lines);
     }
   }
 
+  shiftDiagnosticLines(&result.diagnostics, skipped_lines);
   addBlockLengthDiagnostics(input, &result.diagnostics);
   addSemanticDiagnostics(result, options.enable_double_slash_comments,
                          options.tool_management, options.enable_iso_m98_calls);

@@ -1,5 +1,24 @@
 #CHANGELOG_AGENT
 
+## 2026-03-08 (T-049 slice 4: leading percent program-name metadata)
+- Added parser support for a leading `%...` external transfer-name line as
+  program metadata.
+- Preserved raw `%` text, normalized name text, and source location in parse
+  output without treating the metadata line as a normal executable block.
+- Updated the SPEC baseline note and parser tests for `%MPF...` / `%SPF...`
+  handling.
+
+SPEC sections / tests:
+- SPEC: Section 3.8
+- Tests: `test/parser_tests.cpp`
+
+Known limitations:
+- Internal Siemens program-name forms and stricter name-shape diagnostics are
+  still planned follow-up work.
+
+How to reproduce locally (commands):
+- `./dev/check.sh`
+
 ## 2026-03-08 (Backlog hygiene: mark merged architecture queue tasks done)
 - Removed the already-merged `T-037`..`T-047` architecture items from the ready
   queue in `BACKLOG.md`.

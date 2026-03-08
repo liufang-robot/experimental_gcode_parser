@@ -255,6 +255,15 @@ nlohmann::json lineToJson(const Line &line) {
 std::string format(const ParseResult &result) {
   std::ostringstream out;
   out << "program\n";
+  if (result.program.program_name.has_value()) {
+    out << "program_name raw=" << result.program.program_name->raw_text
+        << " name=" << result.program.program_name->name << " at ";
+    writeLocation(out, result.program.program_name->location);
+    if (result.program.program_name->external_percent) {
+      out << " external_percent";
+    }
+    out << "\n";
+  }
   for (const auto &line : result.program.lines) {
     out << "line " << line.line_index << "\n";
     out << "  block_delete: " << (line.block_delete ? "true" : "false") << "\n";
@@ -393,6 +402,16 @@ std::string formatJson(const ParseResult &result, bool pretty) {
   nlohmann::json j;
   j["schema_version"] = 1;
   j["program"] = nlohmann::json::object();
+  if (result.program.program_name.has_value()) {
+    nlohmann::json name;
+    name["raw"] = result.program.program_name->raw_text;
+    name["name"] = result.program.program_name->name;
+    name["external_percent"] = result.program.program_name->external_percent;
+    name["location"] = locationToJson(result.program.program_name->location);
+    j["program"]["program_name"] = name;
+  } else {
+    j["program"]["program_name"] = nullptr;
+  }
   j["program"]["lines"] = nlohmann::json::array();
   for (const auto &line : result.program.lines) {
     j["program"]["lines"].push_back(lineToJson(line));

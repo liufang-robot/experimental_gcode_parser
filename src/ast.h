@@ -34,6 +34,13 @@ struct Comment {
   Location location;
 };
 
+struct ProgramName {
+  std::string raw_text;
+  std::string name;
+  bool external_percent = false;
+  Location location;
+};
+
 using LineItem = std::variant<Word, Comment>;
 
 struct ExprNode;
@@ -184,6 +191,7 @@ struct Line {
 };
 
 struct Program {
+  std::optional<ProgramName> program_name;
   std::vector<Line> lines;
 };
 
