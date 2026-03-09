@@ -7,9 +7,9 @@
 
 #include "gtest/gtest.h"
 
-#include "ail.h"
-#include "subprogram_policy.h"
-#include "tool_policy.h"
+#include "gcode/ail.h"
+#include "gcode/subprogram_policy.h"
+#include "gcode/tool_policy.h"
 
 namespace {
 

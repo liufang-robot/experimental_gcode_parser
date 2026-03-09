@@ -4,8 +4,8 @@
 #include <string>
 #include <vector>
 
-#include "ail.h"
-#include "runtime_status.h"
+#include "gcode/ail.h"
+#include "gcode/runtime_status.h"
 
 namespace gcode {
 

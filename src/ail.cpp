@@ -1,4 +1,4 @@
-#include "ail.h"
+#include "gcode/ail.h"
 
 #include <algorithm>
 #include <cctype>
@@ -9,9 +9,9 @@
 #include <type_traits>
 #include <unordered_map>
 
-#include "gcode_parser.h"
-#include "subprogram_policy.h"
-#include "tool_policy.h"
+#include "gcode/gcode_parser.h"
+#include "gcode/subprogram_policy.h"
+#include "gcode/tool_policy.h"
 
 namespace gcode {
 namespace {

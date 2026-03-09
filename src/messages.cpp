@@ -1,11 +1,11 @@
-#include "messages.h"
+#include "gcode/messages.h"
 
 #include <algorithm>
 #include <fstream>
 #include <sstream>
 #include <unordered_map>
 
-#include "gcode_parser.h"
+#include "gcode/gcode_parser.h"
 #include "lowering_family.h"
 
 namespace gcode {

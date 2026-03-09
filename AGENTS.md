@@ -24,6 +24,7 @@ If `./dev/check.sh` is green, CI should be green.
 - Use `clang-format` to format code.
 
 ## Architecture
+- public library headers in `include/gcode/`
 - implementation code in `src/`
 - test code in `test/`
 - test data sets in `testdata/`
@@ -46,3 +47,12 @@ If `./dev/check.sh` is green, CI should be green.
   pick from `BACKLOG.md`, align priority with `ROADMAP.md`, and follow
   `OODA.md` (Observe/Orient/Decide/Act, merge policy, and definition of done).
 - Prefer small PRs / small diffs.
+- Public header rule:
+  - only stable library entry points belong in `include/gcode/`
+  - do not mirror `src/` into `include/gcode/`
+  - if a header is internal/supporting-only, keep it in `src/` even if public
+    headers include it transitively
+  - if a type appears in a public signature or public struct field, its header
+    is public too and must live in `include/gcode/`
+  - when adding a new public header, update the public-header compile test
+    under `test/public_headers_tests.cpp`

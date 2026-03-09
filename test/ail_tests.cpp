@@ -5,8 +5,8 @@
 
 #include "gtest/gtest.h"
 
-#include "ail.h"
-#include "ail_json.h"
+#include "gcode/ail.h"
+#include "gcode/ail_json.h"
 
 namespace {
 

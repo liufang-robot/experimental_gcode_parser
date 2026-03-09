@@ -6,7 +6,7 @@
 
 #include "gtest/gtest.h"
 
-#include "messages.h"
+#include "gcode/messages.h"
 
 namespace {
 

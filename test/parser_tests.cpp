@@ -8,7 +8,7 @@
 #include "gtest/gtest.h"
 
 #include "ast_printer.h"
-#include "gcode_parser.h"
+#include "gcode/gcode_parser.h"
 
 namespace {
 

@@ -9,8 +9,8 @@
 
 #include "gtest/gtest.h"
 
-#include "gcode_parser.h"
-#include "messages.h"
+#include "gcode/gcode_parser.h"
+#include "gcode/messages.h"
 
 namespace {
 

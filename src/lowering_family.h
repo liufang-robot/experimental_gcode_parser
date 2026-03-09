@@ -3,7 +3,7 @@
 #include <memory>
 #include <vector>
 
-#include "messages.h"
+#include "gcode/messages.h"
 
 namespace gcode {
 

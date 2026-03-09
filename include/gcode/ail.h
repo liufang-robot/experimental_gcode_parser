@@ -10,12 +10,12 @@
 #include <variant>
 #include <vector>
 
-#include "condition_runtime.h"
-#include "machine_profile.h"
-#include "messages.h"
-#include "runtime_status.h"
-#include "subprogram_policy.h"
-#include "tool_selection.h"
+#include "gcode/condition_runtime.h"
+#include "gcode/machine_profile.h"
+#include "gcode/messages.h"
+#include "gcode/runtime_status.h"
+#include "gcode/subprogram_policy.h"
+#include "gcode/tool_selection.h"
 
 namespace gcode {
 class ToolPolicy;

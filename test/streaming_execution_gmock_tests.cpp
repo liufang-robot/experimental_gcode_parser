@@ -4,8 +4,8 @@
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 
-#include "execution_interfaces.h"
-#include "streaming_execution_engine.h"
+#include "gcode/execution_interfaces.h"
+#include "gcode/streaming_execution_engine.h"
 
 namespace {
 
