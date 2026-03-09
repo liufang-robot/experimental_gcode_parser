@@ -708,9 +708,12 @@ N130 G01 X20 Y20
     - `ExactOnly` (default): resolve only exact label match
     - `ExactThenBareName`: try exact target first, then bare-name fallback
       (substring after last `/` or `\`)
-  - executor uses pluggable `SubprogramPolicy`; default policy implements the
-    two search modes above, alias-map resolution (`requested -> label`), and
-    unresolved-target policy (`error|warning|ignore`)
+  - executor subprogram resolution is configured through
+    `AilExecutorOptions`:
+    - optional `subprogram_target_resolver` callback override
+    - built-in exact / bare-name fallback search
+    - alias-map resolution (`requested -> label`)
+    - unresolved-target policy (`error|warning|ignore`)
   - when `repeat_count > 1`, executor loops call/return on same target until
     repeat count is exhausted
   - `repeat_count <= 0` is ignored with warning
@@ -732,9 +735,10 @@ N130 G01 X20 Y20
     - `tool_change` consumes pending selection when present
     - `M6` without pending selection follows configurable policy
       (`error|warning|ignore`)
-  - executor integrates pluggable tool policy (`ToolPolicy`) with default policy
-    implementation (`DefaultToolPolicy`) for unresolved/ambiguous/substitution
-    outcomes
+  - executor tool resolution is configured through `AilExecutorOptions`:
+    - optional `tool_selection_resolver` callback override
+    - built-in substitution/fallback maps
+    - unresolved / ambiguous policies (`error|warning|ignore`)
 - Unresolved non-`GOTOC` target is runtime fault.
 
 ## 7. Testing Expectations

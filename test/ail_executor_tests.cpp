@@ -1,6 +1,5 @@
 #include <algorithm>
 #include <functional>
-#include <memory>
 #include <string>
 #include <unordered_map>
 #include <vector>
@@ -10,60 +9,6 @@
 #include "gcode/ail.h"
 
 namespace {
-
-class StubToolPolicy final : public gcode::ToolPolicy {
-public:
-  using Resolver = std::function<gcode::ToolSelectionResolution(
-      const gcode::ToolSelectionState &)>;
-
-  StubToolPolicy(Resolver resolver, gcode::ErrorPolicy unresolved_policy,
-                 gcode::ErrorPolicy ambiguous_policy)
-      : resolver_(std::move(resolver)), unresolved_policy_(unresolved_policy),
-        ambiguous_policy_(ambiguous_policy) {}
-
-  gcode::ToolSelectionResolution
-  resolveSelection(const gcode::ToolSelectionState &selection) const override {
-    return resolver_(selection);
-  }
-
-  gcode::ErrorPolicy unresolvedPolicy() const override {
-    return unresolved_policy_;
-  }
-
-  gcode::ErrorPolicy ambiguousPolicy() const override {
-    return ambiguous_policy_;
-  }
-
-private:
-  Resolver resolver_;
-  gcode::ErrorPolicy unresolved_policy_ = gcode::ErrorPolicy::Error;
-  gcode::ErrorPolicy ambiguous_policy_ = gcode::ErrorPolicy::Error;
-};
-
-class StubSubprogramPolicy final : public gcode::SubprogramPolicy {
-public:
-  using Resolver = std::function<gcode::SubprogramResolution(
-      const std::string &,
-      const std::unordered_map<std::string, std::vector<size_t>> &)>;
-
-  StubSubprogramPolicy(Resolver resolver, gcode::ErrorPolicy unresolved_policy)
-      : resolver_(std::move(resolver)), unresolved_policy_(unresolved_policy) {}
-
-  gcode::SubprogramResolution
-  resolveTarget(const std::string &requested_target,
-                const std::unordered_map<std::string, std::vector<size_t>>
-                    &label_positions) const override {
-    return resolver_(requested_target, label_positions);
-  }
-
-  gcode::ErrorPolicy unresolvedPolicy() const override {
-    return unresolved_policy_;
-  }
-
-private:
-  Resolver resolver_;
-  gcode::ErrorPolicy unresolved_policy_ = gcode::ErrorPolicy::Error;
-};
 
 class StubConditionResolver final : public gcode::IConditionResolver {
 public:
@@ -474,9 +419,9 @@ TEST(AilExecutorTest, SubprogramCallFaultsWhenTargetMissing) {
 
 TEST(AilExecutorTest, SubprogramCallWarningPolicyContinuesOnMissingTarget) {
   const auto lowered = gcode::parseAndLowerAil("L1000\nG1 X1\n");
-  gcode::AilExecutor exec(lowered.instructions, gcode::ErrorPolicy::Error,
-                          gcode::ErrorPolicy::Error, nullptr,
-                          gcode::ErrorPolicy::Warning);
+  gcode::AilExecutorOptions options;
+  options.unresolved_subprogram_policy = gcode::ErrorPolicy::Warning;
+  gcode::AilExecutor exec(lowered.instructions, options);
 
   const auto resolver = [](const gcode::Condition &,
                            const gcode::SourceInfo &) {
@@ -543,10 +488,10 @@ TEST(AilExecutorTest, SubprogramSearchPolicyCanFallbackToBareName) {
   instructions.push_back(end_label);
   instructions.push_back(move);
 
-  gcode::AilExecutor exec(instructions, gcode::ErrorPolicy::Error,
-                          gcode::ErrorPolicy::Error, nullptr,
-                          gcode::ErrorPolicy::Error,
-                          gcode::SubprogramSearchPolicy::ExactThenBareName);
+  gcode::AilExecutorOptions options;
+  options.subprogram_search_policy =
+      gcode::SubprogramSearchPolicy::ExactThenBareName;
+  gcode::AilExecutor exec(instructions, options);
 
   const auto resolver = [](const gcode::Condition &,
                            const gcode::SourceInfo &) {
@@ -570,10 +515,10 @@ TEST(AilExecutorTest, SubprogramSearchPolicyCanFallbackToBareName) {
 TEST(AilExecutorTest, QuotedSubprogramCallUsesBareNameFallbackPolicy) {
   const auto lowered = gcode::parseAndLowerAil(
       "GOTO START\nSPF1000:\nRET\nSTART:\n\"DIR/SPF1000\"\nG1 X1\n");
-  gcode::AilExecutor exec(lowered.instructions, gcode::ErrorPolicy::Error,
-                          gcode::ErrorPolicy::Error, nullptr,
-                          gcode::ErrorPolicy::Error,
-                          gcode::SubprogramSearchPolicy::ExactThenBareName);
+  gcode::AilExecutorOptions options;
+  options.subprogram_search_policy =
+      gcode::SubprogramSearchPolicy::ExactThenBareName;
+  gcode::AilExecutor exec(lowered.instructions, options);
 
   const auto resolver = [](const gcode::Condition &,
                            const gcode::SourceInfo &) {
@@ -629,26 +574,22 @@ TEST(AilExecutorTest, SubprogramPolicyCanOverrideResolution) {
   instructions.push_back(call);
   instructions.push_back(move);
 
-  const auto policy = std::make_shared<StubSubprogramPolicy>(
-      [](const std::string &requested_target,
-         const std::unordered_map<std::string, std::vector<size_t>> &) {
-        gcode::SubprogramResolution r;
-        if (requested_target == "ALIAS") {
-          r.resolved = true;
-          r.resolved_target = "REAL";
-          r.message = "subprogram alias resolved by policy";
-          return r;
-        }
-        r.resolved = false;
-        r.resolved_target = requested_target;
-        return r;
-      },
-      gcode::ErrorPolicy::Error);
+  gcode::AilExecutorOptions options;
+  options.subprogram_target_resolver = [](const std::string &requested_target,
+                                          const gcode::LabelPositionMap &) {
+    gcode::SubprogramResolution r;
+    if (requested_target == "ALIAS") {
+      r.resolved = true;
+      r.resolved_target = "REAL";
+      r.message = "subprogram alias resolved by policy";
+      return r;
+    }
+    r.resolved = false;
+    r.resolved_target = requested_target;
+    return r;
+  };
 
-  gcode::AilExecutor exec(instructions, gcode::ErrorPolicy::Error,
-                          gcode::ErrorPolicy::Error, nullptr,
-                          gcode::ErrorPolicy::Error,
-                          gcode::SubprogramSearchPolicy::ExactOnly, policy);
+  gcode::AilExecutor exec(instructions, options);
 
   const auto resolver = [](const gcode::Condition &,
                            const gcode::SourceInfo &) {
@@ -671,16 +612,12 @@ TEST(AilExecutorTest, SubprogramPolicyCanOverrideResolution) {
 }
 
 TEST(AilExecutorTest, DefaultSubprogramPolicyAliasMapResolvesTarget) {
-  gcode::SubprogramPolicyOptions options;
-  options.alias_map["ALIAS"] = "REAL";
-  const auto policy = std::make_shared<gcode::DefaultSubprogramPolicy>(options);
+  gcode::AilExecutorOptions options;
+  options.subprogram_alias_map["ALIAS"] = "REAL";
 
   const auto lowered =
       gcode::parseAndLowerAil("GOTO START\nREAL:\nRET\nSTART:\nALIAS\n");
-  gcode::AilExecutor exec(lowered.instructions, gcode::ErrorPolicy::Error,
-                          gcode::ErrorPolicy::Error, nullptr,
-                          gcode::ErrorPolicy::Error,
-                          gcode::SubprogramSearchPolicy::ExactOnly, policy);
+  gcode::AilExecutor exec(lowered.instructions, options);
 
   const auto resolver = [](const gcode::Condition &,
                            const gcode::SourceInfo &) {
@@ -1090,9 +1027,9 @@ TEST(AilExecutorTest, IsoM98CallWarningPolicyContinuesWhenTargetMissing) {
   const auto lowered = gcode::parseAndLowerAil("M98 P1000\nG1 X1\n", options);
   ASSERT_TRUE(lowered.diagnostics.empty());
 
-  gcode::AilExecutor exec(lowered.instructions, gcode::ErrorPolicy::Error,
-                          gcode::ErrorPolicy::Error, nullptr,
-                          gcode::ErrorPolicy::Warning);
+  gcode::AilExecutorOptions exec_options;
+  exec_options.unresolved_subprogram_policy = gcode::ErrorPolicy::Warning;
+  gcode::AilExecutor exec(lowered.instructions, exec_options);
 
   const auto resolver = [](const gcode::Condition &,
                            const gcode::SourceInfo &) {
@@ -1113,7 +1050,9 @@ TEST(AilExecutorTest, IsoM98CallWarningPolicyContinuesWhenTargetMissing) {
 
 TEST(AilExecutorTest, UnknownMFunctionWarningPolicyContinuesExecution) {
   const auto lowered = gcode::parseAndLowerAil("M123456\nG1 X1\n");
-  gcode::AilExecutor exec(lowered.instructions, gcode::ErrorPolicy::Warning);
+  gcode::AilExecutorOptions exec_options;
+  exec_options.unknown_mcode_policy = gcode::ErrorPolicy::Warning;
+  gcode::AilExecutor exec(lowered.instructions, exec_options);
 
   const auto resolver = [](const gcode::Condition &,
                            const gcode::SourceInfo &) {
@@ -1134,7 +1073,9 @@ TEST(AilExecutorTest, UnknownMFunctionWarningPolicyContinuesExecution) {
 
 TEST(AilExecutorTest, UnknownMFunctionIgnorePolicySuppressesDiagnostic) {
   const auto lowered = gcode::parseAndLowerAil("M123456\n");
-  gcode::AilExecutor exec(lowered.instructions, gcode::ErrorPolicy::Ignore);
+  gcode::AilExecutorOptions exec_options;
+  exec_options.unknown_mcode_policy = gcode::ErrorPolicy::Ignore;
+  gcode::AilExecutor exec(lowered.instructions, exec_options);
 
   const auto resolver = [](const gcode::Condition &,
                            const gcode::SourceInfo &) {
@@ -1334,8 +1275,9 @@ TEST(AilExecutorTest, M6WithoutPendingSelectionWarningPolicyContinues) {
   gcode::LowerOptions options;
   options.tool_change_mode = gcode::ToolChangeMode::DeferredM6;
   const auto lowered = gcode::parseAndLowerAil("M6\nG1 X1\n", options);
-  gcode::AilExecutor exec(lowered.instructions, gcode::ErrorPolicy::Error,
-                          gcode::ErrorPolicy::Warning);
+  gcode::AilExecutorOptions exec_options;
+  exec_options.m6_without_pending_policy = gcode::ErrorPolicy::Warning;
+  gcode::AilExecutor exec(lowered.instructions, exec_options);
 
   const auto resolver = [](const gcode::Condition &,
                            const gcode::SourceInfo &) {
@@ -1355,7 +1297,8 @@ TEST(AilExecutorTest, M6WithoutPendingSelectionWarningPolicyContinues) {
 }
 
 TEST(AilExecutorTest, ToolPolicySubstitutesPendingSelectionDuringM6) {
-  const auto policy = std::make_shared<StubToolPolicy>(
+  gcode::AilExecutorOptions exec_options;
+  exec_options.tool_selection_resolver =
       [](const gcode::ToolSelectionState &selection) {
         gcode::ToolSelectionResolution resolved;
         resolved.kind = gcode::ToolSelectionResolutionKind::Resolved;
@@ -1364,14 +1307,12 @@ TEST(AilExecutorTest, ToolPolicySubstitutesPendingSelectionDuringM6) {
         resolved.substituted = true;
         resolved.message = "substituted by test policy";
         return resolved;
-      },
-      gcode::ErrorPolicy::Error, gcode::ErrorPolicy::Error);
+      };
 
   gcode::LowerOptions options;
   options.tool_change_mode = gcode::ToolChangeMode::DeferredM6;
   const auto lowered = gcode::parseAndLowerAil("T12\nM6\n", options);
-  gcode::AilExecutor exec(lowered.instructions, gcode::ErrorPolicy::Error,
-                          gcode::ErrorPolicy::Error, policy);
+  gcode::AilExecutor exec(lowered.instructions, exec_options);
 
   const auto resolver = [](const gcode::Condition &,
                            const gcode::SourceInfo &) {
@@ -1390,22 +1331,20 @@ TEST(AilExecutorTest, ToolPolicySubstitutesPendingSelectionDuringM6) {
 }
 
 TEST(AilExecutorTest, ToolPolicyFallbackResolvesUnresolvedSelection) {
-  const auto policy = std::make_shared<StubToolPolicy>(
-      [](const gcode::ToolSelectionState &) {
-        gcode::ToolSelectionResolution resolved;
-        resolved.kind = gcode::ToolSelectionResolutionKind::Resolved;
-        resolved.selection = gcode::ToolSelectionState{std::nullopt, "7"};
-        resolved.substituted = true;
-        resolved.message = "fallback selected by test policy";
-        return resolved;
-      },
-      gcode::ErrorPolicy::Error, gcode::ErrorPolicy::Error);
+  gcode::AilExecutorOptions exec_options;
+  exec_options.tool_selection_resolver = [](const gcode::ToolSelectionState &) {
+    gcode::ToolSelectionResolution resolved;
+    resolved.kind = gcode::ToolSelectionResolutionKind::Resolved;
+    resolved.selection = gcode::ToolSelectionState{std::nullopt, "7"};
+    resolved.substituted = true;
+    resolved.message = "fallback selected by test policy";
+    return resolved;
+  };
 
   gcode::LowerOptions options;
   options.tool_change_mode = gcode::ToolChangeMode::DeferredM6;
   const auto lowered = gcode::parseAndLowerAil("T12\nM6\n", options);
-  gcode::AilExecutor exec(lowered.instructions, gcode::ErrorPolicy::Error,
-                          gcode::ErrorPolicy::Error, policy);
+  gcode::AilExecutor exec(lowered.instructions, exec_options);
 
   const auto resolver = [](const gcode::Condition &,
                            const gcode::SourceInfo &) {
@@ -1424,21 +1363,20 @@ TEST(AilExecutorTest, ToolPolicyFallbackResolvesUnresolvedSelection) {
 }
 
 TEST(AilExecutorTest, ToolPolicyAmbiguousSelectionFaultsByDefault) {
-  const auto policy = std::make_shared<StubToolPolicy>(
+  gcode::AilExecutorOptions exec_options;
+  exec_options.tool_selection_resolver =
       [](const gcode::ToolSelectionState &selection) {
         gcode::ToolSelectionResolution unresolved;
         unresolved.kind = gcode::ToolSelectionResolutionKind::Ambiguous;
         unresolved.selection = selection;
         unresolved.message = "multiple candidate tools matched";
         return unresolved;
-      },
-      gcode::ErrorPolicy::Error, gcode::ErrorPolicy::Error);
+      };
 
   gcode::LowerOptions options;
   options.tool_change_mode = gcode::ToolChangeMode::DirectT;
   const auto lowered = gcode::parseAndLowerAil("T12\n", options);
-  gcode::AilExecutor exec(lowered.instructions, gcode::ErrorPolicy::Error,
-                          gcode::ErrorPolicy::Error, policy);
+  gcode::AilExecutor exec(lowered.instructions, exec_options);
 
   const auto resolver = [](const gcode::Condition &,
                            const gcode::SourceInfo &) {

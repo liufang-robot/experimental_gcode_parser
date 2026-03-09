@@ -25,8 +25,7 @@ TEST(PublicHeadersTest, PublicFacadeHeadersCompileAndExposeKeyTypes) {
   static_assert(std::is_class_v<gcode::IRuntime>);
   static_assert(std::is_class_v<gcode::IConditionResolver>);
   static_assert(std::is_class_v<gcode::WaitToken>);
-  static_assert(std::is_class_v<gcode::SubprogramPolicy>);
-  static_assert(std::is_class_v<gcode::ToolPolicy>);
+  static_assert(std::is_class_v<gcode::AilExecutorOptions>);
   static_assert(std::is_class_v<gcode::ToolSelectionState>);
   static_assert(std::is_enum_v<gcode::ToolChangeMode>);
   static_assert(std::is_enum_v<gcode::ErrorPolicy>);

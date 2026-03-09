@@ -14,6 +14,112 @@
 namespace gcode {
 namespace {
 
+ToolSelectionResolution
+makeResolvedToolSelection(const ToolSelectionState &selection, bool substituted,
+                          const std::string &message) {
+  ToolSelectionResolution resolution;
+  resolution.kind = ToolSelectionResolutionKind::Resolved;
+  resolution.selection = selection;
+  resolution.substituted = substituted;
+  resolution.message = message;
+  return resolution;
+}
+
+ToolSelectionResolution
+makeUnresolvedToolSelection(const ToolSelectionState &selection,
+                            const std::string &message) {
+  ToolSelectionResolution resolution;
+  resolution.kind = ToolSelectionResolutionKind::Unresolved;
+  resolution.selection = selection;
+  resolution.message = message;
+  return resolution;
+}
+
+ToolSelectionResolution
+defaultResolveToolSelection(const ToolSelectionState &selection,
+                            const AilExecutorOptions &options) {
+  if (selection.selector_value.empty()) {
+    if (options.fallback_tool_selection.has_value()) {
+      return makeResolvedToolSelection(
+          *options.fallback_tool_selection, true,
+          "tool unresolved; fallback selection applied by policy");
+    }
+    return makeUnresolvedToolSelection(selection,
+                                       "tool selection unresolved by policy");
+  }
+
+  if (options.allow_tool_substitution) {
+    const auto it =
+        options.tool_substitution_map.find(selection.selector_value);
+    if (it != options.tool_substitution_map.end()) {
+      ToolSelectionState mapped = selection;
+      mapped.selector_value = it->second;
+      return makeResolvedToolSelection(
+          mapped, mapped.selector_value != selection.selector_value,
+          "tool selection substituted by policy map");
+    }
+  }
+
+  return makeResolvedToolSelection(selection, false, "");
+}
+
+std::string bareSubprogramName(const std::string &target) {
+  const auto pos = target.find_last_of("/\\");
+  if (pos == std::string::npos || pos + 1 >= target.size()) {
+    return target;
+  }
+  return target.substr(pos + 1);
+}
+
+SubprogramResolution
+defaultResolveSubprogramTarget(const std::string &requested_target,
+                               const LabelPositionMap &label_positions,
+                               const AilExecutorOptions &options) {
+  SubprogramResolution resolution;
+  const auto exact_it = label_positions.find(requested_target);
+  if (exact_it != label_positions.end() && !exact_it->second.empty()) {
+    resolution.resolved = true;
+    resolution.resolved_target = requested_target;
+    return resolution;
+  }
+
+  const auto alias_it = options.subprogram_alias_map.find(requested_target);
+  if (alias_it != options.subprogram_alias_map.end()) {
+    const auto resolved_alias_it = label_positions.find(alias_it->second);
+    if (resolved_alias_it != label_positions.end() &&
+        !resolved_alias_it->second.empty()) {
+      resolution.resolved = true;
+      resolution.resolved_target = alias_it->second;
+      resolution.message =
+          "subprogram target resolved by alias map: " + requested_target +
+          " -> " + alias_it->second;
+      return resolution;
+    }
+  }
+
+  if (options.subprogram_search_policy ==
+      SubprogramSearchPolicy::ExactThenBareName) {
+    const std::string fallback = bareSubprogramName(requested_target);
+    if (fallback != requested_target) {
+      const auto fallback_it = label_positions.find(fallback);
+      if (fallback_it != label_positions.end() &&
+          !fallback_it->second.empty()) {
+        resolution.resolved = true;
+        resolution.resolved_target = fallback;
+        resolution.fallback_used = true;
+        resolution.message =
+            "subprogram target resolved by bare-name fallback: " +
+            requested_target + " -> " + fallback;
+        return resolution;
+      }
+    }
+  }
+
+  resolution.resolved = false;
+  resolution.resolved_target = requested_target;
+  return resolution;
+}
+
 AilInstruction toInstruction(const ParsedMessage &message) {
   return std::visit(
       [](const auto &msg) -> AilInstruction {
@@ -874,27 +980,9 @@ AilResult parseAndLowerAil(std::string_view input,
   return lowerToAil(parsed.program, parsed.diagnostics, options);
 }
 
-AilExecutor::AilExecutor(
-    std::vector<AilInstruction> instructions, ErrorPolicy unknown_mcode_policy,
-    ErrorPolicy m6_without_pending_policy,
-    std::shared_ptr<const ToolPolicy> tool_policy,
-    ErrorPolicy unresolved_subprogram_policy,
-    SubprogramSearchPolicy subprogram_search_policy,
-    std::shared_ptr<const SubprogramPolicy> subprogram_policy)
-    : instructions_(std::move(instructions)),
-      unknown_mcode_policy_(unknown_mcode_policy),
-      m6_without_pending_policy_(m6_without_pending_policy),
-      tool_policy_(std::move(tool_policy)),
-      subprogram_policy_(std::move(subprogram_policy)) {
-  if (!tool_policy_) {
-    tool_policy_ = std::make_shared<DefaultToolPolicy>();
-  }
-  if (!subprogram_policy_) {
-    SubprogramPolicyOptions options;
-    options.search_policy = subprogram_search_policy;
-    options.on_unresolved_target = unresolved_subprogram_policy;
-    subprogram_policy_ = std::make_shared<DefaultSubprogramPolicy>(options);
-  }
+AilExecutor::AilExecutor(std::vector<AilInstruction> instructions,
+                         AilExecutorOptions options)
+    : instructions_(std::move(instructions)), options_(std::move(options)) {
   for (size_t i = 0; i < instructions_.size(); ++i) {
     const auto &inst = instructions_[i];
     std::visit(
@@ -1129,11 +1217,11 @@ bool AilExecutor::handleMCodeAtPc() {
   }
 
   const std::string m_text = "M" + std::to_string(inst.value);
-  if (unknown_mcode_policy_ == ErrorPolicy::Error) {
+  if (options_.unknown_mcode_policy == ErrorPolicy::Error) {
     addFault(inst.source, "unsupported M function: " + m_text);
     return true;
   }
-  if (unknown_mcode_policy_ == ErrorPolicy::Warning) {
+  if (options_.unknown_mcode_policy == ErrorPolicy::Warning) {
     addWarning(inst.source,
                "unsupported M function ignored by policy: " + m_text);
   }
@@ -1149,7 +1237,10 @@ bool AilExecutor::handleToolSelectAtPc() {
   selection.selector_value = inst.selector_value;
 
   if (inst.timing == ToolActionTiming::Immediate) {
-    const auto resolved = tool_policy_->resolveSelection(selection);
+    const auto resolved =
+        options_.tool_selection_resolver
+            ? options_.tool_selection_resolver(selection)
+            : defaultResolveToolSelection(selection, options_);
     if (resolved.kind == ToolSelectionResolutionKind::Resolved) {
       if (resolved.substituted) {
         const std::string suffix =
@@ -1166,8 +1257,8 @@ bool AilExecutor::handleToolSelectAtPc() {
     } else {
       const bool unresolved =
           resolved.kind == ToolSelectionResolutionKind::Unresolved;
-      const ErrorPolicy policy = unresolved ? tool_policy_->unresolvedPolicy()
-                                            : tool_policy_->ambiguousPolicy();
+      const ErrorPolicy policy = unresolved ? options_.unresolved_tool_policy
+                                            : options_.ambiguous_tool_policy;
       const std::string reason =
           unresolved ? "tool selection unresolved" : "tool selection ambiguous";
       const std::string detail =
@@ -1194,7 +1285,9 @@ bool AilExecutor::handleToolChangeAtPc() {
       std::get<AilToolChangeInstruction>(instructions_[state_.pc]);
   if (state_.pending_tool_selection.has_value()) {
     const ToolSelectionState pending = *state_.pending_tool_selection;
-    const auto resolved = tool_policy_->resolveSelection(pending);
+    const auto resolved = options_.tool_selection_resolver
+                              ? options_.tool_selection_resolver(pending)
+                              : defaultResolveToolSelection(pending, options_);
     if (resolved.kind == ToolSelectionResolutionKind::Resolved) {
       if (resolved.substituted) {
         const std::string suffix =
@@ -1211,8 +1304,8 @@ bool AilExecutor::handleToolChangeAtPc() {
     } else {
       const bool unresolved =
           resolved.kind == ToolSelectionResolutionKind::Unresolved;
-      const ErrorPolicy policy = unresolved ? tool_policy_->unresolvedPolicy()
-                                            : tool_policy_->ambiguousPolicy();
+      const ErrorPolicy policy = unresolved ? options_.unresolved_tool_policy
+                                            : options_.ambiguous_tool_policy;
       const std::string reason =
           unresolved ? "tool selection unresolved" : "tool selection ambiguous";
       const std::string detail =
@@ -1232,11 +1325,11 @@ bool AilExecutor::handleToolChangeAtPc() {
   }
 
   const std::string message = "M6 requested with no pending tool selection";
-  if (m6_without_pending_policy_ == ErrorPolicy::Error) {
+  if (options_.m6_without_pending_policy == ErrorPolicy::Error) {
     addFault(inst.source, message);
     return true;
   }
-  if (m6_without_pending_policy_ == ErrorPolicy::Warning) {
+  if (options_.m6_without_pending_policy == ErrorPolicy::Warning) {
     addWarning(inst.source, message + "; ignored by policy");
   }
   ++state_.pc;
@@ -1317,15 +1410,18 @@ bool AilExecutor::advanceOneInstruction(int64_t now_ms,
   if (std::holds_alternative<AilSubprogramCallInstruction>(inst)) {
     const auto &call = std::get<AilSubprogramCallInstruction>(inst);
     const auto resolution =
-        subprogram_policy_->resolveTarget(call.target, label_positions_);
+        options_.subprogram_target_resolver
+            ? options_.subprogram_target_resolver(call.target, label_positions_)
+            : defaultResolveSubprogramTarget(call.target, label_positions_,
+                                             options_);
     if (!resolution.resolved) {
       const std::string message =
           "unresolved subprogram target: " + call.target;
-      if (subprogram_policy_->unresolvedPolicy() == ErrorPolicy::Error) {
+      if (options_.unresolved_subprogram_policy == ErrorPolicy::Error) {
         addFault(call.source, message);
         return true;
       }
-      if (subprogram_policy_->unresolvedPolicy() == ErrorPolicy::Warning) {
+      if (options_.unresolved_subprogram_policy == ErrorPolicy::Warning) {
         addWarning(call.source, message + "; ignored by policy");
       }
       ++state_.pc;

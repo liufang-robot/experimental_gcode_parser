@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cstdint>
+#include <functional>
 #include <memory>
 #include <optional>
 #include <string>
@@ -20,6 +21,7 @@ enum class RapidInterpolationMode { Linear, NonLinear };
 enum class ToolRadiusCompMode { Off, Left, Right };
 enum class WorkingPlane { XY, ZX, YZ };
 enum class ToolActionTiming { Immediate, DeferredUntilM6 };
+enum class SubprogramSearchPolicy { ExactOnly, ExactThenBareName };
 
 struct ToolSelectionState {
   std::optional<int64_t> selector_index;
@@ -35,44 +37,6 @@ struct ToolSelectionResolution {
   std::string message;
 };
 
-class ToolPolicy {
-public:
-  virtual ~ToolPolicy() = default;
-
-  virtual ToolSelectionResolution
-  resolveSelection(const ToolSelectionState &selection) const = 0;
-  virtual ErrorPolicy unresolvedPolicy() const = 0;
-  virtual ErrorPolicy ambiguousPolicy() const = 0;
-};
-
-struct ToolPolicyOptions {
-  bool allow_substitution = false;
-  ErrorPolicy on_unresolved_tool = ErrorPolicy::Error;
-  ErrorPolicy on_ambiguous_tool = ErrorPolicy::Error;
-  std::optional<ToolSelectionState> fallback_selection;
-  std::unordered_map<std::string, std::string> substitution_map;
-};
-
-class DefaultToolPolicy final : public ToolPolicy {
-public:
-  explicit DefaultToolPolicy(ToolPolicyOptions options = {})
-      : options_(std::move(options)) {}
-
-  ToolSelectionResolution
-  resolveSelection(const ToolSelectionState &selection) const override;
-  ErrorPolicy unresolvedPolicy() const override {
-    return options_.on_unresolved_tool;
-  }
-  ErrorPolicy ambiguousPolicy() const override {
-    return options_.on_ambiguous_tool;
-  }
-
-private:
-  ToolPolicyOptions options_;
-};
-
-enum class SubprogramSearchPolicy { ExactOnly, ExactThenBareName };
-
 struct SubprogramResolution {
   bool resolved = false;
   std::string resolved_target;
@@ -80,41 +44,11 @@ struct SubprogramResolution {
   std::string message;
 };
 
-class SubprogramPolicy {
-public:
-  virtual ~SubprogramPolicy() = default;
-
-  virtual SubprogramResolution
-  resolveTarget(const std::string &requested_target,
-                const std::unordered_map<std::string, std::vector<size_t>>
-                    &label_positions) const = 0;
-
-  virtual ErrorPolicy unresolvedPolicy() const = 0;
-};
-
-struct SubprogramPolicyOptions {
-  SubprogramSearchPolicy search_policy = SubprogramSearchPolicy::ExactOnly;
-  ErrorPolicy on_unresolved_target = ErrorPolicy::Error;
-  std::unordered_map<std::string, std::string> alias_map;
-};
-
-class DefaultSubprogramPolicy final : public SubprogramPolicy {
-public:
-  explicit DefaultSubprogramPolicy(SubprogramPolicyOptions options = {})
-      : options_(options) {}
-
-  SubprogramResolution
-  resolveTarget(const std::string &requested_target,
-                const std::unordered_map<std::string, std::vector<size_t>>
-                    &label_positions) const override;
-
-  ErrorPolicy unresolvedPolicy() const override {
-    return options_.on_unresolved_target;
-  }
-
-private:
-  SubprogramPolicyOptions options_;
-};
+using LabelPositionMap = std::unordered_map<std::string, std::vector<size_t>>;
+using ToolSelectionResolver =
+    std::function<ToolSelectionResolution(const ToolSelectionState &)>;
+using SubprogramTargetResolver = std::function<SubprogramResolution(
+    const std::string &, const LabelPositionMap &)>;
 
 struct AilLinearMoveInstruction {
   SourceInfo source;
@@ -261,17 +195,26 @@ struct ExecutorState {
   std::optional<std::string> fault_message;
 };
 
+struct AilExecutorOptions {
+  ErrorPolicy unknown_mcode_policy = ErrorPolicy::Error;
+  ErrorPolicy m6_without_pending_policy = ErrorPolicy::Error;
+  ErrorPolicy unresolved_tool_policy = ErrorPolicy::Error;
+  ErrorPolicy ambiguous_tool_policy = ErrorPolicy::Error;
+  bool allow_tool_substitution = false;
+  std::optional<ToolSelectionState> fallback_tool_selection;
+  std::unordered_map<std::string, std::string> tool_substitution_map;
+  ErrorPolicy unresolved_subprogram_policy = ErrorPolicy::Error;
+  SubprogramSearchPolicy subprogram_search_policy =
+      SubprogramSearchPolicy::ExactOnly;
+  std::unordered_map<std::string, std::string> subprogram_alias_map;
+  ToolSelectionResolver tool_selection_resolver;
+  SubprogramTargetResolver subprogram_target_resolver;
+};
+
 class AilExecutor {
 public:
-  explicit AilExecutor(
-      std::vector<AilInstruction> instructions,
-      ErrorPolicy unknown_mcode_policy = ErrorPolicy::Error,
-      ErrorPolicy m6_without_pending_policy = ErrorPolicy::Error,
-      std::shared_ptr<const ToolPolicy> tool_policy = nullptr,
-      ErrorPolicy unresolved_subprogram_policy = ErrorPolicy::Error,
-      SubprogramSearchPolicy subprogram_search_policy =
-          SubprogramSearchPolicy::ExactOnly,
-      std::shared_ptr<const SubprogramPolicy> subprogram_policy = nullptr);
+  explicit AilExecutor(std::vector<AilInstruction> instructions,
+                       AilExecutorOptions options = {});
 
   const ExecutorState &state() const { return state_; }
   const std::vector<Diagnostic> &diagnostics() const { return diagnostics_; }
@@ -303,10 +246,7 @@ private:
   std::unordered_map<int, std::vector<size_t>> line_number_positions_;
   std::vector<SubprogramCallFrame> call_stack_frames_;
   std::unordered_set<WaitToken, WaitTokenHash> pending_events_;
-  ErrorPolicy unknown_mcode_policy_ = ErrorPolicy::Error;
-  ErrorPolicy m6_without_pending_policy_ = ErrorPolicy::Error;
-  std::shared_ptr<const ToolPolicy> tool_policy_;
-  std::shared_ptr<const SubprogramPolicy> subprogram_policy_;
+  AilExecutorOptions options_;
   ExecutorState state_;
   std::vector<Diagnostic> diagnostics_;
 };
