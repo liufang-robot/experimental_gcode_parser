@@ -7,6 +7,7 @@
 
 #include "gcode/ail.h"
 #include "gcode/execution_interfaces.h"
+#include "gcode/execution_runtime.h"
 #include "gcode/messages.h"
 
 namespace gcode {
@@ -14,6 +15,9 @@ namespace gcode {
 class StreamingExecutionEngine {
 public:
   StreamingExecutionEngine(IExecutionSink &sink, IRuntime &runtime,
+                           ICancellation &cancellation,
+                           const LowerOptions &options = {});
+  StreamingExecutionEngine(IExecutionSink &sink, IExecutionRuntime &runtime,
                            ICancellation &cancellation,
                            const LowerOptions &options = {});
 
@@ -49,6 +53,7 @@ private:
 
   IExecutionSink &sink_;
   IRuntime &runtime_;
+  IExecutionRuntime *execution_runtime_ = nullptr;
   ICancellation &cancellation_;
   LowerOptions options_;
   EngineState state_ = EngineState::AcceptingInput;

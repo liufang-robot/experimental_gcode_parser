@@ -32,6 +32,15 @@ StreamingExecutionEngine::StreamingExecutionEngine(IExecutionSink &sink,
     : sink_(sink), runtime_(runtime), cancellation_(cancellation),
       options_(options) {}
 
+StreamingExecutionEngine::StreamingExecutionEngine(IExecutionSink &sink,
+                                                   IExecutionRuntime &runtime,
+                                                   ICancellation &cancellation,
+                                                   const LowerOptions &options)
+    : StreamingExecutionEngine(sink, static_cast<IRuntime &>(runtime),
+                               cancellation, options) {
+  execution_runtime_ = &runtime;
+}
+
 bool StreamingExecutionEngine::pushChunk(std::string_view chunk) {
   if (state_ == EngineState::Cancelled || state_ == EngineState::Completed ||
       state_ == EngineState::Faulted) {

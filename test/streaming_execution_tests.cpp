@@ -164,4 +164,50 @@ TEST(StreamingExecutionTest, FunctionExecutionRuntimeCanDriveStreamingEngine) {
   EXPECT_EQ(engine.state(), gcode::EngineState::Completed);
 }
 
+TEST(StreamingExecutionTest,
+     FunctionExecutionRuntimeCanUseCombinedRuntimeOverload) {
+  NullSink sink;
+  StaticCancellation cancellation;
+  gcode::FunctionExecutionRuntime runtime(
+      [](const gcode::Condition &, const gcode::SourceInfo &) {
+        gcode::ConditionResolution r;
+        r.kind = gcode::ConditionResolutionKind::False;
+        return r;
+      },
+      [](const gcode::LinearMoveCommand &) {
+        gcode::RuntimeResult<gcode::WaitToken> result;
+        result.status = gcode::RuntimeCallStatus::Ready;
+        return result;
+      },
+      [](const gcode::ArcMoveCommand &) {
+        gcode::RuntimeResult<gcode::WaitToken> result;
+        result.status = gcode::RuntimeCallStatus::Ready;
+        return result;
+      },
+      [](const gcode::DwellCommand &) {
+        gcode::RuntimeResult<gcode::WaitToken> result;
+        result.status = gcode::RuntimeCallStatus::Ready;
+        return result;
+      },
+      [](std::string_view) {
+        gcode::RuntimeResult<double> result;
+        result.status = gcode::RuntimeCallStatus::Error;
+        result.error_message = "not used";
+        return result;
+      },
+      [](const gcode::WaitToken &) {
+        gcode::RuntimeResult<gcode::WaitToken> result;
+        result.status = gcode::RuntimeCallStatus::Ready;
+        return result;
+      });
+
+  gcode::IExecutionRuntime &combined_runtime = runtime;
+  gcode::StreamingExecutionEngine engine(sink, combined_runtime, cancellation);
+
+  ASSERT_TRUE(engine.pushChunk("G1 X1\n"));
+  const auto step = engine.finish();
+  EXPECT_EQ(step.status, gcode::StepStatus::Completed);
+  EXPECT_EQ(engine.state(), gcode::EngineState::Completed);
+}
+
 } // namespace
