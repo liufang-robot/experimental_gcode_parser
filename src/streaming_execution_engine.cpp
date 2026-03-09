@@ -4,6 +4,7 @@
 
 #include "execution_command_builder.h"
 #include "execution_instruction_dispatcher.h"
+#include "execution_modal_state.h"
 #include "gcode/gcode_parser.h"
 
 namespace gcode {
@@ -209,29 +210,15 @@ StepResult StreamingExecutionEngine::executeNextLine() {
 
 StepResult StreamingExecutionEngine::executeAilInstruction(
     const AilInstruction &instruction, int line) {
-  if (std::holds_alternative<AilRapidTraverseModeInstruction>(instruction)) {
-    current_rapid_mode_ =
-        std::get<AilRapidTraverseModeInstruction>(instruction).mode;
+  if (applyExecutionModalInstruction(instruction, &current_working_plane_,
+                                     &current_rapid_mode_,
+                                     &current_tool_radius_comp_)) {
     StepResult result;
     result.status = StepStatus::Progress;
     return result;
   }
-  if (std::holds_alternative<AilToolRadiusCompInstruction>(instruction)) {
-    current_tool_radius_comp_ =
-        std::get<AilToolRadiusCompInstruction>(instruction).mode;
-    StepResult result;
-    result.status = StepStatus::Progress;
-    return result;
-  }
-  if (std::holds_alternative<AilWorkingPlaneInstruction>(instruction)) {
-    current_working_plane_ =
-        std::get<AilWorkingPlaneInstruction>(instruction).plane;
-    StepResult result;
-    result.status = StepStatus::Progress;
-    return result;
-  }
-  const ExecutionModalState modal_state{
-      current_working_plane_, current_rapid_mode_, current_tool_radius_comp_};
+  const ExecutionModalState modal_state = makeExecutionModalState(
+      current_working_plane_, current_rapid_mode_, current_tool_radius_comp_);
   const auto dispatch_result = dispatchExecutionInstruction(
       instruction, line, modal_state, sink_, runtime_);
   if (dispatch_result.status == ExecutionDispatchResult::Status::Blocked &&

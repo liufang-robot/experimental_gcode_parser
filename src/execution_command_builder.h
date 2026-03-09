@@ -1,17 +1,11 @@
 #pragma once
 
-#include <optional>
 #include <string>
 
+#include "execution_modal_state.h"
 #include "gcode/execution_commands.h"
 
 namespace gcode {
-
-struct ExecutionModalState {
-  std::optional<WorkingPlane> working_plane = WorkingPlane::XY;
-  std::optional<RapidInterpolationMode> rapid_mode;
-  std::optional<ToolRadiusCompMode> tool_radius_comp = ToolRadiusCompMode::Off;
-};
 
 SourceRef toSourceRef(const SourceInfo &source);
 EffectiveModalState makeEffectiveModalState(const std::string &motion_code,

@@ -1,5 +1,31 @@
 #CHANGELOG_AGENT
 
+## 2026-03-09 (share execution modal-state helper between engine and executor)
+- Added internal `src/execution_modal_state.{h,cpp}` with shared helpers for
+  applying modal AIL instructions and constructing effective modal state.
+- Switched both `StreamingExecutionEngine` and `AilExecutor` to use the same
+  internal modal-state update helper for rapid mode, tool-radius compensation,
+  and working-plane instructions.
+- Kept behavior unchanged while reducing duplicated modal-state execution logic
+  ahead of the larger loop-unification refactor.
+
+SPEC sections / tests:
+- SPEC: no behavior change; internal refactor only
+- Tests: `test/streaming_execution_tests.cpp`,
+  `test/streaming_execution_gmock_tests.cpp`, `test/ail_executor_tests.cpp`,
+  `./dev/check.sh`
+
+Known limitations:
+- This only shares modal-state update logic; the streaming engine and
+  `AilExecutor` still remain separate execution loops for now.
+
+How to reproduce locally (commands):
+- `cmake --build build -j --target streaming_execution_tests streaming_execution_gmock_tests ail_executor_tests`
+- `./build/streaming_execution_tests`
+- `./build/streaming_execution_gmock_tests`
+- `./build/ail_executor_tests`
+- `./dev/check.sh`
+
 ## 2026-03-09 (extract internal execution-instruction dispatcher)
 - Added internal `src/execution_instruction_dispatcher.{h,cpp}` to centralize
   sink/runtime dispatch for motion-capable AIL instructions.
