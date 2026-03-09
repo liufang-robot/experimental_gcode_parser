@@ -8,8 +8,8 @@
 #include <variant>
 #include <vector>
 
-#include "ast.h"
-#include "machine_profile.h"
+#include "gcode/ast.h"
+#include "gcode/machine_profile.h"
 
 namespace gcode {
 

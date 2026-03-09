@@ -1,4 +1,4 @@
-#include "message_diff.h"
+#include "gcode/message_diff.h"
 
 #include <algorithm>
 #include <cmath>

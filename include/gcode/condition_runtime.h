@@ -5,7 +5,7 @@
 #include <optional>
 #include <string>
 
-#include "runtime_status.h"
+#include "gcode/runtime_status.h"
 
 namespace gcode {
 

@@ -1,6 +1,6 @@
 #include "gtest/gtest.h"
 
-#include "machine_profile.h"
+#include "gcode/machine_profile.h"
 
 namespace {
 

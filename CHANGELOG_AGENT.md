@@ -1,5 +1,32 @@
 #CHANGELOG_AGENT
 
+## 2026-03-09 (public header facade under include/gcode)
+- Added `include/gcode/` as the explicit public header surface and moved the
+  current library-facing declarations there.
+- Updated CMake so `gcode_parser` exports `include/` publicly and keeps `src/`
+  as a private include path for implementation targets.
+- Added `test/public_headers_tests.cpp` to compile against the public facade
+  only, making the public/internal header boundary testable.
+- Trimmed the facade to stable entry-point headers only; support/internal
+  headers stay under `src/` unless intentionally promoted later.
+- Promoted support headers that are part of the current public API contract
+  (`machine_profile.h`, `subprogram_policy.h`, `tool_policy.h`,
+  `tool_selection.h`) and removed duplicate public-header copies from `src/`.
+
+SPEC sections / tests:
+- SPEC: no behavior change; packaging/refactor only
+- Tests: `test/public_headers_tests.cpp`, `./dev/check.sh`
+
+Known limitations:
+- Some APIs still expose support types that may later be hidden or simplified;
+  until that refactor lands, those support headers remain part of the public
+  surface.
+
+How to reproduce locally (commands):
+- `cmake --build build -j --target public_headers_tests`
+- `./build/public_headers_tests`
+- `./dev/check.sh`
+
 ## 2026-03-09 (extract shared condition-runtime contract header)
 - Moved condition blocking/result types and resolver interfaces out of
   `src/ail.h` into a dedicated shared header: `src/condition_runtime.h`.

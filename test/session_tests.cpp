@@ -2,8 +2,8 @@
 
 #include "gtest/gtest.h"
 
-#include "messages.h"
-#include "session.h"
+#include "gcode/messages.h"
+#include "gcode/session.h"
 
 namespace {
 

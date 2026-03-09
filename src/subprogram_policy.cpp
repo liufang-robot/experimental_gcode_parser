@@ -1,4 +1,4 @@
-#include "subprogram_policy.h"
+#include "gcode/subprogram_policy.h"
 
 namespace gcode {
 namespace {

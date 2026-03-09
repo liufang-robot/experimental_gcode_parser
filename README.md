@@ -200,11 +200,25 @@ GitHub Pages publishes `docs/book` on pushes to `main`.
 
 ## Project Layout
 
+- `include/gcode/` public library headers
 - `src/` implementation
 - `test/` GoogleTest suites
 - `testdata/` golden/assets
 - `docs/` mdBook sources
 - `dev/` local scripts
+
+Header boundary direction:
+
+- public headers should be included as `#include <gcode/...>`
+- `src/` headers are internal unless explicitly re-exported through
+  `include/gcode/`
+- only stable library entry points belong in `include/gcode/`
+- support/internal headers that are merely transitively needed by public APIs
+  should remain under `src/` unless we intentionally promote them as
+  standalone public includes
+- if a public header exposes a support type in its API, that support type's
+  header is part of the public surface too and should also live in
+  `include/gcode/`
 
 ## Contribution Notes
 

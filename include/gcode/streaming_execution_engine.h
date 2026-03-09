@@ -5,9 +5,9 @@
 #include <string>
 #include <string_view>
 
-#include "ail.h"
-#include "execution_interfaces.h"
-#include "messages.h"
+#include "gcode/ail.h"
+#include "gcode/execution_interfaces.h"
+#include "gcode/messages.h"
 
 namespace gcode {
 

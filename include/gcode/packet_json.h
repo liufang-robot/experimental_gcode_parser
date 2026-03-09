@@ -2,7 +2,7 @@
 
 #include <string>
 
-#include "packet.h"
+#include "gcode/packet.h"
 
 namespace gcode {
 

@@ -2,7 +2,7 @@
 
 #include <string>
 
-#include "ast.h"
+#include "gcode/ast.h"
 
 namespace gcode {
 

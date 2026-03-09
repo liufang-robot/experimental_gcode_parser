@@ -9,8 +9,8 @@
 
 #include "gtest/gtest.h"
 
-#include "messages.h"
-#include "messages_json.h"
+#include "gcode/messages.h"
+#include "gcode/messages_json.h"
 
 namespace {
 

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "gcode_parser.h"
+#include "gcode/gcode_parser.h"
 
 namespace gcode {
 

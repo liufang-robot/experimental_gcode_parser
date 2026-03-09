@@ -1,0 +1,35 @@
+#include <type_traits>
+
+#include "gtest/gtest.h"
+
+#include "gcode/ail.h"
+#include "gcode/condition_runtime.h"
+#include "gcode/execution_commands.h"
+#include "gcode/execution_interfaces.h"
+#include "gcode/gcode_parser.h"
+#include "gcode/machine_profile.h"
+#include "gcode/message_diff.h"
+#include "gcode/messages.h"
+#include "gcode/packet.h"
+#include "gcode/runtime_status.h"
+#include "gcode/session.h"
+#include "gcode/streaming_execution_engine.h"
+#include "gcode/subprogram_policy.h"
+#include "gcode/tool_policy.h"
+#include "gcode/tool_selection.h"
+
+TEST(PublicHeadersTest, PublicFacadeHeadersCompileAndExposeKeyTypes) {
+  static_assert(std::is_class_v<gcode::ParseResult>);
+  static_assert(std::is_class_v<gcode::MessageResult>);
+  static_assert(std::is_class_v<gcode::AilResult>);
+  static_assert(std::is_class_v<gcode::PacketResult>);
+  static_assert(std::is_class_v<gcode::StreamingExecutionEngine>);
+  static_assert(std::is_class_v<gcode::IExecutionSink>);
+  static_assert(std::is_class_v<gcode::IRuntime>);
+  static_assert(std::is_class_v<gcode::IConditionResolver>);
+  static_assert(std::is_class_v<gcode::WaitToken>);
+  static_assert(std::is_class_v<gcode::MachineProfile>);
+  static_assert(std::is_class_v<gcode::SubprogramPolicy>);
+  static_assert(std::is_class_v<gcode::ToolPolicy>);
+  static_assert(std::is_class_v<gcode::ToolSelectionState>);
+}

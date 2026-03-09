@@ -5,8 +5,8 @@
 #include <unordered_map>
 #include <utility>
 
-#include "machine_profile.h"
-#include "tool_selection.h"
+#include "gcode/machine_profile.h"
+#include "gcode/tool_selection.h"
 
 namespace gcode {
 

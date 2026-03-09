@@ -5,14 +5,14 @@
 #include <string>
 #include <type_traits>
 
-#include "ail.h"
-#include "ail_json.h"
 #include "ast_printer.h"
-#include "gcode_parser.h"
-#include "messages.h"
-#include "messages_json.h"
-#include "packet.h"
-#include "packet_json.h"
+#include "gcode/ail.h"
+#include "gcode/ail_json.h"
+#include "gcode/gcode_parser.h"
+#include "gcode/messages.h"
+#include "gcode/messages_json.h"
+#include "gcode/packet.h"
+#include "gcode/packet_json.h"
 
 namespace {
 

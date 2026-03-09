@@ -109,8 +109,10 @@ add_library(
                       src/session.cpp src/message_diff.cpp src/tool_policy.cpp
                       src/subprogram_policy.cpp src/machine_profile.cpp
                       src/modal_registry.cpp)
-target_include_directories(gcode_parser PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/src
-                                            ${GENERATED_DIR})
+target_include_directories(
+  gcode_parser
+  PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include
+  PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src ${GENERATED_DIR})
 target_link_libraries(gcode_parser PUBLIC gcode_antlr)
 target_link_libraries(gcode_parser PRIVATE nlohmann_json::nlohmann_json)
 
@@ -245,6 +247,11 @@ target_link_libraries(streaming_execution_gmock_tests PRIVATE GTest::gtest_main
 target_include_directories(streaming_execution_gmock_tests
                            PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
 gtest_discover_tests(streaming_execution_gmock_tests DISCOVERY_MODE PRE_TEST)
+
+add_executable(public_headers_tests test/public_headers_tests.cpp)
+target_link_libraries(public_headers_tests PRIVATE gcode_parser)
+target_link_libraries(public_headers_tests PRIVATE GTest::gtest_main)
+gtest_discover_tests(public_headers_tests DISCOVERY_MODE PRE_TEST)
 
 add_executable(semantic_rules_tests test/semantic_rules_tests.cpp)
 target_link_libraries(semantic_rules_tests PRIVATE gcode_parser)

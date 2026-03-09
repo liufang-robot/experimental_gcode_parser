@@ -6,8 +6,8 @@
 
 #include <nlohmann/json.hpp>
 
-#include "gcode_parser.h"
-#include "messages.h"
+#include "gcode/gcode_parser.h"
+#include "gcode/messages.h"
 
 namespace {
 

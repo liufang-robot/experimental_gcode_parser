@@ -1,4 +1,4 @@
-#include "tool_policy.h"
+#include "gcode/tool_policy.h"
 
 namespace gcode {
 namespace {

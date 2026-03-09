@@ -1,8 +1,8 @@
-#include "streaming_execution_engine.h"
+#include "gcode/streaming_execution_engine.h"
 
 #include <utility>
 
-#include "gcode_parser.h"
+#include "gcode/gcode_parser.h"
 
 namespace gcode {
 namespace {
