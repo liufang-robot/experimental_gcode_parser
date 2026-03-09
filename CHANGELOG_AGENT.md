@@ -1,5 +1,31 @@
 #CHANGELOG_AGENT
 
+## 2026-03-09 (add unified execution-runtime interface seam)
+- Added `include/gcode/execution_runtime.h` with `IExecutionRuntime`, a
+  combined runtime-facing interface that inherits both `IRuntime` and
+  `IConditionResolver`.
+- Added `AilExecutor::step(now_ms, const IExecutionRuntime&)` so executor-style
+  execution can share one runtime/service object with the streaming engine
+  path without changing instruction behavior.
+- Added executor/public-header coverage for the new combined interface and
+  updated SPEC wording for the shared runtime contract.
+
+SPEC sections / tests:
+- SPEC: Section 6, Section 6.1
+- Tests: `test/ail_executor_tests.cpp`, `test/public_headers_tests.cpp`,
+  `./dev/check.sh`
+
+Known limitations:
+- This adds a shared interface seam, but the streaming engine and `AilExecutor`
+  still remain separate execution loops; full runtime/workflow unification is
+  still a later refactor slice.
+
+How to reproduce locally (commands):
+- `cmake --build build -j --target ail_executor_tests public_headers_tests`
+- `./build/ail_executor_tests`
+- `./build/public_headers_tests`
+- `./dev/check.sh`
+
 ## 2026-03-09 (collapse executor policy classes into AilExecutorOptions)
 - Replaced direct public `ToolPolicy` / `SubprogramPolicy` class injection on
   `AilExecutor` with a single `AilExecutorOptions` contract that carries
