@@ -219,6 +219,8 @@ Header boundary direction:
 - if a public header exposes a support type in its API, that support type's
   header is part of the public surface too and should also live in
   `include/gcode/`
+- prefer folding tiny leaked support types into the owning public header rather
+  than creating one-header-per-type public includes
 
 ## Contribution Notes
 

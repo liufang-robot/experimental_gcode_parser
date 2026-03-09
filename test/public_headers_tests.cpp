@@ -16,7 +16,6 @@
 #include "gcode/streaming_execution_engine.h"
 #include "gcode/subprogram_policy.h"
 #include "gcode/tool_policy.h"
-#include "gcode/tool_selection.h"
 
 TEST(PublicHeadersTest, PublicFacadeHeadersCompileAndExposeKeyTypes) {
   static_assert(std::is_class_v<gcode::ParseResult>);

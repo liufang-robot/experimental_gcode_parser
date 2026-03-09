@@ -12,6 +12,8 @@
 - Promoted support headers that are part of the current public API contract
   (`machine_profile.h`, `subprogram_policy.h`, `tool_policy.h`,
   `tool_selection.h`) and removed duplicate public-header copies from `src/`.
+- Reduced the public header count by folding `ToolSelectionState` into
+  `tool_policy.h` and removing the standalone `tool_selection.h` public header.
 
 SPEC sections / tests:
 - SPEC: no behavior change; packaging/refactor only
