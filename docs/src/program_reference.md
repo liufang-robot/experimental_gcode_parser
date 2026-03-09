@@ -5,7 +5,7 @@ planned streaming-first execution boundary.
 
 ## Output APIs
 
-- Planned primary execution API:
+- Primary execution API (current motion-slice baseline):
   - `StreamingExecutionEngine`
   - injected interfaces:
     - execution sink
@@ -18,9 +18,12 @@ planned streaming-first execution boundary.
   - `parseAndLowerStream(...)`
   - `parseAndLowerFileStream(...)`
 
-Current limitation:
+Current limitations:
 - `parseAndLowerStream(...)` is not yet a true chunk-by-chunk parser; it parses
   the full input before callback delivery.
+- `StreamingExecutionEngine` currently covers motion/dwell lines plus
+  line-level diagnostics/rejections; variable/control-flow execution remains
+  follow-up work.
 
 ## Modal Metadata
 
@@ -43,7 +46,7 @@ Current Siemens-aligned baseline for supported functions:
 | `RTLION` / `RTLIOF` rapid interpolation mode | Partial | Lowered to AIL `rapid_mode`; packet/runtime interpolation semantics pending. |
 | `G40` / `G41` / `G42` tool radius compensation | Partial | Lowered to AIL `tool_radius_comp`; executor tracks modal state only. |
 | `G17` / `G18` / `G19` working plane | Partial | Lowered to AIL `working_plane`; executor tracks active plane state only. |
-| `G1` linear | Implemented | Current compatibility surfaces emit `G1Message`; planned streaming engine emits normalized linear-move commands to sink/runtime interfaces. |
+| `G1` linear | Implemented | Compatibility surfaces emit `G1Message`; streaming engine emits normalized linear-move commands to sink/runtime interfaces. |
 | `G2` arc CW | Implemented | Emits `G2Message` with endpoint + arc fields + feed. |
 | `G3` arc CCW | Implemented | Emits `G3Message` with endpoint + arc fields + feed. |
 | `G4` dwell | Implemented | Emits `G4Message` with dwell mode/value. |

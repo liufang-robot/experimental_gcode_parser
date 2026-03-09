@@ -6,7 +6,8 @@ ANTLR-based parser/lowering library for CNC G-code with:
 - queue-oriented typed messages (`G1`, `G2`, `G3`, `G4`)
 - per-message modal metadata (`group`, `code`, `updates_state`)
 - batch and streaming compatibility APIs
-- a planned streaming-first execution refactor with injected runtime interfaces
+- initial streaming-first execution engine for the motion subset with injected
+  runtime interfaces
 - JSON serialization for lowered message results
 
 Current source-of-truth docs:
@@ -29,6 +30,9 @@ Current source-of-truth docs:
   - note: current implementation parses the full input first, then emits
     callbacks while lowering; this is a transitional API rather than the final
     line-by-line execution surface
+- Streaming execution engine:
+  - `StreamingExecutionEngine`
+  - `gcode_stream_exec` fake-log CLI for motion-subset event inspection
 - Session/edit flow:
   - `ParseSession::applyLineEdit(...)`
   - `ParseSession::reparseFromLine(...)`
@@ -82,7 +86,7 @@ cmake --build build -j
 Current stable library surfaces are still the parse/lower batch APIs plus the
 transitional callback-based streaming API.
 
-The planned primary execution surface is a line-by-line streaming engine with
+The primary execution direction is a line-by-line streaming engine with
 injected interfaces:
 
 - execution sink interface for deterministic emitted events
@@ -90,7 +94,7 @@ injected interfaces:
   and variable reads
 - cancellation interface for cooperative stop
 
-See:
+Implemented in the current slice for `G0/G1/G2/G3/G4`:
 
 - `docs/src/development/design/streaming_execution_architecture.md`
 - `SPEC.md` section 6 / 6.1 / 6.2
@@ -125,10 +129,9 @@ options.filename = "job.ngc";
 gcode::parseAndLowerStream("G1 X10\nG4 F2\n", options, callbacks);
 ```
 
-Planned streaming-first execution shape:
+Streaming-first execution shape:
 
 ```cpp
-// Conceptual target API; not fully implemented yet.
 MyExecutionSink sink;
 MyRuntime runtime;
 MyCancellation cancellation;
@@ -140,6 +143,13 @@ auto step = engine.pump();
 if (step.status == StepStatus::Blocked) {
   engine.resume(step.blocked->token);
 }
+```
+
+Fake-log CLI for quick review:
+
+```bash
+./build/gcode_stream_exec --format debug testdata/messages/g4_dwell.ngc
+./build/gcode_stream_exec --format json testdata/messages/g4_dwell.ngc
 ```
 
 JSON conversion helpers:

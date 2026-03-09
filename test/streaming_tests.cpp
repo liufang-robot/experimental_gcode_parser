@@ -97,6 +97,26 @@ TEST(StreamingTest, ParseAndLowerFileStreamWorks) {
   EXPECT_EQ(message_count, 2u);
 }
 
+TEST(StreamingTest, StreamsFinalLineWithoutTrailingNewline) {
+  const std::string input = "N1 G4 F3";
+  std::vector<gcode::ParsedMessage> messages;
+
+  gcode::StreamCallbacks callbacks;
+  callbacks.on_message = [&](const gcode::ParsedMessage &message) {
+    messages.push_back(message);
+  };
+
+  const bool completed = gcode::parseAndLowerStream(input, {}, callbacks);
+  ASSERT_TRUE(completed);
+  ASSERT_EQ(messages.size(), 1u);
+  ASSERT_TRUE(std::holds_alternative<gcode::G4Message>(messages[0]));
+
+  const auto &g4 = std::get<gcode::G4Message>(messages[0]);
+  EXPECT_EQ(g4.source.line, 1);
+  EXPECT_EQ(g4.dwell_mode, gcode::DwellMode::Seconds);
+  EXPECT_TRUE(closeEnough(g4.dwell_value, 3.0));
+}
+
 TEST(StreamingTest, CallbackCanCaptureAndValidateDetailedMessages) {
   const std::string input = "N1 G4 F3\nN2 G1 X10 Y20 F30\nN3 G4 S40\n";
   std::vector<gcode::ParsedMessage> messages;

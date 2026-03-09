@@ -9,6 +9,21 @@ find_package(GTest REQUIRED)
 include(GoogleTest)
 find_package(nlohmann_json REQUIRED)
 
+if(NOT TARGET GTest::gmock)
+  if(EXISTS /usr/src/googletest/googlemock/src/gmock-all.cc)
+    add_library(local_gmock STATIC /usr/src/googletest/googlemock/src/gmock-all.cc)
+    target_include_directories(
+      local_gmock PUBLIC /usr/src/googletest/googlemock/include
+                         /usr/src/googletest/googletest/include
+                         /usr/src/googletest/googlemock
+                         /usr/src/googletest/googletest)
+    target_link_libraries(local_gmock PUBLIC GTest::gtest)
+    add_library(GTest::gmock ALIAS local_gmock)
+  else()
+    message(FATAL_ERROR "GMock not found. Install googletest/googlemock sources.")
+  endif()
+endif()
+
 if(NOT ANTLR4_EXECUTABLE AND DEFINED ENV{ANTLR4_EXECUTABLE})
   set(ANTLR4_EXECUTABLE "$ENV{ANTLR4_EXECUTABLE}")
 endif()
@@ -85,6 +100,8 @@ add_library(
                       src/ast_printer.cpp src/messages.cpp
                       src/ail.cpp src/ail_json.cpp
                       src/packet.cpp src/packet_json.cpp
+                      src/streaming_execution_engine.cpp
+                      src/streaming_event_log.cpp
                       src/lowering_family_factory.cpp src/lowering_family_g0.cpp
                       src/lowering_family_g1.cpp
                       src/lowering_family_g2.cpp src/lowering_family_g3.cpp
@@ -100,6 +117,12 @@ target_link_libraries(gcode_parser PRIVATE nlohmann_json::nlohmann_json)
 add_executable(gcode_parse src/main.cpp)
 target_link_libraries(gcode_parse PRIVATE gcode_parser)
 target_include_directories(gcode_parse PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
+
+add_executable(gcode_stream_exec src/streaming_main.cpp)
+target_link_libraries(gcode_stream_exec PRIVATE gcode_parser)
+target_link_libraries(gcode_stream_exec PRIVATE nlohmann_json::nlohmann_json)
+target_include_directories(gcode_stream_exec
+                           PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
 
 add_executable(gcode_bench bench/gcode_bench.cpp)
 target_link_libraries(gcode_bench PRIVATE gcode_parser)
@@ -184,7 +207,8 @@ add_executable(cli_tests test/cli_tests.cpp)
 target_link_libraries(cli_tests PRIVATE GTest::gtest_main)
 target_compile_definitions(cli_tests PRIVATE
                            GCODE_SOURCE_DIR="${CMAKE_CURRENT_SOURCE_DIR}"
-                           GCODE_PARSE_BIN="$<TARGET_FILE:gcode_parse>")
+                           GCODE_PARSE_BIN="$<TARGET_FILE:gcode_parse>"
+                           GCODE_STREAM_EXEC_BIN="$<TARGET_FILE:gcode_stream_exec>")
 gtest_discover_tests(cli_tests DISCOVERY_MODE PRE_TEST)
 
 add_executable(session_tests test/session_tests.cpp)
@@ -205,6 +229,22 @@ target_link_libraries(streaming_tests PRIVATE gcode_parser)
 target_link_libraries(streaming_tests PRIVATE GTest::gtest_main)
 target_include_directories(streaming_tests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
 gtest_discover_tests(streaming_tests DISCOVERY_MODE PRE_TEST)
+
+add_executable(streaming_execution_tests test/streaming_execution_tests.cpp)
+target_link_libraries(streaming_execution_tests PRIVATE gcode_parser)
+target_link_libraries(streaming_execution_tests PRIVATE GTest::gtest_main)
+target_include_directories(streaming_execution_tests
+                           PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
+gtest_discover_tests(streaming_execution_tests DISCOVERY_MODE PRE_TEST)
+
+add_executable(streaming_execution_gmock_tests
+               test/streaming_execution_gmock_tests.cpp)
+target_link_libraries(streaming_execution_gmock_tests PRIVATE gcode_parser)
+target_link_libraries(streaming_execution_gmock_tests PRIVATE GTest::gtest_main
+                                                             GTest::gmock)
+target_include_directories(streaming_execution_gmock_tests
+                           PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
+gtest_discover_tests(streaming_execution_gmock_tests DISCOVERY_MODE PRE_TEST)
 
 add_executable(semantic_rules_tests test/semantic_rules_tests.cpp)
 target_link_libraries(semantic_rules_tests PRIVATE gcode_parser)

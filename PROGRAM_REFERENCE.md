@@ -22,13 +22,15 @@ Implemented compatibility API paths:
   `parseAndLowerFileStream(...)` emit callbacks for messages, diagnostics, and
   rejected lines
 
-Planned primary execution API:
+Primary execution API (current motion-slice baseline):
 - `StreamingExecutionEngine` with injected execution sink, runtime, and
   cancellation interfaces
 
-Current limitation:
+Current limitations:
 - callback streaming is still whole-input parse followed by callback delivery,
   not true line-by-line execution
+- `StreamingExecutionEngine` currently covers motion/dwell lines plus
+  diagnostics/rejections; variable and control-flow execution remain follow-up
 
 ## Modal Metadata
 
@@ -112,7 +114,7 @@ Lowering output:
     - `modal`: `group=GGroup1`, `code=G1`, `updates_state=true`
     - `target_pose`: optional `x/y/z/a/b/c`
     - `feed`: optional `F`
-- planned streaming execution surfaces:
+- streaming execution surfaces:
   - normalized linear-move command passed first to execution sink, then to
     runtime line execution interface
 

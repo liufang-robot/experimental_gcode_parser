@@ -220,6 +220,143 @@ TEST(CliFormatTest, AilModeOutputsToolSelectAndToolChangeSchema) {
             std::string::npos);
 }
 
+TEST(CliFormatTest, StreamingExecDebugOutputsLinearMoveEventSequence) {
+  const auto temp_file =
+      std::filesystem::temp_directory_path() / "gcode_stream_exec_test.ngc";
+  {
+    std::ofstream out(temp_file, std::ios::out | std::ios::trunc);
+    ASSERT_TRUE(out.is_open());
+    out << "N10 G1 X10 Y20 F100\n";
+  }
+
+  const std::string command = std::string("\"") + GCODE_STREAM_EXEC_BIN +
+                              "\" --format debug \"" + temp_file.string() +
+                              "\"";
+  const auto result = runCommand(command);
+
+  std::error_code ec;
+  std::filesystem::remove(temp_file, ec);
+
+  EXPECT_EQ(result.exit_code, 0);
+  EXPECT_TRUE(result.stderr_text.empty());
+  EXPECT_NE(result.stdout_text.find("line 1 n=10"), std::string::npos);
+  EXPECT_NE(result.stdout_text.find(
+                "  emit linear_move: opcode=G1 plane=xy comp=off"),
+            std::string::npos);
+  EXPECT_NE(result.stdout_text.find("  target: x=10 y=20 feed=100"),
+            std::string::npos);
+  EXPECT_NE(result.stdout_text.find("  runtime: submit_linear_move"),
+            std::string::npos);
+  EXPECT_NE(result.stdout_text.find("engine.completed"), std::string::npos);
+}
+
+TEST(CliFormatTest, StreamingExecDebugOutputsGroupedMixedFixture) {
+  const std::filesystem::path source_dir(GCODE_SOURCE_DIR);
+  const auto input_path = source_dir / "testdata" / "messages" / "g4_dwell.ngc";
+
+  const std::string command = std::string("\"") + GCODE_STREAM_EXEC_BIN +
+                              "\" --format debug \"" + input_path.string() +
+                              "\"";
+  const auto result = runCommand(command);
+
+  EXPECT_EQ(result.exit_code, 0);
+  EXPECT_TRUE(result.stderr_text.empty());
+  EXPECT_NE(result.stdout_text.find("line 1 n=10"), std::string::npos);
+  EXPECT_NE(result.stdout_text.find(
+                "  emit linear_move: opcode=G1 plane=xy comp=off"),
+            std::string::npos);
+  EXPECT_NE(result.stdout_text.find("  target: z=-5 feed=200"),
+            std::string::npos);
+  EXPECT_NE(result.stdout_text.find("line 2 n=20"), std::string::npos);
+  EXPECT_NE(result.stdout_text.find("  emit dwell: mode=seconds value=3"),
+            std::string::npos);
+  EXPECT_NE(result.stdout_text.find("line 4 n=40"), std::string::npos);
+  EXPECT_NE(result.stdout_text.find("  emit dwell: mode=revolutions value=30"),
+            std::string::npos);
+  EXPECT_NE(result.stdout_text.find("engine.completed"), std::string::npos);
+}
+
+TEST(CliFormatTest, StreamingExecJsonOutputsDeterministicEventLog) {
+  const auto temp_file =
+      std::filesystem::temp_directory_path() / "gcode_stream_exec_json.ngc";
+  {
+    std::ofstream out(temp_file, std::ios::out | std::ios::trunc);
+    ASSERT_TRUE(out.is_open());
+    out << "G4 F3\n";
+  }
+
+  const std::string command = std::string("\"") + GCODE_STREAM_EXEC_BIN +
+                              "\" --format json \"" + temp_file.string() + "\"";
+  const auto result = runCommand(command);
+
+  std::error_code ec;
+  std::filesystem::remove(temp_file, ec);
+
+  EXPECT_EQ(result.exit_code, 0);
+  EXPECT_TRUE(result.stderr_text.empty());
+
+  std::stringstream lines(result.stdout_text);
+  std::string first;
+  std::string second;
+  std::string third;
+  ASSERT_TRUE(std::getline(lines, first));
+  ASSERT_TRUE(std::getline(lines, second));
+  ASSERT_TRUE(std::getline(lines, third));
+
+  const auto first_json = nlohmann::json::parse(first);
+  const auto second_json = nlohmann::json::parse(second);
+  const auto third_json = nlohmann::json::parse(third);
+
+  EXPECT_EQ(first_json["event"], "sink.dwell");
+  EXPECT_EQ(second_json["event"], "runtime.submit_dwell");
+  EXPECT_EQ(third_json["event"], "engine.completed");
+}
+
+TEST(CliFormatTest, StreamingExecFixtureShowsWorkingPlaneTransitions) {
+  const std::filesystem::path source_dir(GCODE_SOURCE_DIR);
+  const auto input_path =
+      source_dir / "testdata" / "execution" / "plane_switch.ngc";
+
+  const std::string command = std::string("\"") + GCODE_STREAM_EXEC_BIN +
+                              "\" --format json \"" + input_path.string() +
+                              "\"";
+  const auto result = runCommand(command);
+
+  EXPECT_EQ(result.exit_code, 0);
+  EXPECT_TRUE(result.stderr_text.empty());
+
+  std::stringstream lines(result.stdout_text);
+  std::string line;
+  std::vector<nlohmann::json> events;
+  while (std::getline(lines, line)) {
+    if (line.empty()) {
+      continue;
+    }
+    events.push_back(nlohmann::json::parse(line));
+  }
+
+  ASSERT_EQ(events.size(), 7u);
+  EXPECT_EQ(events[0]["event"], "sink.linear_move");
+  EXPECT_EQ(events[1]["event"], "runtime.submit_linear_move");
+  EXPECT_EQ(events[2]["event"], "sink.linear_move");
+  EXPECT_EQ(events[3]["event"], "runtime.submit_linear_move");
+  EXPECT_EQ(events[4]["event"], "sink.linear_move");
+  EXPECT_EQ(events[5]["event"], "runtime.submit_linear_move");
+  EXPECT_EQ(events[6]["event"], "engine.completed");
+
+  EXPECT_EQ(events[0]["line"], 2);
+  EXPECT_EQ(events[0]["params"]["source"]["line_number"], 10);
+  EXPECT_EQ(events[0]["params"]["effective"]["working_plane"], "xy");
+
+  EXPECT_EQ(events[2]["line"], 4);
+  EXPECT_EQ(events[2]["params"]["source"]["line_number"], 20);
+  EXPECT_EQ(events[2]["params"]["effective"]["working_plane"], "zx");
+
+  EXPECT_EQ(events[4]["line"], 6);
+  EXPECT_EQ(events[4]["params"]["source"]["line_number"], 30);
+  EXPECT_EQ(events[4]["params"]["effective"]["working_plane"], "yz");
+}
+
 TEST(CliFormatTest, AilModeHandlesAssignmentExpression) {
   const auto temp_file =
       std::filesystem::temp_directory_path() / "gcode_cli_assign_test.ngc";
