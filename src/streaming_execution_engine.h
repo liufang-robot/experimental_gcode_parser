@@ -5,6 +5,7 @@
 #include <string>
 #include <string_view>
 
+#include "ail.h"
 #include "execution_interfaces.h"
 #include "messages.h"
 
@@ -32,13 +33,13 @@ private:
 
   bool enqueueCompleteLines();
   StepResult executeNextLine();
+  StepResult executeAilInstruction(const AilInstruction &instruction, int line);
   StepResult makeBlockedResult(int line, const WaitToken &token,
                                std::string reason);
   StepResult faultWithDiagnostic(const Diagnostic &diag);
   void emitDiagnostics(const std::vector<Diagnostic> &diagnostics);
   std::optional<RejectedLineEvent>
   makeRejectedEvent(const MessageResult::RejectedLine &rejected) const;
-  void applyStateWords(const std::string &line_text);
   void remapDiagnostics(std::vector<Diagnostic> *diagnostics, int line) const;
   void
   remapRejectedLines(std::vector<MessageResult::RejectedLine> *rejected_lines,

@@ -1,5 +1,30 @@
 #CHANGELOG_AGENT
 
+## 2026-03-09 (streaming engine internal AIL refactor)
+- Switched `StreamingExecutionEngine` internals from per-line message lowering
+  plus raw-word modal tracking to per-line AIL lowering plus AIL state
+  instructions.
+- Removed duplicated in-engine parsing of plane/rapid/tool-comp state words and
+  now derive effective modal state from the same lowered instruction stream
+  used by the runtime-facing path.
+- Added regression coverage proving same-block modal words (for example
+  `G18 G41 G1 X1`) affect the emitted motion command in the refactored engine.
+
+SPEC sections / tests:
+- SPEC: Section 6.1, Section 6.2
+- Tests: `test/streaming_execution_gmock_tests.cpp`,
+  `test/streaming_execution_tests.cpp`, `./dev/check.sh`
+
+Known limitations:
+- The streaming engine still covers the motion/dwell subset only; this refactor
+  reduces duplicate workflow logic but does not yet add control-flow or
+  variable execution to the engine.
+
+How to reproduce locally (commands):
+- `cmake --build build -j --target streaming_execution_gmock_tests`
+- `./build/streaming_execution_gmock_tests`
+- `./dev/check.sh`
+
 ## 2026-03-09 (streaming execution slice 1: motion engine skeleton and fake-log CLI)
 - Added injected execution interfaces, shared execution command types, and an
   initial `StreamingExecutionEngine` implementation for chunked motion/dwell

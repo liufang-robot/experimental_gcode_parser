@@ -262,6 +262,30 @@ TEST(StreamingExecutionGmockTest,
   EXPECT_EQ(engine.pump().status, gcode::StepStatus::Progress);
 }
 
+TEST(StreamingExecutionGmockTest,
+     EffectiveModalStateTracksSameBlockPlaneAndToolComp) {
+  MockExecutionSink sink;
+  MockRuntime runtime;
+  MockCancellation cancellation;
+  gcode::StreamingExecutionEngine engine(sink, runtime, cancellation);
+
+  EXPECT_CALL(cancellation, isCancelled()).WillOnce(Return(false));
+  EXPECT_CALL(sink, onDiagnostic(_)).Times(0);
+  EXPECT_CALL(sink, onRejectedLine(_)).Times(0);
+  EXPECT_CALL(sink, onLinearMove(_))
+      .WillOnce(Invoke([](const gcode::LinearMoveCommand &cmd) {
+        ASSERT_TRUE(cmd.effective.working_plane.has_value());
+        EXPECT_EQ(*cmd.effective.working_plane, gcode::WorkingPlane::ZX);
+        ASSERT_TRUE(cmd.effective.tool_radius_comp.has_value());
+        EXPECT_EQ(*cmd.effective.tool_radius_comp,
+                  gcode::ToolRadiusCompMode::Left);
+      }));
+  EXPECT_CALL(runtime, submitLinearMove(_)).WillOnce(Return(readyMove()));
+
+  ASSERT_TRUE(engine.pushChunk("G18 G41 G1 X1\n"));
+  EXPECT_EQ(engine.pump().status, gcode::StepStatus::Progress);
+}
+
 TEST(StreamingExecutionGmockTest, InvalidLineEmitsDiagnosticAndRejectedLine) {
   NiceMock<MockExecutionSink> sink;
   MockRuntime runtime;
