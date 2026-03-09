@@ -1,6 +1,7 @@
 #include "gtest/gtest.h"
 
 #include "gcode/execution_interfaces.h"
+#include "gcode/execution_runtime.h"
 #include "gcode/streaming_execution_engine.h"
 
 namespace {
@@ -117,6 +118,50 @@ TEST(StreamingExecutionTest, NoNextLineExecutesWhileBlocked) {
   const auto second = engine.pump();
   EXPECT_EQ(second.status, gcode::StepStatus::Blocked);
   EXPECT_EQ(runtime.linear_calls, 1);
+}
+
+TEST(StreamingExecutionTest, FunctionExecutionRuntimeCanDriveStreamingEngine) {
+  NullSink sink;
+  StaticCancellation cancellation;
+  gcode::FunctionExecutionRuntime runtime(
+      [](const gcode::Condition &, const gcode::SourceInfo &) {
+        gcode::ConditionResolution r;
+        r.kind = gcode::ConditionResolutionKind::False;
+        return r;
+      },
+      [](const gcode::LinearMoveCommand &) {
+        gcode::RuntimeResult<gcode::WaitToken> result;
+        result.status = gcode::RuntimeCallStatus::Ready;
+        return result;
+      },
+      [](const gcode::ArcMoveCommand &) {
+        gcode::RuntimeResult<gcode::WaitToken> result;
+        result.status = gcode::RuntimeCallStatus::Ready;
+        return result;
+      },
+      [](const gcode::DwellCommand &) {
+        gcode::RuntimeResult<gcode::WaitToken> result;
+        result.status = gcode::RuntimeCallStatus::Ready;
+        return result;
+      },
+      [](std::string_view) {
+        gcode::RuntimeResult<double> result;
+        result.status = gcode::RuntimeCallStatus::Error;
+        result.error_message = "not used";
+        return result;
+      },
+      [](const gcode::WaitToken &) {
+        gcode::RuntimeResult<gcode::WaitToken> result;
+        result.status = gcode::RuntimeCallStatus::Ready;
+        return result;
+      });
+
+  gcode::StreamingExecutionEngine engine(sink, runtime, cancellation);
+
+  ASSERT_TRUE(engine.pushChunk("G1 X1\n"));
+  const auto step = engine.finish();
+  EXPECT_EQ(step.status, gcode::StepStatus::Completed);
+  EXPECT_EQ(engine.state(), gcode::EngineState::Completed);
 }
 
 } // namespace

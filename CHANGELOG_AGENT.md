@@ -7,6 +7,9 @@
 - Added `AilExecutor::step(now_ms, const IExecutionRuntime&)` so executor-style
   execution can share one runtime/service object with the streaming engine
   path without changing instruction behavior.
+- Added `FunctionExecutionRuntime` so the combined runtime can be assembled
+  from lambdas/callables instead of requiring a bespoke class for every test
+  or small embedding.
 - Added executor/public-header coverage for the new combined interface and
   updated SPEC wording for the shared runtime contract.
 

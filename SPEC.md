@@ -568,6 +568,8 @@ N130 G01 X20 Y20
     - `IRuntime` for motion / dwell / variable-read operations
     - `IExecutionRuntime` when one runtime object also provides
       condition-evaluation services for executor-style paths
+    - `FunctionExecutionRuntime` as a convenience adapter for building that
+      combined runtime from lambdas/callables in tests or small embeddings
   - Current implementation coverage is limited to motion/dwell lines
     (`G0/G1/G2/G3/G4`) plus line-level diagnostics/rejection handling.
 - JSON schema notes:
