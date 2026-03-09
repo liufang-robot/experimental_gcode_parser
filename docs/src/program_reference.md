@@ -303,6 +303,7 @@ Implemented behavior:
   - injected resolver interface returns `true`, `false`, `pending`, or `error`
   - `pending` supports `wait_token` and retry timestamp
   - lambda/function overload remains as a compatibility adapter
+  - shared types live in [condition_runtime.h](/home/liufang/optcnc/gcode/src/condition_runtime.h)
 - Structured `IF/ELSE/ENDIF` lowering:
   - lowered to `branch_if` + internal labels + gotos (Lua-style chunk lowering)
 

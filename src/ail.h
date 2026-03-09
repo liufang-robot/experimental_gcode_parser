@@ -1,7 +1,6 @@
 #pragma once
 
 #include <cstdint>
-#include <functional>
 #include <memory>
 #include <optional>
 #include <string>
@@ -11,6 +10,7 @@
 #include <variant>
 #include <vector>
 
+#include "condition_runtime.h"
 #include "machine_profile.h"
 #include "messages.h"
 #include "runtime_status.h"
@@ -147,39 +147,6 @@ AilResult lowerToAil(const Program &program,
 
 AilResult parseAndLowerAil(std::string_view input,
                            const LowerOptions &options = {});
-
-enum class ConditionResolutionKind { True, False, Pending, Error };
-
-struct ConditionResolution {
-  ConditionResolutionKind kind = ConditionResolutionKind::Error;
-  std::optional<WaitToken> wait_token;
-  std::optional<int64_t> retry_at_ms;
-  std::optional<std::string> error_message;
-};
-
-using ConditionResolver =
-    std::function<ConditionResolution(const Condition &, const SourceInfo &)>;
-
-class IConditionResolver {
-public:
-  virtual ~IConditionResolver() = default;
-  virtual ConditionResolution resolve(const Condition &condition,
-                                      const SourceInfo &source) const = 0;
-};
-
-class FunctionConditionResolver final : public IConditionResolver {
-public:
-  explicit FunctionConditionResolver(ConditionResolver resolver)
-      : resolver_(std::move(resolver)) {}
-
-  ConditionResolution resolve(const Condition &condition,
-                              const SourceInfo &source) const override {
-    return resolver_(condition, source);
-  }
-
-private:
-  ConditionResolver resolver_;
-};
 
 enum class ExecutorStatus { Ready, BlockedOnCondition, Completed, Fault };
 
