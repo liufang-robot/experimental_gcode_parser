@@ -184,6 +184,73 @@ TEST(AilExecutorTest, BranchCanBlockAndResumeOnEvent) {
   EXPECT_EQ(exec.state().status, gcode::ExecutorStatus::Ready);
 }
 
+TEST(AilExecutorTest, SystemVariableConditionCanBlockAndResumeOnEvent) {
+  const auto lowered = gcode::parseAndLowerAil(
+      "IF $P_ACT_X == 1 GOTOF TARGET\nGOTO END\nTARGET:\nEND:\n");
+  gcode::AilExecutor exec(lowered.instructions);
+
+  int calls = 0;
+  const auto resolver = [&calls](const gcode::Condition &condition,
+                                 const gcode::SourceInfo &) {
+    gcode::ConditionResolution r;
+    ++calls;
+    const auto *lhs = std::get_if<gcode::ExprVariable>(&condition.lhs->node);
+    EXPECT_NE(lhs, nullptr);
+    if (lhs == nullptr) {
+      r.kind = gcode::ConditionResolutionKind::Error;
+      r.error_message = "missing system variable lhs";
+      return r;
+    }
+    EXPECT_TRUE(lhs->is_system);
+    EXPECT_EQ(lhs->name, "$P_ACT_X");
+    if (calls == 1) {
+      r.kind = gcode::ConditionResolutionKind::Pending;
+      r.wait_key = "sysvar_ready";
+      r.retry_at_ms = 100;
+      return r;
+    }
+    r.kind = gcode::ConditionResolutionKind::False;
+    return r;
+  };
+
+  ASSERT_TRUE(exec.step(0, resolver));
+  EXPECT_EQ(exec.state().status, gcode::ExecutorStatus::BlockedOnCondition);
+
+  EXPECT_FALSE(exec.step(10, resolver));
+  EXPECT_EQ(exec.state().status, gcode::ExecutorStatus::BlockedOnCondition);
+
+  exec.notifyEvent("sysvar_ready");
+  ASSERT_TRUE(exec.step(10, resolver));
+  EXPECT_EQ(exec.state().status, gcode::ExecutorStatus::Ready);
+}
+
+TEST(AilExecutorTest, SystemVariableConditionErrorFaultsRuntime) {
+  const auto lowered =
+      gcode::parseAndLowerAil("IF $P_ACT_X == 1 GOTOF TARGET\n");
+  gcode::AilExecutor exec(lowered.instructions);
+
+  const auto resolver = [](const gcode::Condition &condition,
+                           const gcode::SourceInfo &) {
+    gcode::ConditionResolution r;
+    const auto *lhs = std::get_if<gcode::ExprVariable>(&condition.lhs->node);
+    EXPECT_NE(lhs, nullptr);
+    if (lhs != nullptr) {
+      EXPECT_TRUE(lhs->is_system);
+      EXPECT_EQ(lhs->name, "$P_ACT_X");
+    }
+    r.kind = gcode::ConditionResolutionKind::Error;
+    r.error_message = "system variable unavailable";
+    return r;
+  };
+
+  ASSERT_TRUE(exec.step(0, resolver));
+  EXPECT_EQ(exec.state().status, gcode::ExecutorStatus::Fault);
+  ASSERT_FALSE(exec.diagnostics().empty());
+  EXPECT_NE(
+      exec.diagnostics().back().message.find("system variable unavailable"),
+      std::string::npos);
+}
+
 TEST(AilExecutorTest, BranchWithSystemVariableTargetFaultsWhenTaken) {
   const auto lowered = gcode::parseAndLowerAil("IF R1 == 1 GOTOF $DEST\n");
   gcode::AilExecutor exec(lowered.instructions);
