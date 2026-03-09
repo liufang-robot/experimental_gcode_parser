@@ -1,5 +1,26 @@
 #CHANGELOG_AGENT
 
+## 2026-03-09 (extract shared condition-runtime contract header)
+- Moved condition blocking/result types and resolver interfaces out of
+  `src/ail.h` into a dedicated shared header: `src/condition_runtime.h`.
+- Kept `AilExecutor` behavior unchanged while reducing header-level mixing
+  between AIL schema definitions and runtime condition-evaluation contracts.
+- Updated design/program-reference docs to point at the shared condition
+  runtime header.
+
+SPEC sections / tests:
+- SPEC: Section 6.1
+- Tests: `test/ail_executor_tests.cpp`, `./dev/check.sh`
+
+Known limitations:
+- The condition runtime contract is now in its own header, but variable reads
+  are still not unified with `IRuntime`; that remains a later refactor slice.
+
+How to reproduce locally (commands):
+- `cmake --build build -j --target ail_executor_tests`
+- `./build/ail_executor_tests`
+- `./dev/check.sh`
+
 ## 2026-03-09 (executor resolver interface injection)
 - Added `IConditionResolver` for `AilExecutor` so branch/condition evaluation
   can use an injected interface instead of only a raw `std::function`.

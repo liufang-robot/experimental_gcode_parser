@@ -169,6 +169,12 @@ struct VariableResolver {
 };
 ```
 
+Current code organization note:
+- branch/condition pending/error results and the injected condition-resolver
+  interface now live in `src/condition_runtime.h`
+- `AilExecutor` consumes that shared contract rather than defining its own
+  condition-runtime result types inline
+
 Semantics:
 - `Value`
   - expression/condition evaluation continues
