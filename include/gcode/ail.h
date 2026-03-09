@@ -15,7 +15,7 @@
 #include "gcode/messages.h"
 #include "gcode/runtime_status.h"
 #include "gcode/subprogram_policy.h"
-#include "gcode/tool_selection.h"
+#include "gcode/tool_policy.h"
 
 namespace gcode {
 class ToolPolicy;

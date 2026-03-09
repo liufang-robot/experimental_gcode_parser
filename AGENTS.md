@@ -54,5 +54,8 @@ If `./dev/check.sh` is green, CI should be green.
     headers include it transitively
   - if a type appears in a public signature or public struct field, its header
     is public too and must live in `include/gcode/`
+  - prefer attaching a small support type to its owning public API header
+    instead of adding a standalone public header when that keeps the surface
+    smaller and clearer
   - when adding a new public header, update the public-header compile test
     under `test/public_headers_tests.cpp`

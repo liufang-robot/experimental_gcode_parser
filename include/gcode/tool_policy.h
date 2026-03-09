@@ -1,14 +1,19 @@
 #pragma once
 
+#include <cstdint>
 #include <optional>
 #include <string>
 #include <unordered_map>
 #include <utility>
 
 #include "gcode/machine_profile.h"
-#include "gcode/tool_selection.h"
 
 namespace gcode {
+
+struct ToolSelectionState {
+  std::optional<int64_t> selector_index;
+  std::string selector_value;
+};
 
 enum class ToolSelectionResolutionKind { Resolved, Unresolved, Ambiguous };
 
