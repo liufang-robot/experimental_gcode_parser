@@ -1,5 +1,52 @@
 #CHANGELOG_AGENT
 
+## 2026-03-09 (streaming execution slice 1: motion engine skeleton and fake-log CLI)
+- Added injected execution interfaces, shared execution command types, and an
+  initial `StreamingExecutionEngine` implementation for chunked motion/dwell
+  line execution with block/resume/cancel state handling.
+- Added `gmock`-based streaming engine tests covering `G1` sink/runtime call
+  order, pending/blocking, resume, cancellation, dwell dispatch, and rejected
+  line behavior.
+- Added `gcode_stream_exec`, a fake-log CLI that runs the streaming engine
+  against a recording sink/runtime and prints deterministic event output for
+  review in `debug` or JSONL form.
+
+SPEC sections / tests:
+- SPEC: Section 2.2, Section 6, Section 6.1, Section 6.2
+- Tests: `test/streaming_execution_tests.cpp`,
+  `test/streaming_execution_gmock_tests.cpp`, `test/cli_tests.cpp`
+
+Known limitations:
+- The streaming engine currently covers only motion/dwell lines plus
+  diagnostics/rejections; variable execution, control-flow execution, and
+  adapter replacement for legacy callback streaming remain follow-up work.
+
+How to reproduce locally (commands):
+- `cmake -S . -B build`
+- `cmake --build build -j --target streaming_execution_tests streaming_execution_gmock_tests cli_tests gcode_stream_exec`
+- `./build/streaming_execution_tests`
+- `./build/streaming_execution_gmock_tests`
+- `./build/cli_tests --gtest_filter='CliFormatTest.StreamingExec*'`
+
+## 2026-03-09 (streaming execution slice 1a: add working-plane fixture coverage)
+- Added a dedicated streaming-execution fixture `testdata/execution/plane_switch.ngc`
+  that programs `G17`, `G18`, and `G19` before separate `G1` lines.
+- Added CLI coverage proving `gcode_stream_exec --format json` reports the
+  expected `effective.working_plane` transitions (`xy`, `zx`, `yz`) on the
+  emitted linear-move events.
+
+SPEC sections / tests:
+- SPEC: Section 6.2
+- Tests: `test/cli_tests.cpp`
+
+Known limitations:
+- The fixture currently validates only working-plane propagation in the motion
+  subset; broader modal-group propagation remains follow-up work.
+
+How to reproduce locally (commands):
+- `cmake --build build -j --target cli_tests gcode_stream_exec`
+- `./build/cli_tests --gtest_filter='CliFormatTest.StreamingExecFixtureShowsWorkingPlaneTransitions'`
+
 ## 2026-03-09 (streaming execution architecture: line-by-line blocking contract)
 - Added a dedicated development design note defining the target streaming
   execution engine contract: injected interfaces, blocking/resume state

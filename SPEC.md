@@ -47,10 +47,11 @@ Optional downstream stage:
   workflows (`parseAndLowerStream(...)` / `parseAndLowerFileStream(...)`).
   Current implementation still parses the whole input before callback
   delivery.
-- Planned primary execution API:
+- Initial primary execution API slice:
   - line-by-line streaming execution engine
   - injected interfaces for execution sink, runtime, and cancellation
   - explicit blocking/resume/cancel contract per executed line
+  - current implementation coverage: motion subset `G0/G1/G2/G3/G4`
 
 The `gcode_parse` CLI supports:
 - `--mode parse|ail|packet|lower` (default: `parse`)
@@ -496,11 +497,11 @@ N130 G01 X20 Y20
     with `parse -> messages` retained for queue-level compatibility and legacy
     integration surfaces.
 - Execution API note:
-  - the long-term primary execution surface is a streaming engine that accepts
-    chunks, assembles complete lines, lowers/exposes one line at a time, and
-    may block on runtime operations
+  - the streaming engine now exists for the motion subset and accepts chunks,
+    assembles complete lines, lowers/exposes one line at a time, and may block
+    on runtime operations
   - current message and callback APIs remain valid transitional surfaces until
-    streaming execution reaches parity
+    streaming execution reaches broader feature parity
 - Standalone lowering stage: AST + parser diagnostics -> queue-ready messages +
   diagnostics.
 - `G1Message` fields:
@@ -556,13 +557,15 @@ N130 G01 X20 Y20
   - Stream diagnostics/messages/rejected-lines without requiring message-vector
     accumulation by default after the parse result has already been built.
   - Support early-stop controls (max lines/messages/diagnostics, cancel hook).
-- Streaming execution API (planned primary):
+- Streaming execution API (initial primary slice):
   - Accept arbitrary text chunks and assemble complete logical lines.
   - Parse/lower/execute one line at a time.
   - Emit deterministic sink/runtime events per line.
   - Support explicit `blocked`, `resumed`, `cancelled`, `faulted`, and
     `completed` execution states.
   - Use injected interfaces rather than hardcoded machine/runtime calls.
+  - Current implementation coverage is limited to motion/dwell lines
+    (`G0/G1/G2/G3/G4`) plus line-level diagnostics/rejection handling.
 - JSON schema notes:
   - Include top-level `schema_version` (current value: `1`).
   - Include `messages`, `diagnostics`, and `rejected_lines`.
@@ -606,7 +609,7 @@ N130 G01 X20 Y20
   - `pending` may include `wait_key` and `retry_at` metadata
   - this contract applies equally to simple system-variable-backed conditions
     such as `IF $P_ACT_X == 1 ...`
-- Planned streaming execution contract:
+- Streaming execution contract:
   - execution is driven by an injected runtime interface rather than direct
     global or static machine calls
   - runtime-facing operations may complete immediately, block, or fail
@@ -627,7 +630,7 @@ N130 G01 X20 Y20
   - `blocked_on_condition`
   - `completed`
   - `fault`
-- Planned streaming engine state model:
+- Streaming engine state model:
   - `accepting_input`
   - `ready_to_execute`
   - `blocked`
@@ -652,7 +655,7 @@ N130 G01 X20 Y20
 - For `N`/numeric targets with multiple candidates in the chosen search
   direction, runtime selects nearest match and emits warning diagnostic.
 
-### 6.2 Streaming Execution Engine (planned primary API)
+### 6.2 Streaming Execution Engine (initial primary API slice)
 - Primary interfaces:
   - execution sink interface
   - runtime interface
@@ -663,8 +666,14 @@ N130 G01 X20 Y20
   - engine then invokes runtime linear-move submission with the same command
   - runtime returns `ready`, `pending`, or `error`
   - on `pending`, engine becomes blocked and requires explicit resume
+- Fake-log CLI:
+  - `gcode_stream_exec` runs the streaming engine with a recording execution
+    sink and ready fake runtime
+  - intended for deterministic event-sequence review during refactor
 - System-variable execution contract:
   - runtime performs variable reads and may return value, pending, or error
+  - current implementation keeps this interface but does not yet execute
+    variable-backed expressions through the streaming engine
 - Integration-test contract:
   - deterministic event logs should capture interface call order and parameter
     values for a given input program
