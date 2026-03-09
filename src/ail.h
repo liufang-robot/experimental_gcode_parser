@@ -160,6 +160,27 @@ struct ConditionResolution {
 using ConditionResolver =
     std::function<ConditionResolution(const Condition &, const SourceInfo &)>;
 
+class IConditionResolver {
+public:
+  virtual ~IConditionResolver() = default;
+  virtual ConditionResolution resolve(const Condition &condition,
+                                      const SourceInfo &source) const = 0;
+};
+
+class FunctionConditionResolver final : public IConditionResolver {
+public:
+  explicit FunctionConditionResolver(ConditionResolver resolver)
+      : resolver_(std::move(resolver)) {}
+
+  ConditionResolution resolve(const Condition &condition,
+                              const SourceInfo &source) const override {
+    return resolver_(condition, source);
+  }
+
+private:
+  ConditionResolver resolver_;
+};
+
 enum class ExecutorStatus { Ready, BlockedOnCondition, Completed, Fault };
 
 struct ExecutorBlockedState {
@@ -197,6 +218,7 @@ public:
   const std::vector<Diagnostic> &diagnostics() const { return diagnostics_; }
 
   void notifyEvent(const WaitToken &wait_token);
+  bool step(int64_t now_ms, const IConditionResolver &resolver);
   bool step(int64_t now_ms, const ConditionResolver &resolver);
 
 private:
@@ -208,11 +230,12 @@ private:
 
   std::optional<size_t> resolveGotoTarget(size_t current_index,
                                           const AilGotoInstruction &inst);
-  bool evaluateBranchAtPc(int64_t now_ms, const ConditionResolver &resolver);
+  bool evaluateBranchAtPc(int64_t now_ms, const IConditionResolver &resolver);
   bool handleMCodeAtPc();
   bool handleToolSelectAtPc();
   bool handleToolChangeAtPc();
-  bool advanceOneInstruction(int64_t now_ms, const ConditionResolver &resolver);
+  bool advanceOneInstruction(int64_t now_ms,
+                             const IConditionResolver &resolver);
   void addFault(const SourceInfo &source, const std::string &message);
   void addWarning(const SourceInfo &source, const std::string &message);
 

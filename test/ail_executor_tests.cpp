@@ -67,6 +67,24 @@ private:
   gcode::ErrorPolicy unresolved_policy_ = gcode::ErrorPolicy::Error;
 };
 
+class StubConditionResolver final : public gcode::IConditionResolver {
+public:
+  using Resolver = std::function<gcode::ConditionResolution(
+      const gcode::Condition &, const gcode::SourceInfo &)>;
+
+  explicit StubConditionResolver(Resolver resolver)
+      : resolver_(std::move(resolver)) {}
+
+  gcode::ConditionResolution
+  resolve(const gcode::Condition &condition,
+          const gcode::SourceInfo &source) const override {
+    return resolver_(condition, source);
+  }
+
+private:
+  Resolver resolver_;
+};
+
 TEST(AilExecutorTest, ResolvesGotoAndCompletes) {
   const auto lowered = gcode::parseAndLowerAil("L1:\nGOTO L2\nL2:\n");
   gcode::AilExecutor exec(lowered.instructions);
@@ -82,6 +100,21 @@ TEST(AilExecutorTest, ResolvesGotoAndCompletes) {
   ASSERT_TRUE(exec.step(0, resolver)); // goto L2
   ASSERT_TRUE(exec.step(0, resolver)); // label L2
   ASSERT_TRUE(exec.step(0, resolver)); // complete
+  EXPECT_EQ(exec.state().status, gcode::ExecutorStatus::Completed);
+}
+
+TEST(AilExecutorTest, AcceptsInjectedConditionResolverInterface) {
+  const auto lowered = gcode::parseAndLowerAil("IF R1 == 1 GOTOF TARGET\n");
+  gcode::AilExecutor exec(lowered.instructions);
+  StubConditionResolver resolver(
+      [](const gcode::Condition &, const gcode::SourceInfo &) {
+        gcode::ConditionResolution r;
+        r.kind = gcode::ConditionResolutionKind::False;
+        return r;
+      });
+
+  ASSERT_TRUE(exec.step(0, resolver));
+  ASSERT_TRUE(exec.step(0, resolver));
   EXPECT_EQ(exec.state().status, gcode::ExecutorStatus::Completed);
 }
 

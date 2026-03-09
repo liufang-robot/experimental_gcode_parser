@@ -1069,10 +1069,10 @@ AilExecutor::resolveGotoTarget(size_t current_index,
 }
 
 bool AilExecutor::evaluateBranchAtPc(int64_t now_ms,
-                                     const ConditionResolver &resolver) {
+                                     const IConditionResolver &resolver) {
   const auto &branch =
       std::get<AilBranchIfInstruction>(instructions_[state_.pc]);
-  const auto resolved = resolver(branch.condition, branch.source);
+  const auto resolved = resolver.resolve(branch.condition, branch.source);
   if (resolved.kind == ConditionResolutionKind::Pending) {
     state_.status = ExecutorStatus::BlockedOnCondition;
     ExecutorBlockedState blocked;
@@ -1246,7 +1246,7 @@ bool AilExecutor::handleToolChangeAtPc() {
 }
 
 bool AilExecutor::advanceOneInstruction(int64_t now_ms,
-                                        const ConditionResolver &resolver) {
+                                        const IConditionResolver &resolver) {
   if (state_.pc >= instructions_.size()) {
     state_.status = ExecutorStatus::Completed;
     return true;
@@ -1369,6 +1369,11 @@ bool AilExecutor::advanceOneInstruction(int64_t now_ms,
 }
 
 bool AilExecutor::step(int64_t now_ms, const ConditionResolver &resolver) {
+  FunctionConditionResolver adapter(resolver);
+  return step(now_ms, adapter);
+}
+
+bool AilExecutor::step(int64_t now_ms, const IConditionResolver &resolver) {
   if (state_.status == ExecutorStatus::Fault ||
       state_.status == ExecutorStatus::Completed) {
     return false;
