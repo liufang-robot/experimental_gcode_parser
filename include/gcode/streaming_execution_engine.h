@@ -48,8 +48,6 @@ private:
   void
   remapRejectedLines(std::vector<MessageResult::RejectedLine> *rejected_lines,
                      int line) const;
-  EffectiveModalState
-  makeEffectiveModalState(const std::string &motion_code) const;
 
   IExecutionSink &sink_;
   IRuntime &runtime_;
