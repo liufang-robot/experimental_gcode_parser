@@ -10,6 +10,9 @@
 - Added `FunctionExecutionRuntime` so the combined runtime can be assembled
   from lambdas/callables instead of requiring a bespoke class for every test
   or small embedding.
+- Added a matching `StreamingExecutionEngine` constructor overload for
+  `IExecutionRuntime&`, so both execution surfaces accept the same combined
+  runtime object shape.
 - Added executor/public-header coverage for the new combined interface and
   updated SPEC wording for the shared runtime contract.
 
