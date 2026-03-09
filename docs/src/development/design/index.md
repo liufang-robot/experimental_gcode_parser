@@ -15,6 +15,7 @@ Pages in this section are split by topic for easier review:
 - Siemens modal Group 7 tool-radius compensation
 - Siemens working-plane modal semantics (Group 6)
 - Siemens M-code model and execution boundaries
+- system-variable selector and runtime evaluation model
 - rapid traverse model (`G0`, `RTLION`, `RTLIOF`)
 - incremental parse session API
 - work-offset model (Group 8 + suppression commands)

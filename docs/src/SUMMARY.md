@@ -12,6 +12,7 @@
     - [Development: Group 7 Architecture](development/design/group7_architecture.md)
     - [Development: Working-Plane Architecture](development/design/working_plane_architecture.md)
     - [Development: M-Code Architecture](development/design/mcode_architecture.md)
+    - [Development: System-Variable Architecture](development/design/system_variable_architecture.md)
     - [Development: Rapid Traverse Architecture](development/design/rapid_traverse_architecture.md)
     - [Development: Incremental Session](development/design/incremental_session.md)
     - [Development: Work-Offset Architecture](development/design/work_offset_architecture.md)

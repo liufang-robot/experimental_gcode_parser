@@ -1,5 +1,21 @@
 #CHANGELOG_AGENT
 
+## 2026-03-09 (T-048 architecture: system-variable selector model)
+- Added a dedicated development design note for structured system-variable
+  selectors, runtime variable resolution, and policy boundaries.
+- Wired the new note into the mdBook development architecture section.
+
+SPEC sections / tests:
+- SPEC: none (architecture-only note)
+- Tests: none (documentation-only slice)
+
+Known limitations:
+- No parser/runtime behavior changed in this slice; selector-style system
+  variables remain unimplemented beyond the documented baseline.
+
+How to reproduce locally (commands):
+- `./dev/check.sh`
+
 ## 2026-03-08 (T-048 slice 5: lock system-variable condition resolver baseline)
 - Added executor coverage showing simple system-variable-backed branch
   conditions use the normal runtime resolver contract for `pending` and
