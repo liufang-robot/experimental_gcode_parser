@@ -14,15 +14,107 @@
 #include "gcode/messages.h"
 #include "gcode/policy_types.h"
 #include "gcode/runtime_status.h"
-#include "gcode/subprogram_policy.h"
-#include "gcode/tool_policy.h"
 
 namespace gcode {
-class ToolPolicy;
 enum class RapidInterpolationMode { Linear, NonLinear };
 enum class ToolRadiusCompMode { Off, Left, Right };
 enum class WorkingPlane { XY, ZX, YZ };
 enum class ToolActionTiming { Immediate, DeferredUntilM6 };
+
+struct ToolSelectionState {
+  std::optional<int64_t> selector_index;
+  std::string selector_value;
+};
+
+enum class ToolSelectionResolutionKind { Resolved, Unresolved, Ambiguous };
+
+struct ToolSelectionResolution {
+  ToolSelectionResolutionKind kind = ToolSelectionResolutionKind::Resolved;
+  ToolSelectionState selection;
+  bool substituted = false;
+  std::string message;
+};
+
+class ToolPolicy {
+public:
+  virtual ~ToolPolicy() = default;
+
+  virtual ToolSelectionResolution
+  resolveSelection(const ToolSelectionState &selection) const = 0;
+  virtual ErrorPolicy unresolvedPolicy() const = 0;
+  virtual ErrorPolicy ambiguousPolicy() const = 0;
+};
+
+struct ToolPolicyOptions {
+  bool allow_substitution = false;
+  ErrorPolicy on_unresolved_tool = ErrorPolicy::Error;
+  ErrorPolicy on_ambiguous_tool = ErrorPolicy::Error;
+  std::optional<ToolSelectionState> fallback_selection;
+  std::unordered_map<std::string, std::string> substitution_map;
+};
+
+class DefaultToolPolicy final : public ToolPolicy {
+public:
+  explicit DefaultToolPolicy(ToolPolicyOptions options = {})
+      : options_(std::move(options)) {}
+
+  ToolSelectionResolution
+  resolveSelection(const ToolSelectionState &selection) const override;
+  ErrorPolicy unresolvedPolicy() const override {
+    return options_.on_unresolved_tool;
+  }
+  ErrorPolicy ambiguousPolicy() const override {
+    return options_.on_ambiguous_tool;
+  }
+
+private:
+  ToolPolicyOptions options_;
+};
+
+enum class SubprogramSearchPolicy { ExactOnly, ExactThenBareName };
+
+struct SubprogramResolution {
+  bool resolved = false;
+  std::string resolved_target;
+  bool fallback_used = false;
+  std::string message;
+};
+
+class SubprogramPolicy {
+public:
+  virtual ~SubprogramPolicy() = default;
+
+  virtual SubprogramResolution
+  resolveTarget(const std::string &requested_target,
+                const std::unordered_map<std::string, std::vector<size_t>>
+                    &label_positions) const = 0;
+
+  virtual ErrorPolicy unresolvedPolicy() const = 0;
+};
+
+struct SubprogramPolicyOptions {
+  SubprogramSearchPolicy search_policy = SubprogramSearchPolicy::ExactOnly;
+  ErrorPolicy on_unresolved_target = ErrorPolicy::Error;
+  std::unordered_map<std::string, std::string> alias_map;
+};
+
+class DefaultSubprogramPolicy final : public SubprogramPolicy {
+public:
+  explicit DefaultSubprogramPolicy(SubprogramPolicyOptions options = {})
+      : options_(options) {}
+
+  SubprogramResolution
+  resolveTarget(const std::string &requested_target,
+                const std::unordered_map<std::string, std::vector<size_t>>
+                    &label_positions) const override;
+
+  ErrorPolicy unresolvedPolicy() const override {
+    return options_.on_unresolved_target;
+  }
+
+private:
+  SubprogramPolicyOptions options_;
+};
 
 struct AilLinearMoveInstruction {
   SourceInfo source;
