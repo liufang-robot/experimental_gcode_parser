@@ -14,13 +14,21 @@ Version scope:
 
 ## Output Access
 
-Implemented API paths:
+Implemented compatibility API paths:
 - intermediate IR: `parseAndLowerAil(...)` returns `AilResult`
 - packet stage: `parseLowerAndPacketize(...)` returns `PacketResult`
 - batch output: `parseAndLower(...)` returns `MessageResult`
 - streaming output: `parseAndLowerStream(...)` /
   `parseAndLowerFileStream(...)` emit callbacks for messages, diagnostics, and
   rejected lines
+
+Planned primary execution API:
+- `StreamingExecutionEngine` with injected execution sink, runtime, and
+  cancellation interfaces
+
+Current limitation:
+- callback streaming is still whole-input parse followed by callback delivery,
+  not true line-by-line execution
 
 ## Modal Metadata
 
@@ -98,11 +106,15 @@ Syntax:
 - Case-insensitive words (`g1`, `x`, etc. accepted).
 
 Lowering output:
-- `G1Message`
-  - `source`: filename/line/line_number
-  - `modal`: `group=GGroup1`, `code=G1`, `updates_state=true`
-  - `target_pose`: optional `x/y/z/a/b/c`
-  - `feed`: optional `F`
+- compatibility surfaces:
+  - `G1Message`
+    - `source`: filename/line/line_number
+    - `modal`: `group=GGroup1`, `code=G1`, `updates_state=true`
+    - `target_pose`: optional `x/y/z/a/b/c`
+    - `feed`: optional `F`
+- planned streaming execution surfaces:
+  - normalized linear-move command passed first to execution sink, then to
+    runtime line execution interface
 
 Diagnostics:
 - Error when mixing Cartesian (`X/Y/Z/A`) and polar (`AP/RP`) in same `G1`

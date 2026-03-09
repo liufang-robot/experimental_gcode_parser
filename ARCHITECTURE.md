@@ -16,20 +16,28 @@ configuration-driven runtime semantics.
 ## 3. High-Level Pipeline
 ```mermaid
 flowchart LR
-  A[NC Text] --> B[Parser<br/>grammar + AST]
-  B --> C[Semantic Normalizer<br/>canonical statements]
-  C --> D[Modal/Context Engine<br/>group states + validation]
-  D --> E[AIL Lowering<br/>deterministic executable IR]
-  E --> F[AilExecutor<br/>runtime execution]
-  E --> G[Message/Packet Output]
+  A[NC Text Chunks] --> B[StreamingExecutionEngine]
+  B --> C[Line Assembly]
+  C --> D[Parser<br/>grammar + AST]
+  D --> E[Semantic Normalizer<br/>canonical statements]
+  E --> F[Modal/Context Engine<br/>group states + validation]
+  F --> G[AIL Lowering<br/>deterministic executable IR]
+  G --> H[IExecutionSink / IRuntime]
+  H --> I[Blocked / Resume / Cancel]
+  G --> J[Legacy Message/Packet Output]
   A --> PS[ParseSession<br/>line edits + resume]
-  PS --> B
-  PS --> C
-  H[MachineProfile + Policies] --> C
-  H --> D
-  H --> E
-  H --> F
+  PS --> D
+  PS --> E
+  K[MachineProfile + Policies] --> E
+  K --> F
+  K --> G
+  K --> H
 ```
+
+Streaming-first direction:
+- the primary execution surface is a stateful streaming engine
+- batch parse/lower APIs remain transitional compatibility surfaces
+- runtime work must cross injected interfaces, not direct global bindings
 
 ## 4. Code Organization (Target)
 ```mermaid
@@ -56,15 +64,18 @@ flowchart TB
   end
 
   subgraph runtime["Runtime Layer"]
-    EX["AilExecutor"]
+    SE["StreamingExecutionEngine"]
+    RI["Runtime / Sink Interfaces"]
+    EX["AilExecutor (compatibility path)"]
     PL["Policy Interfaces"]
   end
 
-  G4 --> GP --> AST --> SN --> ME --> AL --> EX
+  G4 --> GP --> AST --> SN --> ME --> AL --> SE
   SR --> SN
   MR --> ME
   AL --> AJ
-  PL --> EX
+  PL --> SE
+  RI --> SE
 ```
 
 ## 5. Config and Policy Model
@@ -156,8 +167,20 @@ stateDiagram-v2
   - resolve meaning under `MachineProfile`
   - enforce modal/conflict policies
 - Runtime layer:
-  - executes AIL with policy hooks
+  - executes lowered line/AIL results with injected policy/runtime hooks
   - applies machine-specific actions (tool/mcode behavior)
+
+### 7.0 Streaming Execution Boundary
+- streaming engine owns:
+  - chunk intake
+  - logical-line assembly
+  - sequencing
+  - blocked/resume/cancel state
+- runtime interfaces own:
+  - machine-visible side effects
+  - slow/blocking operations such as motion submission and variable reads
+- sink interfaces own:
+  - deterministic emitted event visibility for tests/integration
 
 ### 7.1 Instruction-First Execution Contract
 - Any machine-visible action must exist as an explicit executable instruction in
@@ -174,10 +197,12 @@ stateDiagram-v2
   - core `G1/G2/G3/G4` flow
   - control flow core (`goto`, `if_goto`, structured `if/else/endif` lowering)
   - line-number targeting runtime
+  - architecture contract for future line-by-line streaming execution
 - Partial:
   - `G0` rapid semantics
   - M-code semantics
   - comment compatibility extensions
+  - current callback streaming path still parses the entire input first
 - Detailed exact-stop/continuous-path architecture note:
   - [docs/src/design/exactstop_contpath_architecture.md](/home/liufang/optcnc/gcode/docs/src/design/exactstop_contpath_architecture.md)
 - Detailed M-code architecture note:

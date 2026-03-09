@@ -14,6 +14,7 @@
     - [Development: M-Code Architecture](development/design/mcode_architecture.md)
     - [Development: System-Variable Architecture](development/design/system_variable_architecture.md)
     - [Development: Rapid Traverse Architecture](development/design/rapid_traverse_architecture.md)
+    - [Development: Streaming Execution Architecture](development/design/streaming_execution_architecture.md)
     - [Development: Incremental Session](development/design/incremental_session.md)
     - [Development: Work-Offset Architecture](development/design/work_offset_architecture.md)
     - [Development: Dimensions Architecture](development/design/dimensions_architecture.md)

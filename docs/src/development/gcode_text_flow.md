@@ -1,24 +1,36 @@
 # G-code Text Flow
 
 This page explains the end-to-end path of input G-code text through the current
-library implementation.
+library implementation and the planned streaming-first execution direction.
 
 ## End-to-End Flow
 
 ```mermaid
 flowchart LR
-  A[G-code text] --> B[Parser]
-  B --> C[AST + syntax diagnostics]
-  C --> D[Semantic rules]
-  D --> E[Normalized parse result + semantic diagnostics]
-  E --> F[AIL lowering]
-  F --> G[AIL instructions]
-  G --> H[AilExecutor]
-  G --> I[Packetization]
-  E --> J[Message lowering]
+  A[G-code text chunks] --> B[StreamingExecutionEngine]
+  B --> C[Line assembly]
+  C --> D[Parser]
+  D --> E[AST + syntax diagnostics]
+  E --> F[Semantic rules]
+  F --> G[Normalized line result + semantic diagnostics]
+  G --> H[AIL lowering]
+  H --> I[Execution sink]
+  H --> J[Runtime]
+  J --> K[Blocked / resume / cancel]
+  H --> L[Packetization / legacy message output]
 ```
 
-## Step 1: Parse Input Text
+## Step 1: Accept Input Chunks
+
+Planned primary runtime path:
+- input arrives in arbitrary chunks
+- engine buffers text until a complete logical line is available
+- only complete lines are eligible for parse/lower/execute
+
+Current limitation:
+- current callback streaming API still parses whole input text first
+
+## Step 2: Parse Input Text
 
 Main code:
 - `grammar/GCode.g4`
@@ -34,7 +46,7 @@ Outputs:
 - AST-like parse structures
 - syntax diagnostics with line and column
 
-## Step 2: Run Semantic Rules
+## Step 3: Run Semantic Rules
 
 Main code:
 - `src/semantic_rules.cpp`
@@ -52,7 +64,7 @@ Examples:
 Outputs:
 - parse result plus semantic diagnostics
 
-## Step 3: Lower to AIL
+## Step 4: Lower to AIL
 
 Main code:
 - `src/ail.cpp`
@@ -62,6 +74,10 @@ What happens:
 - AIL is the executable intermediate representation for runtime/control-flow
 - non-motion state changes are preserved as explicit instructions, not only as
   text diagnostics
+
+Planned streaming-first direction:
+- line execution may also expose normalized command objects directly to
+  injected sink/runtime interfaces without requiring whole-program buffering
 
 Examples:
 - motion instructions
@@ -74,10 +90,22 @@ Outputs:
 - `result.instructions`
 - lowering diagnostics and warnings
 
-## Step 4: Execute AIL
+## Step 5: Execute Through Injected Interfaces
+
+Planned primary runtime shape:
+- engine emits deterministic execution events through an execution sink
+- engine invokes runtime interfaces for slow or blocking machine work
+- runtime may return immediate completion, pending/blocking, or error
+- no later line executes while the current line is blocked
+
+Examples:
+- `G1` -> normalized linear-move command -> sink event -> runtime submission
+- system variable read -> runtime read request -> ready/pending/error
+
+## Step 6: Execute AIL (Current Compatibility Path)
 
 Main code:
-- `src/ail_executor.cpp`
+- `src/ail.cpp`
 
 What happens:
 - control-flow and stateful instructions are stepped in order
@@ -90,7 +118,7 @@ Outputs:
 - runtime state transitions
 - executor diagnostics
 
-## Step 5: Convert AIL to Packets
+## Step 7: Convert AIL to Packets
 
 Main code:
 - `src/packet.cpp`
@@ -105,7 +133,7 @@ Outputs:
 - packet list
 - packet-stage diagnostics or skip warnings when relevant
 
-## Step 6: Lower to Messages
+## Step 8: Lower to Messages
 
 Main code:
 - `src/messages.cpp`
@@ -122,9 +150,10 @@ Outputs:
 
 Use these modes depending on what you need:
 - parse: syntax and semantic understanding
-- ail: executable intermediate representation
+- streaming engine: planned primary execution surface
+- ail: executable intermediate representation / compatibility inspection path
 - packet: motion packet transport view
-- lower: typed message output view
+- lower: typed message output view for legacy integrations
 
 ## Related Docs
 
