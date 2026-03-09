@@ -1,5 +1,32 @@
 #CHANGELOG_AGENT
 
+## 2026-03-09 (collapse executor policy classes into AilExecutorOptions)
+- Replaced direct public `ToolPolicy` / `SubprogramPolicy` class injection on
+  `AilExecutor` with a single `AilExecutorOptions` contract that carries
+  callback overrides plus built-in config for tool substitution and subprogram
+  alias/search behavior.
+- Removed the remaining standalone internal implementation units for default
+  tool/subprogram policy classes and moved their built-in behavior into the
+  executor path.
+- Updated executor tests and the public-header facade test to use the new
+  options-based API and dropped the old policy classes from the public surface.
+
+SPEC sections / tests:
+- SPEC: Section 6.1
+- Tests: `test/ail_executor_tests.cpp`, `test/public_headers_tests.cpp`,
+  `./dev/check.sh`
+
+Known limitations:
+- `AilExecutorOptions` still exposes a fairly broad callback/config surface;
+  a later cleanup can narrow it further once runtime service boundaries are
+  unified.
+
+How to reproduce locally (commands):
+- `cmake --build build -j --target ail_executor_tests public_headers_tests`
+- `./build/ail_executor_tests`
+- `./build/public_headers_tests`
+- `./dev/check.sh`
+
 ## 2026-03-09 (fold AIL executor policy contracts into the public AIL header)
 - Moved the remaining public executor policy contracts (`ToolPolicy`,
   `SubprogramPolicy`, their option structs, and supporting resolution types)

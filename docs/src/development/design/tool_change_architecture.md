@@ -17,7 +17,8 @@ This design maps PRD Section 5.4.
 - AST/AIL/runtime representation boundaries for tool-select and tool-change
 - machine-configuration model for direct vs deferred mode
 - selection forms for management-off and management-on workflows
-- policy interfaces for tool resolution/substitution and error behavior
+- resolver callbacks / policy configuration for tool resolution,
+  substitution, and error behavior
 - staged implementation plan and test matrix
 
 Out of scope:
@@ -33,7 +34,7 @@ flowchart LR
   C --> D[AilExecutor]
   D --> E[Runtime tool events]
 
-  P[MachineProfile + ToolPolicy] --> B
+  P[MachineProfile + Tool policy config] --> B
   P --> D
 ```
 
@@ -45,7 +46,8 @@ flowchart LR
   - includes timing (`immediate` or `deferred_until_m6`) metadata
 - Executor:
   - tracks pending selection state
-  - resolves selection/substitution via policy and commits active tool state
+  - resolves selection/substitution via executor config/callbacks and commits
+    active tool state
 
 ## Instruction Contract
 
