@@ -5,6 +5,7 @@
 #include <vector>
 
 #include "ail.h"
+#include "runtime_status.h"
 
 namespace gcode {
 
@@ -63,24 +64,6 @@ struct DwellCommand {
 struct RejectedLineEvent {
   SourceRef source;
   std::vector<Diagnostic> reasons;
-};
-
-struct WaitToken {
-  std::string kind;
-  std::string id;
-
-  bool operator==(const WaitToken &other) const {
-    return kind == other.kind && id == other.id;
-  }
-};
-
-enum class RuntimeCallStatus { Ready, Pending, Error };
-
-template <typename T> struct RuntimeResult {
-  RuntimeCallStatus status = RuntimeCallStatus::Error;
-  std::optional<T> value;
-  std::optional<WaitToken> wait_token;
-  std::string error_message;
 };
 
 enum class EngineState {

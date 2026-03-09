@@ -165,7 +165,7 @@ TEST(AilExecutorTest, BranchCanBlockAndResumeOnEvent) {
     ++calls;
     if (calls == 1) {
       r.kind = gcode::ConditionResolutionKind::Pending;
-      r.wait_key = "sensor_ready";
+      r.wait_token = gcode::WaitToken{"condition", "sensor_ready"};
       r.retry_at_ms = 100;
       return r;
     }
@@ -179,7 +179,7 @@ TEST(AilExecutorTest, BranchCanBlockAndResumeOnEvent) {
   EXPECT_FALSE(exec.step(10, resolver));
   EXPECT_EQ(exec.state().status, gcode::ExecutorStatus::BlockedOnCondition);
 
-  exec.notifyEvent("sensor_ready");
+  exec.notifyEvent(gcode::WaitToken{"condition", "sensor_ready"});
   ASSERT_TRUE(exec.step(10, resolver));
   EXPECT_EQ(exec.state().status, gcode::ExecutorStatus::Ready);
 }
@@ -205,7 +205,7 @@ TEST(AilExecutorTest, SystemVariableConditionCanBlockAndResumeOnEvent) {
     EXPECT_EQ(lhs->name, "$P_ACT_X");
     if (calls == 1) {
       r.kind = gcode::ConditionResolutionKind::Pending;
-      r.wait_key = "sysvar_ready";
+      r.wait_token = gcode::WaitToken{"condition", "sysvar_ready"};
       r.retry_at_ms = 100;
       return r;
     }
@@ -219,7 +219,7 @@ TEST(AilExecutorTest, SystemVariableConditionCanBlockAndResumeOnEvent) {
   EXPECT_FALSE(exec.step(10, resolver));
   EXPECT_EQ(exec.state().status, gcode::ExecutorStatus::BlockedOnCondition);
 
-  exec.notifyEvent("sysvar_ready");
+  exec.notifyEvent(gcode::WaitToken{"condition", "sysvar_ready"});
   ASSERT_TRUE(exec.step(10, resolver));
   EXPECT_EQ(exec.state().status, gcode::ExecutorStatus::Ready);
 }

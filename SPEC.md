@@ -606,7 +606,7 @@ N130 G01 X20 Y20
   - exactly one branch body executes at runtime
 - Runtime executor API evaluates `branch_if` conditions via callback contract:
   - callback result states: `true`, `false`, `pending`, `error`
-  - `pending` may include `wait_key` and `retry_at` metadata
+  - `pending` may include `wait_token` and `retry_at` metadata
   - this contract applies equally to simple system-variable-backed conditions
     such as `IF $P_ACT_X == 1 ...`
 - Streaming execution contract:
@@ -639,7 +639,7 @@ N130 G01 X20 Y20
   - `faulted`
 - Branch wait/retry behavior:
   - on `pending`, executor blocks at the branch instruction
-  - resume on matching event (`wait_key`) or retry deadline
+  - resume on matching event (`wait_token`) or retry deadline
 - Target-resolution behavior (v0):
   - `GOTOF`: forward-only lookup
   - `GOTOB`: backward-only lookup
