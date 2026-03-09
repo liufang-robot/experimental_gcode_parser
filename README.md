@@ -221,6 +221,8 @@ Header boundary direction:
   `include/gcode/`
 - prefer folding tiny leaked support types into the owning public header rather
   than creating one-header-per-type public includes
+- if only shared enums leak through public APIs, prefer a narrow public enum
+  header over promoting the whole internal support header
 
 ## Contribution Notes
 

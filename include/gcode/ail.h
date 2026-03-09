@@ -11,8 +11,8 @@
 #include <vector>
 
 #include "gcode/condition_runtime.h"
-#include "gcode/machine_profile.h"
 #include "gcode/messages.h"
+#include "gcode/policy_types.h"
 #include "gcode/runtime_status.h"
 #include "gcode/subprogram_policy.h"
 #include "gcode/tool_policy.h"

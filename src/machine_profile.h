@@ -4,22 +4,13 @@
 #include <utility>
 #include <vector>
 
+#include "gcode/policy_types.h"
+
 namespace gcode {
 
 enum class ControllerKind {
   Generic = 0,
   Siemens840D,
-};
-
-enum class ToolChangeMode {
-  DirectT = 0,
-  DeferredM6,
-};
-
-enum class ErrorPolicy {
-  Error = 0,
-  Warning,
-  Ignore,
 };
 
 class RangeSet {
