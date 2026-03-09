@@ -1,5 +1,27 @@
 #CHANGELOG_AGENT
 
+## 2026-03-09 (executor resolver interface injection)
+- Added `IConditionResolver` for `AilExecutor` so branch/condition evaluation
+  can use an injected interface instead of only a raw `std::function`.
+- Kept the existing function/lambda-based `step(...)` entry point as a
+  compatibility adapter onto the same interface-driven path.
+- Added executor regression coverage proving the interface-based resolver path
+  works and updated SPEC/program-reference wording.
+
+SPEC sections / tests:
+- SPEC: Section 6.1
+- Tests: `test/ail_executor_tests.cpp`, `./dev/check.sh`
+
+Known limitations:
+- This change makes the executor interface-injection-friendly, but condition
+  evaluation is still separate from `IRuntime`; a later slice is still needed
+  if we want one fully unified runtime service surface.
+
+How to reproduce locally (commands):
+- `cmake --build build -j --target ail_executor_tests`
+- `./build/ail_executor_tests`
+- `./dev/check.sh`
+
 ## 2026-03-09 (shared wait-token contract for executor and streaming runtime)
 - Extracted `WaitToken` and `RuntimeResult<T>` into `src/runtime_status.h` so
   the AIL executor and streaming runtime path use the same pending/error/wait

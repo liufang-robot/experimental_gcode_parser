@@ -300,8 +300,9 @@ Implemented behavior:
 - Target kinds:
   - label, `N` line-number, numeric line-number, system-variable token target
 - `AilExecutor` branch resolver contract:
-  - callback returns `true`, `false`, `pending`, or `error`
+  - injected resolver interface returns `true`, `false`, `pending`, or `error`
   - `pending` supports `wait_token` and retry timestamp
+  - lambda/function overload remains as a compatibility adapter
 - Structured `IF/ELSE/ENDIF` lowering:
   - lowered to `branch_if` + internal labels + gotos (Lua-style chunk lowering)
 

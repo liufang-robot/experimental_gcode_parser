@@ -604,11 +604,14 @@ N130 G01 X20 Y20
   - entry `branch_if` chooses `then_label` vs `else_label`/`end_label`
   - `then` body ends with `goto end_label` when `ELSE` exists
   - exactly one branch body executes at runtime
-- Runtime executor API evaluates `branch_if` conditions via callback contract:
-  - callback result states: `true`, `false`, `pending`, `error`
+- Runtime executor API evaluates `branch_if` conditions via injected resolver
+  interface:
+  - resolver result states: `true`, `false`, `pending`, `error`
   - `pending` may include `wait_token` and `retry_at` metadata
   - this contract applies equally to simple system-variable-backed conditions
     such as `IF $P_ACT_X == 1 ...`
+  - compatibility overloads may still accept function/lambda resolvers, but
+    they adapt into the same interface contract
 - Streaming execution contract:
   - execution is driven by an injected runtime interface rather than direct
     global or static machine calls
