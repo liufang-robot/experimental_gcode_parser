@@ -6,6 +6,7 @@
 #include "gcode/condition_runtime.h"
 #include "gcode/execution_commands.h"
 #include "gcode/execution_interfaces.h"
+#include "gcode/execution_runtime.h"
 #include "gcode/gcode_parser.h"
 #include "gcode/message_diff.h"
 #include "gcode/messages.h"
@@ -23,6 +24,7 @@ TEST(PublicHeadersTest, PublicFacadeHeadersCompileAndExposeKeyTypes) {
   static_assert(std::is_class_v<gcode::StreamingExecutionEngine>);
   static_assert(std::is_class_v<gcode::IExecutionSink>);
   static_assert(std::is_class_v<gcode::IRuntime>);
+  static_assert(std::is_class_v<gcode::IExecutionRuntime>);
   static_assert(std::is_class_v<gcode::IConditionResolver>);
   static_assert(std::is_class_v<gcode::WaitToken>);
   static_assert(std::is_class_v<gcode::AilExecutorOptions>);

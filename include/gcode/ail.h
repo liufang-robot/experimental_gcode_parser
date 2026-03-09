@@ -17,6 +17,7 @@
 #include "gcode/runtime_status.h"
 
 namespace gcode {
+class IExecutionRuntime;
 enum class RapidInterpolationMode { Linear, NonLinear };
 enum class ToolRadiusCompMode { Off, Left, Right };
 enum class WorkingPlane { XY, ZX, YZ };
@@ -220,6 +221,7 @@ public:
   const std::vector<Diagnostic> &diagnostics() const { return diagnostics_; }
 
   void notifyEvent(const WaitToken &wait_token);
+  bool step(int64_t now_ms, const IExecutionRuntime &runtime);
   bool step(int64_t now_ms, const IConditionResolver &resolver);
   bool step(int64_t now_ms, const ConditionResolver &resolver);
 

@@ -564,6 +564,10 @@ N130 G01 X20 Y20
   - Support explicit `blocked`, `resumed`, `cancelled`, `faulted`, and
     `completed` execution states.
   - Use injected interfaces rather than hardcoded machine/runtime calls.
+  - Shared runtime-facing execution contracts now include:
+    - `IRuntime` for motion / dwell / variable-read operations
+    - `IExecutionRuntime` when one runtime object also provides
+      condition-evaluation services for executor-style paths
   - Current implementation coverage is limited to motion/dwell lines
     (`G0/G1/G2/G3/G4`) plus line-level diagnostics/rejection handling.
 - JSON schema notes:
@@ -722,6 +726,17 @@ N130 G01 X20 Y20
     - `error` => fault
     - `warning` => warning diagnostic and continue
     - `ignore` => continue silently
+- Condition/runtime resolver boundary (current):
+  - `AilExecutor` accepts:
+    - function/lambda `ConditionResolver`
+    - `IConditionResolver`
+    - `IExecutionRuntime` when a downstream runtime combines motion/runtime and
+      condition-resolution services
+  - condition evaluation can return:
+    - `true`
+    - `false`
+    - `pending(wait_token[, retry_at_ms])`
+    - `error(message)`
 - Tool runtime boundary (current):
   - `tool_select` / `tool_change` instructions are explicit executable control
     instructions in AIL

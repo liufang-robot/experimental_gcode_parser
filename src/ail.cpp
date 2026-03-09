@@ -9,6 +9,7 @@
 #include <type_traits>
 #include <unordered_map>
 
+#include "gcode/execution_runtime.h"
 #include "gcode/gcode_parser.h"
 
 namespace gcode {
@@ -1465,6 +1466,10 @@ bool AilExecutor::advanceOneInstruction(int64_t now_ms,
 bool AilExecutor::step(int64_t now_ms, const ConditionResolver &resolver) {
   FunctionConditionResolver adapter(resolver);
   return step(now_ms, adapter);
+}
+
+bool AilExecutor::step(int64_t now_ms, const IExecutionRuntime &runtime) {
+  return step(now_ms, static_cast<const IConditionResolver &>(runtime));
 }
 
 bool AilExecutor::step(int64_t now_ms, const IConditionResolver &resolver) {

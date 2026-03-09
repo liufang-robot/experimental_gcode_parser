@@ -7,6 +7,7 @@
 #include "gtest/gtest.h"
 
 #include "gcode/ail.h"
+#include "gcode/execution_runtime.h"
 
 namespace {
 
@@ -22,6 +23,59 @@ public:
   resolve(const gcode::Condition &condition,
           const gcode::SourceInfo &source) const override {
     return resolver_(condition, source);
+  }
+
+private:
+  Resolver resolver_;
+};
+
+class StubExecutionRuntime final : public gcode::IExecutionRuntime {
+public:
+  using Resolver = std::function<gcode::ConditionResolution(
+      const gcode::Condition &, const gcode::SourceInfo &)>;
+
+  explicit StubExecutionRuntime(Resolver resolver)
+      : resolver_(std::move(resolver)) {}
+
+  gcode::ConditionResolution
+  resolve(const gcode::Condition &condition,
+          const gcode::SourceInfo &source) const override {
+    return resolver_(condition, source);
+  }
+
+  gcode::RuntimeResult<gcode::WaitToken>
+  submitLinearMove(const gcode::LinearMoveCommand &) override {
+    gcode::RuntimeResult<gcode::WaitToken> result;
+    result.status = gcode::RuntimeCallStatus::Ready;
+    return result;
+  }
+
+  gcode::RuntimeResult<gcode::WaitToken>
+  submitArcMove(const gcode::ArcMoveCommand &) override {
+    gcode::RuntimeResult<gcode::WaitToken> result;
+    result.status = gcode::RuntimeCallStatus::Ready;
+    return result;
+  }
+
+  gcode::RuntimeResult<gcode::WaitToken>
+  submitDwell(const gcode::DwellCommand &) override {
+    gcode::RuntimeResult<gcode::WaitToken> result;
+    result.status = gcode::RuntimeCallStatus::Ready;
+    return result;
+  }
+
+  gcode::RuntimeResult<double> readSystemVariable(std::string_view) override {
+    gcode::RuntimeResult<double> result;
+    result.status = gcode::RuntimeCallStatus::Error;
+    result.error_message = "not implemented in test runtime";
+    return result;
+  }
+
+  gcode::RuntimeResult<gcode::WaitToken>
+  cancelWait(const gcode::WaitToken &) override {
+    gcode::RuntimeResult<gcode::WaitToken> result;
+    result.status = gcode::RuntimeCallStatus::Ready;
+    return result;
   }
 
 private:
@@ -58,6 +112,21 @@ TEST(AilExecutorTest, AcceptsInjectedConditionResolverInterface) {
 
   ASSERT_TRUE(exec.step(0, resolver));
   ASSERT_TRUE(exec.step(0, resolver));
+  EXPECT_EQ(exec.state().status, gcode::ExecutorStatus::Completed);
+}
+
+TEST(AilExecutorTest, AcceptsInjectedExecutionRuntimeInterface) {
+  const auto lowered = gcode::parseAndLowerAil("IF R1 == 1 GOTOF TARGET\n");
+  gcode::AilExecutor exec(lowered.instructions);
+  StubExecutionRuntime runtime(
+      [](const gcode::Condition &, const gcode::SourceInfo &) {
+        gcode::ConditionResolution r;
+        r.kind = gcode::ConditionResolutionKind::False;
+        return r;
+      });
+
+  ASSERT_TRUE(exec.step(0, runtime));
+  ASSERT_TRUE(exec.step(0, runtime));
   EXPECT_EQ(exec.state().status, gcode::ExecutorStatus::Completed);
 }
 
