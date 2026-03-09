@@ -25,6 +25,7 @@ TEST(PublicHeadersTest, PublicFacadeHeadersCompileAndExposeKeyTypes) {
   static_assert(std::is_class_v<gcode::IExecutionSink>);
   static_assert(std::is_class_v<gcode::IRuntime>);
   static_assert(std::is_class_v<gcode::IExecutionRuntime>);
+  static_assert(std::is_class_v<gcode::FunctionExecutionRuntime>);
   static_assert(std::is_class_v<gcode::IConditionResolver>);
   static_assert(std::is_class_v<gcode::WaitToken>);
   static_assert(std::is_class_v<gcode::AilExecutorOptions>);
