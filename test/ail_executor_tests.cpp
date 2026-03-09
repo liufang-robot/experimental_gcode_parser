@@ -8,8 +8,6 @@
 #include "gtest/gtest.h"
 
 #include "gcode/ail.h"
-#include "gcode/subprogram_policy.h"
-#include "gcode/tool_policy.h"
 
 namespace {
 

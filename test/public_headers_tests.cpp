@@ -14,8 +14,6 @@
 #include "gcode/runtime_status.h"
 #include "gcode/session.h"
 #include "gcode/streaming_execution_engine.h"
-#include "gcode/subprogram_policy.h"
-#include "gcode/tool_policy.h"
 
 TEST(PublicHeadersTest, PublicFacadeHeadersCompileAndExposeKeyTypes) {
   static_assert(std::is_class_v<gcode::ParseResult>);

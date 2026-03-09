@@ -1,5 +1,31 @@
 #CHANGELOG_AGENT
 
+## 2026-03-09 (fold AIL executor policy contracts into the public AIL header)
+- Moved the remaining public executor policy contracts (`ToolPolicy`,
+  `SubprogramPolicy`, their option structs, and supporting resolution types)
+  into `include/gcode/ail.h` and removed the standalone public
+  `tool_policy.h` and `subprogram_policy.h` headers.
+- Updated implementation and tests to consume those policy types from the
+  single public AIL entry point instead of separate policy headers.
+- Kept behavior unchanged while shrinking the public header surface and making
+  `ail.h` the single include point for executor/policy-facing APIs.
+
+SPEC sections / tests:
+- SPEC: no behavior change; public API packaging/refactor only
+- Tests: `test/public_headers_tests.cpp`, `test/ail_executor_tests.cpp`,
+  `./dev/check.sh`
+
+Known limitations:
+- `include/gcode/ail.h` still exposes policy contracts directly; a later API
+  cleanup may further narrow that public surface if executor construction is
+  simplified.
+
+How to reproduce locally (commands):
+- `cmake --build build -j --target public_headers_tests ail_executor_tests`
+- `./build/public_headers_tests`
+- `./build/ail_executor_tests`
+- `./dev/check.sh`
+
 ## 2026-03-09 (public header facade under include/gcode)
 - Added `include/gcode/` as the explicit public header surface and moved the
   current library-facing declarations there.

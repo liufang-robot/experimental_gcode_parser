@@ -10,8 +10,6 @@
 #include <unordered_map>
 
 #include "gcode/gcode_parser.h"
-#include "gcode/subprogram_policy.h"
-#include "gcode/tool_policy.h"
 
 namespace gcode {
 namespace {
