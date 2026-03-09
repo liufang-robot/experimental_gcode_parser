@@ -15,96 +15,12 @@ SourceRef toSourceRef(const SourceInfo &source) {
   return ref;
 }
 
-LinearMoveCommand toLinearMoveCommand(const G0Message &msg) {
-  LinearMoveCommand cmd;
-  cmd.source = toSourceRef(msg.source);
-  cmd.opcode = msg.modal.code;
-  cmd.x = msg.target_pose.x;
-  cmd.y = msg.target_pose.y;
-  cmd.z = msg.target_pose.z;
-  cmd.a = msg.target_pose.a;
-  cmd.b = msg.target_pose.b;
-  cmd.c = msg.target_pose.c;
-  cmd.feed = msg.feed;
-  cmd.modal = msg.modal;
-  return cmd;
-}
-
-LinearMoveCommand toLinearMoveCommand(const G1Message &msg) {
-  LinearMoveCommand cmd;
-  cmd.source = toSourceRef(msg.source);
-  cmd.opcode = msg.modal.code;
-  cmd.x = msg.target_pose.x;
-  cmd.y = msg.target_pose.y;
-  cmd.z = msg.target_pose.z;
-  cmd.a = msg.target_pose.a;
-  cmd.b = msg.target_pose.b;
-  cmd.c = msg.target_pose.c;
-  cmd.feed = msg.feed;
-  cmd.modal = msg.modal;
-  return cmd;
-}
-
-ArcMoveCommand toArcMoveCommand(const G2Message &msg) {
-  ArcMoveCommand cmd;
-  cmd.source = toSourceRef(msg.source);
-  cmd.opcode = msg.modal.code;
-  cmd.clockwise = true;
-  cmd.x = msg.target_pose.x;
-  cmd.y = msg.target_pose.y;
-  cmd.z = msg.target_pose.z;
-  cmd.a = msg.target_pose.a;
-  cmd.b = msg.target_pose.b;
-  cmd.c = msg.target_pose.c;
-  cmd.arc = msg.arc;
-  cmd.feed = msg.feed;
-  cmd.modal = msg.modal;
-  return cmd;
-}
-
-ArcMoveCommand toArcMoveCommand(const G3Message &msg) {
-  ArcMoveCommand cmd;
-  cmd.source = toSourceRef(msg.source);
-  cmd.opcode = msg.modal.code;
-  cmd.clockwise = false;
-  cmd.x = msg.target_pose.x;
-  cmd.y = msg.target_pose.y;
-  cmd.z = msg.target_pose.z;
-  cmd.a = msg.target_pose.a;
-  cmd.b = msg.target_pose.b;
-  cmd.c = msg.target_pose.c;
-  cmd.arc = msg.arc;
-  cmd.feed = msg.feed;
-  cmd.modal = msg.modal;
-  return cmd;
-}
-
-DwellCommand toDwellCommand(const G4Message &msg) {
-  DwellCommand cmd;
-  cmd.source = toSourceRef(msg.source);
-  cmd.dwell_mode = msg.dwell_mode;
-  cmd.dwell_value = msg.dwell_value;
-  cmd.modal = msg.modal;
-  return cmd;
-}
-
 Diagnostic makeFaultDiagnostic(int line, const std::string &message) {
   Diagnostic diag;
   diag.severity = Diagnostic::Severity::Error;
   diag.location = {line, 1};
   diag.message = message;
   return diag;
-}
-
-std::optional<int> gCodeFromWord(const Word &word) {
-  if (word.head != "G" || !word.value.has_value()) {
-    return std::nullopt;
-  }
-  try {
-    return std::stoi(*word.value);
-  } catch (...) {
-    return std::nullopt;
-  }
 }
 
 } // namespace
@@ -238,8 +154,7 @@ StepResult StreamingExecutionEngine::executeNextLine() {
 
   std::string line_text = line.text;
   line_text.push_back('\n');
-  applyStateWords(line_text);
-  MessageResult line_result = parseAndLower(line_text, options_);
+  AilResult line_result = parseAndLowerAil(line_text, options_);
   remapDiagnostics(&line_result.diagnostics, line.line);
   remapRejectedLines(&line_result.rejected_lines, line.line);
   emitDiagnostics(line_result.diagnostics);
@@ -255,7 +170,7 @@ StepResult StreamingExecutionEngine::executeNextLine() {
     Diagnostic diag = makeFaultDiagnostic(line.line, "line rejected");
     return faultWithDiagnostic(diag);
   }
-  if (line_result.messages.empty()) {
+  if (line_result.instructions.empty()) {
     state_ = pending_lines_.empty() && input_finished_
                  ? EngineState::Completed
                  : EngineState::ReadyToExecute;
@@ -269,86 +184,10 @@ StepResult StreamingExecutionEngine::executeNextLine() {
     return step_result;
   }
 
-  const ParsedMessage &message = line_result.messages.front();
-  if (std::holds_alternative<G0Message>(message)) {
-    LinearMoveCommand cmd = toLinearMoveCommand(std::get<G0Message>(message));
-    cmd.source.line = line.line;
-    cmd.effective = makeEffectiveModalState(cmd.opcode);
-    sink_.onLinearMove(cmd);
-    const auto runtime_result = runtime_.submitLinearMove(cmd);
-    if (runtime_result.status == RuntimeCallStatus::Pending &&
-        runtime_result.wait_token.has_value()) {
-      return makeBlockedResult(cmd.source.line, *runtime_result.wait_token,
-                               "linear move in progress");
-    }
-    if (runtime_result.status == RuntimeCallStatus::Error) {
-      Diagnostic diag =
-          makeFaultDiagnostic(cmd.source.line, runtime_result.error_message);
-      return faultWithDiagnostic(diag);
-    }
-  } else if (std::holds_alternative<G1Message>(message)) {
-    LinearMoveCommand cmd = toLinearMoveCommand(std::get<G1Message>(message));
-    cmd.source.line = line.line;
-    cmd.effective = makeEffectiveModalState(cmd.opcode);
-    sink_.onLinearMove(cmd);
-    const auto runtime_result = runtime_.submitLinearMove(cmd);
-    if (runtime_result.status == RuntimeCallStatus::Pending &&
-        runtime_result.wait_token.has_value()) {
-      return makeBlockedResult(cmd.source.line, *runtime_result.wait_token,
-                               "linear move in progress");
-    }
-    if (runtime_result.status == RuntimeCallStatus::Error) {
-      Diagnostic diag =
-          makeFaultDiagnostic(cmd.source.line, runtime_result.error_message);
-      return faultWithDiagnostic(diag);
-    }
-  } else if (std::holds_alternative<G2Message>(message)) {
-    ArcMoveCommand cmd = toArcMoveCommand(std::get<G2Message>(message));
-    cmd.source.line = line.line;
-    cmd.effective = makeEffectiveModalState(cmd.opcode);
-    sink_.onArcMove(cmd);
-    const auto runtime_result = runtime_.submitArcMove(cmd);
-    if (runtime_result.status == RuntimeCallStatus::Pending &&
-        runtime_result.wait_token.has_value()) {
-      return makeBlockedResult(cmd.source.line, *runtime_result.wait_token,
-                               "arc move in progress");
-    }
-    if (runtime_result.status == RuntimeCallStatus::Error) {
-      Diagnostic diag =
-          makeFaultDiagnostic(cmd.source.line, runtime_result.error_message);
-      return faultWithDiagnostic(diag);
-    }
-  } else if (std::holds_alternative<G3Message>(message)) {
-    ArcMoveCommand cmd = toArcMoveCommand(std::get<G3Message>(message));
-    cmd.source.line = line.line;
-    cmd.effective = makeEffectiveModalState(cmd.opcode);
-    sink_.onArcMove(cmd);
-    const auto runtime_result = runtime_.submitArcMove(cmd);
-    if (runtime_result.status == RuntimeCallStatus::Pending &&
-        runtime_result.wait_token.has_value()) {
-      return makeBlockedResult(cmd.source.line, *runtime_result.wait_token,
-                               "arc move in progress");
-    }
-    if (runtime_result.status == RuntimeCallStatus::Error) {
-      Diagnostic diag =
-          makeFaultDiagnostic(cmd.source.line, runtime_result.error_message);
-      return faultWithDiagnostic(diag);
-    }
-  } else if (std::holds_alternative<G4Message>(message)) {
-    DwellCommand cmd = toDwellCommand(std::get<G4Message>(message));
-    cmd.source.line = line.line;
-    cmd.effective = makeEffectiveModalState(cmd.modal.code);
-    sink_.onDwell(cmd);
-    const auto runtime_result = runtime_.submitDwell(cmd);
-    if (runtime_result.status == RuntimeCallStatus::Pending &&
-        runtime_result.wait_token.has_value()) {
-      return makeBlockedResult(cmd.source.line, *runtime_result.wait_token,
-                               "dwell in progress");
-    }
-    if (runtime_result.status == RuntimeCallStatus::Error) {
-      Diagnostic diag =
-          makeFaultDiagnostic(cmd.source.line, runtime_result.error_message);
-      return faultWithDiagnostic(diag);
+  for (const auto &instruction : line_result.instructions) {
+    StepResult step_result = executeAilInstruction(instruction, line.line);
+    if (step_result.status != StepStatus::Progress) {
+      return step_result;
     }
   }
 
@@ -363,6 +202,111 @@ StepResult StreamingExecutionEngine::executeNextLine() {
   StepResult step_result;
   step_result.status = StepStatus::Progress;
   return step_result;
+}
+
+StepResult StreamingExecutionEngine::executeAilInstruction(
+    const AilInstruction &instruction, int line) {
+  if (std::holds_alternative<AilRapidTraverseModeInstruction>(instruction)) {
+    current_rapid_mode_ =
+        std::get<AilRapidTraverseModeInstruction>(instruction).mode;
+    StepResult result;
+    result.status = StepStatus::Progress;
+    return result;
+  }
+  if (std::holds_alternative<AilToolRadiusCompInstruction>(instruction)) {
+    current_tool_radius_comp_ =
+        std::get<AilToolRadiusCompInstruction>(instruction).mode;
+    StepResult result;
+    result.status = StepStatus::Progress;
+    return result;
+  }
+  if (std::holds_alternative<AilWorkingPlaneInstruction>(instruction)) {
+    current_working_plane_ =
+        std::get<AilWorkingPlaneInstruction>(instruction).plane;
+    StepResult result;
+    result.status = StepStatus::Progress;
+    return result;
+  }
+  if (std::holds_alternative<AilLinearMoveInstruction>(instruction)) {
+    const auto &inst = std::get<AilLinearMoveInstruction>(instruction);
+    LinearMoveCommand cmd;
+    cmd.source = toSourceRef(inst.source);
+    cmd.source.line = line;
+    cmd.opcode = inst.opcode;
+    cmd.x = inst.target_pose.x;
+    cmd.y = inst.target_pose.y;
+    cmd.z = inst.target_pose.z;
+    cmd.a = inst.target_pose.a;
+    cmd.b = inst.target_pose.b;
+    cmd.c = inst.target_pose.c;
+    cmd.feed = inst.feed;
+    cmd.modal = inst.modal;
+    cmd.effective = makeEffectiveModalState(cmd.opcode);
+    sink_.onLinearMove(cmd);
+    const auto runtime_result = runtime_.submitLinearMove(cmd);
+    if (runtime_result.status == RuntimeCallStatus::Pending &&
+        runtime_result.wait_token.has_value()) {
+      return makeBlockedResult(cmd.source.line, *runtime_result.wait_token,
+                               "linear move in progress");
+    }
+    if (runtime_result.status == RuntimeCallStatus::Error) {
+      return faultWithDiagnostic(
+          makeFaultDiagnostic(cmd.source.line, runtime_result.error_message));
+    }
+  } else if (std::holds_alternative<AilArcMoveInstruction>(instruction)) {
+    const auto &inst = std::get<AilArcMoveInstruction>(instruction);
+    ArcMoveCommand cmd;
+    cmd.source = toSourceRef(inst.source);
+    cmd.source.line = line;
+    cmd.opcode = inst.modal.code;
+    cmd.clockwise = inst.clockwise;
+    cmd.plane_effective = inst.plane_effective;
+    cmd.x = inst.target_pose.x;
+    cmd.y = inst.target_pose.y;
+    cmd.z = inst.target_pose.z;
+    cmd.a = inst.target_pose.a;
+    cmd.b = inst.target_pose.b;
+    cmd.c = inst.target_pose.c;
+    cmd.arc = inst.arc;
+    cmd.feed = inst.feed;
+    cmd.modal = inst.modal;
+    cmd.effective = makeEffectiveModalState(cmd.opcode);
+    sink_.onArcMove(cmd);
+    const auto runtime_result = runtime_.submitArcMove(cmd);
+    if (runtime_result.status == RuntimeCallStatus::Pending &&
+        runtime_result.wait_token.has_value()) {
+      return makeBlockedResult(cmd.source.line, *runtime_result.wait_token,
+                               "arc move in progress");
+    }
+    if (runtime_result.status == RuntimeCallStatus::Error) {
+      return faultWithDiagnostic(
+          makeFaultDiagnostic(cmd.source.line, runtime_result.error_message));
+    }
+  } else if (std::holds_alternative<AilDwellInstruction>(instruction)) {
+    const auto &inst = std::get<AilDwellInstruction>(instruction);
+    DwellCommand cmd;
+    cmd.source = toSourceRef(inst.source);
+    cmd.source.line = line;
+    cmd.dwell_mode = inst.dwell_mode;
+    cmd.dwell_value = inst.dwell_value;
+    cmd.modal = inst.modal;
+    cmd.effective = makeEffectiveModalState(cmd.modal.code);
+    sink_.onDwell(cmd);
+    const auto runtime_result = runtime_.submitDwell(cmd);
+    if (runtime_result.status == RuntimeCallStatus::Pending &&
+        runtime_result.wait_token.has_value()) {
+      return makeBlockedResult(cmd.source.line, *runtime_result.wait_token,
+                               "dwell in progress");
+    }
+    if (runtime_result.status == RuntimeCallStatus::Error) {
+      return faultWithDiagnostic(
+          makeFaultDiagnostic(cmd.source.line, runtime_result.error_message));
+    }
+  }
+
+  StepResult result;
+  result.status = StepStatus::Progress;
+  return result;
 }
 
 StepResult StreamingExecutionEngine::makeBlockedResult(int line,
@@ -399,45 +343,6 @@ std::optional<RejectedLineEvent> StreamingExecutionEngine::makeRejectedEvent(
   event.source = toSourceRef(rejected.source);
   event.reasons = rejected.reasons;
   return event;
-}
-
-void StreamingExecutionEngine::applyStateWords(const std::string &line_text) {
-  const ParseResult parsed = parse(line_text);
-  if (parsed.program.lines.empty()) {
-    return;
-  }
-  const Line &line = parsed.program.lines.front();
-  for (const auto &item : line.items) {
-    if (!std::holds_alternative<Word>(item)) {
-      continue;
-    }
-    const Word &word = std::get<Word>(item);
-    if (word.head == "RTLION") {
-      current_rapid_mode_ = RapidInterpolationMode::Linear;
-      continue;
-    }
-    if (word.head == "RTLIOF") {
-      current_rapid_mode_ = RapidInterpolationMode::NonLinear;
-      continue;
-    }
-    const auto gcode = gCodeFromWord(word);
-    if (!gcode.has_value()) {
-      continue;
-    }
-    if (*gcode == 17) {
-      current_working_plane_ = WorkingPlane::XY;
-    } else if (*gcode == 18) {
-      current_working_plane_ = WorkingPlane::ZX;
-    } else if (*gcode == 19) {
-      current_working_plane_ = WorkingPlane::YZ;
-    } else if (*gcode == 40) {
-      current_tool_radius_comp_ = ToolRadiusCompMode::Off;
-    } else if (*gcode == 41) {
-      current_tool_radius_comp_ = ToolRadiusCompMode::Left;
-    } else if (*gcode == 42) {
-      current_tool_radius_comp_ = ToolRadiusCompMode::Right;
-    }
-  }
 }
 
 void StreamingExecutionEngine::remapDiagnostics(
