@@ -913,8 +913,8 @@ AilExecutor::AilExecutor(
   }
 }
 
-void AilExecutor::notifyEvent(const std::string &wait_key) {
-  pending_events_.insert(wait_key);
+void AilExecutor::notifyEvent(const WaitToken &wait_token) {
+  pending_events_.insert(wait_token);
 }
 
 void AilExecutor::addFault(const SourceInfo &source,
@@ -1077,7 +1077,7 @@ bool AilExecutor::evaluateBranchAtPc(int64_t now_ms,
     state_.status = ExecutorStatus::BlockedOnCondition;
     ExecutorBlockedState blocked;
     blocked.instruction_index = state_.pc;
-    blocked.wait_key = resolved.wait_key;
+    blocked.wait_token = resolved.wait_token;
     blocked.retry_at_ms = resolved.retry_at_ms;
     state_.blocked = std::move(blocked);
     (void)now_ms;
@@ -1377,8 +1377,8 @@ bool AilExecutor::step(int64_t now_ms, const ConditionResolver &resolver) {
   if (state_.status == ExecutorStatus::BlockedOnCondition &&
       state_.blocked.has_value()) {
     bool event_ready = false;
-    if (state_.blocked->wait_key.has_value()) {
-      const auto it = pending_events_.find(*state_.blocked->wait_key);
+    if (state_.blocked->wait_token.has_value()) {
+      const auto it = pending_events_.find(*state_.blocked->wait_token);
       if (it != pending_events_.end()) {
         pending_events_.erase(it);
         event_ready = true;

@@ -154,7 +154,7 @@ enum class VariableReadKind { Value, Pending, Error };
 struct VariableReadResult {
   VariableReadKind kind = VariableReadKind::Error;
   double value = 0.0;
-  std::optional<std::string> wait_key;
+  std::optional<WaitToken> wait_token;
   std::optional<int64_t> retry_at_ms;
   std::optional<std::string> error_message;
 };

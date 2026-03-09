@@ -1,5 +1,28 @@
 #CHANGELOG_AGENT
 
+## 2026-03-09 (shared wait-token contract for executor and streaming runtime)
+- Extracted `WaitToken` and `RuntimeResult<T>` into `src/runtime_status.h` so
+  the AIL executor and streaming runtime path use the same pending/error/wait
+  vocabulary.
+- Refactored `AilExecutor` condition blocking from `wait_key` strings to typed
+  `wait_token` values and updated executor tests accordingly.
+- Updated SPEC/program-reference wording to describe the shared `wait_token`
+  contract.
+
+SPEC sections / tests:
+- SPEC: Section 6.1, Section 6.2
+- Tests: `test/ail_executor_tests.cpp`, `./dev/check.sh`
+
+Known limitations:
+- This change unifies the blocking contract vocabulary but does not yet route
+  `AilExecutor` through `IRuntime`; condition evaluation remains on the legacy
+  resolver callback surface for now.
+
+How to reproduce locally (commands):
+- `cmake --build build -j --target ail_executor_tests`
+- `./build/ail_executor_tests`
+- `./dev/check.sh`
+
 ## 2026-03-09 (streaming engine internal AIL refactor)
 - Switched `StreamingExecutionEngine` internals from per-line message lowering
   plus raw-word modal tracking to per-line AIL lowering plus AIL state

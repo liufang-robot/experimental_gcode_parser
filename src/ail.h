@@ -13,6 +13,7 @@
 
 #include "machine_profile.h"
 #include "messages.h"
+#include "runtime_status.h"
 #include "subprogram_policy.h"
 #include "tool_selection.h"
 
@@ -151,7 +152,7 @@ enum class ConditionResolutionKind { True, False, Pending, Error };
 
 struct ConditionResolution {
   ConditionResolutionKind kind = ConditionResolutionKind::Error;
-  std::optional<std::string> wait_key;
+  std::optional<WaitToken> wait_token;
   std::optional<int64_t> retry_at_ms;
   std::optional<std::string> error_message;
 };
@@ -163,7 +164,7 @@ enum class ExecutorStatus { Ready, BlockedOnCondition, Completed, Fault };
 
 struct ExecutorBlockedState {
   size_t instruction_index = 0;
-  std::optional<std::string> wait_key;
+  std::optional<WaitToken> wait_token;
   std::optional<int64_t> retry_at_ms;
 };
 
@@ -195,7 +196,7 @@ public:
   const ExecutorState &state() const { return state_; }
   const std::vector<Diagnostic> &diagnostics() const { return diagnostics_; }
 
-  void notifyEvent(const std::string &wait_key);
+  void notifyEvent(const WaitToken &wait_token);
   bool step(int64_t now_ms, const ConditionResolver &resolver);
 
 private:
@@ -219,7 +220,7 @@ private:
   std::unordered_map<std::string, std::vector<size_t>> label_positions_;
   std::unordered_map<int, std::vector<size_t>> line_number_positions_;
   std::vector<SubprogramCallFrame> call_stack_frames_;
-  std::unordered_set<std::string> pending_events_;
+  std::unordered_set<WaitToken, WaitTokenHash> pending_events_;
   ErrorPolicy unknown_mcode_policy_ = ErrorPolicy::Error;
   ErrorPolicy m6_without_pending_policy_ = ErrorPolicy::Error;
   std::shared_ptr<const ToolPolicy> tool_policy_;
