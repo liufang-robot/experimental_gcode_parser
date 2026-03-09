@@ -1,4 +1,4 @@
-#include "gcode/machine_profile.h"
+#include "machine_profile.h"
 
 namespace gcode {
 

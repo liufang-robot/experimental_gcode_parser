@@ -9,7 +9,7 @@
 #include <vector>
 
 #include "gcode/ast.h"
-#include "gcode/machine_profile.h"
+#include "gcode/policy_types.h"
 
 namespace gcode {
 

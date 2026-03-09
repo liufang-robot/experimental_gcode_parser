@@ -14,6 +14,8 @@
   `tool_selection.h`) and removed duplicate public-header copies from `src/`.
 - Reduced the public header count by folding `ToolSelectionState` into
   `tool_policy.h` and removing the standalone `tool_selection.h` public header.
+- Split shared public enums into `include/gcode/policy_types.h` and moved
+  `machine_profile.h` back to `src/` as an internal header.
 
 SPEC sections / tests:
 - SPEC: no behavior change; packaging/refactor only

@@ -5,7 +5,7 @@
 #include <unordered_map>
 #include <vector>
 
-#include "gcode/machine_profile.h"
+#include "gcode/policy_types.h"
 
 namespace gcode {
 

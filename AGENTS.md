@@ -57,5 +57,8 @@ If `./dev/check.sh` is green, CI should be green.
   - prefer attaching a small support type to its owning public API header
     instead of adding a standalone public header when that keeps the surface
     smaller and clearer
+  - if only a few shared enums leak through otherwise-internal support code,
+    prefer splitting those enums into a narrow public header instead of making
+    the whole support header public
   - when adding a new public header, update the public-header compile test
     under `test/public_headers_tests.cpp`
