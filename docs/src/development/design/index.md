@@ -17,6 +17,7 @@ Pages in this section are split by topic for easier review:
 - Siemens M-code model and execution boundaries
 - system-variable selector and runtime evaluation model
 - rapid traverse model (`G0`, `RTLION`, `RTLIOF`)
+- line-by-line streaming execution with blocking and cancellation
 - incremental parse session API
 - work-offset model (Group 8 + suppression commands)
 - dimensions/units model (Groups 13/14 + `AC/IC` + `DIAM*`)

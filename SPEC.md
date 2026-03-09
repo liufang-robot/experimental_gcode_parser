@@ -43,9 +43,14 @@ Optional downstream stage:
     without standalone motion packets
 - Message results support JSON conversion (`toJson`/`fromJson`) for transport,
   fixtures, and debugging.
-- Additive API: streaming parse/lower output mode for large-file workflows
-  (callbacks/events instead of full-result buffering), with cancel/limit
-  controls.
+- Transitional API: callback-based parse/lower output mode for large-file
+  workflows (`parseAndLowerStream(...)` / `parseAndLowerFileStream(...)`).
+  Current implementation still parses the whole input before callback
+  delivery.
+- Planned primary execution API:
+  - line-by-line streaming execution engine
+  - injected interfaces for execution sink, runtime, and cancellation
+  - explicit blocking/resume/cancel contract per executed line
 
 The `gcode_parse` CLI supports:
 - `--mode parse|ail|packet|lower` (default: `parse`)
@@ -488,7 +493,14 @@ N130 G01 X20 Y20
 ## 6. Message Lowering (v0.1)
 - Pipeline note:
   - Current supported paths are `parse -> AIL` and `parse -> AIL -> packets`,
-    with `parse -> messages` retained for queue-level compatibility.
+    with `parse -> messages` retained for queue-level compatibility and legacy
+    integration surfaces.
+- Execution API note:
+  - the long-term primary execution surface is a streaming engine that accepts
+    chunks, assembles complete lines, lowers/exposes one line at a time, and
+    may block on runtime operations
+  - current message and callback APIs remain valid transitional surfaces until
+    streaming execution reaches parity
 - Standalone lowering stage: AST + parser diagnostics -> queue-ready messages +
   diagnostics.
 - `G1Message` fields:
@@ -539,11 +551,18 @@ N130 G01 X20 Y20
     `removed_lines`.
   - Provide apply helper that applies a diff to an existing message queue and
     preserves deterministic line order.
-- Streaming API (v0):
+- Transitional streaming API (current):
   - Provide callback-based streaming variants for parse/lower output.
   - Stream diagnostics/messages/rejected-lines without requiring message-vector
-    accumulation by default.
+    accumulation by default after the parse result has already been built.
   - Support early-stop controls (max lines/messages/diagnostics, cancel hook).
+- Streaming execution API (planned primary):
+  - Accept arbitrary text chunks and assemble complete logical lines.
+  - Parse/lower/execute one line at a time.
+  - Emit deterministic sink/runtime events per line.
+  - Support explicit `blocked`, `resumed`, `cancelled`, `faulted`, and
+    `completed` execution states.
+  - Use injected interfaces rather than hardcoded machine/runtime calls.
 - JSON schema notes:
   - Include top-level `schema_version` (current value: `1`).
   - Include `messages`, `diagnostics`, and `rejected_lines`.
@@ -587,6 +606,13 @@ N130 G01 X20 Y20
   - `pending` may include `wait_key` and `retry_at` metadata
   - this contract applies equally to simple system-variable-backed conditions
     such as `IF $P_ACT_X == 1 ...`
+- Planned streaming execution contract:
+  - execution is driven by an injected runtime interface rather than direct
+    global or static machine calls
+  - runtime-facing operations may complete immediately, block, or fail
+  - the engine must not execute a later line while the current line is
+    blocked
+  - cancellation must be checked between lines and while blocked
 - Variable evaluation boundary:
   - parser/lowering does not resolve live system-variable values
   - runtime resolver is responsible for evaluating user/system-variable
@@ -601,6 +627,13 @@ N130 G01 X20 Y20
   - `blocked_on_condition`
   - `completed`
   - `fault`
+- Planned streaming engine state model:
+  - `accepting_input`
+  - `ready_to_execute`
+  - `blocked`
+  - `completed`
+  - `cancelled`
+  - `faulted`
 - Branch wait/retry behavior:
   - on `pending`, executor blocks at the branch instruction
   - resume on matching event (`wait_key`) or retry deadline
@@ -618,6 +651,23 @@ N130 G01 X20 Y20
     target policy as the corresponding goto opcode
 - For `N`/numeric targets with multiple candidates in the chosen search
   direction, runtime selects nearest match and emits warning diagnostic.
+
+### 6.2 Streaming Execution Engine (planned primary API)
+- Primary interfaces:
+  - execution sink interface
+  - runtime interface
+  - cancellation interface
+- Per-line motion execution contract:
+  - `G1` is normalized into a line-scoped linear-move command
+  - engine emits sink event for the normalized command
+  - engine then invokes runtime linear-move submission with the same command
+  - runtime returns `ready`, `pending`, or `error`
+  - on `pending`, engine becomes blocked and requires explicit resume
+- System-variable execution contract:
+  - runtime performs variable reads and may return value, pending, or error
+- Integration-test contract:
+  - deterministic event logs should capture interface call order and parameter
+    values for a given input program
 - M-function runtime boundary (v0):
   - `m_function` instructions are present in AIL and seen by executor
   - known predefined Siemens M values:
@@ -708,6 +758,12 @@ N130 G01 X20 Y20
     `Regression_<bug_or_issue_id>_<short_behavior>`.
 - Streaming callback tests must validate message field content (type/source/
   payload), not only event counts.
+- Streaming execution tests should validate:
+  - chunk assembly into logical lines
+  - sink/runtime call order
+  - exact motion command arguments
+  - blocking/resume/cancel state transitions
+  - deterministic event-log output for representative scenarios
 - Performance benchmarking:
   - Maintain a benchmark harness for deterministic corpora.
   - Include at least one 10k-line baseline scenario.

@@ -5,7 +5,8 @@ ANTLR-based parser/lowering library for CNC G-code with:
 - AST + line/column diagnostics
 - queue-oriented typed messages (`G1`, `G2`, `G3`, `G4`)
 - per-message modal metadata (`group`, `code`, `updates_state`)
-- batch and streaming APIs
+- batch and streaming compatibility APIs
+- a planned streaming-first execution refactor with injected runtime interfaces
 - JSON serialization for lowered message results
 
 Current source-of-truth docs:
@@ -25,6 +26,9 @@ Current source-of-truth docs:
 - Streaming callbacks:
   - `parseAndLowerStream(...)`
   - `parseAndLowerFileStream(...)`
+  - note: current implementation parses the full input first, then emits
+    callbacks while lowering; this is a transitional API rather than the final
+    line-by-line execution surface
 - Session/edit flow:
   - `ParseSession::applyLineEdit(...)`
   - `ParseSession::reparseFromLine(...)`
@@ -75,6 +79,22 @@ cmake --build build -j
 
 ## Library Usage
 
+Current stable library surfaces are still the parse/lower batch APIs plus the
+transitional callback-based streaming API.
+
+The planned primary execution surface is a line-by-line streaming engine with
+injected interfaces:
+
+- execution sink interface for deterministic emitted events
+- runtime interface for slow/blocking external work such as motion submission
+  and variable reads
+- cancellation interface for cooperative stop
+
+See:
+
+- `docs/src/development/design/streaming_execution_architecture.md`
+- `SPEC.md` section 6 / 6.1 / 6.2
+
 Batch parse+lower:
 
 ```cpp
@@ -103,6 +123,23 @@ callbacks.on_diagnostic = [](const gcode::Diagnostic& d) {
 gcode::LowerOptions options;
 options.filename = "job.ngc";
 gcode::parseAndLowerStream("G1 X10\nG4 F2\n", options, callbacks);
+```
+
+Planned streaming-first execution shape:
+
+```cpp
+// Conceptual target API; not fully implemented yet.
+MyExecutionSink sink;
+MyRuntime runtime;
+MyCancellation cancellation;
+
+StreamingExecutionEngine engine(sink, runtime, cancellation);
+engine.pushChunk("N10 G1 X10 Y20 F100\n");
+
+auto step = engine.pump();
+if (step.status == StepStatus::Blocked) {
+  engine.resume(step.blocked->token);
+}
 ```
 
 JSON conversion helpers:

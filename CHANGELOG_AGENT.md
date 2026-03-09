@@ -1,5 +1,46 @@
 #CHANGELOG_AGENT
 
+## 2026-03-09 (streaming execution architecture: line-by-line blocking contract)
+- Added a dedicated development design note defining the target streaming
+  execution engine contract: injected interfaces, blocking/resume state
+  machine, cancellation behavior, and per-line `G1`/system-variable handling.
+- Documented a deterministic JSONL event-log schema and recommended C++
+  integration-test layout for reviewing interface call sequence and parameters.
+- Wired the new note into the mdBook development architecture section and added
+  a placeholder `testdata/execution/` fixture directory for future event-log
+  cases.
+
+SPEC sections / tests:
+- SPEC: none (architecture-only note)
+- Tests: none (documentation-only slice)
+
+Known limitations:
+- No runtime behavior changed in this slice; current `parseAndLowerStream(...)`
+  still parses the whole input before emitting callbacks.
+
+How to reproduce locally (commands):
+- `./dev/check.sh`
+
+## 2026-03-09 (streaming execution docs: mark legacy APIs and streaming-first direction)
+- Updated the main spec-adjacent docs, README, architecture overview, text-flow
+  doc, and program-reference pages to describe the planned streaming-first
+  execution engine and injected interface boundaries.
+- Clarified that current callback streaming remains a compatibility API that
+  still parses the whole input before callback delivery.
+- Documented the planned `G1` call sequence through sink/runtime interfaces so
+  upcoming refactor slices have a consistent written contract.
+
+SPEC sections / tests:
+- SPEC: Section 2.2, Section 6, Section 6.1, Section 6.2
+- Tests: none (documentation-only slice)
+
+Known limitations:
+- No code behavior changed in this slice; the repo still exposes the old
+  batch/message/callback execution surfaces today.
+
+How to reproduce locally (commands):
+- `./dev/check.sh`
+
 ## 2026-03-09 (T-048 architecture: system-variable selector model)
 - Added a dedicated development design note for structured system-variable
   selectors, runtime variable resolution, and policy boundaries.
