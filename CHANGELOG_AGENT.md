@@ -1,5 +1,30 @@
 #CHANGELOG_AGENT
 
+## 2026-03-09 (extract internal execution-instruction dispatcher)
+- Added internal `src/execution_instruction_dispatcher.{h,cpp}` to centralize
+  sink/runtime dispatch for motion-capable AIL instructions.
+- Switched `StreamingExecutionEngine` to call that internal dispatcher instead
+  of open-coding sink notification plus runtime submission for each motion kind.
+- Kept behavior unchanged while preparing a shared instruction-dispatch seam
+  for later executor/streaming-loop unification.
+
+SPEC sections / tests:
+- SPEC: no behavior change; internal refactor only
+- Tests: `test/streaming_execution_tests.cpp`,
+  `test/streaming_execution_gmock_tests.cpp`, `test/cli_tests.cpp`,
+  `./dev/check.sh`
+
+Known limitations:
+- This only extracts motion/dwell instruction dispatch; the streaming engine
+  and `AilExecutor` still remain separate execution loops for now.
+
+How to reproduce locally (commands):
+- `cmake --build build -j --target streaming_execution_tests streaming_execution_gmock_tests cli_tests`
+- `./build/streaming_execution_tests`
+- `./build/streaming_execution_gmock_tests`
+- `./build/cli_tests --gtest_filter='CliFormatTest.StreamingExec*'`
+- `./dev/check.sh`
+
 ## 2026-03-09 (extract internal AIL-to-command builder for streaming execution)
 - Added internal `src/execution_command_builder.{h,cpp}` to centralize
   conversion from AIL motion/dwell instructions into normalized execution

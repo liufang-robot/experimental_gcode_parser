@@ -3,6 +3,7 @@
 #include <utility>
 
 #include "execution_command_builder.h"
+#include "execution_instruction_dispatcher.h"
 #include "gcode/gcode_parser.h"
 
 namespace gcode {
@@ -229,54 +230,18 @@ StepResult StreamingExecutionEngine::executeAilInstruction(
     result.status = StepStatus::Progress;
     return result;
   }
-  if (std::holds_alternative<AilLinearMoveInstruction>(instruction)) {
-    const auto &inst = std::get<AilLinearMoveInstruction>(instruction);
-    const ExecutionModalState modal_state{
-        current_working_plane_, current_rapid_mode_, current_tool_radius_comp_};
-    LinearMoveCommand cmd = buildLinearMoveCommand(inst, line, modal_state);
-    sink_.onLinearMove(cmd);
-    const auto runtime_result = runtime_.submitLinearMove(cmd);
-    if (runtime_result.status == RuntimeCallStatus::Pending &&
-        runtime_result.wait_token.has_value()) {
-      return makeBlockedResult(cmd.source.line, *runtime_result.wait_token,
-                               "linear move in progress");
-    }
-    if (runtime_result.status == RuntimeCallStatus::Error) {
-      return faultWithDiagnostic(
-          makeFaultDiagnostic(cmd.source.line, runtime_result.error_message));
-    }
-  } else if (std::holds_alternative<AilArcMoveInstruction>(instruction)) {
-    const auto &inst = std::get<AilArcMoveInstruction>(instruction);
-    const ExecutionModalState modal_state{
-        current_working_plane_, current_rapid_mode_, current_tool_radius_comp_};
-    ArcMoveCommand cmd = buildArcMoveCommand(inst, line, modal_state);
-    sink_.onArcMove(cmd);
-    const auto runtime_result = runtime_.submitArcMove(cmd);
-    if (runtime_result.status == RuntimeCallStatus::Pending &&
-        runtime_result.wait_token.has_value()) {
-      return makeBlockedResult(cmd.source.line, *runtime_result.wait_token,
-                               "arc move in progress");
-    }
-    if (runtime_result.status == RuntimeCallStatus::Error) {
-      return faultWithDiagnostic(
-          makeFaultDiagnostic(cmd.source.line, runtime_result.error_message));
-    }
-  } else if (std::holds_alternative<AilDwellInstruction>(instruction)) {
-    const auto &inst = std::get<AilDwellInstruction>(instruction);
-    const ExecutionModalState modal_state{
-        current_working_plane_, current_rapid_mode_, current_tool_radius_comp_};
-    DwellCommand cmd = buildDwellCommand(inst, line, modal_state);
-    sink_.onDwell(cmd);
-    const auto runtime_result = runtime_.submitDwell(cmd);
-    if (runtime_result.status == RuntimeCallStatus::Pending &&
-        runtime_result.wait_token.has_value()) {
-      return makeBlockedResult(cmd.source.line, *runtime_result.wait_token,
-                               "dwell in progress");
-    }
-    if (runtime_result.status == RuntimeCallStatus::Error) {
-      return faultWithDiagnostic(
-          makeFaultDiagnostic(cmd.source.line, runtime_result.error_message));
-    }
+  const ExecutionModalState modal_state{
+      current_working_plane_, current_rapid_mode_, current_tool_radius_comp_};
+  const auto dispatch_result = dispatchExecutionInstruction(
+      instruction, line, modal_state, sink_, runtime_);
+  if (dispatch_result.status == ExecutionDispatchResult::Status::Blocked &&
+      dispatch_result.wait_token.has_value()) {
+    return makeBlockedResult(dispatch_result.line, *dispatch_result.wait_token,
+                             dispatch_result.message);
+  }
+  if (dispatch_result.status == ExecutionDispatchResult::Status::Error) {
+    return faultWithDiagnostic(
+        makeFaultDiagnostic(dispatch_result.line, dispatch_result.message));
   }
 
   StepResult result;

@@ -103,6 +103,7 @@ add_library(
                       src/streaming_execution_engine.cpp
                       src/streaming_event_log.cpp
                       src/execution_command_builder.cpp
+                      src/execution_instruction_dispatcher.cpp
                       src/lowering_family_factory.cpp src/lowering_family_g0.cpp
                       src/lowering_family_g1.cpp
                       src/lowering_family_g2.cpp src/lowering_family_g3.cpp
