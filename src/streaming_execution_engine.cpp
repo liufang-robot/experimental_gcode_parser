@@ -2,18 +2,11 @@
 
 #include <utility>
 
+#include "execution_command_builder.h"
 #include "gcode/gcode_parser.h"
 
 namespace gcode {
 namespace {
-
-SourceRef toSourceRef(const SourceInfo &source) {
-  SourceRef ref;
-  ref.filename = source.filename;
-  ref.line = source.line;
-  ref.line_number = source.line_number;
-  return ref;
-}
 
 Diagnostic makeFaultDiagnostic(int line, const std::string &message) {
   Diagnostic diag;
@@ -238,19 +231,9 @@ StepResult StreamingExecutionEngine::executeAilInstruction(
   }
   if (std::holds_alternative<AilLinearMoveInstruction>(instruction)) {
     const auto &inst = std::get<AilLinearMoveInstruction>(instruction);
-    LinearMoveCommand cmd;
-    cmd.source = toSourceRef(inst.source);
-    cmd.source.line = line;
-    cmd.opcode = inst.opcode;
-    cmd.x = inst.target_pose.x;
-    cmd.y = inst.target_pose.y;
-    cmd.z = inst.target_pose.z;
-    cmd.a = inst.target_pose.a;
-    cmd.b = inst.target_pose.b;
-    cmd.c = inst.target_pose.c;
-    cmd.feed = inst.feed;
-    cmd.modal = inst.modal;
-    cmd.effective = makeEffectiveModalState(cmd.opcode);
+    const ExecutionModalState modal_state{
+        current_working_plane_, current_rapid_mode_, current_tool_radius_comp_};
+    LinearMoveCommand cmd = buildLinearMoveCommand(inst, line, modal_state);
     sink_.onLinearMove(cmd);
     const auto runtime_result = runtime_.submitLinearMove(cmd);
     if (runtime_result.status == RuntimeCallStatus::Pending &&
@@ -264,22 +247,9 @@ StepResult StreamingExecutionEngine::executeAilInstruction(
     }
   } else if (std::holds_alternative<AilArcMoveInstruction>(instruction)) {
     const auto &inst = std::get<AilArcMoveInstruction>(instruction);
-    ArcMoveCommand cmd;
-    cmd.source = toSourceRef(inst.source);
-    cmd.source.line = line;
-    cmd.opcode = inst.modal.code;
-    cmd.clockwise = inst.clockwise;
-    cmd.plane_effective = inst.plane_effective;
-    cmd.x = inst.target_pose.x;
-    cmd.y = inst.target_pose.y;
-    cmd.z = inst.target_pose.z;
-    cmd.a = inst.target_pose.a;
-    cmd.b = inst.target_pose.b;
-    cmd.c = inst.target_pose.c;
-    cmd.arc = inst.arc;
-    cmd.feed = inst.feed;
-    cmd.modal = inst.modal;
-    cmd.effective = makeEffectiveModalState(cmd.opcode);
+    const ExecutionModalState modal_state{
+        current_working_plane_, current_rapid_mode_, current_tool_radius_comp_};
+    ArcMoveCommand cmd = buildArcMoveCommand(inst, line, modal_state);
     sink_.onArcMove(cmd);
     const auto runtime_result = runtime_.submitArcMove(cmd);
     if (runtime_result.status == RuntimeCallStatus::Pending &&
@@ -293,13 +263,9 @@ StepResult StreamingExecutionEngine::executeAilInstruction(
     }
   } else if (std::holds_alternative<AilDwellInstruction>(instruction)) {
     const auto &inst = std::get<AilDwellInstruction>(instruction);
-    DwellCommand cmd;
-    cmd.source = toSourceRef(inst.source);
-    cmd.source.line = line;
-    cmd.dwell_mode = inst.dwell_mode;
-    cmd.dwell_value = inst.dwell_value;
-    cmd.modal = inst.modal;
-    cmd.effective = makeEffectiveModalState(cmd.modal.code);
+    const ExecutionModalState modal_state{
+        current_working_plane_, current_rapid_mode_, current_tool_radius_comp_};
+    DwellCommand cmd = buildDwellCommand(inst, line, modal_state);
     sink_.onDwell(cmd);
     const auto runtime_result = runtime_.submitDwell(cmd);
     if (runtime_result.status == RuntimeCallStatus::Pending &&
@@ -369,16 +335,6 @@ void StreamingExecutionEngine::remapRejectedLines(
       diag.location.line = line;
     }
   }
-}
-
-EffectiveModalState StreamingExecutionEngine::makeEffectiveModalState(
-    const std::string &motion_code) const {
-  EffectiveModalState state;
-  state.motion_code = motion_code;
-  state.working_plane = current_working_plane_;
-  state.rapid_mode = current_rapid_mode_;
-  state.tool_radius_comp = current_tool_radius_comp_;
-  return state;
 }
 
 } // namespace gcode

@@ -1,5 +1,31 @@
 #CHANGELOG_AGENT
 
+## 2026-03-09 (extract internal AIL-to-command builder for streaming execution)
+- Added internal `src/execution_command_builder.{h,cpp}` to centralize
+  conversion from AIL motion/dwell instructions into normalized execution
+  command structs plus effective-modal-state assembly.
+- Switched `StreamingExecutionEngine` to use that shared internal builder
+  instead of open-coding command construction inline.
+- Kept behavior unchanged while preparing the command-building path for future
+  reuse from executor-side execution flow.
+
+SPEC sections / tests:
+- SPEC: no behavior change; internal refactor only
+- Tests: `test/streaming_execution_tests.cpp`,
+  `test/streaming_execution_gmock_tests.cpp`, `test/cli_tests.cpp`,
+  `./dev/check.sh`
+
+Known limitations:
+- This only extracts command construction; the streaming engine and
+  `AilExecutor` still remain separate execution loops for now.
+
+How to reproduce locally (commands):
+- `cmake --build build -j --target streaming_execution_tests streaming_execution_gmock_tests cli_tests`
+- `./build/streaming_execution_tests`
+- `./build/streaming_execution_gmock_tests`
+- `./build/cli_tests --gtest_filter='CliFormatTest.StreamingExec*'`
+- `./dev/check.sh`
+
 ## 2026-03-09 (add unified execution-runtime interface seam)
 - Added `include/gcode/execution_runtime.h` with `IExecutionRuntime`, a
   combined runtime-facing interface that inherits both `IRuntime` and
