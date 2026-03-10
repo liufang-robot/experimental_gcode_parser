@@ -120,6 +120,39 @@ TEST(StreamingExecutionTest, NoNextLineExecutesWhileBlocked) {
   EXPECT_EQ(runtime.linear_calls, 1);
 }
 
+TEST(StreamingExecutionTest, ResumeCompletesActiveExecutorAfterFinish) {
+  class BlockingRuntime : public ReadyRuntime {
+  public:
+    gcode::RuntimeResult<gcode::WaitToken>
+    submitLinearMove(const gcode::LinearMoveCommand &) override {
+      ++linear_calls;
+      gcode::RuntimeResult<gcode::WaitToken> result;
+      result.status = gcode::RuntimeCallStatus::Pending;
+      result.wait_token = gcode::WaitToken{"motion", "resume-1"};
+      return result;
+    }
+    int linear_calls = 0;
+  };
+
+  NullSink sink;
+  BlockingRuntime runtime;
+  StaticCancellation cancellation;
+  gcode::StreamingExecutionEngine engine(sink, runtime, cancellation);
+
+  ASSERT_TRUE(engine.pushChunk("G1 X1\n"));
+  const auto blocked = engine.finish();
+  ASSERT_EQ(blocked.status, gcode::StepStatus::Blocked);
+  EXPECT_EQ(engine.state(), gcode::EngineState::Blocked);
+
+  const auto resumed = engine.resume(gcode::WaitToken{"motion", "resume-1"});
+  EXPECT_EQ(resumed.status, gcode::StepStatus::Progress);
+
+  const auto completed = engine.pump();
+  EXPECT_EQ(completed.status, gcode::StepStatus::Completed);
+  EXPECT_EQ(engine.state(), gcode::EngineState::Completed);
+  EXPECT_EQ(runtime.linear_calls, 1);
+}
+
 TEST(StreamingExecutionTest, FunctionExecutionRuntimeCanDriveStreamingEngine) {
   NullSink sink;
   StaticCancellation cancellation;

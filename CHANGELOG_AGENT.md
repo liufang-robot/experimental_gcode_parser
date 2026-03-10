@@ -1,5 +1,31 @@
 #CHANGELOG_AGENT
 
+## 2026-03-10 (route streaming line execution through AIL executor)
+- Switched `StreamingExecutionEngine` to execute an active line through
+  `AilExecutor` seeded from the carried modal state, instead of maintaining a
+  separate per-line AIL stepping loop.
+- Kept the streaming-engine API and motion/dwell behavior stable while making
+  blocked/resume flow reuse the executor runtime path.
+- Added streaming coverage proving a blocked active executor resumes and
+  completes correctly after `finish()`.
+
+SPEC sections / tests:
+- SPEC: Section 6.1, Section 6.2
+- Tests: `test/streaming_execution_tests.cpp`,
+  `test/streaming_execution_gmock_tests.cpp`, `test/ail_executor_tests.cpp`,
+  `./dev/check.sh`
+
+Known limitations:
+- This still executes one parsed line at a time; variable/control-flow
+  execution is not yet driven through the streaming engine.
+
+How to reproduce locally (commands):
+- `cmake --build build -j --target streaming_execution_tests streaming_execution_gmock_tests ail_executor_tests`
+- `./build/streaming_execution_tests`
+- `./build/streaming_execution_gmock_tests`
+- `./build/ail_executor_tests`
+- `./dev/check.sh`
+
 ## 2026-03-10 (seed executor modal state for shared runtime dispatch)
 - Added `AilExecutorOptions.initial_state` so executor-based motion dispatch
   can inherit prior working-plane, rapid-mode, and tool-radius-comp state.

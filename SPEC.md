@@ -564,7 +564,7 @@ N130 G01 X20 Y20
   - Support explicit `blocked`, `resumed`, `cancelled`, `faulted`, and
     `completed` execution states.
   - Use injected interfaces rather than hardcoded machine/runtime calls.
-  - Shared runtime-facing execution contracts now include:
+- Shared runtime-facing execution contracts now include:
     - `IRuntime` for motion / dwell / variable-read operations
     - `IExecutionRuntime` when one runtime object also provides
       condition-evaluation services for executor-style paths
@@ -574,6 +574,10 @@ N130 G01 X20 Y20
     - `IRuntime`
     - `IExecutionRuntime` when the caller wants the same runtime object shape
       to work across streaming and executor-style paths
+  - Per-line streaming motion execution is now routed through `AilExecutor`
+    seeded from the engine's carried modal state, so the executor and
+    streaming paths share the same instruction-level runtime stepping for the
+    supported motion subset.
   - Current implementation coverage is limited to motion/dwell lines
     (`G0/G1/G2/G3/G4`) plus line-level diagnostics/rejection handling.
 - JSON schema notes:
