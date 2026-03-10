@@ -1,6 +1,7 @@
 #pragma once
 
 #include <deque>
+#include <memory>
 #include <optional>
 #include <string>
 #include <string_view>
@@ -37,7 +38,7 @@ private:
 
   bool enqueueCompleteLines();
   StepResult executeNextLine();
-  StepResult executeAilInstruction(const AilInstruction &instruction, int line);
+  StepResult advanceActiveExecutor();
   StepResult makeBlockedResult(int line, const WaitToken &token,
                                std::string reason);
   StepResult faultWithDiagnostic(const Diagnostic &diag);
@@ -58,6 +59,9 @@ private:
   std::string input_buffer_;
   std::deque<PendingLine> pending_lines_;
   std::optional<BlockedState> blocked_;
+  std::unique_ptr<AilExecutor> active_executor_;
+  int active_executor_line_ = 0;
+  size_t active_executor_emitted_diagnostics_ = 0;
   int next_line_number_ = 1;
   bool input_finished_ = false;
   std::optional<WorkingPlane> current_working_plane_ = WorkingPlane::XY;

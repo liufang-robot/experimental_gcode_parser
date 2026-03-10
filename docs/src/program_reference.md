@@ -17,6 +17,9 @@ planned streaming-first execution boundary.
     motion-capable AIL instructions
   - `AilExecutorOptions.initial_state` can seed modal context when an executor
     instance needs to inherit prior plane/rapid/tool-comp state
+  - `StreamingExecutionEngine` now seeds a per-line executor from its carried
+    modal state for the supported motion/dwell subset, instead of maintaining a
+    separate manual AIL stepping loop
 - Current compatibility APIs:
   - `parseAndLowerAil(...)` -> `AilResult`
   - `parseLowerAndPacketize(...)` -> `PacketResult`

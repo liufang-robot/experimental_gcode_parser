@@ -1,10 +1,9 @@
 #include "gcode/streaming_execution_engine.h"
 
+#include <memory>
 #include <utility>
 
 #include "execution_command_builder.h"
-#include "execution_instruction_dispatcher.h"
-#include "execution_modal_state.h"
 #include "gcode/gcode_parser.h"
 
 namespace gcode {
@@ -17,6 +16,51 @@ Diagnostic makeFaultDiagnostic(int line, const std::string &message) {
   diag.message = message;
   return diag;
 }
+
+void remapInstructionSourceLines(std::vector<AilInstruction> *instructions,
+                                 int line) {
+  for (auto &instruction : *instructions) {
+    std::visit([line](auto &inst) { inst.source.line = line; }, instruction);
+  }
+}
+
+class RuntimeOnlyExecutionRuntime final : public IExecutionRuntime {
+public:
+  explicit RuntimeOnlyExecutionRuntime(IRuntime &runtime) : runtime_(runtime) {}
+
+  ConditionResolution resolve(const Condition &,
+                              const SourceInfo &source) const override {
+    ConditionResolution resolution;
+    resolution.kind = ConditionResolutionKind::Error;
+    resolution.error_message = "condition resolution is unavailable for "
+                               "runtime-only streaming execution";
+    return resolution;
+  }
+
+  RuntimeResult<WaitToken>
+  submitLinearMove(const LinearMoveCommand &cmd) override {
+    return runtime_.submitLinearMove(cmd);
+  }
+
+  RuntimeResult<WaitToken> submitArcMove(const ArcMoveCommand &cmd) override {
+    return runtime_.submitArcMove(cmd);
+  }
+
+  RuntimeResult<WaitToken> submitDwell(const DwellCommand &cmd) override {
+    return runtime_.submitDwell(cmd);
+  }
+
+  RuntimeResult<double> readSystemVariable(std::string_view name) override {
+    return runtime_.readSystemVariable(name);
+  }
+
+  RuntimeResult<WaitToken> cancelWait(const WaitToken &token) override {
+    return runtime_.cancelWait(token);
+  }
+
+private:
+  IRuntime &runtime_;
+};
 
 } // namespace
 
@@ -67,6 +111,9 @@ StepResult StreamingExecutionEngine::pump() {
     result.blocked = blocked_;
     return result;
   }
+  if (active_executor_ != nullptr) {
+    return advanceActiveExecutor();
+  }
   if (cancellation_.isCancelled()) {
     cancel();
     StepResult result;
@@ -107,10 +154,14 @@ StepResult StreamingExecutionEngine::resume(const WaitToken &token) {
         makeFaultDiagnostic(blocked_->line, "resume token does not match");
     return faultWithDiagnostic(diag);
   }
+  if (active_executor_ != nullptr) {
+    active_executor_->notifyEvent(token);
+  }
   blocked_.reset();
-  state_ = pending_lines_.empty() && input_finished_
-               ? EngineState::Completed
-               : EngineState::ReadyToExecute;
+  state_ =
+      active_executor_ == nullptr && pending_lines_.empty() && input_finished_
+          ? EngineState::Completed
+          : EngineState::ReadyToExecute;
   if (state_ == EngineState::Completed) {
     StepResult result;
     result.status = StepStatus::Completed;
@@ -126,6 +177,7 @@ void StreamingExecutionEngine::cancel() {
     (void)runtime_.cancelWait(blocked_->token);
     blocked_.reset();
   }
+  active_executor_.reset();
   state_ = EngineState::Cancelled;
 }
 
@@ -187,48 +239,74 @@ StepResult StreamingExecutionEngine::executeNextLine() {
     step_result.status = StepStatus::Progress;
     return step_result;
   }
+  remapInstructionSourceLines(&line_result.instructions, line.line);
 
-  for (const auto &instruction : line_result.instructions) {
-    StepResult step_result = executeAilInstruction(instruction, line.line);
-    if (step_result.status != StepStatus::Progress) {
-      return step_result;
-    }
-  }
-
-  state_ = pending_lines_.empty() && input_finished_
-               ? EngineState::Completed
-               : EngineState::ReadyToExecute;
-  if (state_ == EngineState::Completed) {
-    StepResult result;
-    result.status = StepStatus::Completed;
-    return result;
-  }
-  StepResult step_result;
-  step_result.status = StepStatus::Progress;
-  return step_result;
+  AilExecutorOptions executor_options;
+  executor_options.initial_state = AilExecutorInitialState{
+      current_rapid_mode_, current_tool_radius_comp_, current_working_plane_};
+  active_executor_ = std::make_unique<AilExecutor>(
+      std::move(line_result.instructions), std::move(executor_options));
+  active_executor_line_ = line.line;
+  active_executor_emitted_diagnostics_ = 0;
+  return advanceActiveExecutor();
 }
 
-StepResult StreamingExecutionEngine::executeAilInstruction(
-    const AilInstruction &instruction, int line) {
-  if (applyExecutionModalInstruction(instruction, &current_working_plane_,
-                                     &current_rapid_mode_,
-                                     &current_tool_radius_comp_)) {
+StepResult StreamingExecutionEngine::advanceActiveExecutor() {
+  if (active_executor_ == nullptr) {
     StepResult result;
     result.status = StepStatus::Progress;
     return result;
   }
-  const ExecutionModalState modal_state = makeExecutionModalState(
-      current_working_plane_, current_rapid_mode_, current_tool_radius_comp_);
-  const auto dispatch_result = dispatchExecutionInstruction(
-      instruction, line, modal_state, sink_, runtime_);
-  if (dispatch_result.status == ExecutionDispatchResult::Status::Blocked &&
-      dispatch_result.wait_token.has_value()) {
-    return makeBlockedResult(dispatch_result.line, *dispatch_result.wait_token,
-                             dispatch_result.message);
-  }
-  if (dispatch_result.status == ExecutionDispatchResult::Status::Error) {
-    return faultWithDiagnostic(
-        makeFaultDiagnostic(dispatch_result.line, dispatch_result.message));
+
+  RuntimeOnlyExecutionRuntime runtime_adapter(runtime_);
+  IExecutionRuntime &execution_runtime =
+      execution_runtime_ != nullptr ? *execution_runtime_ : runtime_adapter;
+
+  while (active_executor_ != nullptr) {
+    const bool progressed = active_executor_->step(0, sink_, execution_runtime);
+    const auto &executor_diagnostics = active_executor_->diagnostics();
+    while (active_executor_emitted_diagnostics_ < executor_diagnostics.size()) {
+      sink_.onDiagnostic(
+          executor_diagnostics[active_executor_emitted_diagnostics_++]);
+    }
+
+    const auto &executor_state = active_executor_->state();
+    if (executor_state.status == ExecutorStatus::BlockedOnCondition &&
+        executor_state.blocked.has_value() &&
+        executor_state.blocked->wait_token.has_value()) {
+      return makeBlockedResult(active_executor_line_,
+                               *executor_state.blocked->wait_token,
+                               "instruction execution in progress");
+    }
+    if (executor_state.status == ExecutorStatus::Fault) {
+      const Diagnostic diag =
+          executor_diagnostics.empty()
+              ? makeFaultDiagnostic(active_executor_line_,
+                                    "executor faulted without diagnostic")
+              : executor_diagnostics.back();
+      active_executor_.reset();
+      return faultWithDiagnostic(diag);
+    }
+    if (executor_state.status == ExecutorStatus::Completed) {
+      current_working_plane_ = executor_state.working_plane_current;
+      current_rapid_mode_ = executor_state.rapid_mode_current;
+      current_tool_radius_comp_ = executor_state.tool_radius_comp_current;
+      active_executor_.reset();
+      state_ = pending_lines_.empty() && input_finished_
+                   ? EngineState::Completed
+                   : EngineState::ReadyToExecute;
+      if (state_ == EngineState::Completed) {
+        StepResult result;
+        result.status = StepStatus::Completed;
+        return result;
+      }
+      StepResult result;
+      result.status = StepStatus::Progress;
+      return result;
+    }
+    if (!progressed) {
+      break;
+    }
   }
 
   StepResult result;
