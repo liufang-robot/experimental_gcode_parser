@@ -1,5 +1,28 @@
 #CHANGELOG_AGENT
 
+## 2026-03-10 (rename executor blocked status to generic blocked)
+- Renamed `ExecutorStatus::BlockedOnCondition` to `ExecutorStatus::Blocked` so
+  executor motion waits and condition waits use the same public blocked-state
+  vocabulary.
+- Updated executor, streaming-engine, spec, and program-reference references to
+  the generic blocked status.
+- Kept executor wait-token semantics unchanged.
+
+SPEC sections / tests:
+- SPEC: Section 6.1, Section 6.2
+- Tests: `test/ail_executor_tests.cpp`, `test/streaming_execution_tests.cpp`,
+  `./dev/check.sh`
+
+Known limitations:
+- `ExecutorBlockedState` still carries both condition retry metadata and motion
+  wait tokens in one shared struct.
+
+How to reproduce locally (commands):
+- `cmake --build build -j --target ail_executor_tests streaming_execution_tests`
+- `./build/ail_executor_tests`
+- `./build/streaming_execution_tests`
+- `./dev/check.sh`
+
 ## 2026-03-10 (route streaming line execution through AIL executor)
 - Switched `StreamingExecutionEngine` to execute an active line through
   `AilExecutor` seeded from the carried modal state, instead of maintaining a
@@ -66,8 +89,6 @@ SPEC sections / tests:
 
 Known limitations:
 - The older executor overloads remain in place for compatibility.
-- Executor blocked state still uses the older `BlockedOnCondition` naming even
-  when blocked on runtime motion completion.
 
 How to reproduce locally (commands):
 - `cmake --build build -j --target ail_executor_tests streaming_execution_tests streaming_execution_gmock_tests public_headers_tests`

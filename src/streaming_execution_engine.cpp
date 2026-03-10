@@ -271,7 +271,7 @@ StepResult StreamingExecutionEngine::advanceActiveExecutor() {
     }
 
     const auto &executor_state = active_executor_->state();
-    if (executor_state.status == ExecutorStatus::BlockedOnCondition &&
+    if (executor_state.status == ExecutorStatus::Blocked &&
         executor_state.blocked.has_value() &&
         executor_state.blocked->wait_token.has_value()) {
       return makeBlockedResult(active_executor_line_,

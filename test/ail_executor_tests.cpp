@@ -303,7 +303,7 @@ TEST(AilExecutorTest, MotionStepCanBlockAndResumeOnRuntimeWaitToken) {
   runtime.next_linear_move_result = pending;
 
   ASSERT_TRUE(exec.step(0, sink, runtime));
-  EXPECT_EQ(exec.state().status, gcode::ExecutorStatus::BlockedOnCondition);
+  EXPECT_EQ(exec.state().status, gcode::ExecutorStatus::Blocked);
   ASSERT_TRUE(exec.state().blocked.has_value());
   ASSERT_TRUE(exec.state().blocked->wait_token.has_value());
   EXPECT_EQ(exec.state().blocked->wait_token->kind, "motion");
@@ -459,10 +459,10 @@ TEST(AilExecutorTest, BranchCanBlockAndResumeOnEvent) {
   };
 
   ASSERT_TRUE(exec.step(0, resolver));
-  EXPECT_EQ(exec.state().status, gcode::ExecutorStatus::BlockedOnCondition);
+  EXPECT_EQ(exec.state().status, gcode::ExecutorStatus::Blocked);
 
   EXPECT_FALSE(exec.step(10, resolver));
-  EXPECT_EQ(exec.state().status, gcode::ExecutorStatus::BlockedOnCondition);
+  EXPECT_EQ(exec.state().status, gcode::ExecutorStatus::Blocked);
 
   exec.notifyEvent(gcode::WaitToken{"condition", "sensor_ready"});
   ASSERT_TRUE(exec.step(10, resolver));
@@ -499,10 +499,10 @@ TEST(AilExecutorTest, SystemVariableConditionCanBlockAndResumeOnEvent) {
   };
 
   ASSERT_TRUE(exec.step(0, resolver));
-  EXPECT_EQ(exec.state().status, gcode::ExecutorStatus::BlockedOnCondition);
+  EXPECT_EQ(exec.state().status, gcode::ExecutorStatus::Blocked);
 
   EXPECT_FALSE(exec.step(10, resolver));
-  EXPECT_EQ(exec.state().status, gcode::ExecutorStatus::BlockedOnCondition);
+  EXPECT_EQ(exec.state().status, gcode::ExecutorStatus::Blocked);
 
   exec.notifyEvent(gcode::WaitToken{"condition", "sysvar_ready"});
   ASSERT_TRUE(exec.step(10, resolver));
