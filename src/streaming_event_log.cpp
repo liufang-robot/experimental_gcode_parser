@@ -365,12 +365,31 @@ ReadyRuntimeRecorder::submitDwell(const DwellCommand &cmd) {
 }
 
 RuntimeResult<double>
+ReadyRuntimeRecorder::readVariable(std::string_view name) {
+  recorder_.add({{"event", "runtime.read_variable"},
+                 {"params", {{"name", std::string(name)}}}});
+  RuntimeResult<double> result;
+  result.status = RuntimeCallStatus::Error;
+  result.error_message = "fake runtime does not resolve user variables";
+  return result;
+}
+
+RuntimeResult<double>
 ReadyRuntimeRecorder::readSystemVariable(std::string_view name) {
   recorder_.add({{"event", "runtime.read_system_variable"},
                  {"params", {{"name", std::string(name)}}}});
   RuntimeResult<double> result;
   result.status = RuntimeCallStatus::Error;
   result.error_message = "fake runtime does not resolve system variables";
+  return result;
+}
+
+RuntimeResult<void> ReadyRuntimeRecorder::writeVariable(std::string_view name,
+                                                        double value) {
+  recorder_.add({{"event", "runtime.write_variable"},
+                 {"params", {{"name", std::string(name)}, {"value", value}}}});
+  RuntimeResult<void> result;
+  result.status = RuntimeCallStatus::Ready;
   return result;
 }
 

@@ -219,6 +219,7 @@ struct AilExecutorOptions {
   ToolSelectionResolver tool_selection_resolver;
   SubprogramTargetResolver subprogram_target_resolver;
   std::optional<AilExecutorInitialState> initial_state;
+  bool defer_unresolved_targets_until_input_finished = false;
 };
 
 class AilExecutor {
@@ -229,6 +230,8 @@ public:
   const ExecutorState &state() const { return state_; }
   const std::vector<Diagnostic> &diagnostics() const { return diagnostics_; }
 
+  void appendInstructions(std::vector<AilInstruction> instructions);
+  void setInputFinished(bool input_finished);
   void notifyEvent(const WaitToken &wait_token);
   bool step(int64_t now_ms, IExecutionSink &sink, IExecutionRuntime &runtime);
   bool step(int64_t now_ms, const IExecutionRuntime &runtime);
@@ -251,9 +254,13 @@ private:
   bool advanceOneInstruction(int64_t now_ms,
                              const IConditionResolver &resolver);
   bool advanceOneInstruction(int64_t now_ms, const IConditionResolver &resolver,
-                             IExecutionSink *sink, IRuntime *runtime);
+                             IExecutionSink *sink, IRuntime *runtime,
+                             IExecutionRuntime *execution_runtime);
   void addFault(const SourceInfo &source, const std::string &message);
   void addWarning(const SourceInfo &source, const std::string &message);
+  bool canDeferGotoTargetUntilMoreInput(const AilGotoInstruction &inst) const;
+  bool blockWaitingForInput(size_t instruction_index);
+  void indexInstruction(size_t index);
 
   std::vector<AilInstruction> instructions_;
   std::unordered_map<std::string, std::vector<size_t>> label_positions_;
@@ -263,6 +270,7 @@ private:
   AilExecutorOptions options_;
   ExecutorState state_;
   std::vector<Diagnostic> diagnostics_;
+  bool input_finished_ = false;
 };
 
 } // namespace gcode

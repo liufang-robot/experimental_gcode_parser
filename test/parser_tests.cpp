@@ -260,6 +260,25 @@ TEST(ParserControlFlowTest, ParsesStructuredIfWithAndParenthesizedConditions) {
   EXPECT_EQ(condition.raw_text, "(R1 == 1)AND(R2 > 10)");
 }
 
+TEST(ParserControlFlowTest, ParsesStructuredIfWithAndConditionTerms) {
+  const auto result =
+      gcode::parse("IF R1 == 1 AND $P_ACT_X > 2\nG1 Z-5 F10\nENDIF\n");
+  ASSERT_TRUE(result.diagnostics.empty());
+  ASSERT_EQ(result.program.lines.size(), 3u);
+  ASSERT_TRUE(result.program.lines[0].if_block_start_statement.has_value());
+
+  const auto &condition =
+      result.program.lines[0].if_block_start_statement->condition;
+  EXPECT_TRUE(condition.has_logical_and);
+  ASSERT_EQ(condition.terms.size(), 2u);
+  ASSERT_TRUE(condition.terms[0].lhs != nullptr);
+  ASSERT_TRUE(condition.terms[0].rhs != nullptr);
+  ASSERT_TRUE(condition.terms[1].lhs != nullptr);
+  ASSERT_TRUE(condition.terms[1].rhs != nullptr);
+  EXPECT_EQ(condition.terms[0].op, "==");
+  EXPECT_EQ(condition.terms[1].op, ">");
+}
+
 TEST(ParserSyntaxBaselineTest, ParsesBlockDeleteWithSkipLevel) {
   const auto result = gcode::parse("/1 N100 G1 X1\n");
   ASSERT_TRUE(result.diagnostics.empty());

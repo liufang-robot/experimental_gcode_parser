@@ -1,4 +1,4 @@
-# Program Reference
+#Program Reference
 
 This section documents currently implemented parser/lowering behavior and the
 planned streaming-first execution boundary.
@@ -31,8 +31,22 @@ Current limitations:
 - `parseAndLowerStream(...)` is not yet a true chunk-by-chunk parser; it parses
   the full input before callback delivery.
 - `StreamingExecutionEngine` currently covers motion/dwell lines plus
-  line-level diagnostics/rejections; variable/control-flow execution remains
-  follow-up work.
+  buffered control-flow resolution for instructions like forward `goto`; it may
+  return `WaitingForInput` until more text arrives.
+- With plain `IRuntime`, the streaming engine can resolve simple
+  system-variable conditions through `readSystemVariable(...)`, and it can
+  resolve simple user-variable conditions through `readVariable(...)`; it can
+  also execute simple assignments through `writeVariable(...)`.
+- With `IExecutionRuntime`, the executor/streaming path can also delegate
+  assignment expression evaluation through the richer execution-runtime hook.
+- Plain `IRuntime` now also handles structured `AND` conditions when the parser
+  preserves each comparison term structurally.
+- Plain `IRuntime` expression execution currently covers literals, unary `+/-`,
+  binary `+/-/*//`, and user/system-variable reads; richer expression/runtime
+  semantics still need the `IExecutionRuntime` path.
+- Parenthesized Siemens-style `AND` condition text is still parser-limited
+  today; plain `IRuntime` faults with a targeted "use `IExecutionRuntime`"
+  diagnostic for that parser-limited surface.
 - `AilExecutor::step(now_ms, sink, runtime)` currently dispatches motion/dwell
   instructions through the shared runtime path.
 
@@ -54,27 +68,61 @@ Current Siemens-aligned baseline for supported functions:
 | Command | Status | Notes |
 |---|---|---|
 | `G0` rapid baseline | Implemented | Emits `G0Message` with target pose + feed. |
-| `RTLION` / `RTLIOF` rapid interpolation mode | Partial | Lowered to AIL `rapid_mode`; packet/runtime interpolation semantics pending. |
-| `G40` / `G41` / `G42` tool radius compensation | Partial | Lowered to AIL `tool_radius_comp`; executor tracks modal state only. |
-| `G17` / `G18` / `G19` working plane | Partial | Lowered to AIL `working_plane`; executor tracks active plane state only. |
-| `G1` linear | Implemented | Compatibility surfaces emit `G1Message`; streaming engine and executor runtime-step overload both emit normalized linear-move commands to sink/runtime interfaces. |
-| `G2` arc CW | Implemented | Emits `G2Message`; streaming engine and executor runtime-step overload can dispatch normalized arc commands. |
-| `G3` arc CCW | Implemented | Emits `G3Message`; streaming engine and executor runtime-step overload can dispatch normalized arc commands. |
-| `G4` dwell | Implemented | Emits `G4Message`; streaming engine and executor runtime-step overload can dispatch normalized dwell commands. |
-| `M` functions (`M<value>`, `M<ext>=<value>`) | Partial | Parse + validation only in current slice; runtime machine actions not yet mapped. |
-| `R... = expr` assignment | Partial | Parsed and lowered to AIL `assign`; runtime evaluation/store policy not implemented. |
-| `N...` line number at block start | Implemented | Parsed into source metadata; duplicate-warning support for line-number jumps. |
-| Block delete `/` and `/0.. /9` | Implemented | Parsed with skip level metadata; skip policy applied by `LowerOptions.active_skip_levels`. |
-| `GOTO/GOTOF/GOTOB/GOTOC` + labels | Implemented | Parsed, lowered to AIL, and executable in `AilExecutor`. |
-| `IF cond GOTO ... [ELSE GOTO ...]` | Implemented | Parsed/lowered to AIL `branch_if`; runtime resolver decides branch. |
-| Structured `IF/ELSE/ENDIF` | Implemented | Parsed and lowered into label/goto control-flow pattern; runtime executes one branch. |
-| `WHILE/ENDWHILE`, `FOR/ENDFOR`, `REPEAT/UNTIL`, `LOOP/ENDLOOP` | Partial | Parse-only in current implementation (no lowering/executor semantics yet). |
-| Comments `;...`, `( ... )`, `(* ... *)` | Implemented | Preserved as comment items in parse output. |
-| Comments `// ...` | Partial | Supported only when `ParseOptions.enable_double_slash_comments=true`; error by default. |
-| Subprogram call by name (`THE_SHAPE`, `"THE_SHAPE"`) | Planned | Siemens-style call model planned; parser/runtime integration pending. |
-| Subprogram repeat (`P=<n> NAME`, `NAME P<n>`) | Planned | Repeat-count call semantics planned. |
-| Subprogram return (`M17` baseline, `RET` optional) | Planned | Return-to-caller runtime semantics planned. |
-| ISO compat call (`M98 P...`) | Planned | Enabled only by ISO-compatibility profile option. |
+| `RTLION` / `RTLIOF` rapid interpolation mode | Partial | Lowered to AIL `rapid_mode`;
+packet / runtime interpolation semantics pending.|
+    | `G40` / `G41` / `G42` tool radius compensation | Partial |
+    Lowered to AIL `tool_radius_comp`;
+executor tracks modal state only.| | `G17` / `G18` / `G19` working plane |
+    Partial | Lowered to AIL `working_plane`;
+executor tracks active plane state only.| | `G1` linear | Implemented |
+    Compatibility surfaces emit `G1Message`;
+streaming engine and executor runtime -
+        step overload both emit normalized linear -
+        move commands to sink / runtime interfaces.|
+    | `G2` arc CW | Implemented | Emits `G2Message`;
+streaming engine and executor runtime -
+        step overload can dispatch normalized arc commands.|
+    | `G3` arc CCW | Implemented | Emits `G3Message`;
+streaming engine and executor runtime -
+        step overload can dispatch normalized arc commands.|
+    | `G4` dwell | Implemented | Emits `G4Message`;
+streaming engine and executor runtime -
+        step overload can dispatch normalized dwell commands.|
+    | `M` functions(`M<value>`, `M < ext >= <value>`) | Partial
+    | Parse + validation only in current slice;
+runtime machine actions not yet mapped.| | `R... =
+    expr` assignment | Partial | Parsed and lowered to AIL `assign`;
+runtime evaluation / store policy not implemented.|
+    | `N...` line number at block start | Implemented |
+    Parsed into source metadata; duplicate-warning support for line-number jumps. |
+| Block delete `/` and `/0.. /9` | Implemented | Parsed with skip level metadata;
+skip policy applied by `LowerOptions.active_skip_levels`.|
+    | `GOTO / GOTOF / GOTOB / GOTOC` + labels | Implemented | Parsed,
+    lowered to AIL,
+    and executable in `AilExecutor`.| | `IF cond GOTO...[ELSE GOTO...]` |
+        Implemented | Parsed / lowered to AIL `branch_if`;
+runtime resolver decides branch.| | Structured `IF / ELSE / ENDIF` |
+    Implemented | Parsed and lowered into label / goto control - flow pattern;
+runtime executes one branch.| | `WHILE / ENDWHILE`, `FOR / ENDFOR`, `REPEAT / UNTIL`, `LOOP / ENDLOOP` |
+                                                                                          Partial |
+                                                                                          Parse -
+                                                                                              only in current
+                                                                                              implementation(
+                                                                                                  no lowering /
+                                                                                                  executor semantics
+                                                                                                      yet)
+                                                                                                  .|
+                                                                                          |
+                                                                                          Comments `;
+...`, `(...)`, `(*... *)` | Implemented
+                   | Preserved as comment items in parse output.| |
+                   Comments ` // ...` | Partial | Supported only when `ParseOptions.enable_double_slash_comments=true`; error by default. |
+                   | Subprogram call by name(`THE_SHAPE`, `"THE_SHAPE"`) |
+                   Implemented
+                   | Parsed / lowered to AIL and executable in `AilExecutor`; streaming buffered mode can wait for later target labels. |
+| Subprogram repeat (`P=<n> NAME`, `NAME P<n>`) | Implemented | Repeat-count call semantics execute through executor call stack. |
+| Subprogram return (`M17` baseline, `RET` optional) | Implemented | Executor pops return PC; buffered streaming mode reuses the same call-stack path. |
+| ISO compat call (`M98 P...`) | Implemented | Enabled only by ISO-compatibility profile option. |
 
 ## Parse/Lower Options
 
@@ -97,7 +145,8 @@ Rules:
 - `packet_id` is 1-based and deterministic per result order.
 - Non-motion AIL instructions (for example `assign`) are skipped with a
   warning diagnostic.
-- `G0` and `G1` both use packet type `linear_move`; distinguish intent via
+- `G0` and `G1` both use packet type `linear_move`;
+distinguish intent via
   `packet.modal.code` (`G0` vs `G1`).
 
 Output fields:

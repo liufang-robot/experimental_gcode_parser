@@ -1,4 +1,53 @@
-#CHANGELOG_AGENT
+# CHANGELOG_AGENT
+
+## 2026-03-10 (buffer unresolved control flow in streaming mode)
+- Changed `StreamingExecutionEngine` to keep one growing buffered executor
+  context so forward control-flow like `GOTOF END` can wait for later labels
+  instead of faulting immediately.
+- Added explicit `WaitingForInput` streaming state/result and coverage for
+  resolve-later vs fault-at-EOF behavior.
+- Added buffered streaming coverage for branch and subprogram call/return
+  semantics so the streaming path is locked to the same executor call-stack
+  behavior.
+- Enabled simple system-variable condition resolution on the plain `IRuntime`
+  streaming path, including `Pending` plus `resume(...)` behavior for
+  `readSystemVariable(...)`.
+- Added simple assignment execution on the shared executor/runtime path, using
+  `IRuntime.writeVariable(...)` plus shared runtime expression evaluation for
+  literal/system-variable arithmetic and pending write handling.
+- Extended the plain `IRuntime` path with `readVariable(...)` so buffered
+  streaming can resolve simple `R...` conditions and expressions without
+  requiring the richer `IExecutionRuntime` interface.
+- Added structured condition-term preservation for multi-term `AND`
+  conditions, allowing the plain `IRuntime` path to evaluate non-parenthesized
+  `R...`/`$...` logical-AND conditions directly.
+- Made the plain `IRuntime` boundary explicit for parser-limited condition
+  forms: parenthesized `AND` text now faults with a targeted diagnostic, while
+  the same condition can be handled through `IExecutionRuntime`.
+- Extended that same boundary split to assignments: `IExecutionRuntime` can
+  now own expression evaluation for assignment execution, while plain
+  `IRuntime` still provides only the primitive read/write/action layer.
+- Kept runtime blocking semantics unchanged for motion and dwell waits.
+
+SPEC sections / tests:
+- SPEC: Section 6.1, Section 6.2
+- Tests: `test/streaming_execution_tests.cpp`, `./dev/check.sh`
+
+Known limitations:
+- This slice covers buffered unresolved-target waiting for existing executor
+  control flow plus simple user/system-variable condition and assignment
+  runtime execution, but not the full rich-expression execution model through
+  streaming.
+- Parenthesized `AND` conditions are still limited by current parser shape and
+  are not structurally evaluated by the plain `IRuntime` runtime-evaluation
+  path; callers should use `IExecutionRuntime` for those cases.
+- Plain `IRuntime` still only covers the current simple numeric expression
+  subset; richer assignment-expression semantics need `IExecutionRuntime`.
+
+How to reproduce locally (commands):
+- `cmake --build build -j --target streaming_execution_tests`
+- `./build/streaming_execution_tests`
+- `./dev/check.sh`
 
 ## 2026-03-10 (rename executor blocked status to generic blocked)
 - Renamed `ExecutorStatus::BlockedOnCondition` to `ExecutorStatus::Blocked` so
@@ -99,7 +148,9 @@ How to reproduce locally (commands):
 - `./dev/check.sh`
 
 ## 2026-03-09 (share execution modal-state helper between engine and executor)
-- Added internal `src/execution_modal_state.{h,cpp}` with shared helpers for
+- Added internal `src/execution_modal_state.{
+  h, cpp
+}` with shared helpers for
   applying modal AIL instructions and constructing effective modal state.
 - Switched both `StreamingExecutionEngine` and `AilExecutor` to use the same
   internal modal-state update helper for rapid mode, tool-radius compensation,
@@ -108,13 +159,14 @@ How to reproduce locally (commands):
   ahead of the larger loop-unification refactor.
 
 SPEC sections / tests:
-- SPEC: no behavior change; internal refactor only
-- Tests: `test/streaming_execution_tests.cpp`,
-  `test/streaming_execution_gmock_tests.cpp`, `test/ail_executor_tests.cpp`,
-  `./dev/check.sh`
+- SPEC: no behavior change;
+internal refactor only - Tests : `test / streaming_execution_tests.cpp`,
+  `test / streaming_execution_gmock_tests.cpp`, `test / ail_executor_tests.cpp`,
+  `./ dev /
+           check.sh`
 
-Known limitations:
-- This only shares modal-state update logic; the streaming engine and
+           Known limitations : -This only shares modal -
+       state update logic; the streaming engine and
   `AilExecutor` still remain separate execution loops for now.
 
 How to reproduce locally (commands):
@@ -125,7 +177,9 @@ How to reproduce locally (commands):
 - `./dev/check.sh`
 
 ## 2026-03-09 (extract internal execution-instruction dispatcher)
-- Added internal `src/execution_instruction_dispatcher.{h,cpp}` to centralize
+- Added internal `src/execution_instruction_dispatcher.{
+  h, cpp
+}` to centralize
   sink/runtime dispatch for motion-capable AIL instructions.
 - Switched `StreamingExecutionEngine` to call that internal dispatcher instead
   of open-coding sink notification plus runtime submission for each motion kind.
@@ -133,13 +187,14 @@ How to reproduce locally (commands):
   for later executor/streaming-loop unification.
 
 SPEC sections / tests:
-- SPEC: no behavior change; internal refactor only
-- Tests: `test/streaming_execution_tests.cpp`,
-  `test/streaming_execution_gmock_tests.cpp`, `test/cli_tests.cpp`,
-  `./dev/check.sh`
+- SPEC: no behavior change;
+internal refactor only - Tests : `test / streaming_execution_tests.cpp`,
+  `test / streaming_execution_gmock_tests.cpp`, `test / cli_tests.cpp`,
+  `./ dev /
+       check.sh`
 
-Known limitations:
-- This only extracts motion/dwell instruction dispatch; the streaming engine
+       Known limitations : -This only extracts motion /
+       dwell instruction dispatch; the streaming engine
   and `AilExecutor` still remain separate execution loops for now.
 
 How to reproduce locally (commands):
@@ -150,7 +205,9 @@ How to reproduce locally (commands):
 - `./dev/check.sh`
 
 ## 2026-03-09 (extract internal AIL-to-command builder for streaming execution)
-- Added internal `src/execution_command_builder.{h,cpp}` to centralize
+- Added internal `src/execution_command_builder.{
+  h, cpp
+}` to centralize
   conversion from AIL motion/dwell instructions into normalized execution
   command structs plus effective-modal-state assembly.
 - Switched `StreamingExecutionEngine` to use that shared internal builder
@@ -159,13 +216,13 @@ How to reproduce locally (commands):
   reuse from executor-side execution flow.
 
 SPEC sections / tests:
-- SPEC: no behavior change; internal refactor only
-- Tests: `test/streaming_execution_tests.cpp`,
-  `test/streaming_execution_gmock_tests.cpp`, `test/cli_tests.cpp`,
-  `./dev/check.sh`
+- SPEC: no behavior change;
+internal refactor only - Tests : `test / streaming_execution_tests.cpp`,
+  `test / streaming_execution_gmock_tests.cpp`, `test / cli_tests.cpp`,
+  `./ dev /
+       check.sh`
 
-Known limitations:
-- This only extracts command construction; the streaming engine and
+       Known limitations : -This only extracts command construction; the streaming engine and
   `AilExecutor` still remain separate execution loops for now.
 
 How to reproduce locally (commands):
@@ -245,7 +302,9 @@ How to reproduce locally (commands):
   `ail.h` the single include point for executor/policy-facing APIs.
 
 SPEC sections / tests:
-- SPEC: no behavior change; public API packaging/refactor only
+- SPEC: no behavior change;
+public
+  API packaging/refactor only
 - Tests: `test/public_headers_tests.cpp`, `test/ail_executor_tests.cpp`,
   `./dev/check.sh`
 
@@ -267,22 +326,30 @@ How to reproduce locally (commands):
   as a private include path for implementation targets.
 - Added `test/public_headers_tests.cpp` to compile against the public facade
   only, making the public/internal header boundary testable.
-- Trimmed the facade to stable entry-point headers only; support/internal
-  headers stay under `src/` unless intentionally promoted later.
-- Promoted support headers that are part of the current public API contract
-  (`machine_profile.h`, `subprogram_policy.h`, `tool_policy.h`,
-  `tool_selection.h`) and removed duplicate public-header copies from `src/`.
-- Reduced the public header count by folding `ToolSelectionState` into
-  `tool_policy.h` and removing the standalone `tool_selection.h` public header.
-- Split shared public enums into `include/gcode/policy_types.h` and moved
-  `machine_profile.h` back to `src/` as an internal header.
+- Trimmed the facade to stable entry-point headers only;
+  support / internal headers stay under `src /` unless
+                                                  intentionally promoted later.-
+          Promoted support headers that are part of the current public API
+              contract(`machine_profile.h`, `subprogram_policy.h`, `tool_policy.h`,
+  `tool_selection.h`) and
+      removed duplicate public - header copies from `src /`.-
+          Reduced the public header count by folding `ToolSelectionState` into
+  `tool_policy.h` and removing the
+          standalone `tool_selection.h` public header.-
+          Split shared public enums into `include / gcode
+              / policy_types.h` and moved
+  `machine_profile.h` back to `src /` as an internal header.
 
-SPEC sections / tests:
-- SPEC: no behavior change; packaging/refactor only
-- Tests: `test/public_headers_tests.cpp`, `./dev/check.sh`
+                                     SPEC sections
+              / tests : -SPEC : no behavior change;
+  packaging / refactor only - Tests : `test / public_headers_tests.cpp`, `./ dev /
+                                                                                 check
+                                                                                     .sh`
 
-Known limitations:
-- Some APIs still expose support types that may later be hidden or simplified;
+                                                                                 Known
+                                                                                     limitations
+      : -Some APIs still expose support types that may later be
+            hidden or simplified;
   until that refactor lands, those support headers remain part of the public
   surface.
 
@@ -444,27 +511,38 @@ SPEC sections / tests:
 - Tests: none (documentation-only slice)
 
 Known limitations:
-- No runtime behavior changed in this slice; current `parseAndLowerStream(...)`
-  still parses the whole input before emitting callbacks.
+- No runtime behavior changed in this slice;
+  current `parseAndLowerStream(
+      ...)` still parses the whole input before emitting callbacks
+              .
 
-How to reproduce locally (commands):
-- `./dev/check.sh`
+          How to reproduce locally(commands)
+      : - `./
+          dev /
+          check.sh`
 
-## 2026-03-09 (streaming execution docs: mark legacy APIs and streaming-first direction)
-- Updated the main spec-adjacent docs, README, architecture overview, text-flow
-  doc, and program-reference pages to describe the planned streaming-first
-  execution engine and injected interface boundaries.
-- Clarified that current callback streaming remains a compatibility API that
-  still parses the whole input before callback delivery.
-- Documented the planned `G1` call sequence through sink/runtime interfaces so
-  upcoming refactor slices have a consistent written contract.
+          ##2026 -
+      03 -
+      09(streaming execution docs : mark legacy APIs and
+         streaming - first direction) -
+      Updated the main spec - adjacent docs,
+  README, architecture overview, text - flow doc,
+  and program - reference pages to describe the planned streaming
+          - first execution engine
+      and injected interface boundaries.-
+              Clarified that current callback streaming remains a compatibility
+              API that still parses the whole input before callback delivery.-
+              Documented the planned `G1` call sequence through sink /
+                  runtime interfaces so upcoming refactor slices have a
+                  consistent written contract.
 
-SPEC sections / tests:
-- SPEC: Section 2.2, Section 6, Section 6.1, Section 6.2
-- Tests: none (documentation-only slice)
+                  SPEC sections
+                  / tests : -SPEC : Section 2.2,
+      Section 6, Section 6.1,
+      Section 6.2 - Tests : none(documentation - only slice)
 
-Known limitations:
-- No code behavior changed in this slice; the repo still exposes the old
+                                Known limitations : -No code behavior changed in
+                                                    this slice; the repo still exposes the old
   batch/message/callback execution surfaces today.
 
 How to reproduce locally (commands):
@@ -625,15 +703,22 @@ SPEC sections / tests:
 - Tests: `test/parser_tests.cpp`
 
 Known limitations:
-- `%...` metadata still uses a baseline compatibility model; stricter Siemens
-  naming constraints remain future work.
+- `%...` metadata still uses a baseline compatibility model;
+  stricter Siemens naming constraints remain future
+                  work.
 
-How to reproduce locally (commands):
-- `./dev/check.sh`
+              How to reproduce locally(commands)
+      : - `./ dev
+              /
+              check.sh`
 
-## 2026-03-08 (T-049 slice 13: reject punctuation-prefixed percent program names)
-- Tightened `%...` external metadata parsing so the normalized name must start
-  with an alphanumeric character or a quote; punctuation-prefixed payloads
+              ##2026 -
+          03 -
+          08(T - 049 slice 13 : reject punctuation -
+             prefixed percent program names) -
+          Tightened `% ...` external metadata parsing so the
+              normalized name must start with an alphanumeric character
+      or a quote; punctuation-prefixed payloads
   like `%:A`, `%/MPF1000`, and `%..MPF1000` are now rejected.
 - Added parser coverage for colon-, slash-, and dot-prefixed external `%...`
   program-name metadata rejection and updated SPEC section 3.8.
@@ -643,15 +728,19 @@ SPEC sections / tests:
 - Tests: `test/parser_tests.cpp`
 
 Known limitations:
-- `%...` metadata still uses a baseline shape check only; full Siemens naming
-  constraints remain future work.
+- `%...` metadata still uses a baseline shape check only;
+  full Siemens naming constraints remain future
+              work.
 
-How to reproduce locally (commands):
-- `./dev/check.sh`
+          How to reproduce locally(commands)
+      : - `./
+          dev /
+          check.sh`
 
-## 2026-03-08 (T-049 slice 12: reject symbol-only percent program names)
-- Tightened `%...` external metadata parsing so the normalized name must
-  contain at least one alphanumeric character; symbol-only payloads like `%%`,
+          ##2026 -
+      03 - 08(T - 049 slice 12 : reject symbol - only percent program names) -
+      Tightened `% ...` external metadata parsing so the
+          normalized name must contain at least one alphanumeric character; symbol-only payloads like `%%`,
   `%""`, and `%/` are now rejected.
 - Added parser coverage for percent-only, quoted-empty, and symbol-only
   external `%...` program-name metadata rejection and updated SPEC section 3.8.
@@ -661,14 +750,20 @@ SPEC sections / tests:
 - Tests: `test/parser_tests.cpp`
 
 Known limitations:
-- `%...` metadata still uses a baseline shape check only; full Siemens naming
-  constraints remain future work.
+- `%...` metadata still uses a baseline shape check only;
+  full Siemens naming constraints remain future
+              work.
 
-How to reproduce locally (commands):
-- `./dev/check.sh`
+          How to reproduce locally(commands)
+      : - `./
+          dev /
+          check.sh`
 
-## 2026-03-08 (T-049 slice 11: reject empty percent names after comment stripping)
-- Tightened `%...` external metadata parsing so comment-only forms like
+          ##2026 -
+      03 -
+      08(T -
+         049 slice 11 : reject empty percent names after comment stripping) -
+      Tightened `% ...` external metadata parsing so comment - only forms like
   `% ;comment` and `% (note)` are rejected instead of producing an empty
   normalized `program_name`.
 - Added parser coverage for comment-only `%...` metadata rejection and updated
@@ -679,24 +774,33 @@ SPEC sections / tests:
 - Tests: `test/parser_tests.cpp`
 
 Known limitations:
-- `%...` metadata still uses baseline normalization only; broader Siemens name
-  validation rules remain follow-up work.
+- `%...` metadata still uses baseline normalization only;
+  broader Siemens name validation rules remain follow -
+          up work.
 
-How to reproduce locally (commands):
-- `./dev/check.sh`
+              How to reproduce locally(commands)
+      : - `./ dev
+              /
+              check.sh`
 
-## 2026-03-08 (T-049 slice 10: lock quoted percent program-name baseline)
-- Added parser coverage showing `%\"MPF1000\"` is accepted as external `%...`
-  metadata and the normalized `name` currently preserves the quote characters.
-- Updated SPEC section 3.8 to state that quoted-name characters are preserved
-  verbatim in the current external metadata baseline.
+              ##2026 -
+          03 -
+          08(T - 049 slice 10 : lock quoted percent program - name baseline) -
+          Added parser coverage
+              showing `%\"MPF1000\"` is accepted as external `%...`
+              metadata
+      and the normalized `name` currently preserves the quote characters.-
+              Updated SPEC section 3.8 to state that quoted -
+              name characters are preserved verbatim in the current external
+                  metadata baseline.
 
-SPEC sections / tests:
-- SPEC: Section 3.8
-- Tests: `test/parser_tests.cpp`
+                  SPEC sections
+                  / tests : -SPEC : Section 3.8 -
+              Tests : `test /
+      parser_tests.cpp`
 
-Known limitations:
-- `%...` metadata still has only baseline normalization; stricter Siemens
+      Known limitations : - `%
+      ...` metadata still has only baseline normalization; stricter Siemens
   quoted-name semantics and invalid-name diagnostics remain follow-up work.
 
 How to reproduce locally (commands):

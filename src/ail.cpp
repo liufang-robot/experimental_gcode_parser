@@ -14,6 +14,7 @@
 
 #include "execution_instruction_dispatcher.h"
 #include "execution_modal_state.h"
+#include "runtime_expression_eval.h"
 
 namespace gcode {
 namespace {
@@ -995,23 +996,57 @@ AilExecutor::AilExecutor(std::vector<AilInstruction> instructions,
         options_.initial_state->working_plane_current;
   }
   for (size_t i = 0; i < instructions_.size(); ++i) {
-    const auto &inst = instructions_[i];
-    std::visit(
-        [i, this](const auto &node) {
-          using T = std::decay_t<decltype(node)>;
-          if constexpr (std::is_same_v<T, AilLabelInstruction>) {
-            label_positions_[node.name].push_back(i);
-          }
-          if (node.source.line_number.has_value()) {
-            line_number_positions_[*node.source.line_number].push_back(i);
-          }
-        },
-        inst);
+    indexInstruction(i);
+  }
+}
+
+void AilExecutor::appendInstructions(std::vector<AilInstruction> instructions) {
+  const size_t start_index = instructions_.size();
+  for (auto &instruction : instructions) {
+    instructions_.push_back(std::move(instruction));
+    indexInstruction(instructions_.size() - 1);
+  }
+  if (instructions_.size() > start_index &&
+      state_.status == ExecutorStatus::Completed) {
+    state_.status = ExecutorStatus::Ready;
+  }
+  if (state_.status == ExecutorStatus::Blocked && state_.blocked.has_value() &&
+      !state_.blocked->wait_token.has_value() &&
+      !state_.blocked->retry_at_ms.has_value()) {
+    state_.status = ExecutorStatus::Ready;
+    state_.pc = state_.blocked->instruction_index;
+    state_.blocked.reset();
+  }
+}
+
+void AilExecutor::setInputFinished(bool input_finished) {
+  input_finished_ = input_finished;
+  if (input_finished_ && state_.status == ExecutorStatus::Blocked &&
+      state_.blocked.has_value() && !state_.blocked->wait_token.has_value() &&
+      !state_.blocked->retry_at_ms.has_value()) {
+    state_.status = ExecutorStatus::Ready;
+    state_.pc = state_.blocked->instruction_index;
+    state_.blocked.reset();
   }
 }
 
 void AilExecutor::notifyEvent(const WaitToken &wait_token) {
   pending_events_.insert(wait_token);
+}
+
+void AilExecutor::indexInstruction(size_t index) {
+  const auto &inst = instructions_[index];
+  std::visit(
+      [index, this](const auto &node) {
+        using T = std::decay_t<decltype(node)>;
+        if constexpr (std::is_same_v<T, AilLabelInstruction>) {
+          label_positions_[node.name].push_back(index);
+        }
+        if (node.source.line_number.has_value()) {
+          line_number_positions_[*node.source.line_number].push_back(index);
+        }
+      },
+      inst);
 }
 
 void AilExecutor::addFault(const SourceInfo &source,
@@ -1165,6 +1200,20 @@ AilExecutor::resolveGotoTarget(size_t current_index,
   return std::nullopt;
 }
 
+bool AilExecutor::canDeferGotoTargetUntilMoreInput(
+    const AilGotoInstruction &inst) const {
+  return inst.target_kind == "label" || inst.target_kind == "line_number" ||
+         inst.target_kind == "number";
+}
+
+bool AilExecutor::blockWaitingForInput(size_t instruction_index) {
+  state_.status = ExecutorStatus::Blocked;
+  ExecutorBlockedState blocked;
+  blocked.instruction_index = instruction_index;
+  state_.blocked = std::move(blocked);
+  return true;
+}
+
 bool AilExecutor::evaluateBranchAtPc(int64_t now_ms,
                                      const IConditionResolver &resolver) {
   const auto &branch =
@@ -1190,6 +1239,11 @@ bool AilExecutor::evaluateBranchAtPc(int64_t now_ms,
   if (take_then) {
     auto target = resolveGotoTarget(state_.pc, branch.then_branch);
     if (!target.has_value()) {
+      if (options_.defer_unresolved_targets_until_input_finished &&
+          !input_finished_ &&
+          canDeferGotoTargetUntilMoreInput(branch.then_branch)) {
+        return blockWaitingForInput(state_.pc);
+      }
       if (branch.then_branch.opcode == "GOTOC") {
         ++state_.pc;
         return true;
@@ -1208,6 +1262,11 @@ bool AilExecutor::evaluateBranchAtPc(int64_t now_ms,
   }
   auto target = resolveGotoTarget(state_.pc, *branch.else_branch);
   if (!target.has_value()) {
+    if (options_.defer_unresolved_targets_until_input_finished &&
+        !input_finished_ &&
+        canDeferGotoTargetUntilMoreInput(*branch.else_branch)) {
+      return blockWaitingForInput(state_.pc);
+    }
     if (branch.else_branch->opcode == "GOTOC") {
       ++state_.pc;
       return true;
@@ -1349,13 +1408,13 @@ bool AilExecutor::handleToolChangeAtPc() {
 
 bool AilExecutor::advanceOneInstruction(int64_t now_ms,
                                         const IConditionResolver &resolver) {
-  return advanceOneInstruction(now_ms, resolver, nullptr, nullptr);
+  return advanceOneInstruction(now_ms, resolver, nullptr, nullptr, nullptr);
 }
 
 bool AilExecutor::advanceOneInstruction(int64_t now_ms,
                                         const IConditionResolver &resolver,
-                                        IExecutionSink *sink,
-                                        IRuntime *runtime) {
+                                        IExecutionSink *sink, IRuntime *runtime,
+                                        IExecutionRuntime *execution_runtime) {
   if (state_.pc >= instructions_.size()) {
     state_.status = ExecutorStatus::Completed;
     return true;
@@ -1366,6 +1425,10 @@ bool AilExecutor::advanceOneInstruction(int64_t now_ms,
     const auto &goto_inst = std::get<AilGotoInstruction>(inst);
     auto target = resolveGotoTarget(state_.pc, goto_inst);
     if (!target.has_value()) {
+      if (options_.defer_unresolved_targets_until_input_finished &&
+          !input_finished_ && canDeferGotoTargetUntilMoreInput(goto_inst)) {
+        return blockWaitingForInput(state_.pc);
+      }
       if (goto_inst.opcode == "GOTOC") {
         ++state_.pc;
         return true;
@@ -1419,6 +1482,64 @@ bool AilExecutor::advanceOneInstruction(int64_t now_ms,
       return true;
     }
   }
+  if (std::holds_alternative<AilAssignInstruction>(inst) &&
+      runtime != nullptr) {
+    const auto &assign = std::get<AilAssignInstruction>(inst);
+    if (!assign.rhs) {
+      addFault(assign.source,
+               "assignment has no rhs expression: " + assign.lhs);
+      return true;
+    }
+
+    const auto value = execution_runtime != nullptr
+                           ? execution_runtime->evaluateExpression(*assign.rhs)
+                           : evaluateRuntimeExpression(*assign.rhs, *runtime);
+    if (value.status == RuntimeCallStatus::Pending) {
+      if (!value.wait_token.has_value()) {
+        addFault(assign.source,
+                 "assignment evaluation returned pending without wait token: " +
+                     assign.lhs);
+        return true;
+      }
+      state_.status = ExecutorStatus::Blocked;
+      ExecutorBlockedState blocked;
+      blocked.instruction_index = state_.pc;
+      blocked.wait_token = value.wait_token;
+      state_.blocked = std::move(blocked);
+      return true;
+    }
+    if (value.status == RuntimeCallStatus::Error || !value.value.has_value()) {
+      addFault(assign.source,
+               value.error_message.empty()
+                   ? "assignment evaluation failed for " + assign.lhs
+                   : value.error_message);
+      return true;
+    }
+
+    const auto write = runtime->writeVariable(assign.lhs, *value.value);
+    if (write.status == RuntimeCallStatus::Pending) {
+      if (!write.wait_token.has_value()) {
+        addFault(assign.source,
+                 "assignment write returned pending without wait token: " +
+                     assign.lhs);
+        return true;
+      }
+      state_.status = ExecutorStatus::Blocked;
+      ExecutorBlockedState blocked;
+      blocked.instruction_index = state_.pc + 1;
+      blocked.wait_token = write.wait_token;
+      state_.blocked = std::move(blocked);
+      return true;
+    }
+    if (write.status == RuntimeCallStatus::Error) {
+      addFault(assign.source, write.error_message.empty()
+                                  ? "assignment write failed for " + assign.lhs
+                                  : write.error_message);
+      return true;
+    }
+    ++state_.pc;
+    return true;
+  }
   if (std::holds_alternative<AilToolSelectInstruction>(inst)) {
     return handleToolSelectAtPc();
   }
@@ -1452,6 +1573,10 @@ bool AilExecutor::advanceOneInstruction(int64_t now_ms,
             : defaultResolveSubprogramTarget(call.target, label_positions_,
                                              options_);
     if (!resolution.resolved) {
+      if (options_.defer_unresolved_targets_until_input_finished &&
+          !input_finished_) {
+        return blockWaitingForInput(state_.pc);
+      }
       const std::string message =
           "unresolved subprogram target: " + call.target;
       if (options_.unresolved_subprogram_policy == ErrorPolicy::Error) {
@@ -1530,7 +1655,7 @@ bool AilExecutor::step(int64_t now_ms, IExecutionSink &sink,
     state_.blocked.reset();
   }
 
-  return advanceOneInstruction(now_ms, runtime, &sink, &runtime);
+  return advanceOneInstruction(now_ms, runtime, &sink, &runtime, &runtime);
 }
 
 bool AilExecutor::step(int64_t now_ms, const IExecutionRuntime &runtime) {

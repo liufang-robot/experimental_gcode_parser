@@ -474,14 +474,22 @@ private:
         return;
       }
       condition.and_terms_raw.push_back(term_ctx->getText());
+      Condition::Term term;
+      term.location = locationFromToken(term_ctx->getStart());
+      if (term_ctx->lhs) {
+        term.lhs = buildExpr(term_ctx->lhs);
+      }
+      if (term_ctx->rhs) {
+        term.rhs = buildExpr(term_ctx->rhs);
+      }
+      if (term_ctx->op) {
+        term.op = term_ctx->op->getText();
+      }
+      condition.terms.push_back(term);
       if (term_ctx->lhs && !condition.lhs) {
-        condition.lhs = buildExpr(term_ctx->lhs);
-        if (term_ctx->rhs) {
-          condition.rhs = buildExpr(term_ctx->rhs);
-        }
-        if (term_ctx->op) {
-          condition.op = term_ctx->op->getText();
-        }
+        condition.lhs = term.lhs;
+        condition.rhs = term.rhs;
+        condition.op = term.op;
       }
     };
 

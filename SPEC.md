@@ -236,13 +236,15 @@ Planned Siemens compatibility extension:
   - a leading external transfer name line that starts with `%` and has
     non-blank text after `%` is accepted as program metadata.
   - after baseline normalization/comment stripping, the effective external
-    metadata name must remain non-empty; otherwise the line is rejected as
-    syntax-invalid instead of producing an empty `program_name`.
-  - the effective external metadata name must contain at least one
-    alphanumeric character after normalization; symbol-only payloads are
-    rejected as syntax-invalid.
-  - the effective external metadata name must start with an alphanumeric
-    character or a quote after normalization; punctuation-prefixed payloads
+    metadata name must remain non-empty;
+otherwise the line is rejected as syntax -
+    invalid instead of producing an empty `program_name`.-
+    the effective external metadata name must contain at least one alphanumeric
+        character after normalization;
+symbol - only payloads are rejected as syntax - invalid.-
+        the effective external metadata name must start with an alphanumeric
+            character or
+    a quote after normalization; punctuation-prefixed payloads
     are rejected as syntax-invalid.
   - parser preserves:
     - raw program-name text including `%`
@@ -637,6 +639,8 @@ N130 G01 X20 Y20
   - parser/lowering does not resolve live system-variable values
   - runtime resolver is responsible for evaluating user/system-variable
     references, including pending/unavailable outcomes
+  - richer execution runtimes may also own assignment/expression evaluation
+    semantics; plain `IRuntime` remains the primitive read/write/action layer
 - Skip-level execution boundary (v0 Siemens baseline):
   - parser captures skip marker + optional level metadata (`/` => level `0`)
   - lowering/execution stage applies skip policy from
@@ -689,8 +693,34 @@ N130 G01 X20 Y20
   - intended for deterministic event-sequence review during refactor
 - System-variable execution contract:
   - runtime performs variable reads and may return value, pending, or error
-  - current implementation keeps this interface but does not yet execute
-    variable-backed expressions through the streaming engine
+  - buffered streaming can resolve simple system-variable conditions through
+    plain `IRuntime.readSystemVariable(...)`
+  - buffered streaming can also resolve simple user-variable (`R...`)
+    conditions and expressions through plain `IRuntime.readVariable(...)`
+  - buffered streaming and executor-backed runtime execution can evaluate
+    simple numeric assignment expressions and write them through
+    `IRuntime.writeVariable(...)`
+  - when callers provide `IExecutionRuntime`, assignment evaluation can use
+    the richer execution-runtime expression hook instead of the primitive
+    `IRuntime` evaluator
+  - plain `IRuntime` now also evaluates structured logical-AND conditions
+    when the parser preserves each comparison term as structured AST
+  - plain `IRuntime` currently covers literals, unary `+/-`, binary
+    `+/-/*//`, plus user/system-variable reads inside runtime-evaluated
+    expressions
+  - parenthesized Siemens-style `AND` terms are still parser-limited today and
+    plain `IRuntime` faults with a targeted "use `IExecutionRuntime`" style
+    diagnostic for those parser-limited forms; richer expression/runtime
+    semantics still require the richer
+    `IExecutionRuntime` path
+- Line-scope / buffered streaming behavior:
+  - line-by-line input is buffered into one growing executor context
+  - unresolved forward control-flow targets may return `WaitingForInput`
+    until more text arrives
+  - buffered execution applies to forward `goto` / `branch_if` targets and
+    unresolved subprogram-call targets that may be defined by later lines
+  - after `finish()`, still-unresolved targets fault with normal executor
+    diagnostics
 - Integration-test contract:
   - deterministic event logs should capture interface call order and parameter
     values for a given input program

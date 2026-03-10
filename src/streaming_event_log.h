@@ -44,7 +44,10 @@ public:
   submitLinearMove(const LinearMoveCommand &cmd) override;
   RuntimeResult<WaitToken> submitArcMove(const ArcMoveCommand &cmd) override;
   RuntimeResult<WaitToken> submitDwell(const DwellCommand &cmd) override;
+  RuntimeResult<double> readVariable(std::string_view name) override;
   RuntimeResult<double> readSystemVariable(std::string_view name) override;
+  RuntimeResult<void> writeVariable(std::string_view name,
+                                    double value) override;
   RuntimeResult<WaitToken> cancelWait(const WaitToken &token) override;
 
 private:

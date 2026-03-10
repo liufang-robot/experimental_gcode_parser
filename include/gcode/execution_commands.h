@@ -69,10 +69,16 @@ struct RejectedLineEvent {
 enum class EngineState {
   AcceptingInput,
   ReadyToExecute,
+  WaitingForInput,
   Blocked,
   Completed,
   Cancelled,
   Faulted,
+};
+
+struct WaitingForInputState {
+  int line = 0;
+  std::string reason;
 };
 
 struct BlockedState {
@@ -81,10 +87,18 @@ struct BlockedState {
   std::string reason;
 };
 
-enum class StepStatus { Progress, Blocked, Completed, Cancelled, Faulted };
+enum class StepStatus {
+  Progress,
+  WaitingForInput,
+  Blocked,
+  Completed,
+  Cancelled,
+  Faulted
+};
 
 struct StepResult {
   StepStatus status = StepStatus::Progress;
+  std::optional<WaitingForInputState> waiting;
   std::optional<BlockedState> blocked;
   std::optional<Diagnostic> fault;
 };
