@@ -644,7 +644,7 @@ N130 G01 X20 Y20
   - a block-delete line is skipped only when its level is active
 - Executor state model:
   - `ready`
-  - `blocked_on_condition`
+  - `blocked`
   - `completed`
   - `fault`
 - Streaming engine state model:
@@ -759,10 +759,8 @@ N130 G01 X20 Y20
   - motion-capable AIL instructions (`linear`, `arc`, `dwell`) remain
     executable through the streaming engine and are also executable through the
     additive `AilExecutor::step(now_ms, sink, runtime)` overload
-  - current limitation:
-    - executor blocked state still uses `ExecutorStatus::BlockedOnCondition`
-      for both condition waits and runtime motion waits; broader blocked-state
-      naming cleanup remains a follow-up refactor
+  - executor uses a single `ExecutorStatus::Blocked` state for both condition
+    waits and runtime motion waits
 - Tool runtime boundary (current):
   - `tool_select` / `tool_change` instructions are explicit executable control
     instructions in AIL

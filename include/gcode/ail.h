@@ -177,7 +177,7 @@ AilResult lowerToAil(const Program &program,
 AilResult parseAndLowerAil(std::string_view input,
                            const LowerOptions &options = {});
 
-enum class ExecutorStatus { Ready, BlockedOnCondition, Completed, Fault };
+enum class ExecutorStatus { Ready, Blocked, Completed, Fault };
 
 struct ExecutorBlockedState {
   size_t instruction_index = 0;

@@ -34,8 +34,7 @@ Current limitations:
   line-level diagnostics/rejections; variable/control-flow execution remains
   follow-up work.
 - `AilExecutor::step(now_ms, sink, runtime)` currently dispatches motion/dwell
-  instructions through the shared runtime path, but executor blocked-state
-  naming still reflects the older condition-centric terminology.
+  instructions through the shared runtime path.
 
 ## Modal Metadata
 

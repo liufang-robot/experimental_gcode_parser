@@ -1171,7 +1171,7 @@ bool AilExecutor::evaluateBranchAtPc(int64_t now_ms,
       std::get<AilBranchIfInstruction>(instructions_[state_.pc]);
   const auto resolved = resolver.resolve(branch.condition, branch.source);
   if (resolved.kind == ConditionResolutionKind::Pending) {
-    state_.status = ExecutorStatus::BlockedOnCondition;
+    state_.status = ExecutorStatus::Blocked;
     ExecutorBlockedState blocked;
     blocked.instruction_index = state_.pc;
     blocked.wait_token = resolved.wait_token;
@@ -1398,7 +1398,7 @@ bool AilExecutor::advanceOneInstruction(int64_t now_ms,
         dispatchExecutionInstruction(inst, line, modal_state, *sink, *runtime);
     if (dispatch_result.status == ExecutionDispatchResult::Status::Blocked &&
         dispatch_result.wait_token.has_value()) {
-      state_.status = ExecutorStatus::BlockedOnCondition;
+      state_.status = ExecutorStatus::Blocked;
       ExecutorBlockedState blocked;
       blocked.instruction_index = state_.pc + 1;
       blocked.wait_token = dispatch_result.wait_token;
@@ -1511,8 +1511,7 @@ bool AilExecutor::step(int64_t now_ms, IExecutionSink &sink,
     return false;
   }
 
-  if (state_.status == ExecutorStatus::BlockedOnCondition &&
-      state_.blocked.has_value()) {
+  if (state_.status == ExecutorStatus::Blocked && state_.blocked.has_value()) {
     bool event_ready = false;
     if (state_.blocked->wait_token.has_value()) {
       const auto it = pending_events_.find(*state_.blocked->wait_token);
@@ -1544,8 +1543,7 @@ bool AilExecutor::step(int64_t now_ms, const IConditionResolver &resolver) {
     return false;
   }
 
-  if (state_.status == ExecutorStatus::BlockedOnCondition &&
-      state_.blocked.has_value()) {
+  if (state_.status == ExecutorStatus::Blocked && state_.blocked.has_value()) {
     bool event_ready = false;
     if (state_.blocked->wait_token.has_value()) {
       const auto it = pending_events_.find(*state_.blocked->wait_token);
