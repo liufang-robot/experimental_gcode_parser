@@ -12,6 +12,8 @@
 #include "gcode/execution_runtime.h"
 #include "gcode/gcode_parser.h"
 
+#include "execution_modal_state.h"
+
 namespace gcode {
 namespace {
 
@@ -1365,21 +1367,9 @@ bool AilExecutor::advanceOneInstruction(int64_t now_ms,
   if (std::holds_alternative<AilMCodeInstruction>(inst)) {
     return handleMCodeAtPc();
   }
-  if (std::holds_alternative<AilRapidTraverseModeInstruction>(inst)) {
-    const auto &rapid = std::get<AilRapidTraverseModeInstruction>(inst);
-    state_.rapid_mode_current = rapid.mode;
-    ++state_.pc;
-    return true;
-  }
-  if (std::holds_alternative<AilToolRadiusCompInstruction>(inst)) {
-    const auto &comp = std::get<AilToolRadiusCompInstruction>(inst);
-    state_.tool_radius_comp_current = comp.mode;
-    ++state_.pc;
-    return true;
-  }
-  if (std::holds_alternative<AilWorkingPlaneInstruction>(inst)) {
-    const auto &plane = std::get<AilWorkingPlaneInstruction>(inst);
-    state_.working_plane_current = plane.plane;
+  if (applyExecutionModalInstruction(inst, &state_.working_plane_current,
+                                     &state_.rapid_mode_current,
+                                     &state_.tool_radius_comp_current)) {
     ++state_.pc;
     return true;
   }
