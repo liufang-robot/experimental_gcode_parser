@@ -987,6 +987,13 @@ AilResult parseAndLowerAil(std::string_view input,
 AilExecutor::AilExecutor(std::vector<AilInstruction> instructions,
                          AilExecutorOptions options)
     : instructions_(std::move(instructions)), options_(std::move(options)) {
+  if (options_.initial_state.has_value()) {
+    state_.rapid_mode_current = options_.initial_state->rapid_mode_current;
+    state_.tool_radius_comp_current =
+        options_.initial_state->tool_radius_comp_current;
+    state_.working_plane_current =
+        options_.initial_state->working_plane_current;
+  }
   for (size_t i = 0; i < instructions_.size(); ++i) {
     const auto &inst = instructions_[i];
     std::visit(

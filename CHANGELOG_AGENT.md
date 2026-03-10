@@ -1,5 +1,26 @@
 #CHANGELOG_AGENT
 
+## 2026-03-10 (seed executor modal state for shared runtime dispatch)
+- Added `AilExecutorOptions.initial_state` so executor-based motion dispatch
+  can inherit prior working-plane, rapid-mode, and tool-radius-comp state.
+- Added executor coverage proving seeded modal state is reflected in dispatched
+  motion commands.
+- Kept behavior unchanged for callers that do not opt into the new seed-state
+  option.
+
+SPEC sections / tests:
+- SPEC: Section 6.1
+- Tests: `test/ail_executor_tests.cpp`, `test/public_headers_tests.cpp`
+
+Known limitations:
+- This only seeds executor modal state; `StreamingExecutionEngine` does not yet
+  delegate line execution to `AilExecutor`.
+
+How to reproduce locally (commands):
+- `cmake --build build -j --target ail_executor_tests public_headers_tests`
+- `./build/ail_executor_tests`
+- `./build/public_headers_tests`
+
 ## 2026-03-10 (add executor runtime-step overload for motion dispatch)
 - Added `AilExecutor::step(now_ms, sink, runtime)` so motion-capable AIL
   instructions can dispatch through the same `IExecutionSink` /

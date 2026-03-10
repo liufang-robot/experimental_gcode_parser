@@ -339,6 +339,37 @@ TEST(AilExecutorTest, MotionRuntimeErrorFaultsExecutor) {
             std::string::npos);
 }
 
+TEST(AilExecutorTest, InitialModalStateAffectsDispatchedMotionCommands) {
+  const auto lowered = gcode::parseAndLowerAil("G1 X1\n");
+  gcode::AilExecutorOptions options;
+  options.initial_state = gcode::AilExecutorInitialState{
+      gcode::RapidInterpolationMode::NonLinear,
+      gcode::ToolRadiusCompMode::Left,
+      gcode::WorkingPlane::YZ,
+  };
+  gcode::AilExecutor exec(lowered.instructions, options);
+  RecordingExecutionSink sink;
+  RecordingExecutionRuntime runtime(
+      [](const gcode::Condition &, const gcode::SourceInfo &) {
+        gcode::ConditionResolution r;
+        r.kind = gcode::ConditionResolutionKind::False;
+        return r;
+      });
+
+  ASSERT_TRUE(exec.step(0, sink, runtime));
+  ASSERT_EQ(runtime.linear_moves.size(), 1u);
+  ASSERT_TRUE(runtime.linear_moves.front().effective.working_plane.has_value());
+  EXPECT_EQ(*runtime.linear_moves.front().effective.working_plane,
+            gcode::WorkingPlane::YZ);
+  ASSERT_TRUE(runtime.linear_moves.front().effective.rapid_mode.has_value());
+  EXPECT_EQ(*runtime.linear_moves.front().effective.rapid_mode,
+            gcode::RapidInterpolationMode::NonLinear);
+  ASSERT_TRUE(
+      runtime.linear_moves.front().effective.tool_radius_comp.has_value());
+  EXPECT_EQ(*runtime.linear_moves.front().effective.tool_radius_comp,
+            gcode::ToolRadiusCompMode::Left);
+}
+
 TEST(AilExecutorTest, GotocDoesNotFaultWhenTargetMissing) {
   const auto lowered = gcode::parseAndLowerAil("GOTOC MISSING\n");
   gcode::AilExecutor exec(lowered.instructions);
