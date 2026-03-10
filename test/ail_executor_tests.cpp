@@ -1,5 +1,6 @@
 #include <algorithm>
 #include <functional>
+#include <optional>
 #include <string>
 #include <unordered_map>
 #include <vector>
@@ -80,6 +81,95 @@ public:
 
 private:
   Resolver resolver_;
+};
+
+gcode::RuntimeResult<gcode::WaitToken> readyRuntimeResult() {
+  gcode::RuntimeResult<gcode::WaitToken> result;
+  result.status = gcode::RuntimeCallStatus::Ready;
+  return result;
+}
+
+class RecordingExecutionSink final : public gcode::IExecutionSink {
+public:
+  void onDiagnostic(const gcode::Diagnostic &diag) override {
+    diagnostics.push_back(diag);
+  }
+
+  void onRejectedLine(const gcode::RejectedLineEvent &event) override {
+    rejected_lines.push_back(event);
+  }
+
+  void onLinearMove(const gcode::LinearMoveCommand &cmd) override {
+    linear_moves.push_back(cmd);
+  }
+
+  void onArcMove(const gcode::ArcMoveCommand &cmd) override {
+    arc_moves.push_back(cmd);
+  }
+
+  void onDwell(const gcode::DwellCommand &cmd) override {
+    dwells.push_back(cmd);
+  }
+
+  std::vector<gcode::Diagnostic> diagnostics;
+  std::vector<gcode::RejectedLineEvent> rejected_lines;
+  std::vector<gcode::LinearMoveCommand> linear_moves;
+  std::vector<gcode::ArcMoveCommand> arc_moves;
+  std::vector<gcode::DwellCommand> dwells;
+};
+
+class RecordingExecutionRuntime final : public gcode::IExecutionRuntime {
+public:
+  using Resolver = StubExecutionRuntime::Resolver;
+
+  explicit RecordingExecutionRuntime(Resolver resolver)
+      : resolver_(std::move(resolver)) {}
+
+  gcode::ConditionResolution
+  resolve(const gcode::Condition &condition,
+          const gcode::SourceInfo &source) const override {
+    return resolver_(condition, source);
+  }
+
+  gcode::RuntimeResult<gcode::WaitToken>
+  submitLinearMove(const gcode::LinearMoveCommand &cmd) override {
+    linear_moves.push_back(cmd);
+    return next_linear_move_result.value_or(readyRuntimeResult());
+  }
+
+  gcode::RuntimeResult<gcode::WaitToken>
+  submitArcMove(const gcode::ArcMoveCommand &cmd) override {
+    arc_moves.push_back(cmd);
+    return next_arc_move_result.value_or(readyRuntimeResult());
+  }
+
+  gcode::RuntimeResult<gcode::WaitToken>
+  submitDwell(const gcode::DwellCommand &cmd) override {
+    dwells.push_back(cmd);
+    return next_dwell_result.value_or(readyRuntimeResult());
+  }
+
+  gcode::RuntimeResult<double> readSystemVariable(std::string_view) override {
+    gcode::RuntimeResult<double> result;
+    result.status = gcode::RuntimeCallStatus::Error;
+    result.error_message = "not implemented in test runtime";
+    return result;
+  }
+
+  gcode::RuntimeResult<gcode::WaitToken>
+  cancelWait(const gcode::WaitToken &token) override {
+    cancelled_tokens.push_back(token);
+    return readyRuntimeResult();
+  }
+
+  Resolver resolver_;
+  std::optional<gcode::RuntimeResult<gcode::WaitToken>> next_linear_move_result;
+  std::optional<gcode::RuntimeResult<gcode::WaitToken>> next_arc_move_result;
+  std::optional<gcode::RuntimeResult<gcode::WaitToken>> next_dwell_result;
+  std::vector<gcode::LinearMoveCommand> linear_moves;
+  std::vector<gcode::ArcMoveCommand> arc_moves;
+  std::vector<gcode::DwellCommand> dwells;
+  std::vector<gcode::WaitToken> cancelled_tokens;
 };
 
 TEST(AilExecutorTest, ResolvesGotoAndCompletes) {
@@ -170,6 +260,83 @@ TEST(AilExecutorTest, AcceptsFunctionExecutionRuntimeAdapter) {
   ASSERT_TRUE(exec.step(0, runtime));
   ASSERT_TRUE(exec.step(0, runtime));
   EXPECT_EQ(exec.state().status, gcode::ExecutorStatus::Completed);
+}
+
+TEST(AilExecutorTest, MotionStepWithSinkAndRuntimeDispatchesLinearMove) {
+  const auto lowered = gcode::parseAndLowerAil("N10 G1 X1 F2\n");
+  gcode::AilExecutor exec(lowered.instructions);
+  RecordingExecutionSink sink;
+  RecordingExecutionRuntime runtime(
+      [](const gcode::Condition &, const gcode::SourceInfo &) {
+        gcode::ConditionResolution r;
+        r.kind = gcode::ConditionResolutionKind::False;
+        return r;
+      });
+
+  ASSERT_TRUE(exec.step(0, sink, runtime));
+  ASSERT_EQ(sink.linear_moves.size(), 1u);
+  ASSERT_EQ(runtime.linear_moves.size(), 1u);
+  EXPECT_EQ(exec.state().status, gcode::ExecutorStatus::Ready);
+  EXPECT_EQ(exec.state().pc, 1u);
+  ASSERT_TRUE(sink.linear_moves.front().x.has_value());
+  EXPECT_DOUBLE_EQ(*sink.linear_moves.front().x, 1.0);
+  ASSERT_TRUE(sink.linear_moves.front().feed.has_value());
+  EXPECT_DOUBLE_EQ(*sink.linear_moves.front().feed, 2.0);
+
+  ASSERT_TRUE(exec.step(0, sink, runtime));
+  EXPECT_EQ(exec.state().status, gcode::ExecutorStatus::Completed);
+}
+
+TEST(AilExecutorTest, MotionStepCanBlockAndResumeOnRuntimeWaitToken) {
+  const auto lowered = gcode::parseAndLowerAil("G1 X1\n");
+  gcode::AilExecutor exec(lowered.instructions);
+  RecordingExecutionSink sink;
+  RecordingExecutionRuntime runtime(
+      [](const gcode::Condition &, const gcode::SourceInfo &) {
+        gcode::ConditionResolution r;
+        r.kind = gcode::ConditionResolutionKind::False;
+        return r;
+      });
+  gcode::RuntimeResult<gcode::WaitToken> pending;
+  pending.status = gcode::RuntimeCallStatus::Pending;
+  pending.wait_token = gcode::WaitToken{"motion", "executor-move-1"};
+  runtime.next_linear_move_result = pending;
+
+  ASSERT_TRUE(exec.step(0, sink, runtime));
+  EXPECT_EQ(exec.state().status, gcode::ExecutorStatus::BlockedOnCondition);
+  ASSERT_TRUE(exec.state().blocked.has_value());
+  ASSERT_TRUE(exec.state().blocked->wait_token.has_value());
+  EXPECT_EQ(exec.state().blocked->wait_token->kind, "motion");
+  EXPECT_EQ(exec.state().blocked->wait_token->id, "executor-move-1");
+  EXPECT_EQ(exec.state().blocked->instruction_index, 1u);
+  ASSERT_EQ(runtime.linear_moves.size(), 1u);
+
+  exec.notifyEvent(gcode::WaitToken{"motion", "executor-move-1"});
+  ASSERT_TRUE(exec.step(0, sink, runtime));
+  EXPECT_EQ(exec.state().status, gcode::ExecutorStatus::Completed);
+  EXPECT_EQ(runtime.linear_moves.size(), 1u);
+}
+
+TEST(AilExecutorTest, MotionRuntimeErrorFaultsExecutor) {
+  const auto lowered = gcode::parseAndLowerAil("G1 X1\n");
+  gcode::AilExecutor exec(lowered.instructions);
+  RecordingExecutionSink sink;
+  RecordingExecutionRuntime runtime(
+      [](const gcode::Condition &, const gcode::SourceInfo &) {
+        gcode::ConditionResolution r;
+        r.kind = gcode::ConditionResolutionKind::False;
+        return r;
+      });
+  gcode::RuntimeResult<gcode::WaitToken> error;
+  error.status = gcode::RuntimeCallStatus::Error;
+  error.error_message = "planner rejected move";
+  runtime.next_linear_move_result = error;
+
+  ASSERT_TRUE(exec.step(0, sink, runtime));
+  EXPECT_EQ(exec.state().status, gcode::ExecutorStatus::Fault);
+  ASSERT_FALSE(exec.diagnostics().empty());
+  EXPECT_NE(exec.diagnostics().back().message.find("planner rejected move"),
+            std::string::npos);
 }
 
 TEST(AilExecutorTest, GotocDoesNotFaultWhenTargetMissing) {

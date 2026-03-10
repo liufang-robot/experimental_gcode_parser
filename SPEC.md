@@ -738,11 +738,21 @@ N130 G01 X20 Y20
     - `IConditionResolver`
     - `IExecutionRuntime` when a downstream runtime combines motion/runtime and
       condition-resolution services
+    - `IExecutionSink + IExecutionRuntime` when a downstream runtime wants the
+      executor to dispatch motion-capable AIL instructions through the same
+      sink/runtime contract used by `StreamingExecutionEngine`
   - condition evaluation can return:
     - `true`
     - `false`
     - `pending(wait_token[, retry_at_ms])`
     - `error(message)`
+  - motion-capable AIL instructions (`linear`, `arc`, `dwell`) remain
+    executable through the streaming engine and are also executable through the
+    additive `AilExecutor::step(now_ms, sink, runtime)` overload
+  - current limitation:
+    - executor blocked state still uses `ExecutorStatus::BlockedOnCondition`
+      for both condition waits and runtime motion waits; broader blocked-state
+      naming cleanup remains a follow-up refactor
 - Tool runtime boundary (current):
   - `tool_select` / `tool_change` instructions are explicit executable control
     instructions in AIL

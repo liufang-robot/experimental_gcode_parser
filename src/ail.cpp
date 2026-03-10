@@ -12,6 +12,7 @@
 #include "gcode/execution_runtime.h"
 #include "gcode/gcode_parser.h"
 
+#include "execution_instruction_dispatcher.h"
 #include "execution_modal_state.h"
 
 namespace gcode {
@@ -1341,6 +1342,13 @@ bool AilExecutor::handleToolChangeAtPc() {
 
 bool AilExecutor::advanceOneInstruction(int64_t now_ms,
                                         const IConditionResolver &resolver) {
+  return advanceOneInstruction(now_ms, resolver, nullptr, nullptr);
+}
+
+bool AilExecutor::advanceOneInstruction(int64_t now_ms,
+                                        const IConditionResolver &resolver,
+                                        IExecutionSink *sink,
+                                        IRuntime *runtime) {
   if (state_.pc >= instructions_.size()) {
     state_.status = ExecutorStatus::Completed;
     return true;
@@ -1372,6 +1380,37 @@ bool AilExecutor::advanceOneInstruction(int64_t now_ms,
                                      &state_.tool_radius_comp_current)) {
     ++state_.pc;
     return true;
+  }
+  if (sink != nullptr && runtime != nullptr) {
+    const auto line = std::visit(
+        [](const auto &instruction) { return instruction.source.line; }, inst);
+    const ExecutionModalState modal_state = makeExecutionModalState(
+        state_.working_plane_current, state_.rapid_mode_current,
+        state_.tool_radius_comp_current);
+    const auto dispatch_result =
+        dispatchExecutionInstruction(inst, line, modal_state, *sink, *runtime);
+    if (dispatch_result.status == ExecutionDispatchResult::Status::Blocked &&
+        dispatch_result.wait_token.has_value()) {
+      state_.status = ExecutorStatus::BlockedOnCondition;
+      ExecutorBlockedState blocked;
+      blocked.instruction_index = state_.pc + 1;
+      blocked.wait_token = dispatch_result.wait_token;
+      state_.blocked = blocked;
+      return true;
+    }
+    if (dispatch_result.status == ExecutionDispatchResult::Status::Error) {
+      const auto &source = std::visit(
+          [](const auto &instruction) -> const SourceInfo & {
+            return instruction.source;
+          },
+          inst);
+      addFault(source, dispatch_result.message);
+      return true;
+    }
+    if (dispatch_result.status == ExecutionDispatchResult::Status::Progress) {
+      ++state_.pc;
+      return true;
+    }
   }
   if (std::holds_alternative<AilToolSelectInstruction>(inst)) {
     return handleToolSelectAtPc();
@@ -1456,6 +1495,36 @@ bool AilExecutor::advanceOneInstruction(int64_t now_ms,
 bool AilExecutor::step(int64_t now_ms, const ConditionResolver &resolver) {
   FunctionConditionResolver adapter(resolver);
   return step(now_ms, adapter);
+}
+
+bool AilExecutor::step(int64_t now_ms, IExecutionSink &sink,
+                       IExecutionRuntime &runtime) {
+  if (state_.status == ExecutorStatus::Fault ||
+      state_.status == ExecutorStatus::Completed) {
+    return false;
+  }
+
+  if (state_.status == ExecutorStatus::BlockedOnCondition &&
+      state_.blocked.has_value()) {
+    bool event_ready = false;
+    if (state_.blocked->wait_token.has_value()) {
+      const auto it = pending_events_.find(*state_.blocked->wait_token);
+      if (it != pending_events_.end()) {
+        pending_events_.erase(it);
+        event_ready = true;
+      }
+    }
+    const bool time_ready = state_.blocked->retry_at_ms.has_value() &&
+                            now_ms >= *state_.blocked->retry_at_ms;
+    if (!event_ready && !time_ready) {
+      return false;
+    }
+    state_.status = ExecutorStatus::Ready;
+    state_.pc = state_.blocked->instruction_index;
+    state_.blocked.reset();
+  }
+
+  return advanceOneInstruction(now_ms, runtime, &sink, &runtime);
 }
 
 bool AilExecutor::step(int64_t now_ms, const IExecutionRuntime &runtime) {

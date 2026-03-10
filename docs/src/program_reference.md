@@ -11,6 +11,10 @@ planned streaming-first execution boundary.
     - execution sink
     - runtime
     - cancellation
+- Executor API (additive runtime path):
+  - `AilExecutor::step(now_ms, sink, runtime)`
+  - uses the same `IExecutionSink` / `IExecutionRuntime` motion contract for
+    motion-capable AIL instructions
 - Current compatibility APIs:
   - `parseAndLowerAil(...)` -> `AilResult`
   - `parseLowerAndPacketize(...)` -> `PacketResult`
@@ -24,6 +28,9 @@ Current limitations:
 - `StreamingExecutionEngine` currently covers motion/dwell lines plus
   line-level diagnostics/rejections; variable/control-flow execution remains
   follow-up work.
+- `AilExecutor::step(now_ms, sink, runtime)` currently dispatches motion/dwell
+  instructions through the shared runtime path, but executor blocked-state
+  naming still reflects the older condition-centric terminology.
 
 ## Modal Metadata
 
@@ -46,10 +53,10 @@ Current Siemens-aligned baseline for supported functions:
 | `RTLION` / `RTLIOF` rapid interpolation mode | Partial | Lowered to AIL `rapid_mode`; packet/runtime interpolation semantics pending. |
 | `G40` / `G41` / `G42` tool radius compensation | Partial | Lowered to AIL `tool_radius_comp`; executor tracks modal state only. |
 | `G17` / `G18` / `G19` working plane | Partial | Lowered to AIL `working_plane`; executor tracks active plane state only. |
-| `G1` linear | Implemented | Compatibility surfaces emit `G1Message`; streaming engine emits normalized linear-move commands to sink/runtime interfaces. |
-| `G2` arc CW | Implemented | Emits `G2Message` with endpoint + arc fields + feed. |
-| `G3` arc CCW | Implemented | Emits `G3Message` with endpoint + arc fields + feed. |
-| `G4` dwell | Implemented | Emits `G4Message` with dwell mode/value. |
+| `G1` linear | Implemented | Compatibility surfaces emit `G1Message`; streaming engine and executor runtime-step overload both emit normalized linear-move commands to sink/runtime interfaces. |
+| `G2` arc CW | Implemented | Emits `G2Message`; streaming engine and executor runtime-step overload can dispatch normalized arc commands. |
+| `G3` arc CCW | Implemented | Emits `G3Message`; streaming engine and executor runtime-step overload can dispatch normalized arc commands. |
+| `G4` dwell | Implemented | Emits `G4Message`; streaming engine and executor runtime-step overload can dispatch normalized dwell commands. |
 | `M` functions (`M<value>`, `M<ext>=<value>`) | Partial | Parse + validation only in current slice; runtime machine actions not yet mapped. |
 | `R... = expr` assignment | Partial | Parsed and lowered to AIL `assign`; runtime evaluation/store policy not implemented. |
 | `N...` line number at block start | Implemented | Parsed into source metadata; duplicate-warning support for line-number jumps. |

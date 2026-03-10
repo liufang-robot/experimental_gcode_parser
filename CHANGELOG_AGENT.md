@@ -1,5 +1,35 @@
 #CHANGELOG_AGENT
 
+## 2026-03-10 (add executor runtime-step overload for motion dispatch)
+- Added `AilExecutor::step(now_ms, sink, runtime)` so motion-capable AIL
+  instructions can dispatch through the same `IExecutionSink` /
+  `IExecutionRuntime` path already used by `StreamingExecutionEngine`.
+- Reused the shared internal motion dispatcher and modal-state helpers so the
+  executor and streaming paths now share more of the actual execution path,
+  not just data-building helpers.
+- Added executor coverage for ready, pending/resume, and runtime-error motion
+  execution.
+
+SPEC sections / tests:
+- SPEC: Section 6.1
+- Tests: `test/ail_executor_tests.cpp`,
+  `test/streaming_execution_tests.cpp`,
+  `test/streaming_execution_gmock_tests.cpp`,
+  `test/public_headers_tests.cpp`, `./dev/check.sh`
+
+Known limitations:
+- The older executor overloads remain in place for compatibility.
+- Executor blocked state still uses the older `BlockedOnCondition` naming even
+  when blocked on runtime motion completion.
+
+How to reproduce locally (commands):
+- `cmake --build build -j --target ail_executor_tests streaming_execution_tests streaming_execution_gmock_tests public_headers_tests`
+- `./build/ail_executor_tests`
+- `./build/streaming_execution_tests`
+- `./build/streaming_execution_gmock_tests`
+- `./build/public_headers_tests`
+- `./dev/check.sh`
+
 ## 2026-03-09 (share execution modal-state helper between engine and executor)
 - Added internal `src/execution_modal_state.{h,cpp}` with shared helpers for
   applying modal AIL instructions and constructing effective modal state.
