@@ -18,6 +18,8 @@
 
 namespace gcode {
 class IExecutionRuntime;
+class IExecutionSink;
+class IRuntime;
 enum class RapidInterpolationMode { Linear, NonLinear };
 enum class ToolRadiusCompMode { Off, Left, Right };
 enum class WorkingPlane { XY, ZX, YZ };
@@ -221,6 +223,7 @@ public:
   const std::vector<Diagnostic> &diagnostics() const { return diagnostics_; }
 
   void notifyEvent(const WaitToken &wait_token);
+  bool step(int64_t now_ms, IExecutionSink &sink, IExecutionRuntime &runtime);
   bool step(int64_t now_ms, const IExecutionRuntime &runtime);
   bool step(int64_t now_ms, const IConditionResolver &resolver);
   bool step(int64_t now_ms, const ConditionResolver &resolver);
@@ -240,6 +243,8 @@ private:
   bool handleToolChangeAtPc();
   bool advanceOneInstruction(int64_t now_ms,
                              const IConditionResolver &resolver);
+  bool advanceOneInstruction(int64_t now_ms, const IConditionResolver &resolver,
+                             IExecutionSink *sink, IRuntime *runtime);
   void addFault(const SourceInfo &source, const std::string &message);
   void addWarning(const SourceInfo &source, const std::string &message);
 
