@@ -5,6 +5,7 @@
 
 #include "execution_command_builder.h"
 #include "gcode/gcode_parser.h"
+#include "runtime_expression_eval.h"
 
 namespace gcode {
 namespace {
@@ -28,13 +29,9 @@ class RuntimeOnlyExecutionRuntime final : public IExecutionRuntime {
 public:
   explicit RuntimeOnlyExecutionRuntime(IRuntime &runtime) : runtime_(runtime) {}
 
-  ConditionResolution resolve(const Condition &,
-                              const SourceInfo &source) const override {
-    ConditionResolution resolution;
-    resolution.kind = ConditionResolutionKind::Error;
-    resolution.error_message = "condition resolution is unavailable for "
-                               "runtime-only streaming execution";
-    return resolution;
+  ConditionResolution resolve(const Condition &condition,
+                              const SourceInfo &) const override {
+    return resolveRuntimeCondition(condition, runtime_);
   }
 
   RuntimeResult<WaitToken>
@@ -50,12 +47,26 @@ public:
     return runtime_.submitDwell(cmd);
   }
 
+  RuntimeResult<double> readVariable(std::string_view name) override {
+    return runtime_.readVariable(name);
+  }
+
   RuntimeResult<double> readSystemVariable(std::string_view name) override {
     return runtime_.readSystemVariable(name);
   }
 
+  RuntimeResult<void> writeVariable(std::string_view name,
+                                    double value) override {
+    return runtime_.writeVariable(name, value);
+  }
+
   RuntimeResult<WaitToken> cancelWait(const WaitToken &token) override {
     return runtime_.cancelWait(token);
+  }
+
+  RuntimeResult<double>
+  evaluateExpression(const ExprNode &expression) override {
+    return evaluateRuntimeExpression(expression, runtime_);
   }
 
 private:
@@ -90,46 +101,79 @@ bool StreamingExecutionEngine::pushChunk(std::string_view chunk) {
 }
 
 StepResult StreamingExecutionEngine::pump() {
-  if (state_ == EngineState::Faulted) {
-    StepResult result;
-    result.status = StepStatus::Faulted;
-    return result;
+  while (true) {
+    if (state_ == EngineState::Faulted) {
+      StepResult result;
+      result.status = StepStatus::Faulted;
+      return result;
+    }
+    if (state_ == EngineState::Cancelled) {
+      StepResult result;
+      result.status = StepStatus::Cancelled;
+      return result;
+    }
+    if (state_ == EngineState::Completed) {
+      StepResult result;
+      result.status = StepStatus::Completed;
+      return result;
+    }
+    if (state_ == EngineState::Blocked) {
+      StepResult result;
+      result.status = StepStatus::Blocked;
+      result.blocked = blocked_;
+      return result;
+    }
+    if (state_ == EngineState::WaitingForInput) {
+      if (!pending_lines_.empty()) {
+        state_ = EngineState::ReadyToExecute;
+        continue;
+      }
+      if (input_finished_ && executor_ != nullptr) {
+        executor_->setInputFinished(true);
+        state_ = EngineState::ReadyToExecute;
+        continue;
+      }
+      StepResult result;
+      result.status = StepStatus::WaitingForInput;
+      result.waiting = WaitingForInputState{
+          next_line_number_ - 1, "streaming control flow needs more input"};
+      return result;
+    }
+    if (cancellation_.isCancelled()) {
+      cancel();
+      StepResult result;
+      result.status = StepStatus::Cancelled;
+      return result;
+    }
+    if (!pending_lines_.empty()) {
+      const auto step = executeNextLine();
+      if (step.status != StepStatus::Progress) {
+        return step;
+      }
+      continue;
+    }
+    if (executor_ != nullptr) {
+      const auto step = advanceExecutor();
+      if (step.status != StepStatus::Progress) {
+        return step;
+      }
+      if (state_ == EngineState::ReadyToExecute) {
+        if (pending_lines_.empty()) {
+          break;
+        }
+        continue;
+      }
+      continue;
+    }
+    if (input_finished_) {
+      state_ = EngineState::Completed;
+      StepResult result;
+      result.status = StepStatus::Completed;
+      return result;
+    }
+    state_ = EngineState::ReadyToExecute;
+    break;
   }
-  if (state_ == EngineState::Cancelled) {
-    StepResult result;
-    result.status = StepStatus::Cancelled;
-    return result;
-  }
-  if (state_ == EngineState::Completed) {
-    StepResult result;
-    result.status = StepStatus::Completed;
-    return result;
-  }
-  if (state_ == EngineState::Blocked) {
-    StepResult result;
-    result.status = StepStatus::Blocked;
-    result.blocked = blocked_;
-    return result;
-  }
-  if (active_executor_ != nullptr) {
-    return advanceActiveExecutor();
-  }
-  if (cancellation_.isCancelled()) {
-    cancel();
-    StepResult result;
-    result.status = StepStatus::Cancelled;
-    return result;
-  }
-  if (!pending_lines_.empty()) {
-    return executeNextLine();
-  }
-  if (input_finished_) {
-    state_ = EngineState::Completed;
-    StepResult result;
-    result.status = StepStatus::Completed;
-    return result;
-  }
-  state_ = EngineState::ReadyToExecute;
   StepResult result;
   result.status = StepStatus::Progress;
   return result;
@@ -154,14 +198,13 @@ StepResult StreamingExecutionEngine::resume(const WaitToken &token) {
         makeFaultDiagnostic(blocked_->line, "resume token does not match");
     return faultWithDiagnostic(diag);
   }
-  if (active_executor_ != nullptr) {
-    active_executor_->notifyEvent(token);
+  if (executor_ != nullptr) {
+    executor_->notifyEvent(token);
   }
   blocked_.reset();
-  state_ =
-      active_executor_ == nullptr && pending_lines_.empty() && input_finished_
-          ? EngineState::Completed
-          : EngineState::ReadyToExecute;
+  state_ = executor_ == nullptr && pending_lines_.empty() && input_finished_
+               ? EngineState::Completed
+               : EngineState::ReadyToExecute;
   if (state_ == EngineState::Completed) {
     StepResult result;
     result.status = StepStatus::Completed;
@@ -177,7 +220,7 @@ void StreamingExecutionEngine::cancel() {
     (void)runtime_.cancelWait(blocked_->token);
     blocked_.reset();
   }
-  active_executor_.reset();
+  executor_.reset();
   state_ = EngineState::Cancelled;
 }
 
@@ -227,32 +270,36 @@ StepResult StreamingExecutionEngine::executeNextLine() {
     return faultWithDiagnostic(diag);
   }
   if (line_result.instructions.empty()) {
-    state_ = pending_lines_.empty() && input_finished_
-                 ? EngineState::Completed
-                 : EngineState::ReadyToExecute;
-    if (state_ == EngineState::Completed) {
-      StepResult step_result;
-      step_result.status = StepStatus::Completed;
-      return step_result;
-    }
+    state_ = EngineState::ReadyToExecute;
     StepResult step_result;
     step_result.status = StepStatus::Progress;
     return step_result;
   }
   remapInstructionSourceLines(&line_result.instructions, line.line);
+  for (const auto &instruction : line_result.instructions) {
+    buffered_instructions_.push_back(instruction);
+  }
 
-  AilExecutorOptions executor_options;
-  executor_options.initial_state = AilExecutorInitialState{
-      current_rapid_mode_, current_tool_radius_comp_, current_working_plane_};
-  active_executor_ = std::make_unique<AilExecutor>(
-      std::move(line_result.instructions), std::move(executor_options));
-  active_executor_line_ = line.line;
-  active_executor_emitted_diagnostics_ = 0;
-  return advanceActiveExecutor();
+  if (executor_ == nullptr) {
+    AilExecutorOptions executor_options;
+    executor_options.defer_unresolved_targets_until_input_finished = true;
+    executor_options.initial_state = AilExecutorInitialState{
+        std::nullopt, ToolRadiusCompMode::Off, WorkingPlane::XY};
+    executor_ = std::make_unique<AilExecutor>(
+        std::move(line_result.instructions), std::move(executor_options));
+    executor_emitted_diagnostics_ = 0;
+  } else {
+    executor_->appendInstructions(std::move(line_result.instructions));
+  }
+
+  state_ = EngineState::ReadyToExecute;
+  StepResult step_result;
+  step_result.status = StepStatus::Progress;
+  return step_result;
 }
 
-StepResult StreamingExecutionEngine::advanceActiveExecutor() {
-  if (active_executor_ == nullptr) {
+StepResult StreamingExecutionEngine::advanceExecutor() {
+  if (executor_ == nullptr) {
     StepResult result;
     result.status = StepStatus::Progress;
     return result;
@@ -262,44 +309,65 @@ StepResult StreamingExecutionEngine::advanceActiveExecutor() {
   IExecutionRuntime &execution_runtime =
       execution_runtime_ != nullptr ? *execution_runtime_ : runtime_adapter;
 
-  while (active_executor_ != nullptr) {
-    const bool progressed = active_executor_->step(0, sink_, execution_runtime);
-    const auto &executor_diagnostics = active_executor_->diagnostics();
-    while (active_executor_emitted_diagnostics_ < executor_diagnostics.size()) {
-      sink_.onDiagnostic(
-          executor_diagnostics[active_executor_emitted_diagnostics_++]);
+  while (executor_ != nullptr) {
+    const bool progressed = executor_->step(0, sink_, execution_runtime);
+    const auto &executor_diagnostics = executor_->diagnostics();
+    while (executor_emitted_diagnostics_ < executor_diagnostics.size()) {
+      sink_.onDiagnostic(executor_diagnostics[executor_emitted_diagnostics_++]);
     }
 
-    const auto &executor_state = active_executor_->state();
+    const auto &executor_state = executor_->state();
     if (executor_state.status == ExecutorStatus::Blocked &&
         executor_state.blocked.has_value() &&
         executor_state.blocked->wait_token.has_value()) {
-      return makeBlockedResult(active_executor_line_,
+      const size_t blocked_index =
+          executor_state.blocked->instruction_index > 0
+              ? executor_state.blocked->instruction_index - 1
+              : executor_state.pc;
+      const int blocked_line =
+          blocked_index < buffered_instructions_.size()
+              ? std::visit([](const auto &inst) { return inst.source.line; },
+                           buffered_instructions_[blocked_index])
+              : 0;
+      return makeBlockedResult(blocked_line,
                                *executor_state.blocked->wait_token,
                                "instruction execution in progress");
+    }
+    if (executor_state.status == ExecutorStatus::Blocked &&
+        executor_state.blocked.has_value() &&
+        !executor_state.blocked->wait_token.has_value() &&
+        !executor_state.blocked->retry_at_ms.has_value()) {
+      const size_t blocked_index = executor_state.blocked->instruction_index;
+      const int blocked_line =
+          blocked_index < buffered_instructions_.size()
+              ? std::visit([](const auto &inst) { return inst.source.line; },
+                           buffered_instructions_[blocked_index])
+              : 0;
+      if (input_finished_) {
+        executor_->setInputFinished(true);
+        continue;
+      }
+      return makeWaitingForInputResult(
+          blocked_line,
+          "unresolved control-flow target may resolve from future input");
     }
     if (executor_state.status == ExecutorStatus::Fault) {
       const Diagnostic diag =
           executor_diagnostics.empty()
-              ? makeFaultDiagnostic(active_executor_line_,
-                                    "executor faulted without diagnostic")
+              ? makeFaultDiagnostic(0, "executor faulted without diagnostic")
               : executor_diagnostics.back();
-      active_executor_.reset();
+      executor_.reset();
       return faultWithDiagnostic(diag);
     }
     if (executor_state.status == ExecutorStatus::Completed) {
-      current_working_plane_ = executor_state.working_plane_current;
-      current_rapid_mode_ = executor_state.rapid_mode_current;
-      current_tool_radius_comp_ = executor_state.tool_radius_comp_current;
-      active_executor_.reset();
-      state_ = pending_lines_.empty() && input_finished_
-                   ? EngineState::Completed
-                   : EngineState::ReadyToExecute;
-      if (state_ == EngineState::Completed) {
+      if (input_finished_ && pending_lines_.empty() &&
+          executor_state.pc >= buffered_instructions_.size()) {
+        state_ = EngineState::Completed;
         StepResult result;
         result.status = StepStatus::Completed;
         return result;
       }
+      state_ = EngineState::ReadyToExecute;
       StepResult result;
       result.status = StepStatus::Progress;
       return result;
@@ -322,6 +390,17 @@ StepResult StreamingExecutionEngine::makeBlockedResult(int line,
   StepResult result;
   result.status = StepStatus::Blocked;
   result.blocked = blocked_;
+  return result;
+}
+
+StepResult
+StreamingExecutionEngine::makeWaitingForInputResult(int line,
+                                                    std::string reason) {
+  blocked_.reset();
+  state_ = EngineState::WaitingForInput;
+  StepResult result;
+  result.status = StepStatus::WaitingForInput;
+  result.waiting = WaitingForInputState{line, std::move(reason)};
   return result;
 }
 

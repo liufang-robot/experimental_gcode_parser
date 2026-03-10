@@ -119,23 +119,21 @@ class IRuntime {
 public:
   virtual ~IRuntime() = default;
 
-  virtual RuntimeResult<double>
-  readSystemVariable(std::string_view name) = 0;
+  virtual RuntimeResult<double> readVariable(std::string_view name) = 0;
 
-  virtual RuntimeResult<void>
-  writeVariable(std::string_view name, double value) = 0;
+  virtual RuntimeResult<double> readSystemVariable(std::string_view name) = 0;
+
+  virtual RuntimeResult<void> writeVariable(std::string_view name,
+                                            double value) = 0;
 
   virtual RuntimeResult<WaitToken>
   submitLinearMove(const LinearMoveCommand &cmd) = 0;
 
-  virtual RuntimeResult<WaitToken>
-  submitArcMove(const ArcMoveCommand &cmd) = 0;
+  virtual RuntimeResult<WaitToken> submitArcMove(const ArcMoveCommand &cmd) = 0;
 
-  virtual RuntimeResult<WaitToken>
-  submitDwell(const DwellCommand &cmd) = 0;
+  virtual RuntimeResult<WaitToken> submitDwell(const DwellCommand &cmd) = 0;
 
-  virtual RuntimeResult<void>
-  cancelWait(const WaitToken &token) = 0;
+  virtual RuntimeResult<void> cancelWait(const WaitToken &token) = 0;
 };
 ```
 
@@ -241,8 +239,7 @@ Recommended public API:
 ```cpp
 class StreamingExecutionEngine {
 public:
-  StreamingExecutionEngine(IExecutionSink &sink,
-                           IRuntime &runtime,
+  StreamingExecutionEngine(IExecutionSink &sink, IRuntime &runtime,
                            ICancellation &cancellation);
 
   bool pushChunk(std::string_view chunk);
@@ -318,12 +315,14 @@ Minimum command fields:
 
 ## System-Variable Read Contract
 
-System-variable reads are runtime-resolved, not parser-owned.
+Variable reads are runtime-resolved, not parser-owned.
 
-For a line or condition using `$...`:
+For a line or condition using `R...` or `$...`:
 
 1. parser preserves the variable reference in syntax/IR
-2. execution requests value through `IRuntime::readSystemVariable(...)`
+2. execution requests value through:
+   - `IRuntime::readVariable(...)` for `R...`
+   - `IRuntime::readSystemVariable(...)` for `$...`
 3. if ready, evaluation proceeds immediately
 4. if pending, engine enters `Blocked`
 5. if error, engine emits diagnostic/fault
@@ -332,6 +331,16 @@ This contract applies equally to:
 
 - assignment expressions
 - branch/condition evaluation
+- richer execution-runtime embeddings that want to own expression semantics
+
+Structured multi-term `AND` conditions can use the same runtime path when each
+comparison term is preserved as structured AST. Parenthesized `AND` text that
+is not yet lowered into structured comparison terms should use the richer
+execution-runtime path; the plain `IRuntime` path faults with a targeted
+diagnostic for that parser-limited form.
+- Assignment expressions follow the same split: plain `IRuntime` supports the
+  current simple numeric expression subset, while `IExecutionRuntime` can
+  override expression evaluation for richer runtime semantics.
 - future runtime-evaluated selector forms
 
 ## Cancellation Contract
@@ -383,27 +392,45 @@ Example:
 
 ```json
 {"seq":1,"event":"line_completed","line":1,"text":"N10 G1 X10 Y20 F100"}
-{"seq":2,"event":"sink.linear_move","line":1,"params":{"opcode":"G1","x":10.0,"y":20.0,"feed":100.0}}
-{"seq":3,"event":"runtime.submit_linear_move","line":1,"params":{"opcode":"G1","x":10.0,"y":20.0,"feed":100.0}}
-{"seq":4,"event":"engine.blocked","line":1,"token":{"kind":"motion","id":"m1"}}
-{"seq":5,"event":"engine.resumed","token":{"kind":"motion","id":"m1"}}
-{"seq":6,"event":"engine.completed"}
+{
+  "seq" : 2, "event" : "sink.linear_move",
+                       "line" : 1,
+                       "params"
+      : {"opcode" : "G1", "x" : 10.0, "y" : 20.0, "feed" : 100.0}
+}
+{
+  "seq" : 3, "event" : "runtime.submit_linear_move",
+                       "line" : 1,
+                       "params"
+      : {"opcode" : "G1", "x" : 10.0, "y" : 20.0, "feed" : 100.0}
+}
+{
+  "seq" : 4, "event" : "engine.blocked",
+                       "line" : 1,
+                       "token" : {"kind" : "motion", "id" : "m1"}
+}
+{
+  "seq" : 5, "event" : "engine.resumed",
+                       "token" : {"kind" : "motion", "id" : "m1"}
+}
+{"seq" : 6, "event" : "engine.completed"}
 ```
 
-## Integration Test Structure
+        ##Integration Test Structure
 
-Recommended new test files:
+            Recommended new test files :
 
-- `test/streaming_execution_tests.cpp`
-- `test/streaming_cancellation_tests.cpp`
-- `test/runtime_integration_tests.cpp`
+    - `test /
+    streaming_execution_tests
+        .cpp` - `test / streaming_cancellation_tests
+                            .cpp` - `test /
+                                        runtime_integration_tests.cpp`
 
-Recommended fixture directories:
+                                        Recommended fixture directories :
 
-- `testdata/execution/`
-- `testdata/execution_logs/`
+    - `testdata / execution /` - `testdata / execution_logs /`
 
-Each integration test case should define:
+                                     Each integration test case should define:
 
 - input G-code
 - mock runtime script/config

@@ -10,6 +10,8 @@
 #include "gcode/ail.h"
 #include "gcode/execution_runtime.h"
 
+#include "runtime_expression_eval.h"
+
 namespace {
 
 class StubConditionResolver final : public gcode::IConditionResolver {
@@ -72,10 +74,31 @@ public:
     return result;
   }
 
+  gcode::RuntimeResult<double> readVariable(std::string_view) override {
+    gcode::RuntimeResult<double> result;
+    result.status = gcode::RuntimeCallStatus::Error;
+    result.error_message = "not implemented in test runtime";
+    return result;
+  }
+
+  gcode::RuntimeResult<void> writeVariable(std::string_view, double) override {
+    gcode::RuntimeResult<void> result;
+    result.status = gcode::RuntimeCallStatus::Ready;
+    return result;
+  }
+
   gcode::RuntimeResult<gcode::WaitToken>
   cancelWait(const gcode::WaitToken &) override {
     gcode::RuntimeResult<gcode::WaitToken> result;
     result.status = gcode::RuntimeCallStatus::Ready;
+    return result;
+  }
+
+  gcode::RuntimeResult<double>
+  evaluateExpression(const gcode::ExprNode &) override {
+    gcode::RuntimeResult<double> result;
+    result.status = gcode::RuntimeCallStatus::Error;
+    result.error_message = "not implemented in test runtime";
     return result;
   }
 
@@ -85,6 +108,12 @@ private:
 
 gcode::RuntimeResult<gcode::WaitToken> readyRuntimeResult() {
   gcode::RuntimeResult<gcode::WaitToken> result;
+  result.status = gcode::RuntimeCallStatus::Ready;
+  return result;
+}
+
+gcode::RuntimeResult<void> readyVoidResult() {
+  gcode::RuntimeResult<void> result;
   result.status = gcode::RuntimeCallStatus::Ready;
   return result;
 }
@@ -156,20 +185,50 @@ public:
     return result;
   }
 
+  gcode::RuntimeResult<double> readVariable(std::string_view) override {
+    gcode::RuntimeResult<double> result;
+    result.status = gcode::RuntimeCallStatus::Error;
+    result.error_message = "not implemented in test runtime";
+    return result;
+  }
+
+  gcode::RuntimeResult<void> writeVariable(std::string_view name,
+                                           double value) override {
+    write_names.emplace_back(name);
+    write_values.push_back(value);
+    return next_write_result.value_or(readyVoidResult());
+  }
+
   gcode::RuntimeResult<gcode::WaitToken>
   cancelWait(const gcode::WaitToken &token) override {
     cancelled_tokens.push_back(token);
     return readyRuntimeResult();
   }
 
+  gcode::RuntimeResult<double>
+  evaluateExpression(const gcode::ExprNode &expression) override {
+    ++expression_eval_calls;
+    last_expression = &expression;
+    if (next_expression_result.has_value()) {
+      return *next_expression_result;
+    }
+    return gcode::evaluateRuntimeExpression(expression, *this);
+  }
+
   Resolver resolver_;
   std::optional<gcode::RuntimeResult<gcode::WaitToken>> next_linear_move_result;
   std::optional<gcode::RuntimeResult<gcode::WaitToken>> next_arc_move_result;
   std::optional<gcode::RuntimeResult<gcode::WaitToken>> next_dwell_result;
+  std::optional<gcode::RuntimeResult<void>> next_write_result;
+  std::optional<gcode::RuntimeResult<double>> next_expression_result;
   std::vector<gcode::LinearMoveCommand> linear_moves;
   std::vector<gcode::ArcMoveCommand> arc_moves;
   std::vector<gcode::DwellCommand> dwells;
+  std::vector<std::string> write_names;
+  std::vector<double> write_values;
   std::vector<gcode::WaitToken> cancelled_tokens;
+  int expression_eval_calls = 0;
+  const gcode::ExprNode *last_expression = nullptr;
 };
 
 TEST(AilExecutorTest, ResolvesGotoAndCompletes) {
@@ -251,6 +310,17 @@ TEST(AilExecutorTest, AcceptsFunctionExecutionRuntimeAdapter) {
         result.error_message = "not used";
         return result;
       },
+      [](std::string_view) {
+        gcode::RuntimeResult<double> result;
+        result.status = gcode::RuntimeCallStatus::Error;
+        result.error_message = "not used";
+        return result;
+      },
+      [](std::string_view, double) {
+        gcode::RuntimeResult<void> result;
+        result.status = gcode::RuntimeCallStatus::Ready;
+        return result;
+      },
       [](const gcode::WaitToken &) {
         gcode::RuntimeResult<gcode::WaitToken> result;
         result.status = gcode::RuntimeCallStatus::Ready;
@@ -260,6 +330,122 @@ TEST(AilExecutorTest, AcceptsFunctionExecutionRuntimeAdapter) {
   ASSERT_TRUE(exec.step(0, runtime));
   ASSERT_TRUE(exec.step(0, runtime));
   EXPECT_EQ(exec.state().status, gcode::ExecutorStatus::Completed);
+}
+
+TEST(AilExecutorTest, AssignmentWritesVariableViaRuntime) {
+  const auto lowered = gcode::parseAndLowerAil("R1 = 2\n");
+  gcode::AilExecutor exec(lowered.instructions);
+  RecordingExecutionSink sink;
+  RecordingExecutionRuntime runtime(
+      [](const gcode::Condition &, const gcode::SourceInfo &) {
+        gcode::ConditionResolution r;
+        r.kind = gcode::ConditionResolutionKind::False;
+        return r;
+      });
+
+  ASSERT_TRUE(exec.step(0, sink, runtime));
+  ASSERT_TRUE(exec.step(0, sink, runtime));
+  EXPECT_EQ(exec.state().status, gcode::ExecutorStatus::Completed);
+  ASSERT_EQ(runtime.write_names.size(), 1u);
+  EXPECT_EQ(runtime.write_names[0], "R1");
+  ASSERT_EQ(runtime.write_values.size(), 1u);
+  EXPECT_DOUBLE_EQ(runtime.write_values[0], 2.0);
+  EXPECT_EQ(runtime.expression_eval_calls, 1);
+}
+
+TEST(AilExecutorTest, AssignmentUsesExecutionRuntimeExpressionEvaluation) {
+  const auto lowered = gcode::parseAndLowerAil("R1 = R2 + 1\n");
+  gcode::AilExecutor exec(lowered.instructions);
+  RecordingExecutionSink sink;
+  RecordingExecutionRuntime runtime(
+      [](const gcode::Condition &, const gcode::SourceInfo &) {
+        gcode::ConditionResolution r;
+        r.kind = gcode::ConditionResolutionKind::False;
+        return r;
+      });
+  gcode::RuntimeResult<double> evaluated;
+  evaluated.status = gcode::RuntimeCallStatus::Ready;
+  evaluated.value = 42.0;
+  runtime.next_expression_result = evaluated;
+
+  ASSERT_TRUE(exec.step(0, sink, runtime));
+  ASSERT_TRUE(exec.step(0, sink, runtime));
+  EXPECT_EQ(exec.state().status, gcode::ExecutorStatus::Completed);
+  EXPECT_EQ(runtime.expression_eval_calls, 1);
+  ASSERT_EQ(runtime.write_names.size(), 1u);
+  EXPECT_EQ(runtime.write_names[0], "R1");
+  ASSERT_EQ(runtime.write_values.size(), 1u);
+  EXPECT_DOUBLE_EQ(runtime.write_values[0], 42.0);
+}
+
+TEST(AilExecutorTest, AssignmentPendingExpressionBlocksAndResumes) {
+  const auto lowered = gcode::parseAndLowerAil("R1 = R2 + 1\nG1 X3\n");
+  gcode::AilExecutor exec(lowered.instructions);
+  RecordingExecutionSink sink;
+  RecordingExecutionRuntime runtime(
+      [](const gcode::Condition &, const gcode::SourceInfo &) {
+        gcode::ConditionResolution r;
+        r.kind = gcode::ConditionResolutionKind::False;
+        return r;
+      });
+  gcode::RuntimeResult<double> pending_value;
+  pending_value.status = gcode::RuntimeCallStatus::Pending;
+  pending_value.wait_token = gcode::WaitToken{"expr", "r2_plus_1"};
+  runtime.next_expression_result = pending_value;
+
+  ASSERT_TRUE(exec.step(0, sink, runtime));
+  ASSERT_EQ(exec.state().status, gcode::ExecutorStatus::Blocked);
+  ASSERT_TRUE(exec.state().blocked.has_value());
+  ASSERT_TRUE(exec.state().blocked->wait_token.has_value());
+  EXPECT_EQ(exec.state().blocked->wait_token->kind, "expr");
+  EXPECT_EQ(exec.state().blocked->wait_token->id, "r2_plus_1");
+  EXPECT_TRUE(runtime.write_names.empty());
+
+  gcode::RuntimeResult<double> ready_value;
+  ready_value.status = gcode::RuntimeCallStatus::Ready;
+  ready_value.value = 7.0;
+  runtime.next_expression_result = ready_value;
+  exec.notifyEvent(gcode::WaitToken{"expr", "r2_plus_1"});
+  ASSERT_TRUE(exec.step(0, sink, runtime));
+  EXPECT_EQ(exec.state().status, gcode::ExecutorStatus::Ready);
+  ASSERT_EQ(runtime.write_values.size(), 1u);
+  EXPECT_DOUBLE_EQ(runtime.write_values[0], 7.0);
+  ASSERT_TRUE(exec.step(0, sink, runtime));
+  ASSERT_EQ(sink.linear_moves.size(), 1u);
+  ASSERT_TRUE(sink.linear_moves[0].x.has_value());
+  EXPECT_DOUBLE_EQ(*sink.linear_moves[0].x, 3.0);
+}
+
+TEST(AilExecutorTest, AssignmentPendingWriteBlocksAndResumes) {
+  const auto lowered = gcode::parseAndLowerAil("R1 = 2\nG1 X3\n");
+  gcode::AilExecutor exec(lowered.instructions);
+  RecordingExecutionSink sink;
+  RecordingExecutionRuntime runtime(
+      [](const gcode::Condition &, const gcode::SourceInfo &) {
+        gcode::ConditionResolution r;
+        r.kind = gcode::ConditionResolutionKind::False;
+        return r;
+      });
+  gcode::RuntimeResult<void> pending_write;
+  pending_write.status = gcode::RuntimeCallStatus::Pending;
+  pending_write.wait_token = gcode::WaitToken{"write", "r1"};
+  runtime.next_write_result = pending_write;
+
+  ASSERT_TRUE(exec.step(0, sink, runtime));
+  ASSERT_EQ(exec.state().status, gcode::ExecutorStatus::Blocked);
+  ASSERT_TRUE(exec.state().blocked.has_value());
+  ASSERT_TRUE(exec.state().blocked->wait_token.has_value());
+  EXPECT_EQ(exec.state().blocked->wait_token->kind, "write");
+  EXPECT_EQ(exec.state().blocked->wait_token->id, "r1");
+  ASSERT_EQ(runtime.write_names.size(), 1u);
+  EXPECT_EQ(runtime.write_names[0], "R1");
+
+  exec.notifyEvent(gcode::WaitToken{"write", "r1"});
+  ASSERT_TRUE(exec.step(0, sink, runtime));
+  EXPECT_EQ(exec.state().status, gcode::ExecutorStatus::Ready);
+  ASSERT_EQ(sink.linear_moves.size(), 1u);
+  ASSERT_TRUE(sink.linear_moves[0].x.has_value());
+  EXPECT_DOUBLE_EQ(*sink.linear_moves[0].x, 3.0);
 }
 
 TEST(AilExecutorTest, MotionStepWithSinkAndRuntimeDispatchesLinearMove) {

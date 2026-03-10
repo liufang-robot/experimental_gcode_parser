@@ -31,4 +31,10 @@ template <typename T> struct RuntimeResult {
   std::string error_message;
 };
 
+template <> struct RuntimeResult<void> {
+  RuntimeCallStatus status = RuntimeCallStatus::Error;
+  std::optional<WaitToken> wait_token;
+  std::string error_message;
+};
+
 } // namespace gcode

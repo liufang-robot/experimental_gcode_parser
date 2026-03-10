@@ -61,6 +61,17 @@ nlohmann::json conditionToJson(const Condition &condition) {
   for (const auto &term : condition.and_terms_raw) {
     j["and_terms"].push_back(term);
   }
+  j["terms"] = nlohmann::json::array();
+  for (const auto &term : condition.terms) {
+    nlohmann::json term_json;
+    term_json["location"] = locationToJson(term.location);
+    term_json["lhs"] = exprToJson(term.lhs);
+    term_json["op"] =
+        term.op.empty() ? nlohmann::json(nullptr) : nlohmann::json(term.op);
+    term_json["rhs"] =
+        term.rhs ? exprToJson(term.rhs) : nlohmann::json(nullptr);
+    j["terms"].push_back(std::move(term_json));
+  }
   j["lhs"] = exprToJson(condition.lhs);
   if (!condition.op.empty()) {
     j["op"] = condition.op;

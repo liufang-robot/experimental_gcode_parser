@@ -80,9 +80,17 @@ struct Assignment {
 };
 
 struct Condition {
+  struct Term {
+    std::shared_ptr<ExprNode> lhs;
+    std::string op;
+    std::shared_ptr<ExprNode> rhs;
+    Location location;
+  };
+
   std::shared_ptr<ExprNode> lhs;
   std::string op;
   std::shared_ptr<ExprNode> rhs;
+  std::vector<Term> terms;
   std::string raw_text;
   bool has_logical_and = false;
   std::vector<std::string> and_terms_raw;

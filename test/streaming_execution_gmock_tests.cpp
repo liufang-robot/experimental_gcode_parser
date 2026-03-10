@@ -36,8 +36,12 @@ public:
               (const gcode::ArcMoveCommand &cmd), (override));
   MOCK_METHOD(gcode::RuntimeResult<gcode::WaitToken>, submitDwell,
               (const gcode::DwellCommand &cmd), (override));
+  MOCK_METHOD(gcode::RuntimeResult<double>, readVariable,
+              (std::string_view name), (override));
   MOCK_METHOD(gcode::RuntimeResult<double>, readSystemVariable,
               (std::string_view name), (override));
+  MOCK_METHOD(gcode::RuntimeResult<void>, writeVariable,
+              (std::string_view name, double value), (override));
   MOCK_METHOD(gcode::RuntimeResult<gcode::WaitToken>, cancelWait,
               (const gcode::WaitToken &token), (override));
 };
@@ -62,7 +66,7 @@ TEST(StreamingExecutionGmockTest, G1CallsSinkThenRuntime) {
 
   gcode::StreamingExecutionEngine engine(sink, runtime, cancellation, options);
 
-  EXPECT_CALL(cancellation, isCancelled()).WillOnce(Return(false));
+  EXPECT_CALL(cancellation, isCancelled()).WillRepeatedly(Return(false));
 
   {
     InSequence seq;
@@ -123,7 +127,7 @@ TEST(StreamingExecutionGmockTest, G1PendingMoveBlocksEngine) {
   MockCancellation cancellation;
   gcode::StreamingExecutionEngine engine(sink, runtime, cancellation);
 
-  EXPECT_CALL(cancellation, isCancelled()).WillOnce(Return(false));
+  EXPECT_CALL(cancellation, isCancelled()).WillRepeatedly(Return(false));
   EXPECT_CALL(sink, onDiagnostic(_)).Times(0);
   EXPECT_CALL(sink, onRejectedLine(_)).Times(0);
   EXPECT_CALL(sink, onLinearMove(_)).Times(1);
@@ -151,7 +155,7 @@ TEST(StreamingExecutionGmockTest, ResumeAfterPendingMoveContinues) {
   MockCancellation cancellation;
   gcode::StreamingExecutionEngine engine(sink, runtime, cancellation);
 
-  EXPECT_CALL(cancellation, isCancelled()).WillOnce(Return(false));
+  EXPECT_CALL(cancellation, isCancelled()).WillRepeatedly(Return(false));
   EXPECT_CALL(sink, onDiagnostic(_)).Times(0);
   EXPECT_CALL(sink, onRejectedLine(_)).Times(0);
   EXPECT_CALL(sink, onLinearMove(_)).Times(1);
@@ -178,7 +182,7 @@ TEST(StreamingExecutionGmockTest, CancelWhileBlockedCallsRuntimeCancelWait) {
   MockCancellation cancellation;
   gcode::StreamingExecutionEngine engine(sink, runtime, cancellation);
 
-  EXPECT_CALL(cancellation, isCancelled()).WillOnce(Return(false));
+  EXPECT_CALL(cancellation, isCancelled()).WillRepeatedly(Return(false));
   EXPECT_CALL(sink, onDiagnostic(_)).Times(0);
   EXPECT_CALL(sink, onRejectedLine(_)).Times(0);
   EXPECT_CALL(sink, onLinearMove(_)).Times(1);
@@ -210,7 +214,7 @@ TEST(StreamingExecutionGmockTest, G4CallsSubmitDwell) {
   MockCancellation cancellation;
   gcode::StreamingExecutionEngine engine(sink, runtime, cancellation);
 
-  EXPECT_CALL(cancellation, isCancelled()).WillOnce(Return(false));
+  EXPECT_CALL(cancellation, isCancelled()).WillRepeatedly(Return(false));
   EXPECT_CALL(sink, onDiagnostic(_)).Times(0);
   EXPECT_CALL(sink, onRejectedLine(_)).Times(0);
   EXPECT_CALL(sink, onDwell(_))
@@ -237,9 +241,7 @@ TEST(StreamingExecutionGmockTest,
   MockCancellation cancellation;
   gcode::StreamingExecutionEngine engine(sink, runtime, cancellation);
 
-  EXPECT_CALL(cancellation, isCancelled())
-      .Times(4)
-      .WillRepeatedly(Return(false));
+  EXPECT_CALL(cancellation, isCancelled()).WillRepeatedly(Return(false));
   EXPECT_CALL(sink, onDiagnostic(_)).Times(0);
   EXPECT_CALL(sink, onRejectedLine(_)).Times(0);
   EXPECT_CALL(sink, onLinearMove(_))
@@ -269,7 +271,7 @@ TEST(StreamingExecutionGmockTest,
   MockCancellation cancellation;
   gcode::StreamingExecutionEngine engine(sink, runtime, cancellation);
 
-  EXPECT_CALL(cancellation, isCancelled()).WillOnce(Return(false));
+  EXPECT_CALL(cancellation, isCancelled()).WillRepeatedly(Return(false));
   EXPECT_CALL(sink, onDiagnostic(_)).Times(0);
   EXPECT_CALL(sink, onRejectedLine(_)).Times(0);
   EXPECT_CALL(sink, onLinearMove(_))

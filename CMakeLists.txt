@@ -102,6 +102,7 @@ add_library(
                       src/packet.cpp src/packet_json.cpp
                       src/streaming_execution_engine.cpp
                       src/streaming_event_log.cpp
+                      src/runtime_expression_eval.cpp
                       src/execution_modal_state.cpp
                       src/execution_command_builder.cpp
                       src/execution_instruction_dispatcher.cpp

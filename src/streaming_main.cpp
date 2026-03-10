@@ -76,6 +76,13 @@ int main(int argc, const char **argv) {
       recorder.add({{"event", "engine.completed"}});
       break;
     }
+    if (step.status == gcode::StepStatus::WaitingForInput &&
+        step.waiting.has_value()) {
+      recorder.add({{"event", "engine.waiting_for_input"},
+                    {"line", step.waiting->line},
+                    {"params", {{"reason", step.waiting->reason}}}});
+      break;
+    }
     if (step.status == gcode::StepStatus::Blocked && step.blocked.has_value()) {
       recorder.add({{"event", "engine.blocked"},
                     {"line", step.blocked->line},

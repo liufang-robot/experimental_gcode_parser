@@ -26,7 +26,10 @@ public:
   submitLinearMove(const LinearMoveCommand &cmd) = 0;
   virtual RuntimeResult<WaitToken> submitArcMove(const ArcMoveCommand &cmd) = 0;
   virtual RuntimeResult<WaitToken> submitDwell(const DwellCommand &cmd) = 0;
+  virtual RuntimeResult<double> readVariable(std::string_view name) = 0;
   virtual RuntimeResult<double> readSystemVariable(std::string_view name) = 0;
+  virtual RuntimeResult<void> writeVariable(std::string_view name,
+                                            double value) = 0;
   virtual RuntimeResult<WaitToken> cancelWait(const WaitToken &token) = 0;
 };
 
