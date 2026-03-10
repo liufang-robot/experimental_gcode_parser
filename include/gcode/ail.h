@@ -198,6 +198,12 @@ struct ExecutorState {
   std::optional<std::string> fault_message;
 };
 
+struct AilExecutorInitialState {
+  std::optional<RapidInterpolationMode> rapid_mode_current;
+  std::optional<ToolRadiusCompMode> tool_radius_comp_current;
+  std::optional<WorkingPlane> working_plane_current;
+};
+
 struct AilExecutorOptions {
   ErrorPolicy unknown_mcode_policy = ErrorPolicy::Error;
   ErrorPolicy m6_without_pending_policy = ErrorPolicy::Error;
@@ -212,6 +218,7 @@ struct AilExecutorOptions {
   std::unordered_map<std::string, std::string> subprogram_alias_map;
   ToolSelectionResolver tool_selection_resolver;
   SubprogramTargetResolver subprogram_target_resolver;
+  std::optional<AilExecutorInitialState> initial_state;
 };
 
 class AilExecutor {

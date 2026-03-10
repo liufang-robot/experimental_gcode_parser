@@ -15,6 +15,8 @@ planned streaming-first execution boundary.
   - `AilExecutor::step(now_ms, sink, runtime)`
   - uses the same `IExecutionSink` / `IExecutionRuntime` motion contract for
     motion-capable AIL instructions
+  - `AilExecutorOptions.initial_state` can seed modal context when an executor
+    instance needs to inherit prior plane/rapid/tool-comp state
 - Current compatibility APIs:
   - `parseAndLowerAil(...)` -> `AilResult`
   - `parseLowerAndPacketize(...)` -> `PacketResult`

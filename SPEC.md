@@ -741,6 +741,12 @@ N130 G01 X20 Y20
     - `IExecutionSink + IExecutionRuntime` when a downstream runtime wants the
       executor to dispatch motion-capable AIL instructions through the same
       sink/runtime contract used by `StreamingExecutionEngine`
+  - `AilExecutorOptions.initial_state` can seed:
+    - `working_plane_current`
+    - `rapid_mode_current`
+    - `tool_radius_comp_current`
+    for embeddings that need executor motion dispatch to inherit prior modal
+    context
   - condition evaluation can return:
     - `true`
     - `false`
