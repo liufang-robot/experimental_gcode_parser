@@ -1,26 +1,22 @@
 #pragma once
 
-#include <optional>
+#include <string>
 
-#include "gcode/ail.h"
+#include "gcode/execution_commands.h"
 
 namespace gcode {
 
-struct ExecutionModalState {
-  std::optional<WorkingPlane> working_plane = WorkingPlane::XY;
-  std::optional<RapidInterpolationMode> rapid_mode;
-  std::optional<ToolRadiusCompMode> tool_radius_comp = ToolRadiusCompMode::Off;
-};
+using ExecutionModalState = EffectiveModalSnapshot;
 
-ExecutionModalState
-makeExecutionModalState(std::optional<WorkingPlane> working_plane,
-                        std::optional<RapidInterpolationMode> rapid_mode,
-                        std::optional<ToolRadiusCompMode> tool_radius_comp);
+ExecutionModalState makeExecutionModalState(
+    std::string motion_code, WorkingPlane working_plane,
+    RapidInterpolationMode rapid_mode, ToolRadiusCompMode tool_radius_comp,
+    std::optional<ToolSelectionState> active_tool_selection,
+    std::optional<ToolSelectionState> pending_tool_selection);
 
-bool applyExecutionModalInstruction(
-    const AilInstruction &instruction,
-    std::optional<WorkingPlane> *working_plane,
-    std::optional<RapidInterpolationMode> *rapid_mode,
-    std::optional<ToolRadiusCompMode> *tool_radius_comp);
+bool applyExecutionModalInstruction(const AilInstruction &instruction,
+                                    WorkingPlane *working_plane,
+                                    RapidInterpolationMode *rapid_mode,
+                                    ToolRadiusCompMode *tool_radius_comp);
 
 } // namespace gcode

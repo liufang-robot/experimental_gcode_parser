@@ -242,8 +242,14 @@ StepResult StreamingExecutionEngine::executeNextLine() {
   remapInstructionSourceLines(&line_result.instructions, line.line);
 
   AilExecutorOptions executor_options;
-  executor_options.initial_state = AilExecutorInitialState{
-      current_rapid_mode_, current_tool_radius_comp_, current_working_plane_};
+  AilExecutorInitialState initial_state;
+  initial_state.motion_code_current = current_motion_code_;
+  initial_state.rapid_mode_current = current_rapid_mode_;
+  initial_state.tool_radius_comp_current = current_tool_radius_comp_;
+  initial_state.working_plane_current = current_working_plane_;
+  initial_state.active_tool_selection = current_active_tool_selection_;
+  initial_state.pending_tool_selection = current_pending_tool_selection_;
+  executor_options.initial_state = std::move(initial_state);
   active_executor_ = std::make_unique<AilExecutor>(
       std::move(line_result.instructions), std::move(executor_options));
   active_executor_line_ = line.line;
@@ -288,9 +294,12 @@ StepResult StreamingExecutionEngine::advanceActiveExecutor() {
       return faultWithDiagnostic(diag);
     }
     if (executor_state.status == ExecutorStatus::Completed) {
+      current_motion_code_ = executor_state.motion_code_current;
       current_working_plane_ = executor_state.working_plane_current;
       current_rapid_mode_ = executor_state.rapid_mode_current;
       current_tool_radius_comp_ = executor_state.tool_radius_comp_current;
+      current_active_tool_selection_ = executor_state.active_tool_selection;
+      current_pending_tool_selection_ = executor_state.pending_tool_selection;
       active_executor_.reset();
       state_ = pending_lines_.empty() && input_finished_
                    ? EngineState::Completed

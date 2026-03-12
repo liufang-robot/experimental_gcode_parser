@@ -343,6 +343,7 @@ TEST(AilExecutorTest, InitialModalStateAffectsDispatchedMotionCommands) {
   const auto lowered = gcode::parseAndLowerAil("G1 X1\n");
   gcode::AilExecutorOptions options;
   options.initial_state = gcode::AilExecutorInitialState{
+      "G1",
       gcode::RapidInterpolationMode::NonLinear,
       gcode::ToolRadiusCompMode::Left,
       gcode::WorkingPlane::YZ,
@@ -358,15 +359,12 @@ TEST(AilExecutorTest, InitialModalStateAffectsDispatchedMotionCommands) {
 
   ASSERT_TRUE(exec.step(0, sink, runtime));
   ASSERT_EQ(runtime.linear_moves.size(), 1u);
-  ASSERT_TRUE(runtime.linear_moves.front().effective.working_plane.has_value());
-  EXPECT_EQ(*runtime.linear_moves.front().effective.working_plane,
+  EXPECT_EQ(runtime.linear_moves.front().effective.motion_code, "G1");
+  EXPECT_EQ(runtime.linear_moves.front().effective.working_plane,
             gcode::WorkingPlane::YZ);
-  ASSERT_TRUE(runtime.linear_moves.front().effective.rapid_mode.has_value());
-  EXPECT_EQ(*runtime.linear_moves.front().effective.rapid_mode,
+  EXPECT_EQ(runtime.linear_moves.front().effective.rapid_mode,
             gcode::RapidInterpolationMode::NonLinear);
-  ASSERT_TRUE(
-      runtime.linear_moves.front().effective.tool_radius_comp.has_value());
-  EXPECT_EQ(*runtime.linear_moves.front().effective.tool_radius_comp,
+  EXPECT_EQ(runtime.linear_moves.front().effective.tool_radius_comp,
             gcode::ToolRadiusCompMode::Left);
 }
 
@@ -1412,21 +1410,19 @@ TEST(AilExecutorTest, TracksRapidModeStateFromRTLIONAndRTLIOF) {
   };
 
   ASSERT_TRUE(exec.step(0, resolver)); // G0 X1
-  EXPECT_FALSE(exec.state().rapid_mode_current.has_value());
+  EXPECT_EQ(exec.state().rapid_mode_current,
+            gcode::RapidInterpolationMode::Linear);
 
   ASSERT_TRUE(exec.step(0, resolver)); // RTLIOF
-  ASSERT_TRUE(exec.state().rapid_mode_current.has_value());
-  EXPECT_EQ(*exec.state().rapid_mode_current,
+  EXPECT_EQ(exec.state().rapid_mode_current,
             gcode::RapidInterpolationMode::NonLinear);
 
   ASSERT_TRUE(exec.step(0, resolver)); // G0 X2
-  ASSERT_TRUE(exec.state().rapid_mode_current.has_value());
-  EXPECT_EQ(*exec.state().rapid_mode_current,
+  EXPECT_EQ(exec.state().rapid_mode_current,
             gcode::RapidInterpolationMode::NonLinear);
 
   ASSERT_TRUE(exec.step(0, resolver)); // RTLION
-  ASSERT_TRUE(exec.state().rapid_mode_current.has_value());
-  EXPECT_EQ(*exec.state().rapid_mode_current,
+  EXPECT_EQ(exec.state().rapid_mode_current,
             gcode::RapidInterpolationMode::Linear);
 }
 
@@ -1442,23 +1438,19 @@ TEST(AilExecutorTest, TracksToolRadiusCompStateFromG40G41G42) {
   };
 
   ASSERT_TRUE(exec.step(0, resolver)); // G41
-  ASSERT_TRUE(exec.state().tool_radius_comp_current.has_value());
-  EXPECT_EQ(*exec.state().tool_radius_comp_current,
+  EXPECT_EQ(exec.state().tool_radius_comp_current,
             gcode::ToolRadiusCompMode::Left);
 
   ASSERT_TRUE(exec.step(0, resolver)); // G1
-  ASSERT_TRUE(exec.state().tool_radius_comp_current.has_value());
-  EXPECT_EQ(*exec.state().tool_radius_comp_current,
+  EXPECT_EQ(exec.state().tool_radius_comp_current,
             gcode::ToolRadiusCompMode::Left);
 
   ASSERT_TRUE(exec.step(0, resolver)); // G42
-  ASSERT_TRUE(exec.state().tool_radius_comp_current.has_value());
-  EXPECT_EQ(*exec.state().tool_radius_comp_current,
+  EXPECT_EQ(exec.state().tool_radius_comp_current,
             gcode::ToolRadiusCompMode::Right);
 
   ASSERT_TRUE(exec.step(0, resolver)); // G40
-  ASSERT_TRUE(exec.state().tool_radius_comp_current.has_value());
-  EXPECT_EQ(*exec.state().tool_radius_comp_current,
+  EXPECT_EQ(exec.state().tool_radius_comp_current,
             gcode::ToolRadiusCompMode::Off);
 }
 
@@ -1474,20 +1466,16 @@ TEST(AilExecutorTest, TracksWorkingPlaneStateFromG17G18G19) {
   };
 
   ASSERT_TRUE(exec.step(0, resolver)); // G17
-  ASSERT_TRUE(exec.state().working_plane_current.has_value());
-  EXPECT_EQ(*exec.state().working_plane_current, gcode::WorkingPlane::XY);
+  EXPECT_EQ(exec.state().working_plane_current, gcode::WorkingPlane::XY);
 
   ASSERT_TRUE(exec.step(0, resolver)); // G1
-  ASSERT_TRUE(exec.state().working_plane_current.has_value());
-  EXPECT_EQ(*exec.state().working_plane_current, gcode::WorkingPlane::XY);
+  EXPECT_EQ(exec.state().working_plane_current, gcode::WorkingPlane::XY);
 
   ASSERT_TRUE(exec.step(0, resolver)); // G18
-  ASSERT_TRUE(exec.state().working_plane_current.has_value());
-  EXPECT_EQ(*exec.state().working_plane_current, gcode::WorkingPlane::ZX);
+  EXPECT_EQ(exec.state().working_plane_current, gcode::WorkingPlane::ZX);
 
   ASSERT_TRUE(exec.step(0, resolver)); // G19
-  ASSERT_TRUE(exec.state().working_plane_current.has_value());
-  EXPECT_EQ(*exec.state().working_plane_current, gcode::WorkingPlane::YZ);
+  EXPECT_EQ(exec.state().working_plane_current, gcode::WorkingPlane::YZ);
 }
 
 TEST(AilExecutorTest, DeferredToolModeUsesPendingSelectionUntilM6) {

@@ -82,11 +82,12 @@ TEST(StreamingExecutionGmockTest, G1CallsSinkThenRuntime) {
           EXPECT_TRUE(closeEnough(*cmd.x, 10.0));
           EXPECT_TRUE(closeEnough(*cmd.y, 20.0));
           EXPECT_TRUE(closeEnough(*cmd.feed, 100.0));
-          ASSERT_TRUE(cmd.effective.working_plane.has_value());
-          EXPECT_EQ(*cmd.effective.working_plane, gcode::WorkingPlane::XY);
-          ASSERT_TRUE(cmd.effective.tool_radius_comp.has_value());
-          EXPECT_EQ(*cmd.effective.tool_radius_comp,
+          EXPECT_EQ(cmd.effective.motion_code, "G1");
+          EXPECT_EQ(cmd.effective.working_plane, gcode::WorkingPlane::XY);
+          EXPECT_EQ(cmd.effective.tool_radius_comp,
                     gcode::ToolRadiusCompMode::Off);
+          EXPECT_FALSE(cmd.effective.active_tool_selection.has_value());
+          EXPECT_FALSE(cmd.effective.pending_tool_selection.has_value());
         }));
     EXPECT_CALL(runtime, submitLinearMove(_))
         .WillOnce(Invoke([](const gcode::LinearMoveCommand &cmd) {
@@ -103,10 +104,8 @@ TEST(StreamingExecutionGmockTest, G1CallsSinkThenRuntime) {
           if (cmd.feed.has_value()) {
             EXPECT_TRUE(closeEnough(*cmd.feed, 100.0));
           }
-          EXPECT_TRUE(cmd.effective.working_plane.has_value());
-          if (cmd.effective.working_plane.has_value()) {
-            EXPECT_EQ(*cmd.effective.working_plane, gcode::WorkingPlane::XY);
-          }
+          EXPECT_EQ(cmd.effective.motion_code, "G1");
+          EXPECT_EQ(cmd.effective.working_plane, gcode::WorkingPlane::XY);
           return readyMove();
         }));
   }
@@ -244,13 +243,11 @@ TEST(StreamingExecutionGmockTest,
   EXPECT_CALL(sink, onRejectedLine(_)).Times(0);
   EXPECT_CALL(sink, onLinearMove(_))
       .WillOnce(Invoke([](const gcode::LinearMoveCommand &cmd) {
-        ASSERT_TRUE(cmd.effective.working_plane.has_value());
-        EXPECT_EQ(*cmd.effective.working_plane, gcode::WorkingPlane::ZX);
-        ASSERT_TRUE(cmd.effective.rapid_mode.has_value());
-        EXPECT_EQ(*cmd.effective.rapid_mode,
+        EXPECT_EQ(cmd.effective.motion_code, "G1");
+        EXPECT_EQ(cmd.effective.working_plane, gcode::WorkingPlane::ZX);
+        EXPECT_EQ(cmd.effective.rapid_mode,
                   gcode::RapidInterpolationMode::Linear);
-        ASSERT_TRUE(cmd.effective.tool_radius_comp.has_value());
-        EXPECT_EQ(*cmd.effective.tool_radius_comp,
+        EXPECT_EQ(cmd.effective.tool_radius_comp,
                   gcode::ToolRadiusCompMode::Left);
       }));
   EXPECT_CALL(runtime, submitLinearMove(_)).WillOnce(Return(readyMove()));
@@ -274,15 +271,41 @@ TEST(StreamingExecutionGmockTest,
   EXPECT_CALL(sink, onRejectedLine(_)).Times(0);
   EXPECT_CALL(sink, onLinearMove(_))
       .WillOnce(Invoke([](const gcode::LinearMoveCommand &cmd) {
-        ASSERT_TRUE(cmd.effective.working_plane.has_value());
-        EXPECT_EQ(*cmd.effective.working_plane, gcode::WorkingPlane::ZX);
-        ASSERT_TRUE(cmd.effective.tool_radius_comp.has_value());
-        EXPECT_EQ(*cmd.effective.tool_radius_comp,
+        EXPECT_EQ(cmd.effective.motion_code, "G1");
+        EXPECT_EQ(cmd.effective.working_plane, gcode::WorkingPlane::ZX);
+        EXPECT_EQ(cmd.effective.tool_radius_comp,
                   gcode::ToolRadiusCompMode::Left);
       }));
   EXPECT_CALL(runtime, submitLinearMove(_)).WillOnce(Return(readyMove()));
 
   ASSERT_TRUE(engine.pushChunk("G18 G41 G1 X1\n"));
+  EXPECT_EQ(engine.pump().status, gcode::StepStatus::Progress);
+}
+
+TEST(StreamingExecutionGmockTest,
+     EffectiveModalStateCarriesPendingToolSelection) {
+  MockExecutionSink sink;
+  MockRuntime runtime;
+  MockCancellation cancellation;
+  gcode::LowerOptions options;
+  options.tool_change_mode = gcode::ToolChangeMode::DeferredM6;
+  gcode::StreamingExecutionEngine engine(sink, runtime, cancellation, options);
+
+  EXPECT_CALL(cancellation, isCancelled())
+      .Times(2)
+      .WillRepeatedly(Return(false));
+  EXPECT_CALL(sink, onDiagnostic(_)).Times(0);
+  EXPECT_CALL(sink, onRejectedLine(_)).Times(0);
+  EXPECT_CALL(sink, onLinearMove(_))
+      .WillOnce(Invoke([](const gcode::LinearMoveCommand &cmd) {
+        EXPECT_FALSE(cmd.effective.active_tool_selection.has_value());
+        ASSERT_TRUE(cmd.effective.pending_tool_selection.has_value());
+        EXPECT_EQ(cmd.effective.pending_tool_selection->selector_value, "12");
+      }));
+  EXPECT_CALL(runtime, submitLinearMove(_)).WillOnce(Return(readyMove()));
+
+  ASSERT_TRUE(engine.pushChunk("T12\nG1 X1\n"));
+  EXPECT_EQ(engine.pump().status, gcode::StepStatus::Progress);
   EXPECT_EQ(engine.pump().status, gcode::StepStatus::Progress);
 }
 

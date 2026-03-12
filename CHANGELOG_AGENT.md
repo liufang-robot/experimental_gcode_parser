@@ -1,5 +1,36 @@
 # CHANGELOG_AGENT
 
+## 2026-03-12 (wu-1 modal snapshot baseline)
+- Replaced the old partial effective-modal payload with a public
+  `EffectiveModalSnapshot` baseline on emitted linear/arc/dwell commands.
+- Extended executor and streaming carried state so dispatched commands now keep
+  `motion_code`, `working_plane`, `rapid_mode`, `tool_radius_comp`, and
+  active/pending tool-selection state together.
+- Updated fake-log output and executor/streaming tests to assert the new modal
+  snapshot fields, including deferred-tool selection propagation.
+
+SPEC sections / tests:
+- SPEC: Section 6.1
+- Tests: `test/ail_executor_tests.cpp`,
+  `test/streaming_execution_gmock_tests.cpp`,
+  `test/streaming_execution_tests.cpp`,
+  `test/cli_tests.cpp`,
+  `test/public_headers_tests.cpp`,
+  `./dev/check.sh`
+
+Known limitations:
+- This slice defines the baseline snapshot shape, but it still does not cover
+  every future modal group from the reviewed requirements.
+
+How to reproduce locally (commands):
+- `cmake --build build -j --target ail_executor_tests streaming_execution_tests streaming_execution_gmock_tests cli_tests public_headers_tests`
+- `./build/ail_executor_tests`
+- `./build/streaming_execution_tests`
+- `./build/streaming_execution_gmock_tests`
+- `./build/cli_tests --gtest_filter='CliFormatTest.StreamingExec*'`
+- `./build/public_headers_tests`
+- `./dev/check.sh`
+
 ## 2026-03-10 (add review-first requirements documents)
 - Added requirement-first docs for target syntax and target execution behavior
   under `docs/src/requirements/`, separate from implementation status docs.

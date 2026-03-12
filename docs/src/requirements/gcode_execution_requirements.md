@@ -69,10 +69,10 @@ Reviewed decisions:
 
 Follow-up implementation note:
 
-- the exact field layout for carrying the full effective modal snapshot on each
-  emitted command still needs design work, but the requirement direction is now
-  explicit: preserve all supported groups and expose the effective values on
-  emitted commands
+- the baseline field layout for emitted command snapshots is now established
+  (`motion_code`, `working_plane`, `rapid_mode`, `tool_radius_comp`,
+  `active_tool_selection`, `pending_tool_selection`), but future work still
+  needs to extend that snapshot until it covers every supported modal group
 
 ## 2. Streaming Execution Model
 

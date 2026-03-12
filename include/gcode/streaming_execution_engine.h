@@ -64,10 +64,12 @@ private:
   size_t active_executor_emitted_diagnostics_ = 0;
   int next_line_number_ = 1;
   bool input_finished_ = false;
-  std::optional<WorkingPlane> current_working_plane_ = WorkingPlane::XY;
-  std::optional<RapidInterpolationMode> current_rapid_mode_;
-  std::optional<ToolRadiusCompMode> current_tool_radius_comp_ =
-      ToolRadiusCompMode::Off;
+  std::string current_motion_code_ = "G1";
+  WorkingPlane current_working_plane_ = WorkingPlane::XY;
+  RapidInterpolationMode current_rapid_mode_ = RapidInterpolationMode::Linear;
+  ToolRadiusCompMode current_tool_radius_comp_ = ToolRadiusCompMode::Off;
+  std::optional<ToolSelectionState> current_active_tool_selection_;
+  std::optional<ToolSelectionState> current_pending_tool_selection_;
 };
 
 } // namespace gcode

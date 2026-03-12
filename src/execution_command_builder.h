@@ -8,8 +8,6 @@
 namespace gcode {
 
 SourceRef toSourceRef(const SourceInfo &source);
-EffectiveModalState makeEffectiveModalState(const std::string &motion_code,
-                                            const ExecutionModalState &state);
 LinearMoveCommand buildLinearMoveCommand(const AilLinearMoveInstruction &inst,
                                          int line,
                                          const ExecutionModalState &state);

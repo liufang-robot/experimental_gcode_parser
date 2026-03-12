@@ -189,9 +189,10 @@ struct ExecutorState {
   ExecutorStatus status = ExecutorStatus::Ready;
   size_t pc = 0;
   size_t call_stack_depth = 0;
-  std::optional<RapidInterpolationMode> rapid_mode_current;
-  std::optional<ToolRadiusCompMode> tool_radius_comp_current;
-  std::optional<WorkingPlane> working_plane_current;
+  std::string motion_code_current = "G1";
+  RapidInterpolationMode rapid_mode_current = RapidInterpolationMode::Linear;
+  ToolRadiusCompMode tool_radius_comp_current = ToolRadiusCompMode::Off;
+  WorkingPlane working_plane_current = WorkingPlane::XY;
   std::optional<ToolSelectionState> active_tool_selection;
   std::optional<ToolSelectionState> pending_tool_selection;
   std::optional<ExecutorBlockedState> blocked;
@@ -199,9 +200,12 @@ struct ExecutorState {
 };
 
 struct AilExecutorInitialState {
-  std::optional<RapidInterpolationMode> rapid_mode_current;
-  std::optional<ToolRadiusCompMode> tool_radius_comp_current;
-  std::optional<WorkingPlane> working_plane_current;
+  std::string motion_code_current = "G1";
+  RapidInterpolationMode rapid_mode_current = RapidInterpolationMode::Linear;
+  ToolRadiusCompMode tool_radius_comp_current = ToolRadiusCompMode::Off;
+  WorkingPlane working_plane_current = WorkingPlane::XY;
+  std::optional<ToolSelectionState> active_tool_selection;
+  std::optional<ToolSelectionState> pending_tool_selection;
 };
 
 struct AilExecutorOptions {

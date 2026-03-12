@@ -29,6 +29,40 @@ nlohmann::json optionalDoubleToJson(const std::optional<double> &value) {
   return value.has_value() ? nlohmann::json(*value) : nlohmann::json(nullptr);
 }
 
+nlohmann::json
+toolSelectionToJson(const std::optional<ToolSelectionState> &selection) {
+  if (!selection.has_value()) {
+    return nullptr;
+  }
+  nlohmann::json j;
+  j["selector_index"] = selection->selector_index.has_value()
+                            ? nlohmann::json(*selection->selector_index)
+                            : nlohmann::json(nullptr);
+  j["selector_value"] = selection->selector_value;
+  return j;
+}
+
+nlohmann::json effectiveModalToJson(const EffectiveModalSnapshot &effective) {
+  return {{"motion_code", effective.motion_code},
+          {"working_plane",
+           effective.working_plane == WorkingPlane::XY
+               ? "xy"
+               : (effective.working_plane == WorkingPlane::ZX ? "zx" : "yz")},
+          {"rapid_mode", effective.rapid_mode == RapidInterpolationMode::Linear
+                             ? "linear"
+                             : "nonlinear"},
+          {"tool_radius_comp",
+           effective.tool_radius_comp == ToolRadiusCompMode::Off
+               ? "off"
+               : (effective.tool_radius_comp == ToolRadiusCompMode::Left
+                      ? "left"
+                      : "right")},
+          {"active_tool_selection",
+           toolSelectionToJson(effective.active_tool_selection)},
+          {"pending_tool_selection",
+           toolSelectionToJson(effective.pending_tool_selection)}};
+}
+
 nlohmann::json linearMoveToJson(const LinearMoveCommand &cmd) {
   nlohmann::json j;
   j["source"] = sourceToJson(cmd.source);
@@ -41,33 +75,7 @@ nlohmann::json linearMoveToJson(const LinearMoveCommand &cmd) {
   j["c"] = optionalDoubleToJson(cmd.c);
   j["feed"] = optionalDoubleToJson(cmd.feed);
   j["modal"] = modalToJson(cmd.modal);
-  j["effective"] = {
-      {"motion_code", cmd.effective.motion_code},
-      {"working_plane",
-       cmd.effective.working_plane.has_value()
-           ? nlohmann::json(
-                 *cmd.effective.working_plane == WorkingPlane::XY
-                     ? "xy"
-                     : (*cmd.effective.working_plane == WorkingPlane::ZX
-                            ? "zx"
-                            : "yz"))
-           : nlohmann::json(nullptr)},
-      {"rapid_mode", cmd.effective.rapid_mode.has_value()
-                         ? nlohmann::json(*cmd.effective.rapid_mode ==
-                                                  RapidInterpolationMode::Linear
-                                              ? "linear"
-                                              : "nonlinear")
-                         : nlohmann::json(nullptr)},
-      {"tool_radius_comp",
-       cmd.effective.tool_radius_comp.has_value()
-           ? nlohmann::json(*cmd.effective.tool_radius_comp ==
-                                    ToolRadiusCompMode::Off
-                                ? "off"
-                                : (*cmd.effective.tool_radius_comp ==
-                                           ToolRadiusCompMode::Left
-                                       ? "left"
-                                       : "right"))
-           : nlohmann::json(nullptr)}};
+  j["effective"] = effectiveModalToJson(cmd.effective);
   return j;
 }
 
@@ -92,33 +100,7 @@ nlohmann::json arcMoveToJson(const ArcMoveCommand &cmd) {
               {"r", optionalDoubleToJson(cmd.arc.r)}};
   j["feed"] = optionalDoubleToJson(cmd.feed);
   j["modal"] = modalToJson(cmd.modal);
-  j["effective"] = {
-      {"motion_code", cmd.effective.motion_code},
-      {"working_plane",
-       cmd.effective.working_plane.has_value()
-           ? nlohmann::json(
-                 *cmd.effective.working_plane == WorkingPlane::XY
-                     ? "xy"
-                     : (*cmd.effective.working_plane == WorkingPlane::ZX
-                            ? "zx"
-                            : "yz"))
-           : nlohmann::json(nullptr)},
-      {"rapid_mode", cmd.effective.rapid_mode.has_value()
-                         ? nlohmann::json(*cmd.effective.rapid_mode ==
-                                                  RapidInterpolationMode::Linear
-                                              ? "linear"
-                                              : "nonlinear")
-                         : nlohmann::json(nullptr)},
-      {"tool_radius_comp",
-       cmd.effective.tool_radius_comp.has_value()
-           ? nlohmann::json(*cmd.effective.tool_radius_comp ==
-                                    ToolRadiusCompMode::Off
-                                ? "off"
-                                : (*cmd.effective.tool_radius_comp ==
-                                           ToolRadiusCompMode::Left
-                                       ? "left"
-                                       : "right"))
-           : nlohmann::json(nullptr)}};
+  j["effective"] = effectiveModalToJson(cmd.effective);
   return j;
 }
 
@@ -129,33 +111,7 @@ nlohmann::json dwellToJson(const DwellCommand &cmd) {
       cmd.dwell_mode == DwellMode::Revolutions ? "revolutions" : "seconds";
   j["dwell_value"] = cmd.dwell_value;
   j["modal"] = modalToJson(cmd.modal);
-  j["effective"] = {
-      {"motion_code", cmd.effective.motion_code},
-      {"working_plane",
-       cmd.effective.working_plane.has_value()
-           ? nlohmann::json(
-                 *cmd.effective.working_plane == WorkingPlane::XY
-                     ? "xy"
-                     : (*cmd.effective.working_plane == WorkingPlane::ZX
-                            ? "zx"
-                            : "yz"))
-           : nlohmann::json(nullptr)},
-      {"rapid_mode", cmd.effective.rapid_mode.has_value()
-                         ? nlohmann::json(*cmd.effective.rapid_mode ==
-                                                  RapidInterpolationMode::Linear
-                                              ? "linear"
-                                              : "nonlinear")
-                         : nlohmann::json(nullptr)},
-      {"tool_radius_comp",
-       cmd.effective.tool_radius_comp.has_value()
-           ? nlohmann::json(*cmd.effective.tool_radius_comp ==
-                                    ToolRadiusCompMode::Off
-                                ? "off"
-                                : (*cmd.effective.tool_radius_comp ==
-                                           ToolRadiusCompMode::Left
-                                       ? "left"
-                                       : "right"))
-           : nlohmann::json(nullptr)}};
+  j["effective"] = effectiveModalToJson(cmd.effective);
   return j;
 }
 
@@ -218,14 +174,19 @@ std::string EventLogRecorder::toDebugText() const {
           out << "  emit linear_move:";
           out << " opcode=" << params.value("opcode", "");
           const auto &effective = params["effective"];
-          if (!effective["working_plane"].is_null()) {
-            out << " plane=" << effective["working_plane"].get<std::string>();
+          out << " plane=" << effective["working_plane"].get<std::string>();
+          out << " comp=" << effective["tool_radius_comp"].get<std::string>();
+          out << " rapid=" << effective["rapid_mode"].get<std::string>();
+          out << " motion=" << effective["motion_code"].get<std::string>();
+          if (!effective["active_tool_selection"].is_null()) {
+            out << " active_tool="
+                << effective["active_tool_selection"]["selector_value"]
+                       .get<std::string>();
           }
-          if (!effective["tool_radius_comp"].is_null()) {
-            out << " comp=" << effective["tool_radius_comp"].get<std::string>();
-          }
-          if (!effective["rapid_mode"].is_null()) {
-            out << " rapid=" << effective["rapid_mode"].get<std::string>();
+          if (!effective["pending_tool_selection"].is_null()) {
+            out << " pending_tool="
+                << effective["pending_tool_selection"]["selector_value"]
+                       .get<std::string>();
           }
           out << "\n";
           out << "  target:";

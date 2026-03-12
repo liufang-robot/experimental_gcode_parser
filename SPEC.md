@@ -746,9 +746,12 @@ N130 G01 X20 Y20
       executor to dispatch motion-capable AIL instructions through the same
       sink/runtime contract used by `StreamingExecutionEngine`
   - `AilExecutorOptions.initial_state` can seed:
+    - `motion_code_current`
     - `working_plane_current`
     - `rapid_mode_current`
     - `tool_radius_comp_current`
+    - `active_tool_selection`
+    - `pending_tool_selection`
     for embeddings that need executor motion dispatch to inherit prior modal
     context
   - condition evaluation can return:
@@ -759,6 +762,14 @@ N130 G01 X20 Y20
   - motion-capable AIL instructions (`linear`, `arc`, `dwell`) remain
     executable through the streaming engine and are also executable through the
     additive `AilExecutor::step(now_ms, sink, runtime)` overload
+  - normalized execution commands now carry an `effective` modal snapshot with
+    the current baseline fields:
+    - `motion_code`
+    - `working_plane`
+    - `rapid_mode`
+    - `tool_radius_comp`
+    - `active_tool_selection`
+    - `pending_tool_selection`
   - executor uses a single `ExecutorStatus::Blocked` state for both condition
     waits and runtime motion waits
 - Tool runtime boundary (current):
