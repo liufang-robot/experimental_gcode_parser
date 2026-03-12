@@ -1,5 +1,35 @@
 # CHANGELOG_AGENT
 
+## 2026-03-12 (wu-2 normalize execution command payloads)
+- Replaced loose per-axis execution-command fields with a single `target`
+  payload on linear and arc commands, preserving per-axis assignment via
+  optional values.
+- Removed redundant emitted execution-command fields (`opcode`, `modal`,
+  `plane_effective`) where the same meaning is already carried by the
+  effective modal snapshot plus command-specific geometry.
+- Updated event-log output, executor/streaming tests, SPEC, and design docs to
+  reflect the normalized execution-command schema.
+
+SPEC sections / tests:
+- SPEC: Section 6.1
+- Tests: `test/ail_executor_tests.cpp`,
+  `test/streaming_execution_gmock_tests.cpp`,
+  `test/cli_tests.cpp`,
+  `test/public_headers_tests.cpp`
+
+Known limitations:
+- This slice normalizes the motion/dwell command schema, but future tool and
+  other non-motion action command types still need their final public payload
+  design.
+
+How to reproduce locally (commands):
+- `cmake --build build -j --target streaming_execution_gmock_tests ail_executor_tests cli_tests public_headers_tests`
+- `./build/streaming_execution_gmock_tests`
+- `./build/ail_executor_tests`
+- `./build/cli_tests --gtest_filter='CliFormatTest.StreamingExec*'`
+- `./build/public_headers_tests`
+- `./dev/check.sh`
+
 ## 2026-03-12 (wu-1 modal snapshot baseline)
 - Replaced the old partial effective-modal payload with a public
   `EffectiveModalSnapshot` baseline on emitted linear/arc/dwell commands.

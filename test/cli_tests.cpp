@@ -241,7 +241,7 @@ TEST(CliFormatTest, StreamingExecDebugOutputsLinearMoveEventSequence) {
   EXPECT_TRUE(result.stderr_text.empty());
   EXPECT_NE(result.stdout_text.find("line 1 n=10"), std::string::npos);
   EXPECT_NE(result.stdout_text.find(
-                "  emit linear_move: opcode=G1 plane=xy comp=off"),
+                "  emit linear_move: motion=G1 plane=xy comp=off"),
             std::string::npos);
   EXPECT_NE(result.stdout_text.find("  target: x=10 y=20 feed=100"),
             std::string::npos);
@@ -263,7 +263,7 @@ TEST(CliFormatTest, StreamingExecDebugOutputsGroupedMixedFixture) {
   EXPECT_TRUE(result.stderr_text.empty());
   EXPECT_NE(result.stdout_text.find("line 1 n=10"), std::string::npos);
   EXPECT_NE(result.stdout_text.find(
-                "  emit linear_move: opcode=G1 plane=xy comp=off"),
+                "  emit linear_move: motion=G1 plane=xy comp=off"),
             std::string::npos);
   EXPECT_NE(result.stdout_text.find("  target: z=-5 feed=200"),
             std::string::npos);

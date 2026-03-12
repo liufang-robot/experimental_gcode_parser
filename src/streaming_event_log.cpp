@@ -17,16 +17,17 @@ nlohmann::json sourceToJson(const SourceRef &source) {
   return j;
 }
 
-nlohmann::json modalToJson(const ModalState &modal) {
-  nlohmann::json j;
-  j["group"] = modal.group == ModalGroupId::Motion ? "GGroup1" : "GGroup2";
-  j["code"] = modal.code;
-  j["updates_state"] = modal.updates_state;
-  return j;
-}
-
 nlohmann::json optionalDoubleToJson(const std::optional<double> &value) {
   return value.has_value() ? nlohmann::json(*value) : nlohmann::json(nullptr);
+}
+
+nlohmann::json poseTargetToJson(const PoseTarget &target) {
+  return {{"x", optionalDoubleToJson(target.x)},
+          {"y", optionalDoubleToJson(target.y)},
+          {"z", optionalDoubleToJson(target.z)},
+          {"a", optionalDoubleToJson(target.a)},
+          {"b", optionalDoubleToJson(target.b)},
+          {"c", optionalDoubleToJson(target.c)}};
 }
 
 nlohmann::json
@@ -66,15 +67,8 @@ nlohmann::json effectiveModalToJson(const EffectiveModalSnapshot &effective) {
 nlohmann::json linearMoveToJson(const LinearMoveCommand &cmd) {
   nlohmann::json j;
   j["source"] = sourceToJson(cmd.source);
-  j["opcode"] = cmd.opcode;
-  j["x"] = optionalDoubleToJson(cmd.x);
-  j["y"] = optionalDoubleToJson(cmd.y);
-  j["z"] = optionalDoubleToJson(cmd.z);
-  j["a"] = optionalDoubleToJson(cmd.a);
-  j["b"] = optionalDoubleToJson(cmd.b);
-  j["c"] = optionalDoubleToJson(cmd.c);
+  j["target"] = poseTargetToJson(cmd.target);
   j["feed"] = optionalDoubleToJson(cmd.feed);
-  j["modal"] = modalToJson(cmd.modal);
   j["effective"] = effectiveModalToJson(cmd.effective);
   return j;
 }
@@ -82,24 +76,13 @@ nlohmann::json linearMoveToJson(const LinearMoveCommand &cmd) {
 nlohmann::json arcMoveToJson(const ArcMoveCommand &cmd) {
   nlohmann::json j;
   j["source"] = sourceToJson(cmd.source);
-  j["opcode"] = cmd.opcode;
   j["clockwise"] = cmd.clockwise;
-  j["plane_effective"] =
-      cmd.plane_effective == WorkingPlane::XY
-          ? "xy"
-          : (cmd.plane_effective == WorkingPlane::ZX ? "zx" : "yz");
-  j["x"] = optionalDoubleToJson(cmd.x);
-  j["y"] = optionalDoubleToJson(cmd.y);
-  j["z"] = optionalDoubleToJson(cmd.z);
-  j["a"] = optionalDoubleToJson(cmd.a);
-  j["b"] = optionalDoubleToJson(cmd.b);
-  j["c"] = optionalDoubleToJson(cmd.c);
+  j["target"] = poseTargetToJson(cmd.target);
   j["arc"] = {{"i", optionalDoubleToJson(cmd.arc.i)},
               {"j", optionalDoubleToJson(cmd.arc.j)},
               {"k", optionalDoubleToJson(cmd.arc.k)},
               {"r", optionalDoubleToJson(cmd.arc.r)}};
   j["feed"] = optionalDoubleToJson(cmd.feed);
-  j["modal"] = modalToJson(cmd.modal);
   j["effective"] = effectiveModalToJson(cmd.effective);
   return j;
 }
@@ -110,7 +93,6 @@ nlohmann::json dwellToJson(const DwellCommand &cmd) {
   j["dwell_mode"] =
       cmd.dwell_mode == DwellMode::Revolutions ? "revolutions" : "seconds";
   j["dwell_value"] = cmd.dwell_value;
-  j["modal"] = modalToJson(cmd.modal);
   j["effective"] = effectiveModalToJson(cmd.effective);
   return j;
 }
@@ -172,12 +154,11 @@ std::string EventLogRecorder::toDebugText() const {
         out << "\n";
         if (event == "sink.linear_move") {
           out << "  emit linear_move:";
-          out << " opcode=" << params.value("opcode", "");
           const auto &effective = params["effective"];
+          out << " motion=" << effective["motion_code"].get<std::string>();
           out << " plane=" << effective["working_plane"].get<std::string>();
           out << " comp=" << effective["tool_radius_comp"].get<std::string>();
           out << " rapid=" << effective["rapid_mode"].get<std::string>();
-          out << " motion=" << effective["motion_code"].get<std::string>();
           if (!effective["active_tool_selection"].is_null()) {
             out << " active_tool="
                 << effective["active_tool_selection"]["selector_value"]
@@ -190,14 +171,15 @@ std::string EventLogRecorder::toDebugText() const {
           }
           out << "\n";
           out << "  target:";
-          if (!params["x"].is_null()) {
-            out << " x=" << params["x"].get<double>();
+          const auto &target = params["target"];
+          if (!target["x"].is_null()) {
+            out << " x=" << target["x"].get<double>();
           }
-          if (!params["y"].is_null()) {
-            out << " y=" << params["y"].get<double>();
+          if (!target["y"].is_null()) {
+            out << " y=" << target["y"].get<double>();
           }
-          if (!params["z"].is_null()) {
-            out << " z=" << params["z"].get<double>();
+          if (!target["z"].is_null()) {
+            out << " z=" << target["z"].get<double>();
           }
           if (!params["feed"].is_null()) {
             out << " feed=" << params["feed"].get<double>();
@@ -206,8 +188,9 @@ std::string EventLogRecorder::toDebugText() const {
           out << "  runtime: submit_linear_move";
         } else if (event == "sink.arc_move") {
           out << "  emit arc_move:";
-          out << " opcode=" << params.value("opcode", "");
-          out << " plane=" << params.value("plane_effective", "");
+          const auto &effective = params["effective"];
+          out << " motion=" << effective["motion_code"].get<std::string>();
+          out << " plane=" << effective["working_plane"].get<std::string>();
           out << "\n";
           out << "  runtime: submit_arc_move";
         } else {

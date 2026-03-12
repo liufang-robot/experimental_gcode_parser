@@ -1,4 +1,4 @@
-#SPEC — CNC G - code Parser Library(v0.1)
+# SPEC — CNC G-code Parser Library (v0.1)
 
 ## 1. Purpose
 Parse G-code text (string or file) into a simple, syntax-level JSON model
@@ -236,13 +236,15 @@ Planned Siemens compatibility extension:
   - a leading external transfer name line that starts with `%` and has
     non-blank text after `%` is accepted as program metadata.
   - after baseline normalization/comment stripping, the effective external
-    metadata name must remain non-empty; otherwise the line is rejected as
-    syntax-invalid instead of producing an empty `program_name`.
-  - the effective external metadata name must contain at least one
-    alphanumeric character after normalization; symbol-only payloads are
-    rejected as syntax-invalid.
-  - the effective external metadata name must start with an alphanumeric
-    character or a quote after normalization; punctuation-prefixed payloads
+    metadata name must remain non-empty;
+otherwise the line is rejected as syntax -
+    invalid instead of producing an empty `program_name`.-
+    the effective external metadata name must contain at least one alphanumeric
+        character after normalization;
+symbol - only payloads are rejected as syntax - invalid.-
+        the effective external metadata name must start with an alphanumeric
+            character or
+    a quote after normalization; punctuation-prefixed payloads
     are rejected as syntax-invalid.
   - parser preserves:
     - raw program-name text including `%`
@@ -770,6 +772,14 @@ N130 G01 X20 Y20
     - `tool_radius_comp`
     - `active_tool_selection`
     - `pending_tool_selection`
+  - motion-capable execution commands now use normalized payloads:
+    - linear/arc commands carry `target` (`x/y/z/a/b/c` as optionals)
+    - arc commands carry `clockwise` + `arc` geometry
+    - dwell commands carry only dwell mode/value plus source and effective
+      snapshot
+  - emitted execution commands do not duplicate parser-oriented modal/opcode
+    fields when the same meaning is already represented by the effective
+    snapshot
   - executor uses a single `ExecutorStatus::Blocked` state for both condition
     waits and runtime motion waits
 - Tool runtime boundary (current):

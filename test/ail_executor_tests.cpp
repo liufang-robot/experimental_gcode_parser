@@ -278,8 +278,8 @@ TEST(AilExecutorTest, MotionStepWithSinkAndRuntimeDispatchesLinearMove) {
   ASSERT_EQ(runtime.linear_moves.size(), 1u);
   EXPECT_EQ(exec.state().status, gcode::ExecutorStatus::Ready);
   EXPECT_EQ(exec.state().pc, 1u);
-  ASSERT_TRUE(sink.linear_moves.front().x.has_value());
-  EXPECT_DOUBLE_EQ(*sink.linear_moves.front().x, 1.0);
+  ASSERT_TRUE(sink.linear_moves.front().target.x.has_value());
+  EXPECT_DOUBLE_EQ(*sink.linear_moves.front().target.x, 1.0);
   ASSERT_TRUE(sink.linear_moves.front().feed.has_value());
   EXPECT_DOUBLE_EQ(*sink.linear_moves.front().feed, 2.0);
 

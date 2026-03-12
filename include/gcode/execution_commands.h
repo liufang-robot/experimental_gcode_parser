@@ -24,34 +24,28 @@ struct EffectiveModalSnapshot {
   std::optional<ToolSelectionState> pending_tool_selection;
 };
 
-struct LinearMoveCommand {
-  SourceRef source;
-  std::string opcode;
+struct PoseTarget {
   std::optional<double> x;
   std::optional<double> y;
   std::optional<double> z;
   std::optional<double> a;
   std::optional<double> b;
   std::optional<double> c;
+};
+
+struct LinearMoveCommand {
+  SourceRef source;
+  PoseTarget target;
   std::optional<double> feed;
-  ModalState modal;
   EffectiveModalSnapshot effective;
 };
 
 struct ArcMoveCommand {
   SourceRef source;
-  std::string opcode;
   bool clockwise = true;
-  WorkingPlane plane_effective = WorkingPlane::XY;
-  std::optional<double> x;
-  std::optional<double> y;
-  std::optional<double> z;
-  std::optional<double> a;
-  std::optional<double> b;
-  std::optional<double> c;
+  PoseTarget target;
   ArcParams arc;
   std::optional<double> feed;
-  ModalState modal;
   EffectiveModalSnapshot effective;
 };
 
@@ -59,7 +53,6 @@ struct DwellCommand {
   SourceRef source;
   DwellMode dwell_mode = DwellMode::Seconds;
   double dwell_value = 0.0;
-  ModalState modal;
   EffectiveModalSnapshot effective;
 };
 
