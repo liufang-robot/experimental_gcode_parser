@@ -4,6 +4,8 @@ This mdBook is the product documentation entrypoint for this repository.
 
 Use these sections:
 
+- Requirements: target syntax, semantic validation, and execution behavior to
+  review before implementation work starts.
 - Development Reference: build/test workflow, contribution gates, and
   developer architecture/design notes.
 - Program Reference: implemented G-code function syntax and output behavior.

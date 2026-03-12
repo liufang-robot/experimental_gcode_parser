@@ -1,4 +1,77 @@
-#CHANGELOG_AGENT
+# CHANGELOG_AGENT
+
+## 2026-03-10 (add review-first requirements documents)
+- Added requirement-first docs for target syntax and target execution behavior
+  under `docs/src/requirements/`, separate from implementation status docs.
+- Added a separate semantic-validation requirements document so parse rules,
+  post-parse validity rules, and runtime behavior are reviewed independently.
+- Added a requirements index and linked the new section into the mdBook
+  summary and docs overview.
+- Clarified the new requirements docs so `G4` is treated as a dwell/timing
+  command rather than a motion command.
+- This is a planning/documentation slice to support future work-unit review,
+  not a behavior change.
+
+SPEC sections / tests:
+- SPEC: no normative behavior change
+- Tests: not applicable for docs-only slice
+
+Known limitations:
+- These requirement documents are initial consolidated checklists and are not
+  yet fully reviewed item-by-item.
+
+How to reproduce locally (commands):
+- `sed -n '1,220p' docs/src/requirements/gcode_syntax_requirements.md`
+- `sed -n '1,220p' docs/src/requirements/gcode_execution_requirements.md`
+
+## 2026-03-10 (buffer unresolved control flow in streaming mode)
+- Changed `StreamingExecutionEngine` to keep one growing buffered executor
+  context so forward control-flow like `GOTOF END` can wait for later labels
+  instead of faulting immediately.
+- Added explicit `WaitingForInput` streaming state/result and coverage for
+  resolve-later vs fault-at-EOF behavior.
+- Added buffered streaming coverage for branch and subprogram call/return
+  semantics so the streaming path is locked to the same executor call-stack
+  behavior.
+- Enabled simple system-variable condition resolution on the plain `IRuntime`
+  streaming path, including `Pending` plus `resume(...)` behavior for
+  `readSystemVariable(...)`.
+- Added simple assignment execution on the shared executor/runtime path, using
+  `IRuntime.writeVariable(...)` plus shared runtime expression evaluation for
+  literal/system-variable arithmetic and pending write handling.
+- Extended the plain `IRuntime` path with `readVariable(...)` so buffered
+  streaming can resolve simple `R...` conditions and expressions without
+  requiring the richer `IExecutionRuntime` interface.
+- Added structured condition-term preservation for multi-term `AND`
+  conditions, allowing the plain `IRuntime` path to evaluate non-parenthesized
+  `R...`/`$...` logical-AND conditions directly.
+- Made the plain `IRuntime` boundary explicit for parser-limited condition
+  forms: parenthesized `AND` text now faults with a targeted diagnostic, while
+  the same condition can be handled through `IExecutionRuntime`.
+- Extended that same boundary split to assignments: `IExecutionRuntime` can
+  now own expression evaluation for assignment execution, while plain
+  `IRuntime` still provides only the primitive read/write/action layer.
+- Kept runtime blocking semantics unchanged for motion and dwell waits.
+
+SPEC sections / tests:
+- SPEC: Section 6.1, Section 6.2
+- Tests: `test/streaming_execution_tests.cpp`, `./dev/check.sh`
+
+Known limitations:
+- This slice covers buffered unresolved-target waiting for existing executor
+  control flow plus simple user/system-variable condition and assignment
+  runtime execution, but not the full rich-expression execution model through
+  streaming.
+- Parenthesized `AND` conditions are still limited by current parser shape and
+  are not structurally evaluated by the plain `IRuntime` runtime-evaluation
+  path; callers should use `IExecutionRuntime` for those cases.
+- Plain `IRuntime` still only covers the current simple numeric expression
+  subset; richer assignment-expression semantics need `IExecutionRuntime`.
+
+How to reproduce locally (commands):
+- `cmake --build build -j --target streaming_execution_tests`
+- `./build/streaming_execution_tests`
+- `./dev/check.sh`
 
 ## 2026-03-10 (rename executor blocked status to generic blocked)
 - Renamed `ExecutorStatus::BlockedOnCondition` to `ExecutorStatus::Blocked` so
@@ -3877,3 +3950,372 @@ How to reproduce locally (commands):
 - `cmake --build build -j`
 - `ctest --test-dir build --output-on-failure -R StreamingTest`
 - `./dev/check.sh`
+
+## 2026-03-10 (requirements review status sync)
+- Marked the syntax-requirements families explicitly reviewed based on the
+  review pass for motion, dwell, modal/mode syntax, M functions, variables and
+  assignments, control flow, subprograms, and tool syntax.
+- Cleaned up the Variables and Assignments review section so the reviewed
+  selector and expression-baseline decisions are recorded in one place.
+- Preserved follow-up notes where a family is reviewed at high level but still
+  needs more explicit accepted/rejected examples or semantic constraints.
+
+SPEC sections / tests:
+- Requirements docs only: `docs/src/requirements/gcode_syntax_requirements.md`
+
+Known limitations:
+- This is a documentation-only review-status update; detailed per-family
+  examples and semantic rules still need follow-up review in some sections.
+
+How to reproduce locally (commands):
+- `sed -n '1,320p' docs/src/requirements/gcode_syntax_requirements.md`
+- `tail -n 40 CHANGELOG_AGENT.md`
+
+## 2026-03-10 (semantic requirements review status sync)
+- Marked the semantic-requirements families explicitly reviewed based on the
+  review pass for motion, dwell, variables and assignments, control flow,
+  subprograms, tool/modal validation, diagnostics policy, classification, and
+  comment/grouping disambiguation.
+- Normalized the Variables and Assignments validation status from a selector-only
+  review note to a reviewed family status.
+- Preserved short follow-up notes where a family is reviewed at high level but
+  still needs narrower rule text or examples.
+
+SPEC sections / tests:
+- Requirements docs only: `docs/src/requirements/gcode_semantic_requirements.md`
+
+Known limitations:
+- This is a documentation-only review-status update; per-rule severity and some
+- detailed invalid/valid examples still need follow-up review.
+
+How to reproduce locally (commands):
+- `sed -n '1,260p' docs/src/requirements/gcode_semantic_requirements.md`
+- `tail -n 60 CHANGELOG_AGENT.md`
+
+## 2026-03-10 (execution requirements modal-state decision)
+- Marked the execution requirements modal-state section reviewed.
+- Recorded the decision that every supported modal group should be explicit in
+  the final execution model.
+- Recorded that future modal groups should extend the explicit model rather
+  than being carried through ad hoc side channels.
+
+SPEC sections / tests:
+- Requirements docs only:
+  `docs/src/requirements/gcode_execution_requirements.md`
+
+Known limitations:
+- This records the structural modal-model rule only; the exact supported-group
+  inventory and per-command effective-state mapping still need follow-up review.
+
+How to reproduce locally (commands):
+- `sed -n '1,120p' docs/src/requirements/gcode_execution_requirements.md`
+- `tail -n 80 CHANGELOG_AGENT.md`
+
+## 2026-03-10 (execution requirements follow-up questions refined)
+- Removed the already-solved modal-model review question from the execution
+  requirements doc.
+- Replaced the remaining broad modal questions with concrete follow-up
+  decisions about per-command attached modal state, executor-internal modal
+  state, and groups preserved ahead of full runtime support.
+
+SPEC sections / tests:
+- Requirements docs only:
+  `docs/src/requirements/gcode_execution_requirements.md`
+
+Known limitations:
+- These are still unresolved follow-up decisions; this change only rewrites
+  them into a clearer review form.
+
+How to reproduce locally (commands):
+- `sed -n '1,120p' docs/src/requirements/gcode_execution_requirements.md`
+- `tail -n 100 CHANGELOG_AGENT.md`
+
+## 2026-03-11 (execution requirements full modal preservation decision)
+- Recorded the decision that emitted commands should carry all effective
+  supported modal-group values.
+- Recorded the decision that no supported modal group should be treated as
+  executor-internal-only by default.
+- Recorded the decision that all supported modal groups must be preserved in
+  execution state even if current runtime behavior for some of them is still
+  partial or deferred.
+
+SPEC sections / tests:
+- Requirements docs only:
+  `docs/src/requirements/gcode_execution_requirements.md`
+
+Known limitations:
+- The field layout for carrying a full effective modal snapshot on each emitted
+  command is still a follow-up design task.
+
+How to reproduce locally (commands):
+- `sed -n '1,120p' docs/src/requirements/gcode_execution_requirements.md`
+- `tail -n 120 CHANGELOG_AGENT.md`
+
+## 2026-03-11 (execution requirements plain runtime boundary)
+- Recorded the decision to keep the `IRuntime` / `IExecutionRuntime` split.
+- Recorded that plain `IRuntime` must never own parsing, expression
+  interpretation, condition interpretation, or control-flow semantics.
+- Added explicit examples of language-aware logic that must remain out of plain
+  `IRuntime`.
+
+SPEC sections / tests:
+- Requirements docs only:
+  `docs/src/requirements/gcode_execution_requirements.md`
+
+Known limitations:
+- The exact inventory of richer semantics that must always go through
+  `IExecutionRuntime` is still a follow-up review item.
+
+How to reproduce locally (commands):
+- `sed -n '1,180p' docs/src/requirements/gcode_execution_requirements.md`
+- `tail -n 140 CHANGELOG_AGENT.md`
+
+## 2026-03-11 (execution requirements boundary questions cleanup)
+- Removed the already-answered runtime-boundary review questions from the
+  execution requirements doc.
+- Kept only the remaining unresolved follow-up decision: which richer
+  semantics must always go through `IExecutionRuntime`.
+- Cleaned up a leftover duplicate modal-state review heading in the same file.
+
+SPEC sections / tests:
+- Requirements docs only:
+  `docs/src/requirements/gcode_execution_requirements.md`
+
+Known limitations:
+- The richer-semantics inventory for `IExecutionRuntime` is still not fully
+  enumerated.
+
+How to reproduce locally (commands):
+- `sed -n '1,220p' docs/src/requirements/gcode_execution_requirements.md`
+- `tail -n 160 CHANGELOG_AGENT.md`
+
+## 2026-03-11 (execution requirements richer-runtime decision)
+- Recorded the decision that all language-level evaluation beyond simple
+  primitive runtime access must go through `IExecutionRuntime`.
+- Recorded that `IExecutionRuntime` sits above `IRuntime` and may use primitive
+  `IRuntime` reads/writes/actions underneath richer evaluation.
+- Added explicit examples of semantics that should always stay on the
+  `IExecutionRuntime` side.
+
+SPEC sections / tests:
+- Requirements docs only:
+  `docs/src/requirements/gcode_execution_requirements.md`
+
+Known limitations:
+- This is a requirements-level decision only; implementation and tests still
+  need to be aligned later.
+
+How to reproduce locally (commands):
+- `sed -n '1,220p' docs/src/requirements/gcode_execution_requirements.md`
+- `tail -n 180 CHANGELOG_AGENT.md`
+
+## 2026-03-11 (execution requirements streaming model review)
+- Marked the streaming execution model section reviewed.
+- Recorded the API/state-machine contract for `pushChunk(...)`, `pump()`,
+  `finish()`, `resume(...)`, and `cancel()`.
+- Recorded the distinct meanings of `Blocked` vs `WaitingForInput`, and the
+  EOF rule for unresolved forward targets.
+
+SPEC sections / tests:
+- Requirements docs only:
+  `docs/src/requirements/gcode_execution_requirements.md`
+
+Known limitations:
+- This is a requirements-level decision only; feature-specific execution
+  semantics still need review in the later execution sections.
+
+How to reproduce locally (commands):
+- `sed -n '1,180p' docs/src/requirements/gcode_execution_requirements.md`
+- `tail -n 200 CHANGELOG_AGENT.md`
+
+## 2026-03-11 (execution requirements async action-command pattern)
+- Added the general runtime submission pattern for action-type commands:
+  `Ready`, `Pending`, and `Error`.
+- Recorded that `Pending` means accepted by the runtime boundary, not
+  necessarily physically completed.
+- Recorded that the same async handoff pattern should apply broadly to motion,
+  dwell, tool change, and future runtime-managed actions.
+
+SPEC sections / tests:
+- Requirements docs only:
+  `docs/src/requirements/gcode_execution_requirements.md`
+
+Known limitations:
+- This is a general requirement rule only; per-command-family details still
+  need to be reviewed in their own sections.
+
+How to reproduce locally (commands):
+- `sed -n '1,220p' docs/src/requirements/gcode_execution_requirements.md`
+- `tail -n 220 CHANGELOG_AGENT.md`
+
+## 2026-03-11 (execution requirements motion review)
+- Marked the motion execution requirements section reviewed.
+- Recorded that `G0/G1` normalize into linear-move commands and `G2/G3`
+  normalize into arc-move commands sent through the runtime interface.
+- Recorded the required source/modal payload and the motion-specific use of the
+  general async action-command pattern.
+
+SPEC sections / tests:
+- Requirements docs only:
+  `docs/src/requirements/gcode_execution_requirements.md`
+
+Known limitations:
+- The exact command-field layout is still a follow-up design/detail task.
+
+How to reproduce locally (commands):
+- `sed -n '1,240p' docs/src/requirements/gcode_execution_requirements.md`
+- `tail -n 240 CHANGELOG_AGENT.md`
+
+## 2026-03-11 (execution requirements dwell review)
+- Marked the dwell/timing execution requirements section reviewed.
+- Recorded that `G4` normalizes into a dwell/timing command sent through the
+  runtime interface.
+- Recorded the required source/modal payload and the dwell-specific use of the
+  general async action-command pattern.
+
+SPEC sections / tests:
+- Requirements docs only:
+  `docs/src/requirements/gcode_execution_requirements.md`
+
+Known limitations:
+- The exact dwell-command field layout is still a follow-up design/detail task.
+
+How to reproduce locally (commands):
+- `sed -n '1,280p' docs/src/requirements/gcode_execution_requirements.md`
+- `tail -n 260 CHANGELOG_AGENT.md`
+
+## 2026-03-11 (execution requirements variable/runtime review)
+- Marked the variable and expression runtime requirements section reviewed.
+- Recorded that user variables are executor-internal by default, while
+  system-variable reads/writes go through the runtime interface.
+- Replaced the vague "simple arithmetic" wording with a clearer split between
+  executor-direct baseline evaluation and richer `IExecutionRuntime`
+  evaluation.
+
+SPEC sections / tests:
+- Requirements docs only:
+  `docs/src/requirements/gcode_execution_requirements.md`
+
+Known limitations:
+- The exact baseline executor-direct expression subset still needs to be
+  enumerated explicitly in a later follow-up.
+
+How to reproduce locally (commands):
+- `sed -n '1,320p' docs/src/requirements/gcode_execution_requirements.md`
+- `tail -n 280 CHANGELOG_AGENT.md`
+
+## 2026-03-11 (execution requirements control-flow review)
+- Marked the control-flow execution requirements section reviewed.
+- Recorded that all supported control-flow families should also be supported in
+  streaming mode rather than split into batch-only and streaming-only
+  semantics.
+- Recorded the buffered-target rule: unresolved forward targets wait before EOF
+  and fault after `finish()`.
+
+SPEC sections / tests:
+- Requirements docs only:
+  `docs/src/requirements/gcode_execution_requirements.md`
+
+Known limitations:
+- Detailed family-by-family structured-control semantics still need narrower
+  follow-up notes, but the main streaming-support rule is now fixed.
+
+How to reproduce locally (commands):
+- `sed -n '1,360p' docs/src/requirements/gcode_execution_requirements.md`
+- `tail -n 300 CHANGELOG_AGENT.md`
+
+## 2026-03-11 (execution requirements subprogram review)
+- Marked the subprogram and call-stack requirements section reviewed.
+- Recorded that subprogram calls use a real nested call stack with pushed
+  return frames and popped returns.
+- Recorded the forward-target, repeat-count, empty-stack-return, and streaming
+  support rules for subprogram execution.
+
+SPEC sections / tests:
+- Requirements docs only:
+  `docs/src/requirements/gcode_execution_requirements.md`
+
+Known limitations:
+- Detailed call-frame layout and controller-specific subprogram-mode
+  differences still need follow-up review if required.
+
+How to reproduce locally (commands):
+- `sed -n '1,420p' docs/src/requirements/gcode_execution_requirements.md`
+- `tail -n 320 CHANGELOG_AGENT.md`
+
+## 2026-03-12 (execution requirements tool review)
+- Marked the tool execution requirements section reviewed.
+- Recorded that tool selection and tool change are separate execution concepts:
+  selection prepares, while change mounts onto the spindle.
+- Recorded that tool change is triggered later by `M6`/equivalent, goes through
+  the runtime boundary, and should normally follow the async `Pending` action
+  pattern.
+
+SPEC sections / tests:
+- Requirements docs only:
+  `docs/src/requirements/gcode_execution_requirements.md`
+
+Known limitations:
+- The exact `M6` behavior when no pending tool selection exists is still
+  deferred; the current placeholder is "do nothing" until reviewed explicitly.
+
+How to reproduce locally (commands):
+- `sed -n '1,460p' docs/src/requirements/gcode_execution_requirements.md`
+- `tail -n 340 CHANGELOG_AGENT.md`
+
+## 2026-03-12 (execution requirements diagnostics review)
+- Marked the diagnostics and failure policy section reviewed.
+- Recorded the syntax/semantic vs runtime/execution diagnostic split and the
+  editable halt-fix-continue requirement for line failures.
+- Recorded the default severity policy and the per-line/event-only
+  deduplication rule for repeated diagnostics.
+
+SPEC sections / tests:
+- Requirements docs only:
+  `docs/src/requirements/gcode_execution_requirements.md`
+
+Known limitations:
+- Exact warning/error choices for specific semantic families still need to be
+  attached as those families are detailed further.
+
+How to reproduce locally (commands):
+- `sed -n '1,520p' docs/src/requirements/gcode_execution_requirements.md`
+- `tail -n 360 CHANGELOG_AGENT.md`
+
+## 2026-03-12 (execution requirements test-policy review)
+- Marked the test and validation requirements section reviewed.
+- Recorded the rule that each work unit declares the test layers it affects
+  instead of requiring every possible test type for every change.
+- Recorded the golden-vs-assertion split, the execution trace requirement, the
+  `./dev/check.sh` gate, and the explicit streaming coverage checklist.
+
+SPEC sections / tests:
+- Requirements docs only:
+  `docs/src/requirements/gcode_execution_requirements.md`
+
+Known limitations:
+- This is a policy-level review only; future work units still need to apply the
+  policy consistently in implementation.
+
+How to reproduce locally (commands):
+- `sed -n '1,560p' docs/src/requirements/gcode_execution_requirements.md`
+- `tail -n 380 CHANGELOG_AGENT.md`
+
+## 2026-03-12 (requirements-driven implementation plan)
+- Added a current-vs-target architecture plan in
+  `docs/src/development/design/implementation_plan_from_requirements.md`.
+- Mapped the reviewed requirements onto concrete architectural gaps, design
+  decisions, and ordered work units.
+- Linked the new planning document into the published design docs navigation.
+
+SPEC sections / tests:
+- Planning/docs only:
+  `docs/src/development/design/implementation_plan_from_requirements.md`
+
+Known limitations:
+- This is a planning slice only; no code behavior changed and the work units
+  still need to be executed incrementally.
+
+How to reproduce locally (commands):
+- `sed -n '1,320p' docs/src/development/design/implementation_plan_from_requirements.md`
+- `sed -n '1,80p' docs/src/SUMMARY.md`
