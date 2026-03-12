@@ -23,3 +23,4 @@ Pages in this section are split by topic for easier review:
 - dimensions/units model (Groups 13/14 + `AC/IC` + `DIAM*`)
 - tool-change semantics (direct `T` vs deferred `T`+`M6`)
 - implementation phases and task ordering
+- requirements-driven current-vs-target execution plan
