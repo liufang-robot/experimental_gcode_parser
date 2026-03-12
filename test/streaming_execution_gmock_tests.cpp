@@ -75,14 +75,13 @@ TEST(StreamingExecutionGmockTest, G1CallsSinkThenRuntime) {
           EXPECT_EQ(cmd.source.line, 1);
           ASSERT_TRUE(cmd.source.line_number.has_value());
           EXPECT_EQ(*cmd.source.line_number, 10);
-          EXPECT_EQ(cmd.opcode, "G1");
-          ASSERT_TRUE(cmd.x.has_value());
-          ASSERT_TRUE(cmd.y.has_value());
-          ASSERT_TRUE(cmd.feed.has_value());
-          EXPECT_TRUE(closeEnough(*cmd.x, 10.0));
-          EXPECT_TRUE(closeEnough(*cmd.y, 20.0));
-          EXPECT_TRUE(closeEnough(*cmd.feed, 100.0));
           EXPECT_EQ(cmd.effective.motion_code, "G1");
+          ASSERT_TRUE(cmd.target.x.has_value());
+          ASSERT_TRUE(cmd.target.y.has_value());
+          ASSERT_TRUE(cmd.feed.has_value());
+          EXPECT_TRUE(closeEnough(*cmd.target.x, 10.0));
+          EXPECT_TRUE(closeEnough(*cmd.target.y, 20.0));
+          EXPECT_TRUE(closeEnough(*cmd.feed, 100.0));
           EXPECT_EQ(cmd.effective.working_plane, gcode::WorkingPlane::XY);
           EXPECT_EQ(cmd.effective.tool_radius_comp,
                     gcode::ToolRadiusCompMode::Off);
@@ -91,20 +90,19 @@ TEST(StreamingExecutionGmockTest, G1CallsSinkThenRuntime) {
         }));
     EXPECT_CALL(runtime, submitLinearMove(_))
         .WillOnce(Invoke([](const gcode::LinearMoveCommand &cmd) {
-          EXPECT_EQ(cmd.opcode, "G1");
-          EXPECT_TRUE(cmd.x.has_value());
-          EXPECT_TRUE(cmd.y.has_value());
+          EXPECT_EQ(cmd.effective.motion_code, "G1");
+          EXPECT_TRUE(cmd.target.x.has_value());
+          EXPECT_TRUE(cmd.target.y.has_value());
           EXPECT_TRUE(cmd.feed.has_value());
-          if (cmd.x.has_value()) {
-            EXPECT_TRUE(closeEnough(*cmd.x, 10.0));
+          if (cmd.target.x.has_value()) {
+            EXPECT_TRUE(closeEnough(*cmd.target.x, 10.0));
           }
-          if (cmd.y.has_value()) {
-            EXPECT_TRUE(closeEnough(*cmd.y, 20.0));
+          if (cmd.target.y.has_value()) {
+            EXPECT_TRUE(closeEnough(*cmd.target.y, 20.0));
           }
           if (cmd.feed.has_value()) {
             EXPECT_TRUE(closeEnough(*cmd.feed, 100.0));
           }
-          EXPECT_EQ(cmd.effective.motion_code, "G1");
           EXPECT_EQ(cmd.effective.working_plane, gcode::WorkingPlane::XY);
           return readyMove();
         }));

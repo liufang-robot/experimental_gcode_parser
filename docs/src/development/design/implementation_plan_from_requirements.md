@@ -1,4 +1,4 @@
-# Implementation Plan From Requirements
+#Implementation Plan From Requirements
 
 This note converts the reviewed requirements into a concrete architecture plan.
 It is intentionally more specific than the older phase summary in
@@ -141,11 +141,14 @@ This is workable, but it is not yet one clean source of truth.
 
 #### 3. Public execution command model is not finalized
 
-We know the behavioral contract and now have a baseline snapshot layout, but
-not the final data layout for:
+We now have a normalized baseline for motion payloads:
 
-- motion command payloads
-- dwell command payloads
+- one `target` object for motion endpoints
+- one `effective` snapshot for modal state
+- no duplicated emitted `opcode` / `modal` fields on execution commands
+
+But the model is still not final for:
+
 - future tool/non-motion action payloads
 - full effective modal snapshot
 

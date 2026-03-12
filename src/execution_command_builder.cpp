@@ -16,15 +16,13 @@ LinearMoveCommand buildLinearMoveCommand(const AilLinearMoveInstruction &inst,
   LinearMoveCommand cmd;
   cmd.source = toSourceRef(inst.source);
   cmd.source.line = line;
-  cmd.opcode = inst.opcode;
-  cmd.x = inst.target_pose.x;
-  cmd.y = inst.target_pose.y;
-  cmd.z = inst.target_pose.z;
-  cmd.a = inst.target_pose.a;
-  cmd.b = inst.target_pose.b;
-  cmd.c = inst.target_pose.c;
+  cmd.target.x = inst.target_pose.x;
+  cmd.target.y = inst.target_pose.y;
+  cmd.target.z = inst.target_pose.z;
+  cmd.target.a = inst.target_pose.a;
+  cmd.target.b = inst.target_pose.b;
+  cmd.target.c = inst.target_pose.c;
   cmd.feed = inst.feed;
-  cmd.modal = inst.modal;
   cmd.effective = state;
   return cmd;
 }
@@ -34,18 +32,15 @@ ArcMoveCommand buildArcMoveCommand(const AilArcMoveInstruction &inst, int line,
   ArcMoveCommand cmd;
   cmd.source = toSourceRef(inst.source);
   cmd.source.line = line;
-  cmd.opcode = inst.modal.code;
   cmd.clockwise = inst.clockwise;
-  cmd.plane_effective = inst.plane_effective;
-  cmd.x = inst.target_pose.x;
-  cmd.y = inst.target_pose.y;
-  cmd.z = inst.target_pose.z;
-  cmd.a = inst.target_pose.a;
-  cmd.b = inst.target_pose.b;
-  cmd.c = inst.target_pose.c;
+  cmd.target.x = inst.target_pose.x;
+  cmd.target.y = inst.target_pose.y;
+  cmd.target.z = inst.target_pose.z;
+  cmd.target.a = inst.target_pose.a;
+  cmd.target.b = inst.target_pose.b;
+  cmd.target.c = inst.target_pose.c;
   cmd.arc = inst.arc;
   cmd.feed = inst.feed;
-  cmd.modal = inst.modal;
   cmd.effective = state;
   return cmd;
 }
@@ -57,7 +52,6 @@ DwellCommand buildDwellCommand(const AilDwellInstruction &inst, int line,
   cmd.source.line = line;
   cmd.dwell_mode = inst.dwell_mode;
   cmd.dwell_value = inst.dwell_value;
-  cmd.modal = inst.modal;
   cmd.effective = state;
   return cmd;
 }
