@@ -10,16 +10,6 @@ SourceRef toSourceRef(const SourceInfo &source) {
   return ref;
 }
 
-EffectiveModalState makeEffectiveModalState(const std::string &motion_code,
-                                            const ExecutionModalState &state) {
-  EffectiveModalState effective;
-  effective.motion_code = motion_code;
-  effective.working_plane = state.working_plane;
-  effective.rapid_mode = state.rapid_mode;
-  effective.tool_radius_comp = state.tool_radius_comp;
-  return effective;
-}
-
 LinearMoveCommand buildLinearMoveCommand(const AilLinearMoveInstruction &inst,
                                          int line,
                                          const ExecutionModalState &state) {
@@ -35,7 +25,7 @@ LinearMoveCommand buildLinearMoveCommand(const AilLinearMoveInstruction &inst,
   cmd.c = inst.target_pose.c;
   cmd.feed = inst.feed;
   cmd.modal = inst.modal;
-  cmd.effective = makeEffectiveModalState(cmd.opcode, state);
+  cmd.effective = state;
   return cmd;
 }
 
@@ -56,7 +46,7 @@ ArcMoveCommand buildArcMoveCommand(const AilArcMoveInstruction &inst, int line,
   cmd.arc = inst.arc;
   cmd.feed = inst.feed;
   cmd.modal = inst.modal;
-  cmd.effective = makeEffectiveModalState(cmd.opcode, state);
+  cmd.effective = state;
   return cmd;
 }
 
@@ -68,7 +58,7 @@ DwellCommand buildDwellCommand(const AilDwellInstruction &inst, int line,
   cmd.dwell_mode = inst.dwell_mode;
   cmd.dwell_value = inst.dwell_value;
   cmd.modal = inst.modal;
-  cmd.effective = makeEffectiveModalState(cmd.modal.code, state);
+  cmd.effective = state;
   return cmd;
 }
 

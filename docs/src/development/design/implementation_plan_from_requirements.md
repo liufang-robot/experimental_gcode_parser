@@ -116,15 +116,17 @@ This implies a full modal snapshot model, not a partial ad hoc set of fields.
 
 #### 1. Command schema is still partial
 
-Current `execution_commands.h` only carries a small explicit modal subset:
+Current `execution_commands.h` now carries a baseline explicit modal subset:
 
 - motion code
 - working plane
 - rapid mode
 - tool radius compensation
+- active tool selection
+- pending tool selection
 
-That does not yet satisfy the reviewed requirement that emitted commands carry
-all supported modal-group values.
+That is a useful first step, but it still does not satisfy the reviewed
+requirement that emitted commands carry all supported modal-group values.
 
 #### 2. Modal state is modeled in multiple shapes
 
@@ -132,14 +134,15 @@ Today modal state is split across:
 
 - `ModalState`
 - `ExecutorState`
-- `EffectiveModalState`
+- `EffectiveModalSnapshot`
 - AIL per-instruction effective fields
 
 This is workable, but it is not yet one clean source of truth.
 
 #### 3. Public execution command model is not finalized
 
-We know the behavioral contract, but not the final data layout for:
+We know the behavioral contract and now have a baseline snapshot layout, but
+not the final data layout for:
 
 - motion command payloads
 - dwell command payloads

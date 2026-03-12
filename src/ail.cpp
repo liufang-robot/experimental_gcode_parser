@@ -988,11 +988,16 @@ AilExecutor::AilExecutor(std::vector<AilInstruction> instructions,
                          AilExecutorOptions options)
     : instructions_(std::move(instructions)), options_(std::move(options)) {
   if (options_.initial_state.has_value()) {
+    state_.motion_code_current = options_.initial_state->motion_code_current;
     state_.rapid_mode_current = options_.initial_state->rapid_mode_current;
     state_.tool_radius_comp_current =
         options_.initial_state->tool_radius_comp_current;
     state_.working_plane_current =
         options_.initial_state->working_plane_current;
+    state_.active_tool_selection =
+        options_.initial_state->active_tool_selection;
+    state_.pending_tool_selection =
+        options_.initial_state->pending_tool_selection;
   }
   for (size_t i = 0; i < instructions_.size(); ++i) {
     const auto &inst = instructions_[i];
@@ -1391,11 +1396,30 @@ bool AilExecutor::advanceOneInstruction(int64_t now_ms,
   if (sink != nullptr && runtime != nullptr) {
     const auto line = std::visit(
         [](const auto &instruction) { return instruction.source.line; }, inst);
+    std::string motion_code_for_dispatch = state_.motion_code_current;
+    if (std::holds_alternative<AilLinearMoveInstruction>(inst)) {
+      motion_code_for_dispatch =
+          std::get<AilLinearMoveInstruction>(inst).opcode;
+    } else if (std::holds_alternative<AilArcMoveInstruction>(inst)) {
+      motion_code_for_dispatch =
+          std::get<AilArcMoveInstruction>(inst).clockwise ? "G2" : "G3";
+    }
     const ExecutionModalState modal_state = makeExecutionModalState(
-        state_.working_plane_current, state_.rapid_mode_current,
-        state_.tool_radius_comp_current);
+        std::move(motion_code_for_dispatch), state_.working_plane_current,
+        state_.rapid_mode_current, state_.tool_radius_comp_current,
+        state_.active_tool_selection, state_.pending_tool_selection);
     const auto dispatch_result =
         dispatchExecutionInstruction(inst, line, modal_state, *sink, *runtime);
+    if (dispatch_result.status == ExecutionDispatchResult::Status::Progress ||
+        dispatch_result.status == ExecutionDispatchResult::Status::Blocked) {
+      if (std::holds_alternative<AilLinearMoveInstruction>(inst)) {
+        state_.motion_code_current =
+            std::get<AilLinearMoveInstruction>(inst).opcode;
+      } else if (std::holds_alternative<AilArcMoveInstruction>(inst)) {
+        state_.motion_code_current =
+            std::get<AilArcMoveInstruction>(inst).clockwise ? "G2" : "G3";
+      }
+    }
     if (dispatch_result.status == ExecutionDispatchResult::Status::Blocked &&
         dispatch_result.wait_token.has_value()) {
       state_.status = ExecutorStatus::Blocked;

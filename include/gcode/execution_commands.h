@@ -15,11 +15,13 @@ struct SourceRef {
   std::optional<int> line_number;
 };
 
-struct EffectiveModalState {
+struct EffectiveModalSnapshot {
   std::string motion_code;
-  std::optional<WorkingPlane> working_plane;
-  std::optional<RapidInterpolationMode> rapid_mode;
-  std::optional<ToolRadiusCompMode> tool_radius_comp;
+  WorkingPlane working_plane = WorkingPlane::XY;
+  RapidInterpolationMode rapid_mode = RapidInterpolationMode::Linear;
+  ToolRadiusCompMode tool_radius_comp = ToolRadiusCompMode::Off;
+  std::optional<ToolSelectionState> active_tool_selection;
+  std::optional<ToolSelectionState> pending_tool_selection;
 };
 
 struct LinearMoveCommand {
@@ -33,7 +35,7 @@ struct LinearMoveCommand {
   std::optional<double> c;
   std::optional<double> feed;
   ModalState modal;
-  EffectiveModalState effective;
+  EffectiveModalSnapshot effective;
 };
 
 struct ArcMoveCommand {
@@ -50,7 +52,7 @@ struct ArcMoveCommand {
   ArcParams arc;
   std::optional<double> feed;
   ModalState modal;
-  EffectiveModalState effective;
+  EffectiveModalSnapshot effective;
 };
 
 struct DwellCommand {
@@ -58,7 +60,7 @@ struct DwellCommand {
   DwellMode dwell_mode = DwellMode::Seconds;
   double dwell_value = 0.0;
   ModalState modal;
-  EffectiveModalState effective;
+  EffectiveModalSnapshot effective;
 };
 
 struct RejectedLineEvent {
