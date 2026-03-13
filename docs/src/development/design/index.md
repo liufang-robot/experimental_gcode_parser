@@ -7,6 +7,10 @@ Source-of-truth files in repo root:
 - `ARCHITECTURE.md`
 - `IMPLEMENTATION_PLAN.md`
 
+Mirrored mdBook pages:
+- [Repository Architecture](repo_architecture.md)
+- [Repository Implementation Plan](repo_implementation_plan.md)
+
 Pages in this section are split by topic for easier review:
 - pipeline/modules
 - modal/context strategy
