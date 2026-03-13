@@ -568,8 +568,8 @@ N130 G01 X20 Y20
   - Accept arbitrary text chunks and assemble complete logical lines.
   - Parse/lower/execute one line at a time.
   - Emit deterministic sink/runtime events per line.
-  - Support explicit `blocked`, `resumed`, `cancelled`, `faulted`, and
-    `completed` execution states.
+  - Support explicit `blocked`, `rejected`, `resumed`, `cancelled`,
+    `faulted`, and `completed` execution states.
   - Use injected interfaces rather than hardcoded machine/runtime calls.
 - Shared runtime-facing execution contracts now include:
     - `IRuntime` for motion / dwell / variable-read operations
@@ -584,9 +584,21 @@ N130 G01 X20 Y20
   - Per-line streaming motion execution is now routed through `AilExecutor`
     seeded from the engine's carried modal state, so the executor and
     streaming paths share the same instruction-level runtime stepping for the
-    supported motion subset.
-  - Current implementation coverage is limited to motion/dwell lines
-    (`G0/G1/G2/G3/G4`) plus line-level diagnostics/rejection handling.
+    supported control/runtime subset.
+  - Ordinary line rejection now returns a recoverable `Rejected` result with
+    rejected-line reasons instead of collapsing directly into `Faulted`.
+- Execution-session recovery API (current):
+  - Provide `ExecutionSession` as the editable halt-fix-continue layer above
+    `StreamingExecutionEngine`.
+  - `ExecutionSession` owns execution methods (`pushChunk`, `pump`, `finish`,
+    `resume`, `cancel`) plus suffix recovery editing.
+  - When a line is rejected:
+    - the rejected line and any later lines form the editable suffix
+    - the accepted prefix is locked for normal recovery
+    - `replaceEditableSuffix(...)` replaces the editable suffix and retry uses
+      the stored rejected boundary by default
+  - `Rejected` is recoverable through suffix replacement; `Faulted` remains the
+    unrecoverable execution failure state.
 - JSON schema notes:
   - Include top-level `schema_version` (current value: `1`).
   - Include `messages`, `diagnostics`, and `rejected_lines`.

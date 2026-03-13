@@ -351,8 +351,8 @@ StepResult StreamingExecutionEngine::makeBlockedResult(int line,
   return result;
 }
 
-StepResult StreamingExecutionEngine::makeRejectedResult(
-    const RejectedState &rejected) {
+StepResult
+StreamingExecutionEngine::makeRejectedResult(const RejectedState &rejected) {
   blocked_.reset();
   rejected_ = rejected;
   state_ = EngineState::Rejected;

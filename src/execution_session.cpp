@@ -8,9 +8,8 @@ ExecutionSession::ExecutionSession(IExecutionSink &sink, IRuntime &runtime,
                                    ICancellation &cancellation,
                                    const LowerOptions &options)
     : sink_(sink), runtime_(runtime), cancellation_(cancellation),
-      options_(options),
-      engine_(std::make_unique<StreamingExecutionEngine>(sink, runtime,
-                                                         cancellation, options)) {}
+      options_(options), engine_(std::make_unique<StreamingExecutionEngine>(
+                             sink, runtime, cancellation, options)) {}
 
 ExecutionSession::ExecutionSession(IExecutionSink &sink,
                                    IExecutionRuntime &runtime,
@@ -94,7 +93,8 @@ void ExecutionSession::cancel() {
   state_ = EngineState::Cancelled;
 }
 
-bool ExecutionSession::replaceEditableSuffix(std::string_view replacement_text) {
+bool ExecutionSession::replaceEditableSuffix(
+    std::string_view replacement_text) {
   if (state_ != EngineState::Rejected) {
     return false;
   }
@@ -147,11 +147,11 @@ void ExecutionSession::rebuildEngineFromLockedPrefix() {
     engine_ = std::make_unique<StreamingExecutionEngine>(
         sink_, *execution_runtime_, cancellation_, options_);
   } else {
-    engine_ = std::make_unique<StreamingExecutionEngine>(sink_, runtime_,
-                                                         cancellation_, options_);
+    engine_ = std::make_unique<StreamingExecutionEngine>(
+        sink_, runtime_, cancellation_, options_);
   }
-  engine_->importInitialState(prefix_state_,
-                              static_cast<int>(locked_prefix_lines_.size() + 1));
+  engine_->importInitialState(
+      prefix_state_, static_cast<int>(locked_prefix_lines_.size() + 1));
 }
 
 StepResult ExecutionSession::runEngineStep(const StepResult &result) {
