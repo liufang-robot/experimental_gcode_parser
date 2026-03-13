@@ -19,6 +19,33 @@ How to reproduce locally (commands):
 - `sed -n '1,220p' docs/src/development/design/repo_architecture.md`
 - `sed -n '1,220p' docs/src/development/design/repo_implementation_plan.md`
 - `sed -n '1,80p' docs/src/SUMMARY.md`
+
+## 2026-03-12 (wu-3 runtime dispatch cleanup)
+- Collapsed the duplicated linear/arc/dwell runtime dispatch path in
+  `execution_instruction_dispatcher.cpp` into one shared internal helper.
+- Kept emitted-command ordering and `Ready`/`Pending`/`Error` handling
+  unchanged while making the dispatcher the single place that maps runtime
+  submission results into `ExecutionDispatchResult`.
+- This is an internal cleanup slice only; no public API or expected behavior
+  changed.
+
+SPEC sections / tests:
+- SPEC: no normative behavior change
+- Tests: `test/ail_executor_tests.cpp`,
+  `test/streaming_execution_gmock_tests.cpp`,
+  `test/streaming_execution_tests.cpp`
+
+Known limitations:
+- The dispatcher is still limited to the current emitted action command
+  families (linear move, arc move, dwell); future tool and other action
+  command types still need to be wired into the same cleanup path.
+
+How to reproduce locally (commands):
+- `cmake --build build -j --target ail_executor_tests streaming_execution_gmock_tests streaming_execution_tests`
+- `./build/ail_executor_tests`
+- `./build/streaming_execution_gmock_tests`
+- `./build/streaming_execution_tests`
+- `./dev/check.sh`
 ## 2026-03-12 (wu-2 normalize execution command payloads)
 - Replaced loose per-axis execution-command fields with a single `target`
   payload on linear and arc commands, preserving per-axis assignment via
