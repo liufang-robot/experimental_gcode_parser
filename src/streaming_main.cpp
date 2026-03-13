@@ -3,8 +3,8 @@
 #include <sstream>
 #include <string>
 
-#include "gcode/streaming_execution_engine.h"
 #include "streaming_event_log.h"
+#include "streaming_execution_engine.h"
 
 namespace {
 

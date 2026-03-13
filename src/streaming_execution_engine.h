@@ -45,8 +45,8 @@ private:
   StepResult makeRejectedResult(const RejectedState &rejected);
   StepResult faultWithDiagnostic(const Diagnostic &diag);
   void emitDiagnostics(const std::vector<Diagnostic> &diagnostics);
-  std::optional<RejectedLineEvent> makeRejectedEvent(
-      const RejectedLine &rejected) const;
+  std::optional<RejectedLineEvent>
+  makeRejectedEvent(const RejectedLine &rejected) const;
   void remapDiagnostics(std::vector<Diagnostic> *diagnostics, int line) const;
   void remapRejectedLines(std::vector<RejectedLine> *rejected_lines,
                           int line) const;

@@ -570,19 +570,20 @@ N130 G01 X20 Y20
       condition-evaluation services for executor-style paths
     - `FunctionExecutionRuntime` as a convenience adapter for building that
       combined runtime from lambdas/callables in tests or small embeddings
-  - `StreamingExecutionEngine` accepts either:
+  - the public execution entry point is `ExecutionSession`, which accepts
+    either:
     - `IRuntime`
     - `IExecutionRuntime` when the caller wants the same runtime object shape
-      to work across streaming and executor-style paths
+      to work across session and executor-style paths
   - Per-line streaming motion execution is now routed through `AilExecutor`
-    seeded from the engine's carried modal state, so the executor and
+    seeded from the session/engine carried modal state, so the executor and
     streaming paths share the same instruction-level runtime stepping for the
     supported control/runtime subset.
   - Ordinary line rejection now returns a recoverable `Rejected` result with
     rejected-line reasons instead of collapsing directly into `Faulted`.
 - Execution-session recovery API (current):
-  - Provide `ExecutionSession` as the editable halt-fix-continue layer above
-    `StreamingExecutionEngine`.
+  - Provide `ExecutionSession` as the public editable halt-fix-continue
+    execution layer.
   - `ExecutionSession` owns execution methods (`pushChunk`, `pump`, `finish`,
     `resume`, `cancel`) plus suffix recovery editing.
   - When a line is rejected:
@@ -596,6 +597,8 @@ N130 G01 X20 Y20
   - the older batch message/session APIs are retained only for internal
     tooling, tests, and CLI modes
   - they are no longer part of the supported public execution architecture
+  - `StreamingExecutionEngine` is also an internal execution-building block,
+    not a public integration entry point
 - JSON schema notes:
   - Include top-level `schema_version` (current value: `1`).
   - Include `messages`, `diagnostics`, and `rejected_lines`.
@@ -760,7 +763,8 @@ N130 G01 X20 Y20
       condition-resolution services
     - `IExecutionSink + IExecutionRuntime` when a downstream runtime wants the
       executor to dispatch motion-capable AIL instructions through the same
-      sink/runtime contract used by `StreamingExecutionEngine`
+      sink/runtime contract used by the internal execution engine beneath
+      `ExecutionSession`
   - `AilExecutorOptions.initial_state` can seed:
     - `motion_code_current`
     - `working_plane_current`

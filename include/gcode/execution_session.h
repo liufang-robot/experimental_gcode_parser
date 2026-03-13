@@ -8,9 +8,10 @@
 #include <vector>
 
 #include "gcode/execution_runtime.h"
-#include "gcode/streaming_execution_engine.h"
 
 namespace gcode {
+
+class StreamingExecutionEngine;
 
 class ExecutionSession {
 public:
@@ -20,6 +21,7 @@ public:
   ExecutionSession(IExecutionSink &sink, IExecutionRuntime &runtime,
                    ICancellation &cancellation,
                    const LowerOptions &options = {});
+  ~ExecutionSession();
 
   bool pushChunk(std::string_view chunk);
   StepResult pump();
