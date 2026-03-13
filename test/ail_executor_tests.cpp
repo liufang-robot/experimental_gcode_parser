@@ -347,6 +347,8 @@ TEST(AilExecutorTest, InitialModalStateAffectsDispatchedMotionCommands) {
       gcode::RapidInterpolationMode::NonLinear,
       gcode::ToolRadiusCompMode::Left,
       gcode::WorkingPlane::YZ,
+      gcode::ToolSelectionState{12, "12"},
+      gcode::ToolSelectionState{7, "7"},
   };
   gcode::AilExecutor exec(lowered.instructions, options);
   RecordingExecutionSink sink;
@@ -366,6 +368,16 @@ TEST(AilExecutorTest, InitialModalStateAffectsDispatchedMotionCommands) {
             gcode::RapidInterpolationMode::NonLinear);
   EXPECT_EQ(runtime.linear_moves.front().effective.tool_radius_comp,
             gcode::ToolRadiusCompMode::Left);
+  ASSERT_TRUE(
+      runtime.linear_moves.front().effective.active_tool_selection.has_value());
+  EXPECT_EQ(runtime.linear_moves.front()
+                .effective.active_tool_selection->selector_value,
+            "12");
+  ASSERT_TRUE(runtime.linear_moves.front()
+                  .effective.pending_tool_selection.has_value());
+  EXPECT_EQ(runtime.linear_moves.front()
+                .effective.pending_tool_selection->selector_value,
+            "7");
 }
 
 TEST(AilExecutorTest, GotocDoesNotFaultWhenTargetMissing) {
@@ -505,6 +517,38 @@ TEST(AilExecutorTest, SystemVariableConditionCanBlockAndResumeOnEvent) {
   exec.notifyEvent(gcode::WaitToken{"condition", "sysvar_ready"});
   ASSERT_TRUE(exec.step(10, resolver));
   EXPECT_EQ(exec.state().status, gcode::ExecutorStatus::Ready);
+}
+
+TEST(AilExecutorTest, BranchCanResumeWhenRetryTimeElapses) {
+  const auto lowered = gcode::parseAndLowerAil(
+      "IF R1 == 1 GOTOF TARGET\nGOTO END\nTARGET:\nEND:\n");
+  gcode::AilExecutor exec(lowered.instructions);
+
+  int calls = 0;
+  const auto resolver = [&calls](const gcode::Condition &,
+                                 const gcode::SourceInfo &) {
+    gcode::ConditionResolution r;
+    ++calls;
+    if (calls == 1) {
+      r.kind = gcode::ConditionResolutionKind::Pending;
+      r.retry_at_ms = 100;
+      return r;
+    }
+    r.kind = gcode::ConditionResolutionKind::False;
+    return r;
+  };
+
+  ASSERT_TRUE(exec.step(0, resolver));
+  EXPECT_EQ(exec.state().status, gcode::ExecutorStatus::Blocked);
+  ASSERT_TRUE(exec.state().blocked.has_value());
+  EXPECT_EQ(exec.state().blocked->instruction_index, 0u);
+
+  EXPECT_FALSE(exec.step(99, resolver));
+  EXPECT_EQ(exec.state().status, gcode::ExecutorStatus::Blocked);
+
+  ASSERT_TRUE(exec.step(100, resolver));
+  EXPECT_EQ(exec.state().status, gcode::ExecutorStatus::Ready);
+  EXPECT_EQ(exec.state().pc, 1u);
 }
 
 TEST(AilExecutorTest, SystemVariableConditionErrorFaultsRuntime) {

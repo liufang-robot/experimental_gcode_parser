@@ -2,6 +2,21 @@
 
 namespace gcode {
 
+void applyExecutionInitialState(
+    ExecutorState *state,
+    const std::optional<AilExecutorInitialState> &initial_state) {
+  if (!initial_state.has_value()) {
+    return;
+  }
+
+  state->motion_code_current = initial_state->motion_code_current;
+  state->rapid_mode_current = initial_state->rapid_mode_current;
+  state->tool_radius_comp_current = initial_state->tool_radius_comp_current;
+  state->working_plane_current = initial_state->working_plane_current;
+  state->active_tool_selection = initial_state->active_tool_selection;
+  state->pending_tool_selection = initial_state->pending_tool_selection;
+}
+
 ExecutionModalState makeExecutionModalState(
     std::string motion_code, WorkingPlane working_plane,
     RapidInterpolationMode rapid_mode, ToolRadiusCompMode tool_radius_comp,
@@ -15,6 +30,16 @@ ExecutionModalState makeExecutionModalState(
   state.active_tool_selection = std::move(active_tool_selection);
   state.pending_tool_selection = std::move(pending_tool_selection);
   return state;
+}
+
+ExecutionModalState
+makeExecutionModalState(const ExecutorState &state,
+                        std::optional<std::string> motion_code_override) {
+  return makeExecutionModalState(
+      motion_code_override.value_or(state.motion_code_current),
+      state.working_plane_current, state.rapid_mode_current,
+      state.tool_radius_comp_current, state.active_tool_selection,
+      state.pending_tool_selection);
 }
 
 bool applyExecutionModalInstruction(const AilInstruction &instruction,

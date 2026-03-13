@@ -1,5 +1,26 @@
 # CHANGELOG_AGENT
 
+## 2026-03-13 (wu-4 executor state cleanup)
+- Centralized executor initial-state seeding and command-facing modal snapshot
+  construction in `src/execution_modal_state.*`.
+- Deduplicated the blocked-to-ready wake path in `src/ail.cpp` so both
+  `step(...)` execution modes use the same runtime/event unblocking logic.
+- Tightened executor regression coverage for seeded tool-selection propagation
+  and time-based unblock behavior.
+
+SPEC sections / tests:
+- SPEC: no normative behavior change
+- Tests: `test/ail_executor_tests.cpp`
+
+Known limitations:
+- This slice is internal-only; it does not expand modal groups or change public
+  execution behavior.
+
+How to reproduce locally (commands):
+- `cmake --build build -j --target ail_executor_tests`
+- `./build/ail_executor_tests --gtest_filter='AilExecutorTest.InitialModalStateAffectsDispatchedMotionCommands:AilExecutorTest.MotionStepCanBlockAndResumeOnRuntimeWaitToken:AilExecutorTest.BranchCanBlockAndResumeOnEvent:AilExecutorTest.BranchCanResumeWhenRetryTimeElapses:AilExecutorTest.SystemVariableConditionCanBlockAndResumeOnEvent'`
+- `./dev/check.sh`
+
 ## 2026-03-13 (plan cleanup and WU-4 execution plan)
 - Declared `implementation_plan_from_requirements.md` as the authoritative
   current implementation plan and marked the older implementation-plan pages as
