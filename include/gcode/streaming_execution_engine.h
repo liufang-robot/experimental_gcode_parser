@@ -41,6 +41,7 @@ private:
   StepResult advanceActiveExecutor();
   StepResult makeBlockedResult(int line, const WaitToken &token,
                                std::string reason);
+  StepResult makeRejectedResult(const RejectedState &rejected);
   StepResult faultWithDiagnostic(const Diagnostic &diag);
   void emitDiagnostics(const std::vector<Diagnostic> &diagnostics);
   std::optional<RejectedLineEvent>
@@ -59,6 +60,7 @@ private:
   std::string input_buffer_;
   std::deque<PendingLine> pending_lines_;
   std::optional<BlockedState> blocked_;
+  std::optional<RejectedState> rejected_;
   std::unique_ptr<AilExecutor> active_executor_;
   int active_executor_line_ = 0;
   size_t active_executor_emitted_diagnostics_ = 0;
