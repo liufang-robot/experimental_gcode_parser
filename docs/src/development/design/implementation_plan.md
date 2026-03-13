@@ -1,5 +1,10 @@
 # Implementation Plan
 
+Status: summary only.
+
+The authoritative current plan is
+[`implementation_plan_from_requirements.md`](implementation_plan_from_requirements.md).
+
 ## Delivery Principles
 
 - small coherent PR slices
@@ -39,4 +44,5 @@ Per feature slice:
 - CLI/stage-output tests when schemas/output change
 - docs updates (`SPEC.md`, program/development references)
 
-This is a split summary of root `IMPLEMENTATION_PLAN.md`.
+This is a split summary of root `IMPLEMENTATION_PLAN.md`, not the primary
+requirements-driven execution plan.

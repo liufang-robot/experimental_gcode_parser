@@ -3,6 +3,11 @@
 This page mirrors the repo-root `IMPLEMENTATION_PLAN.md` so it is readable in
 the published mdBook HTML. Keep this page in sync with the root document.
 
+Status: summary/reference only.
+
+The authoritative current plan is
+[`implementation_plan_from_requirements.md`](implementation_plan_from_requirements.md).
+
 # IMPLEMENTATION PLAN — Siemens-Compatible Parser and Runtime
 
 ## 1. Goal

@@ -4,12 +4,30 @@ This note converts the reviewed requirements into a concrete architecture plan.
 It is intentionally more specific than the older phase summary in
 [`implementation_plan.md`](implementation_plan.md).
 
+This is the authoritative implementation-planning document for the current
+requirements-reviewed architecture.
+
+The following documents are summary/reference companions only:
+
+- [`implementation_plan.md`](implementation_plan.md)
+- [`repo_implementation_plan.md`](repo_implementation_plan.md)
+
 Use this document to answer:
 
 - what the target architecture should be
 - what the current code already does correctly
 - what the main gaps are
 - what order the remaining work should happen in
+
+## Current Work-Unit Status
+
+- `WU-1 Modal Snapshot Design`: completed and merged
+- `WU-2 Command Schema Redesign`: completed and merged
+- `WU-3 Runtime Dispatch Cleanup`: completed and merged
+- `WU-4 Executor State Cleanup`: next
+- `WU-5 Tool Execution Completion`: pending
+- `WU-6 Diagnostics/Recovery Alignment`: pending
+- `WU-7 Final Public API Cleanup`: pending
 
 ## Goal
 
@@ -255,6 +273,8 @@ R6 Diagnostics/recovery API alignment
 
 ### WU-1 Modal Snapshot Design
 
+Status: `Completed`
+
 Deliver:
 
 - one explicit full modal snapshot type
@@ -268,6 +288,8 @@ Tests:
 - CLI/event trace updates if payload changes
 
 ### WU-2 Command Schema Redesign
+
+Status: `Completed`
 
 Deliver:
 
@@ -285,6 +307,8 @@ Tests:
 
 ### WU-3 Runtime Dispatch Cleanup
 
+Status: `Completed`
+
 Deliver:
 
 - consistent command building from executor state
@@ -297,6 +321,8 @@ Tests:
 - fake-log trace tests
 
 ### WU-4 Executor State Cleanup
+
+Status: `Next`
 
 Deliver:
 
@@ -348,17 +374,14 @@ Tests:
 - integration tests
 - `./dev/check.sh`
 
-## Implementation Order
+## Remaining Implementation Order
 
 Recommended order:
 
-1. WU-1 Modal Snapshot Design
-2. WU-2 Command Schema Redesign
-3. WU-3 Runtime Dispatch Cleanup
-4. WU-4 Executor State Cleanup
-5. WU-5 Tool Execution Completion
-6. WU-6 Diagnostics/Recovery Alignment
-7. WU-7 Final Public API Cleanup
+1. WU-4 Executor State Cleanup
+2. WU-5 Tool Execution Completion
+3. WU-6 Diagnostics/Recovery Alignment
+4. WU-7 Final Public API Cleanup
 
 ## Definition Of Ready For Code Work
 
