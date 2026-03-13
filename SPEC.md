@@ -29,11 +29,9 @@ The parser returns:
 - Diagnostics with line/column (1-based)
 
 Optional downstream stage:
-- AST can be lowered into typed AIL instructions, motion packets, and queue messages.
-- v0 supports `G0Message`, `G1Message`, `G2Message`, `G3Message`, and
-  `G4Message` emission.
-- v0 supports motion packet emission from AIL motion instructions
-  (`G0/G1/G2/G3/G4`).
+- AST can be lowered into typed AIL instructions.
+- Internal tooling/CLI stages may also lower into queue messages and motion
+  packets, but those are not part of the supported public library surface.
 - Normative execution-model contract:
   - machine-executable semantics must be represented as explicit typed AIL
     instructions
@@ -41,15 +39,10 @@ Optional downstream stage:
     requirement for every executable instruction
   - non-motion control instructions may execute through executor/policy paths
     without standalone motion packets
-- Message results support JSON conversion (`toJson`/`fromJson`) for transport,
-  fixtures, and debugging.
-- Transitional API: callback-based parse/lower output mode for large-file
-  workflows (`parseAndLowerStream(...)` / `parseAndLowerFileStream(...)`).
-  Current implementation still parses the whole input before callback
-  delivery.
 - Initial primary execution API slice:
   - line-by-line streaming execution engine
   - injected interfaces for execution sink, runtime, and cancellation
+  - editable recovery through `ExecutionSession`
   - explicit blocking/resume/cancel contract per executed line
   - current implementation coverage: motion subset `G0/G1/G2/G3/G4`
 
@@ -599,6 +592,10 @@ N130 G01 X20 Y20
       the stored rejected boundary by default
   - `Rejected` is recoverable through suffix replacement; `Faulted` remains the
     unrecoverable execution failure state.
+- Legacy/internal compatibility note:
+  - the older batch message/session APIs are retained only for internal
+    tooling, tests, and CLI modes
+  - they are no longer part of the supported public execution architecture
 - JSON schema notes:
   - Include top-level `schema_version` (current value: `1`).
   - Include `messages`, `diagnostics`, and `rejected_lines`.

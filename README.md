@@ -3,12 +3,9 @@
 ANTLR-based parser/lowering library for CNC G-code with:
 
 - AST + line/column diagnostics
-- queue-oriented typed messages (`G1`, `G2`, `G3`, `G4`)
-- per-message modal metadata (`group`, `code`, `updates_state`)
-- batch and streaming compatibility APIs
-- initial streaming-first execution engine for the motion subset with injected
-  runtime interfaces
-- JSON serialization for lowered message results
+- AIL as executable IR
+- line-by-line streaming execution with injected runtime interfaces
+- halt-fix-continue recovery through `ExecutionSession`
 
 Current source-of-truth docs:
 
@@ -20,25 +17,12 @@ Current source-of-truth docs:
 
 - Parser: words/comments/line numbers and syntax diagnostics.
 - Semantic rules: motion-family exclusivity, `G1` mode mixing, `G4` constraints.
-- Lowering:
-  - `G1Message` (pose + feed)
-  - `G2Message` / `G3Message` (pose + arc + feed)
-  - `G4Message` (dwell mode + value)
-- Streaming callbacks:
-  - `parseAndLowerStream(...)`
-  - `parseAndLowerFileStream(...)`
-  - note: current implementation parses the full input first, then emits
-    callbacks while lowering; this is a transitional API rather than the final
-    line-by-line execution surface
 - Streaming execution engine:
   - `StreamingExecutionEngine`
   - `gcode_stream_exec` fake-log CLI for motion-subset event inspection
-- Session/edit flow:
-  - `ParseSession::applyLineEdit(...)`
-  - `ParseSession::reparseFromLine(...)`
-- Queue diff/apply helpers:
-  - `diffMessagesByLine(...)`
-  - `applyMessageDiff(...)`
+- Recovery session:
+  - `ExecutionSession`
+  - `gcode_exec_session` fake-log CLI for rejected-line recovery review
 
 ## Prerequisites
 
@@ -83,11 +67,14 @@ cmake --build build -j
 
 ## Library Usage
 
-Current stable library surfaces are still the parse/lower batch APIs plus the
-transitional callback-based streaming API.
+Current supported public library surfaces are:
 
-The primary execution direction is a line-by-line streaming engine with
-injected interfaces:
+- parser/AST
+- AIL
+- execution runtime APIs
+
+The primary execution model is a line-by-line streaming engine with injected
+interfaces:
 
 - execution sink interface for deterministic emitted events
 - runtime interface for slow/blocking external work such as motion submission
@@ -98,36 +85,6 @@ Implemented in the current slice for `G0/G1/G2/G3/G4`:
 
 - `docs/src/development/design/streaming_execution_architecture.md`
 - `SPEC.md` section 6 / 6.1 / 6.2
-
-Batch parse+lower:
-
-```cpp
-#include "messages.h"
-
-gcode::LowerOptions options;
-options.filename = "job.ngc";
-
-const auto result = gcode::parseAndLower("N10 G1 X10 Y20 F100\n", options);
-// result.messages, result.diagnostics, result.rejected_lines
-```
-
-Streaming parse+lower:
-
-```cpp
-#include "messages.h"
-
-gcode::StreamCallbacks callbacks;
-callbacks.on_message = [](const gcode::ParsedMessage& msg) {
-  // process message incrementally
-};
-callbacks.on_diagnostic = [](const gcode::Diagnostic& d) {
-  // record line/column diagnostics
-};
-
-gcode::LowerOptions options;
-options.filename = "job.ngc";
-gcode::parseAndLowerStream("G1 X10\nG4 F2\n", options, callbacks);
-```
 
 Streaming-first execution shape:
 
@@ -152,13 +109,34 @@ Fake-log CLI for quick review:
 ./build/gcode_stream_exec --format json testdata/messages/g4_dwell.ngc
 ```
 
-JSON conversion helpers:
+Recovery-session shape:
 
 ```cpp
-#include "messages_json.h"
+MyExecutionSink sink;
+MyRuntime runtime;
+MyCancellation cancellation;
 
-std::string json = gcode::toJsonString(result, true);
-gcode::MessageResult round_trip = gcode::fromJsonString(json);
+ExecutionSession session(sink, runtime, cancellation);
+session.pushChunk("G1 X10\nG1 G2 X15\nG1 X20\n");
+
+auto step = session.finish();
+while (step.status == StepStatus::Progress) {
+  step = session.pump();
+}
+
+if (step.status == StepStatus::Rejected) {
+  session.replaceEditableSuffix("G1 X15\nG1 X20\n");
+  while ((step = session.pump()).status == StepStatus::Progress) {
+  }
+}
+```
+
+Recovery demo CLI:
+
+```bash
+./build/gcode_exec_session --format debug \
+  --replace-editable-suffix testdata/execution/session_fix_suffix.ngc \
+  testdata/execution/session_reject.ngc
 ```
 
 ## Quality Gate

@@ -5,31 +5,26 @@ planned streaming-first execution boundary.
 
 ## Output APIs
 
-- Primary execution API (current motion-slice baseline):
+- Primary public execution APIs:
   - `StreamingExecutionEngine`
+  - `ExecutionSession`
   - injected interfaces:
     - execution sink
     - runtime
     - cancellation
-- Executor API (additive runtime path):
+- Additive executable IR API:
   - `AilExecutor::step(now_ms, sink, runtime)`
   - uses the same `IExecutionSink` / `IExecutionRuntime` motion contract for
     motion-capable AIL instructions
   - `AilExecutorOptions.initial_state` can seed modal context when an executor
     instance needs to inherit prior plane/rapid/tool-comp state
   - `StreamingExecutionEngine` now seeds a per-line executor from its carried
-    modal state for the supported motion/dwell subset, instead of maintaining a
-    separate manual AIL stepping loop
-- Current compatibility APIs:
+    modal state for the supported control/runtime subset
+- Public parser/lowering APIs:
+  - `parse(...)` -> `ParseResult`
   - `parseAndLowerAil(...)` -> `AilResult`
-  - `parseLowerAndPacketize(...)` -> `PacketResult`
-  - `parseAndLower(...)` -> `MessageResult`
-  - `parseAndLowerStream(...)`
-  - `parseAndLowerFileStream(...)`
 
 Current limitations:
-- `parseAndLowerStream(...)` is not yet a true chunk-by-chunk parser; it parses
-  the full input before callback delivery.
 - `StreamingExecutionEngine` currently covers motion/dwell lines plus
   line-level diagnostics/rejections; variable/control-flow execution remains
   follow-up work.

@@ -382,7 +382,7 @@ void StreamingExecutionEngine::emitDiagnostics(
 }
 
 std::optional<RejectedLineEvent> StreamingExecutionEngine::makeRejectedEvent(
-    const MessageResult::RejectedLine &rejected) const {
+    const RejectedLine &rejected) const {
   RejectedLineEvent event;
   event.source = toSourceRef(rejected.source);
   event.reasons = rejected.reasons;
@@ -397,7 +397,7 @@ void StreamingExecutionEngine::remapDiagnostics(
 }
 
 void StreamingExecutionEngine::remapRejectedLines(
-    std::vector<MessageResult::RejectedLine> *rejected_lines, int line) const {
+    std::vector<RejectedLine> *rejected_lines, int line) const {
   for (auto &rejected : *rejected_lines) {
     rejected.source.line = line;
     for (auto &diag : rejected.reasons) {

@@ -129,6 +129,12 @@ target_link_libraries(gcode_stream_exec PRIVATE nlohmann_json::nlohmann_json)
 target_include_directories(gcode_stream_exec
                            PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
 
+add_executable(gcode_exec_session src/execution_session_main.cpp)
+target_link_libraries(gcode_exec_session PRIVATE gcode_parser)
+target_link_libraries(gcode_exec_session PRIVATE nlohmann_json::nlohmann_json)
+target_include_directories(gcode_exec_session
+                           PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
+
 add_executable(gcode_bench bench/gcode_bench.cpp)
 target_link_libraries(gcode_bench PRIVATE gcode_parser)
 target_link_libraries(gcode_bench PRIVATE nlohmann_json::nlohmann_json)
@@ -213,7 +219,8 @@ target_link_libraries(cli_tests PRIVATE GTest::gtest_main)
 target_compile_definitions(cli_tests PRIVATE
                            GCODE_SOURCE_DIR="${CMAKE_CURRENT_SOURCE_DIR}"
                            GCODE_PARSE_BIN="$<TARGET_FILE:gcode_parse>"
-                           GCODE_STREAM_EXEC_BIN="$<TARGET_FILE:gcode_stream_exec>")
+                           GCODE_STREAM_EXEC_BIN="$<TARGET_FILE:gcode_stream_exec>"
+                           GCODE_EXEC_SESSION_BIN="$<TARGET_FILE:gcode_exec_session>")
 gtest_discover_tests(cli_tests DISCOVERY_MODE PRE_TEST)
 
 add_executable(session_tests test/session_tests.cpp)

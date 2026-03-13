@@ -9,7 +9,6 @@
 #include "gcode/ail.h"
 #include "gcode/execution_interfaces.h"
 #include "gcode/execution_runtime.h"
-#include "gcode/messages.h"
 
 namespace gcode {
 
@@ -46,12 +45,11 @@ private:
   StepResult makeRejectedResult(const RejectedState &rejected);
   StepResult faultWithDiagnostic(const Diagnostic &diag);
   void emitDiagnostics(const std::vector<Diagnostic> &diagnostics);
-  std::optional<RejectedLineEvent>
-  makeRejectedEvent(const MessageResult::RejectedLine &rejected) const;
+  std::optional<RejectedLineEvent> makeRejectedEvent(
+      const RejectedLine &rejected) const;
   void remapDiagnostics(std::vector<Diagnostic> *diagnostics, int line) const;
-  void
-  remapRejectedLines(std::vector<MessageResult::RejectedLine> *rejected_lines,
-                     int line) const;
+  void remapRejectedLines(std::vector<RejectedLine> *rejected_lines,
+                          int line) const;
   AilExecutorInitialState exportInitialState() const;
   void importInitialState(const AilExecutorInitialState &state,
                           int next_line_number);

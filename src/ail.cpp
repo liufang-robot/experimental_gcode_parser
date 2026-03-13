@@ -14,6 +14,7 @@
 
 #include "execution_instruction_dispatcher.h"
 #include "execution_modal_state.h"
+#include "messages.h"
 
 namespace gcode {
 namespace {

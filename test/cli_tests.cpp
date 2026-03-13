@@ -357,6 +357,63 @@ TEST(CliFormatTest, StreamingExecFixtureShowsWorkingPlaneTransitions) {
   EXPECT_EQ(events[4]["params"]["effective"]["working_plane"], "yz");
 }
 
+TEST(CliFormatTest, ExecutionSessionCliReportsRecoverableRejectedState) {
+  const auto temp_file =
+      std::filesystem::temp_directory_path() / "gcode_exec_session_reject.ngc";
+  {
+    std::ofstream out(temp_file, std::ios::out | std::ios::trunc);
+    ASSERT_TRUE(out.is_open());
+    out << "G1 X10\nG1 G2 X15\nG1 X20\n";
+  }
+
+  const std::string command = std::string("\"") + GCODE_EXEC_SESSION_BIN +
+                              "\" --format debug \"" + temp_file.string() +
+                              "\"";
+  const auto result = runCommand(command);
+
+  std::error_code ec;
+  std::filesystem::remove(temp_file, ec);
+
+  EXPECT_EQ(result.exit_code, 1);
+  EXPECT_TRUE(result.stderr_text.empty());
+  EXPECT_NE(result.stdout_text.find("rejected_line line=2"), std::string::npos);
+  EXPECT_NE(result.stdout_text.find("session.rejected"), std::string::npos);
+}
+
+TEST(CliFormatTest, ExecutionSessionCliCanApplyEditableSuffixReplacement) {
+  const auto temp_file =
+      std::filesystem::temp_directory_path() / "gcode_exec_session_input.ngc";
+  const auto replace_file =
+      std::filesystem::temp_directory_path() / "gcode_exec_session_replace.ngc";
+  {
+    std::ofstream out(temp_file, std::ios::out | std::ios::trunc);
+    ASSERT_TRUE(out.is_open());
+    out << "G1 X10\nG1 G2 X15\nG1 X20\n";
+  }
+  {
+    std::ofstream out(replace_file, std::ios::out | std::ios::trunc);
+    ASSERT_TRUE(out.is_open());
+    out << "G1 X15\nG1 X20\n";
+  }
+
+  const std::string command = std::string("\"") + GCODE_EXEC_SESSION_BIN +
+                              "\" --format debug --replace-editable-suffix \"" +
+                              replace_file.string() + "\" \"" +
+                              temp_file.string() + "\"";
+  const auto result = runCommand(command);
+
+  std::error_code ec;
+  std::filesystem::remove(temp_file, ec);
+  std::filesystem::remove(replace_file, ec);
+
+  EXPECT_EQ(result.exit_code, 0);
+  EXPECT_TRUE(result.stderr_text.empty());
+  EXPECT_NE(result.stdout_text.find("session.editable_suffix_replaced"),
+            std::string::npos);
+  EXPECT_NE(result.stdout_text.find("target: x=15"), std::string::npos);
+  EXPECT_NE(result.stdout_text.find("session.completed"), std::string::npos);
+}
+
 TEST(CliFormatTest, StreamingExecDebugOutputsToolChangeEventSequence) {
   const auto temp_file =
       std::filesystem::temp_directory_path() / "gcode_stream_exec_tool.ngc";

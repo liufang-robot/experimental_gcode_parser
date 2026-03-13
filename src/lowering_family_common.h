@@ -5,7 +5,7 @@
 #include <string>
 #include <vector>
 
-#include "gcode/messages.h"
+#include "messages.h"
 
 namespace gcode {
 

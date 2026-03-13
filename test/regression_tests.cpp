@@ -1,7 +1,7 @@
 #include "gtest/gtest.h"
 
 #include "gcode/gcode_parser.h"
-#include "gcode/messages.h"
+#include "messages.h"
 
 namespace {
 

@@ -1,4 +1,4 @@
-#include "gcode/messages.h"
+#include "messages.h"
 
 #include <algorithm>
 #include <fstream>
@@ -189,7 +189,7 @@ MessageResult lowerToMessages(const Program &program,
     const bool has_line_error =
         lineHasError(result.diagnostics, line.line_index);
     if (has_line_error) {
-      MessageResult::RejectedLine rejected;
+      RejectedLine rejected;
       rejected.source.filename = options.filename;
       rejected.source.line = line.line_index;
       if (line.line_number.has_value()) {
@@ -236,7 +236,7 @@ MessageResult lowerToMessages(const Program &program,
     if (found_motion == 2 || found_motion == 3) {
       validateArcPlaneWords(line, effective_plane, &result.diagnostics);
       if (lineHasError(result.diagnostics, line.line_index)) {
-        MessageResult::RejectedLine rejected;
+        RejectedLine rejected;
         rejected.source.filename = options.filename;
         rejected.source.line = line.line_index;
         if (line.line_number.has_value()) {
@@ -304,7 +304,7 @@ bool lowerToMessagesStream(const Program &program,
     const bool has_line_error =
         lineHasError(parse_diagnostics, line.line_index);
     if (has_line_error) {
-      MessageResult::RejectedLine rejected;
+      RejectedLine rejected;
       rejected.source.filename = options.filename;
       rejected.source.line = line.line_index;
       if (line.line_number.has_value()) {
@@ -362,7 +362,7 @@ bool lowerToMessagesStream(const Program &program,
             return diag.severity == Diagnostic::Severity::Error;
           });
       if (has_plane_error) {
-        MessageResult::RejectedLine rejected;
+        RejectedLine rejected;
         rejected.source.filename = options.filename;
         rejected.source.line = line.line_index;
         if (line.line_number.has_value()) {

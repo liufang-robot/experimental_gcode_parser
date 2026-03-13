@@ -2,8 +2,8 @@
 
 #include "gtest/gtest.h"
 
-#include "gcode/message_diff.h"
-#include "gcode/messages.h"
+#include "message_diff.h"
+#include "messages.h"
 
 namespace {
 

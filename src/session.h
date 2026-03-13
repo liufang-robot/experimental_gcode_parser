@@ -4,7 +4,7 @@
 #include <string_view>
 #include <vector>
 
-#include "gcode/messages.h"
+#include "messages.h"
 
 namespace gcode {
 
