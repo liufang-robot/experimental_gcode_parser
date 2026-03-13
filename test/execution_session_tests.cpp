@@ -70,6 +70,17 @@ public:
   bool cancelled = false;
 };
 
+class BlockingLinearRuntime : public ReadyRuntime {
+public:
+  gcode::RuntimeResult<gcode::WaitToken>
+  submitLinearMove(const gcode::LinearMoveCommand &) override {
+    gcode::RuntimeResult<gcode::WaitToken> result;
+    result.status = gcode::RuntimeCallStatus::Pending;
+    result.wait_token = gcode::WaitToken{"motion", "line-1"};
+    return result;
+  }
+};
+
 TEST(ExecutionSessionTest, RejectedSuffixCanBeReplacedAndExecutionContinues) {
   RecordingSink sink;
   ReadyRuntime runtime;
@@ -106,6 +117,47 @@ TEST(ExecutionSessionTest, RejectedSuffixCanBeReplacedAndExecutionContinues) {
   EXPECT_EQ(*sink.linear_moves[0].target.x, 10.0);
   EXPECT_EQ(*sink.linear_moves[1].target.x, 15.0);
   EXPECT_EQ(*sink.linear_moves[2].target.x, 20.0);
+}
+
+TEST(ExecutionSessionTest, ReplaceEditableSuffixOnlyWorksInRejectedState) {
+  RecordingSink sink;
+  ReadyRuntime runtime;
+  StaticCancellation cancellation;
+  gcode::ExecutionSession session(sink, runtime, cancellation);
+
+  EXPECT_FALSE(session.replaceEditableSuffix("G1 X1\n"));
+
+  ASSERT_TRUE(session.pushChunk("G1 G2 X10\n"));
+  const auto rejected = session.finish();
+  EXPECT_EQ(rejected.status, gcode::StepStatus::Rejected);
+  EXPECT_TRUE(session.replaceEditableSuffix("G1 X10\n"));
+}
+
+TEST(ExecutionSessionTest, CancelFromRejectedSetsCancelled) {
+  RecordingSink sink;
+  ReadyRuntime runtime;
+  StaticCancellation cancellation;
+  gcode::ExecutionSession session(sink, runtime, cancellation);
+
+  ASSERT_TRUE(session.pushChunk("G1 G2 X10\n"));
+  const auto rejected = session.finish();
+  EXPECT_EQ(rejected.status, gcode::StepStatus::Rejected);
+
+  session.cancel();
+  EXPECT_EQ(session.state(), gcode::EngineState::Cancelled);
+}
+
+TEST(ExecutionSessionTest, BlockedSessionRejectsEditableSuffixReplacement) {
+  RecordingSink sink;
+  BlockingLinearRuntime runtime;
+  StaticCancellation cancellation;
+  gcode::ExecutionSession session(sink, runtime, cancellation);
+
+  ASSERT_TRUE(session.pushChunk("G1 X1\n"));
+  const auto blocked = session.finish();
+  ASSERT_EQ(blocked.status, gcode::StepStatus::Blocked);
+  EXPECT_EQ(session.state(), gcode::EngineState::Blocked);
+  EXPECT_FALSE(session.replaceEditableSuffix("G1 X2\n"));
 }
 
 } // namespace
