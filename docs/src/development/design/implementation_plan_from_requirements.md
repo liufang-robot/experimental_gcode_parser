@@ -28,6 +28,7 @@ Use this document to answer:
 - `WU-5 Tool Execution Completion`: completed and merged
 - `WU-6 Diagnostics/Recovery Alignment`: completed
 - `WU-7 Final Public API Cleanup`: completed
+- `WU-8 Public Execution API Simplification`: completed
 
 ## Goal
 
@@ -60,12 +61,16 @@ Key rule:
 
 ### 2. Buffered Execution Core
 
-Primary execution engine:
+Primary public execution entry point:
 
-- `StreamingExecutionEngine`
+- `ExecutionSession`
 - buffered incremental input
 - `pushChunk(...)`, `pump()`, `finish()`, `resume(...)`, `cancel()`
 - `Blocked` vs `WaitingForInput` kept distinct
+
+Internal execution core:
+
+- `StreamingExecutionEngine`
 
 Execution semantics:
 
@@ -112,8 +117,8 @@ This implies a full modal snapshot model, not a partial ad hoc set of fields.
 
 ### What Already Matches The Target
 
-- public streaming execution API already exists in
-  [`streaming_execution_engine.h`](/home/liufang/optcnc/gcode/include/gcode/streaming_execution_engine.h)
+- public execution-session API already exists in
+  [`execution_session.h`](/home/liufang/optcnc/gcode/include/gcode/execution_session.h)
 - buffered streaming state already exists:
   - pending lines
   - buffered instructions
@@ -196,8 +201,9 @@ streaming/executor API surface.
 
 Direction chosen for `WU-6`:
 
-- keep `StreamingExecutionEngine` focused on execution
-- add a new `ExecutionSession` for editable rejected-suffix recovery
+- keep `StreamingExecutionEngine` focused on internal execution
+- provide `ExecutionSession` as the public editable rejected-suffix recovery
+  API
 - use a recoverable `Rejected` state distinct from unrecoverable `Faulted`
 
 ## Design Decisions To Apply Next

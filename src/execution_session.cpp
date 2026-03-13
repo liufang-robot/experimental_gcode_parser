@@ -2,6 +2,8 @@
 
 #include <utility>
 
+#include "streaming_execution_engine.h"
+
 namespace gcode {
 
 ExecutionSession::ExecutionSession(IExecutionSink &sink, IRuntime &runtime,
@@ -21,6 +23,8 @@ ExecutionSession::ExecutionSession(IExecutionSink &sink,
   engine_ = std::make_unique<StreamingExecutionEngine>(sink, runtime,
                                                        cancellation, options);
 }
+
+ExecutionSession::~ExecutionSession() = default;
 
 bool ExecutionSession::pushChunk(std::string_view chunk) {
   if (state_ == EngineState::Rejected || state_ == EngineState::Cancelled ||

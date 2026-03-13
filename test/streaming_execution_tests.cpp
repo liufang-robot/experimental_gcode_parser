@@ -2,7 +2,7 @@
 
 #include "gcode/execution_interfaces.h"
 #include "gcode/execution_runtime.h"
-#include "gcode/streaming_execution_engine.h"
+#include "streaming_execution_engine.h"
 
 namespace {
 

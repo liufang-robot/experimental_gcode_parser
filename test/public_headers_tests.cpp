@@ -12,12 +12,10 @@
 #include "gcode/lowering_types.h"
 #include "gcode/policy_types.h"
 #include "gcode/runtime_status.h"
-#include "gcode/streaming_execution_engine.h"
 
 TEST(PublicHeadersTest, PublicFacadeHeadersCompileAndExposeKeyTypes) {
   static_assert(std::is_class_v<gcode::ParseResult>);
   static_assert(std::is_class_v<gcode::AilResult>);
-  static_assert(std::is_class_v<gcode::StreamingExecutionEngine>);
   static_assert(std::is_class_v<gcode::ExecutionSession>);
   static_assert(std::is_class_v<gcode::IExecutionSink>);
   static_assert(std::is_class_v<gcode::IRuntime>);

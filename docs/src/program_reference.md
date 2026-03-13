@@ -6,7 +6,6 @@ planned streaming-first execution boundary.
 ## Output APIs
 
 - Primary public execution APIs:
-  - `StreamingExecutionEngine`
   - `ExecutionSession`
   - injected interfaces:
     - execution sink
@@ -18,16 +17,15 @@ planned streaming-first execution boundary.
     motion-capable AIL instructions
   - `AilExecutorOptions.initial_state` can seed modal context when an executor
     instance needs to inherit prior plane/rapid/tool-comp state
-  - `StreamingExecutionEngine` now seeds a per-line executor from its carried
-    modal state for the supported control/runtime subset
+  - internal execution uses a per-line executor seeded from carried modal
+    state for the supported control/runtime subset
 - Public parser/lowering APIs:
   - `parse(...)` -> `ParseResult`
   - `parseAndLowerAil(...)` -> `AilResult`
 
 Current limitations:
-- `StreamingExecutionEngine` currently covers motion/dwell lines plus
-  line-level diagnostics/rejections; variable/control-flow execution remains
-  follow-up work.
+- the public execution path is `ExecutionSession`; lower-level engine control is
+  now internal
 - `AilExecutor::step(now_ms, sink, runtime)` currently dispatches motion/dwell
   instructions through the shared runtime path.
 

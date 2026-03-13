@@ -4,7 +4,7 @@ ANTLR-based parser/lowering library for CNC G-code with:
 
 - AST + line/column diagnostics
 - AIL as executable IR
-- line-by-line streaming execution with injected runtime interfaces
+- execution through a single public `ExecutionSession` API
 - halt-fix-continue recovery through `ExecutionSession`
 
 Current source-of-truth docs:
@@ -17,12 +17,11 @@ Current source-of-truth docs:
 
 - Parser: words/comments/line numbers and syntax diagnostics.
 - Semantic rules: motion-family exclusivity, `G1` mode mixing, `G4` constraints.
-- Streaming execution engine:
-  - `StreamingExecutionEngine`
-  - `gcode_stream_exec` fake-log CLI for motion-subset event inspection
-- Recovery session:
+- Execution session:
   - `ExecutionSession`
   - `gcode_exec_session` fake-log CLI for rejected-line recovery review
+- Internal execution engine:
+  - `gcode_stream_exec` fake-log CLI for internal engine/event inspection
 
 ## Prerequisites
 
@@ -73,7 +72,7 @@ Current supported public library surfaces are:
 - AIL
 - execution runtime APIs
 
-The primary execution model is a line-by-line streaming engine with injected
+The primary public execution model is `ExecutionSession` with injected
 interfaces:
 
 - execution sink interface for deterministic emitted events
@@ -86,30 +85,7 @@ Implemented in the current slice for `G0/G1/G2/G3/G4`:
 - `docs/src/development/design/streaming_execution_architecture.md`
 - `SPEC.md` section 6 / 6.1 / 6.2
 
-Streaming-first execution shape:
-
-```cpp
-MyExecutionSink sink;
-MyRuntime runtime;
-MyCancellation cancellation;
-
-StreamingExecutionEngine engine(sink, runtime, cancellation);
-engine.pushChunk("N10 G1 X10 Y20 F100\n");
-
-auto step = engine.pump();
-if (step.status == StepStatus::Blocked) {
-  engine.resume(step.blocked->token);
-}
-```
-
-Fake-log CLI for quick review:
-
-```bash
-./build/gcode_stream_exec --format debug testdata/messages/g4_dwell.ngc
-./build/gcode_stream_exec --format json testdata/messages/g4_dwell.ngc
-```
-
-Recovery-session shape:
+Execution-session shape:
 
 ```cpp
 MyExecutionSink sink;
@@ -117,17 +93,16 @@ MyRuntime runtime;
 MyCancellation cancellation;
 
 ExecutionSession session(sink, runtime, cancellation);
-session.pushChunk("G1 X10\nG1 G2 X15\nG1 X20\n");
+session.pushChunk("N10 G1 X10 Y20 F100\n");
+session.pushChunk("N20 G4 F3\n");
 
 auto step = session.finish();
 while (step.status == StepStatus::Progress) {
   step = session.pump();
 }
 
-if (step.status == StepStatus::Rejected) {
-  session.replaceEditableSuffix("G1 X15\nG1 X20\n");
-  while ((step = session.pump()).status == StepStatus::Progress) {
-  }
+if (step.status == StepStatus::Blocked) {
+  session.resume(step.blocked->token);
 }
 ```
 
@@ -137,6 +112,17 @@ Recovery demo CLI:
 ./build/gcode_exec_session --format debug \
   --replace-editable-suffix testdata/execution/session_fix_suffix.ngc \
   testdata/execution/session_reject.ngc
+```
+
+If you are starting from zero and just want the practical integration steps,
+read:
+
+- `docs/src/execution_workflow.md`
+
+The internal engine-inspection CLI still exists for development and tests:
+
+```bash
+./build/gcode_stream_exec --format debug testdata/messages/g4_dwell.ngc
 ```
 
 ## Quality Gate

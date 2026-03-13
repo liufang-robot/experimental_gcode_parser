@@ -4582,3 +4582,33 @@ How to reproduce locally (commands):
 - `./build/gcode_exec_session --format debug testdata/execution/session_reject.ngc`
 - `./build/gcode_exec_session --format debug --replace-editable-suffix testdata/execution/session_fix_suffix.ngc testdata/execution/session_reject.ngc`
 - `./dev/check.sh`
+
+## 2026-03-13 (wu-8 public execution api simplification)
+- Removed public `gcode/streaming_execution_engine.h` and made
+  `ExecutionSession` the single supported public execution entry point.
+- Updated `ExecutionSession` to hide the internal engine behind a forward
+  declaration plus out-of-line destructor.
+- Rewrote the user-facing execution docs to explain the library through
+  `ExecutionSession`, while keeping the engine CLI/testing path internal.
+
+SPEC sections / tests:
+- `SPEC.md`:
+  - section 2.2 public execution API wording
+  - section 6 internal/public execution boundary wording
+- `README.md`
+- `docs/src/execution_workflow.md`
+- `docs/src/program_reference.md`
+- `test/public_headers_tests.cpp`
+- `test/streaming_execution_tests.cpp`
+- `test/streaming_execution_gmock_tests.cpp`
+
+Known limitations:
+- `gcode_stream_exec` and the internal engine tests still exercise
+  `StreamingExecutionEngine` directly as an internal development surface.
+
+How to reproduce locally (commands):
+- `cmake --build build -j --target public_headers_tests streaming_execution_tests streaming_execution_gmock_tests`
+- `./build/public_headers_tests`
+- `./build/streaming_execution_tests`
+- `./build/streaming_execution_gmock_tests`
+- `./dev/check.sh`
