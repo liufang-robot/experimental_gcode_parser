@@ -322,7 +322,7 @@ Tests:
 
 ### WU-4 Executor State Cleanup
 
-Status: `Next`
+Status: `Completed`
 
 Deliver:
 
@@ -378,10 +378,9 @@ Tests:
 
 Recommended order:
 
-1. WU-4 Executor State Cleanup
-2. WU-5 Tool Execution Completion
-3. WU-6 Diagnostics/Recovery Alignment
-4. WU-7 Final Public API Cleanup
+1. WU-5 Tool Execution Completion
+2. WU-6 Diagnostics/Recovery Alignment
+3. WU-7 Final Public API Cleanup
 
 ## Definition Of Ready For Code Work
 

@@ -18,6 +18,53 @@
 namespace gcode {
 namespace {
 
+std::optional<std::string>
+motionCodeOverrideForDispatch(const AilInstruction &instruction) {
+  if (std::holds_alternative<AilLinearMoveInstruction>(instruction)) {
+    return std::get<AilLinearMoveInstruction>(instruction).opcode;
+  }
+  if (std::holds_alternative<AilArcMoveInstruction>(instruction)) {
+    return std::get<AilArcMoveInstruction>(instruction).clockwise ? "G2" : "G3";
+  }
+  return std::nullopt;
+}
+
+void updateMotionCodeAfterDispatch(const AilInstruction &instruction,
+                                   ExecutorState *state) {
+  const auto motion_code = motionCodeOverrideForDispatch(instruction);
+  if (motion_code.has_value()) {
+    state->motion_code_current = *motion_code;
+  }
+}
+
+bool wakeBlockedExecutorIfReady(
+    int64_t now_ms,
+    std::unordered_set<WaitToken, WaitTokenHash> *pending_events,
+    ExecutorState *state) {
+  if (state->status != ExecutorStatus::Blocked || !state->blocked.has_value()) {
+    return true;
+  }
+
+  bool event_ready = false;
+  if (state->blocked->wait_token.has_value()) {
+    const auto it = pending_events->find(*state->blocked->wait_token);
+    if (it != pending_events->end()) {
+      pending_events->erase(it);
+      event_ready = true;
+    }
+  }
+  const bool time_ready = state->blocked->retry_at_ms.has_value() &&
+                          now_ms >= *state->blocked->retry_at_ms;
+  if (!event_ready && !time_ready) {
+    return false;
+  }
+
+  state->status = ExecutorStatus::Ready;
+  state->pc = state->blocked->instruction_index;
+  state->blocked.reset();
+  return true;
+}
+
 ToolSelectionResolution
 makeResolvedToolSelection(const ToolSelectionState &selection, bool substituted,
                           const std::string &message) {
@@ -987,18 +1034,7 @@ AilResult parseAndLowerAil(std::string_view input,
 AilExecutor::AilExecutor(std::vector<AilInstruction> instructions,
                          AilExecutorOptions options)
     : instructions_(std::move(instructions)), options_(std::move(options)) {
-  if (options_.initial_state.has_value()) {
-    state_.motion_code_current = options_.initial_state->motion_code_current;
-    state_.rapid_mode_current = options_.initial_state->rapid_mode_current;
-    state_.tool_radius_comp_current =
-        options_.initial_state->tool_radius_comp_current;
-    state_.working_plane_current =
-        options_.initial_state->working_plane_current;
-    state_.active_tool_selection =
-        options_.initial_state->active_tool_selection;
-    state_.pending_tool_selection =
-        options_.initial_state->pending_tool_selection;
-  }
+  applyExecutionInitialState(&state_, options_.initial_state);
   for (size_t i = 0; i < instructions_.size(); ++i) {
     const auto &inst = instructions_[i];
     std::visit(
@@ -1396,29 +1432,13 @@ bool AilExecutor::advanceOneInstruction(int64_t now_ms,
   if (sink != nullptr && runtime != nullptr) {
     const auto line = std::visit(
         [](const auto &instruction) { return instruction.source.line; }, inst);
-    std::string motion_code_for_dispatch = state_.motion_code_current;
-    if (std::holds_alternative<AilLinearMoveInstruction>(inst)) {
-      motion_code_for_dispatch =
-          std::get<AilLinearMoveInstruction>(inst).opcode;
-    } else if (std::holds_alternative<AilArcMoveInstruction>(inst)) {
-      motion_code_for_dispatch =
-          std::get<AilArcMoveInstruction>(inst).clockwise ? "G2" : "G3";
-    }
-    const ExecutionModalState modal_state = makeExecutionModalState(
-        std::move(motion_code_for_dispatch), state_.working_plane_current,
-        state_.rapid_mode_current, state_.tool_radius_comp_current,
-        state_.active_tool_selection, state_.pending_tool_selection);
+    const ExecutionModalState modal_state =
+        makeExecutionModalState(state_, motionCodeOverrideForDispatch(inst));
     const auto dispatch_result =
         dispatchExecutionInstruction(inst, line, modal_state, *sink, *runtime);
     if (dispatch_result.status == ExecutionDispatchResult::Status::Progress ||
         dispatch_result.status == ExecutionDispatchResult::Status::Blocked) {
-      if (std::holds_alternative<AilLinearMoveInstruction>(inst)) {
-        state_.motion_code_current =
-            std::get<AilLinearMoveInstruction>(inst).opcode;
-      } else if (std::holds_alternative<AilArcMoveInstruction>(inst)) {
-        state_.motion_code_current =
-            std::get<AilArcMoveInstruction>(inst).clockwise ? "G2" : "G3";
-      }
+      updateMotionCodeAfterDispatch(inst, &state_);
     }
     if (dispatch_result.status == ExecutionDispatchResult::Status::Blocked &&
         dispatch_result.wait_token.has_value()) {
@@ -1535,23 +1555,8 @@ bool AilExecutor::step(int64_t now_ms, IExecutionSink &sink,
     return false;
   }
 
-  if (state_.status == ExecutorStatus::Blocked && state_.blocked.has_value()) {
-    bool event_ready = false;
-    if (state_.blocked->wait_token.has_value()) {
-      const auto it = pending_events_.find(*state_.blocked->wait_token);
-      if (it != pending_events_.end()) {
-        pending_events_.erase(it);
-        event_ready = true;
-      }
-    }
-    const bool time_ready = state_.blocked->retry_at_ms.has_value() &&
-                            now_ms >= *state_.blocked->retry_at_ms;
-    if (!event_ready && !time_ready) {
-      return false;
-    }
-    state_.status = ExecutorStatus::Ready;
-    state_.pc = state_.blocked->instruction_index;
-    state_.blocked.reset();
+  if (!wakeBlockedExecutorIfReady(now_ms, &pending_events_, &state_)) {
+    return false;
   }
 
   return advanceOneInstruction(now_ms, runtime, &sink, &runtime);
@@ -1567,23 +1572,8 @@ bool AilExecutor::step(int64_t now_ms, const IConditionResolver &resolver) {
     return false;
   }
 
-  if (state_.status == ExecutorStatus::Blocked && state_.blocked.has_value()) {
-    bool event_ready = false;
-    if (state_.blocked->wait_token.has_value()) {
-      const auto it = pending_events_.find(*state_.blocked->wait_token);
-      if (it != pending_events_.end()) {
-        pending_events_.erase(it);
-        event_ready = true;
-      }
-    }
-    const bool time_ready = state_.blocked->retry_at_ms.has_value() &&
-                            now_ms >= *state_.blocked->retry_at_ms;
-    if (!event_ready && !time_ready) {
-      return false;
-    }
-    state_.status = ExecutorStatus::Ready;
-    state_.pc = state_.blocked->instruction_index;
-    state_.blocked.reset();
+  if (!wakeBlockedExecutorIfReady(now_ms, &pending_events_, &state_)) {
+    return false;
   }
 
   return advanceOneInstruction(now_ms, resolver);
