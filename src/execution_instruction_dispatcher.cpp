@@ -78,7 +78,6 @@ dispatchExecutionInstruction(const AilInstruction &instruction, int line,
         },
         "dwell in progress");
   }
-
   return {};
 }
 

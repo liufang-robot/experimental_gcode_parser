@@ -435,18 +435,18 @@ Reviewed decisions:
 - tool-change execution should be modeled as asynchronous and normally use the
   general `Pending` action-command behavior
 - pending/current/selected tool state should remain explicit in execution state
-
-Open follow-up question:
-
-- exact `M6` behavior when no pending tool selection exists is still deferred;
-  current acceptable placeholder behavior is "do nothing" until that policy is
-  reviewed explicitly
+- if `M6` occurs with no pending tool selection, the executor should use the
+  current active/default tool selection as the tool-change target
+- if the active/default tool is already mounted, runtime may treat that tool
+  change as a no-op action
+- if `M6` occurs with neither a pending tool selection nor an active/default
+  tool selection, execution should fault
 
 Review note:
 
-- the main tool-selection/tool-change execution split is now reviewed; pending
-  no-selection policy and any substitution/fallback policy details still need a
-  later pass
+- the main tool-selection/tool-change execution split and `M6` no-pending
+  policy are now reviewed; further controller-specific substitution/fallback
+  details can still be refined later
 
 ## 10. Diagnostics and Failure Policy
 

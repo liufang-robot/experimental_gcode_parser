@@ -50,6 +50,11 @@ public:
     return runtime_.submitDwell(cmd);
   }
 
+  RuntimeResult<WaitToken>
+  submitToolChange(const ToolChangeCommand &cmd) override {
+    return runtime_.submitToolChange(cmd);
+  }
+
   RuntimeResult<double> readSystemVariable(std::string_view name) override {
     return runtime_.readSystemVariable(name);
   }

@@ -183,6 +183,7 @@ struct ExecutorBlockedState {
   size_t instruction_index = 0;
   std::optional<WaitToken> wait_token;
   std::optional<int64_t> retry_at_ms;
+  std::optional<ToolSelectionState> tool_change_target_on_resume;
 };
 
 struct ExecutorState {
@@ -195,6 +196,7 @@ struct ExecutorState {
   WorkingPlane working_plane_current = WorkingPlane::XY;
   std::optional<ToolSelectionState> active_tool_selection;
   std::optional<ToolSelectionState> pending_tool_selection;
+  std::optional<ToolSelectionState> selected_tool_selection;
   std::optional<ExecutorBlockedState> blocked;
   std::optional<std::string> fault_message;
 };
@@ -206,6 +208,7 @@ struct AilExecutorInitialState {
   WorkingPlane working_plane_current = WorkingPlane::XY;
   std::optional<ToolSelectionState> active_tool_selection;
   std::optional<ToolSelectionState> pending_tool_selection;
+  std::optional<ToolSelectionState> selected_tool_selection;
 };
 
 struct AilExecutorOptions {
@@ -250,8 +253,14 @@ private:
                                           const AilGotoInstruction &inst);
   bool evaluateBranchAtPc(int64_t now_ms, const IConditionResolver &resolver);
   bool handleMCodeAtPc();
-  bool handleToolSelectAtPc();
-  bool handleToolChangeAtPc();
+  bool handleToolSelectAtPc(IExecutionSink *sink = nullptr,
+                            IRuntime *runtime = nullptr);
+  bool handleToolChangeAtPc(IExecutionSink *sink = nullptr,
+                            IRuntime *runtime = nullptr);
+  void applyResolvedToolSelection(const ToolSelectionState &selection);
+  bool dispatchToolChangeAtPc(const SourceInfo &source,
+                              const ToolSelectionState &target_selection,
+                              IExecutionSink *sink, IRuntime *runtime);
   bool advanceOneInstruction(int64_t now_ms,
                              const IConditionResolver &resolver);
   bool advanceOneInstruction(int64_t now_ms, const IConditionResolver &resolver,

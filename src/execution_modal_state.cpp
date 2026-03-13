@@ -15,6 +15,7 @@ void applyExecutionInitialState(
   state->working_plane_current = initial_state->working_plane_current;
   state->active_tool_selection = initial_state->active_tool_selection;
   state->pending_tool_selection = initial_state->pending_tool_selection;
+  state->selected_tool_selection = initial_state->selected_tool_selection;
 }
 
 ExecutionModalState makeExecutionModalState(
@@ -29,17 +30,20 @@ ExecutionModalState makeExecutionModalState(
   state.tool_radius_comp = tool_radius_comp;
   state.active_tool_selection = std::move(active_tool_selection);
   state.pending_tool_selection = std::move(pending_tool_selection);
+  state.selected_tool_selection = std::nullopt;
   return state;
 }
 
 ExecutionModalState
 makeExecutionModalState(const ExecutorState &state,
                         std::optional<std::string> motion_code_override) {
-  return makeExecutionModalState(
+  ExecutionModalState snapshot = makeExecutionModalState(
       motion_code_override.value_or(state.motion_code_current),
       state.working_plane_current, state.rapid_mode_current,
       state.tool_radius_comp_current, state.active_tool_selection,
       state.pending_tool_selection);
+  snapshot.selected_tool_selection = state.selected_tool_selection;
+  return snapshot;
 }
 
 bool applyExecutionModalInstruction(const AilInstruction &instruction,

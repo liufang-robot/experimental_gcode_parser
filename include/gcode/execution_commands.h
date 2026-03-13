@@ -22,6 +22,7 @@ struct EffectiveModalSnapshot {
   ToolRadiusCompMode tool_radius_comp = ToolRadiusCompMode::Off;
   std::optional<ToolSelectionState> active_tool_selection;
   std::optional<ToolSelectionState> pending_tool_selection;
+  std::optional<ToolSelectionState> selected_tool_selection;
 };
 
 struct PoseTarget {
@@ -53,6 +54,12 @@ struct DwellCommand {
   SourceRef source;
   DwellMode dwell_mode = DwellMode::Seconds;
   double dwell_value = 0.0;
+  EffectiveModalSnapshot effective;
+};
+
+struct ToolChangeCommand {
+  SourceRef source;
+  ToolSelectionState target_tool_selection;
   EffectiveModalSnapshot effective;
 };
 

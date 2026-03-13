@@ -409,11 +409,16 @@ symbol - only payloads are rejected as syntax - invalid.-
     (tool instructions are executable control instructions, routed to runtime
     control path rather than motion packets).
   - executor runtime baseline:
-    - deferred mode: `T...` updates `pending_tool_selection`, `M6` activates it
-    - direct mode: `T...` immediately updates `active_tool_selection`
+    - deferred mode: `T...` updates `pending_tool_selection`, `M6` submits an
+      explicit tool-change command using that pending selection
+    - direct mode: `T...` immediately submits an explicit tool-change command
+      for the selected tool
     - before `M6`, last valid deferred selection wins
-    - `M6` without pending selection uses policy
-      (`error|warning|ignore`)
+    - `M6` without pending selection falls back to the current
+      `active_tool_selection` when present; if neither pending nor active tool
+      exists, execution faults
+    - accepted tool changes follow the same runtime action-command pattern as
+      motion and dwell (`Ready|Pending|Error`)
     - tool resolution policy supports outcomes:
       - `resolved`
       - `unresolved`
@@ -789,12 +794,17 @@ N130 G01 X20 Y20
   - executor tracks:
     - `active_tool_selection`
     - `pending_tool_selection`
+    - `selected_tool_selection`
   - execution baseline:
-    - `tool_select(immediate)` updates `active_tool_selection`
+    - `tool_select(immediate)` submits a tool-change command immediately
     - `tool_select(deferred)` updates `pending_tool_selection`
+    - accepted tool-change submission sets `selected_tool_selection` while the
+      change is in flight
+    - runtime completion mounts the selected tool into
+      `active_tool_selection`
     - `tool_change` consumes pending selection when present
-    - `M6` without pending selection follows configurable policy
-      (`error|warning|ignore`)
+    - `M6` without pending selection uses `active_tool_selection` when present;
+      otherwise it faults
   - executor tool resolution is configured through `AilExecutorOptions`:
     - optional `tool_selection_resolver` callback override
     - built-in substitution/fallback maps

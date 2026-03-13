@@ -357,6 +357,34 @@ TEST(CliFormatTest, StreamingExecFixtureShowsWorkingPlaneTransitions) {
   EXPECT_EQ(events[4]["params"]["effective"]["working_plane"], "yz");
 }
 
+TEST(CliFormatTest, StreamingExecDebugOutputsToolChangeEventSequence) {
+  const auto temp_file =
+      std::filesystem::temp_directory_path() / "gcode_stream_exec_tool.ngc";
+  {
+    std::ofstream out(temp_file, std::ios::out | std::ios::trunc);
+    ASSERT_TRUE(out.is_open());
+    out << "T12\nM6\n";
+  }
+
+  const std::string command = std::string("\"") + GCODE_STREAM_EXEC_BIN +
+                              "\" --format debug \"" + temp_file.string() +
+                              "\"";
+  const auto result = runCommand(command);
+
+  std::error_code ec;
+  std::filesystem::remove(temp_file, ec);
+
+  EXPECT_EQ(result.exit_code, 0);
+  EXPECT_TRUE(result.stderr_text.empty());
+  EXPECT_NE(result.stdout_text.find("line 2"), std::string::npos);
+  EXPECT_NE(result.stdout_text.find("  emit tool_change: target=12"),
+            std::string::npos);
+  EXPECT_NE(result.stdout_text.find("selected=12"), std::string::npos);
+  EXPECT_NE(result.stdout_text.find("  runtime: submit_tool_change"),
+            std::string::npos);
+  EXPECT_NE(result.stdout_text.find("engine.completed"), std::string::npos);
+}
+
 TEST(CliFormatTest, AilModeHandlesAssignmentExpression) {
   const auto temp_file =
       std::filesystem::temp_directory_path() / "gcode_cli_assign_test.ngc";

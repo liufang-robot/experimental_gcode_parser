@@ -13,6 +13,7 @@ public:
   void onLinearMove(const gcode::LinearMoveCommand &) override {}
   void onArcMove(const gcode::ArcMoveCommand &) override {}
   void onDwell(const gcode::DwellCommand &) override {}
+  void onToolChange(const gcode::ToolChangeCommand &) override {}
 };
 
 class ReadyRuntime : public gcode::IRuntime {
@@ -31,6 +32,12 @@ public:
   }
   gcode::RuntimeResult<gcode::WaitToken>
   submitDwell(const gcode::DwellCommand &) override {
+    gcode::RuntimeResult<gcode::WaitToken> result;
+    result.status = gcode::RuntimeCallStatus::Ready;
+    return result;
+  }
+  gcode::RuntimeResult<gcode::WaitToken>
+  submitToolChange(const gcode::ToolChangeCommand &) override {
     gcode::RuntimeResult<gcode::WaitToken> result;
     result.status = gcode::RuntimeCallStatus::Ready;
     return result;
@@ -177,6 +184,11 @@ TEST(StreamingExecutionTest, FunctionExecutionRuntimeCanDriveStreamingEngine) {
         result.status = gcode::RuntimeCallStatus::Ready;
         return result;
       },
+      [](const gcode::ToolChangeCommand &) {
+        gcode::RuntimeResult<gcode::WaitToken> result;
+        result.status = gcode::RuntimeCallStatus::Ready;
+        return result;
+      },
       [](std::string_view) {
         gcode::RuntimeResult<double> result;
         result.status = gcode::RuntimeCallStatus::Error;
@@ -218,6 +230,11 @@ TEST(StreamingExecutionTest,
         return result;
       },
       [](const gcode::DwellCommand &) {
+        gcode::RuntimeResult<gcode::WaitToken> result;
+        result.status = gcode::RuntimeCallStatus::Ready;
+        return result;
+      },
+      [](const gcode::ToolChangeCommand &) {
         gcode::RuntimeResult<gcode::WaitToken> result;
         result.status = gcode::RuntimeCallStatus::Ready;
         return result;

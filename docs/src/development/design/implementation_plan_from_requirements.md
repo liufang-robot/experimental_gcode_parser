@@ -24,8 +24,8 @@ Use this document to answer:
 - `WU-1 Modal Snapshot Design`: completed and merged
 - `WU-2 Command Schema Redesign`: completed and merged
 - `WU-3 Runtime Dispatch Cleanup`: completed and merged
-- `WU-4 Executor State Cleanup`: next
-- `WU-5 Tool Execution Completion`: pending
+- `WU-4 Executor State Cleanup`: completed and merged
+- `WU-5 Tool Execution Completion`: completed and merged
 - `WU-6 Diagnostics/Recovery Alignment`: pending
 - `WU-7 Final Public API Cleanup`: pending
 
@@ -378,9 +378,8 @@ Tests:
 
 Recommended order:
 
-1. WU-5 Tool Execution Completion
-2. WU-6 Diagnostics/Recovery Alignment
-3. WU-7 Final Public API Cleanup
+1. WU-6 Diagnostics/Recovery Alignment
+2. WU-7 Final Public API Cleanup
 
 ## Definition Of Ready For Code Work
 

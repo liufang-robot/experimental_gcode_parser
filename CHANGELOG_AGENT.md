@@ -4470,3 +4470,31 @@ Known limitations:
 How to reproduce locally (commands):
 - `sed -n '1,320p' docs/src/development/design/implementation_plan_from_requirements.md`
 - `sed -n '1,80p' docs/src/SUMMARY.md`
+
+## 2026-03-13 (wu-5 tool execution completion)
+- Added explicit `ToolChangeCommand` dispatch through `IExecutionSink` and
+  `IRuntime`, including grouped streaming/CLI trace output.
+- Extended executor and modal snapshot state with
+  `selected_tool_selection`, so deferred/direct tool changes use the same
+  async `Ready|Pending|Error` action-command pattern as motion and dwell.
+- Finalized the `M6` no-pending policy: use the active/default tool when
+  present, otherwise fault.
+
+SPEC sections / tests:
+- `SPEC.md`:
+  - section 3.6 tool runtime baseline
+  - section 6 tool execution baseline
+- `test/ail_executor_tests.cpp`
+- `test/streaming_execution_gmock_tests.cpp`
+- `test/streaming_execution_tests.cpp`
+- `test/cli_tests.cpp`
+
+Known limitations:
+- Tool change still routes only through executor/runtime control flow; packet
+  output intentionally does not emit standalone tool packets.
+
+How to reproduce locally (commands):
+- `./build/ail_executor_tests --gtest_filter='AilExecutorTest.DeferredToolModeUsesPendingSelectionUntilM6:AilExecutorTest.DeferredToolChangeCanBlockAndActivateOnResume:AilExecutorTest.M6WithoutPendingSelectionUsesActiveToolIfAvailable:AilExecutorTest.M6WithoutPendingSelectionFaultsByDefault:AilExecutorTest.DirectToolModeActivatesImmediatelyOnToolSelect'`
+- `./build/streaming_execution_gmock_tests --gtest_filter='StreamingExecutionGmockTest.DeferredM6CallsToolChangeRuntime:StreamingExecutionGmockTest.DirectTCallsToolChangeRuntimeImmediately'`
+- `./build/cli_tests --gtest_filter='CliFormatTest.StreamingExecDebugOutputsToolChangeEventSequence'`
+- `./dev/check.sh`

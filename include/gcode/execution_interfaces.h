@@ -16,6 +16,7 @@ public:
   virtual void onLinearMove(const LinearMoveCommand &cmd) = 0;
   virtual void onArcMove(const ArcMoveCommand &cmd) = 0;
   virtual void onDwell(const DwellCommand &cmd) = 0;
+  virtual void onToolChange(const ToolChangeCommand &cmd) = 0;
 };
 
 class IRuntime {
@@ -26,6 +27,8 @@ public:
   submitLinearMove(const LinearMoveCommand &cmd) = 0;
   virtual RuntimeResult<WaitToken> submitArcMove(const ArcMoveCommand &cmd) = 0;
   virtual RuntimeResult<WaitToken> submitDwell(const DwellCommand &cmd) = 0;
+  virtual RuntimeResult<WaitToken>
+  submitToolChange(const ToolChangeCommand &cmd) = 0;
   virtual RuntimeResult<double> readSystemVariable(std::string_view name) = 0;
   virtual RuntimeResult<WaitToken> cancelWait(const WaitToken &token) = 0;
 };

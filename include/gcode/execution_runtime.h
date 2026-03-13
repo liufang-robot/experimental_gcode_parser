@@ -21,6 +21,8 @@ public:
       std::function<RuntimeResult<WaitToken>(const ArcMoveCommand &)>;
   using DwellHandler =
       std::function<RuntimeResult<WaitToken>(const DwellCommand &)>;
+  using ToolChangeHandler =
+      std::function<RuntimeResult<WaitToken>(const ToolChangeCommand &)>;
   using ReadVariableHandler =
       std::function<RuntimeResult<double>(std::string_view)>;
   using CancelWaitHandler =
@@ -30,12 +32,14 @@ public:
                            LinearMoveHandler linear_move_handler,
                            ArcMoveHandler arc_move_handler,
                            DwellHandler dwell_handler,
+                           ToolChangeHandler tool_change_handler,
                            ReadVariableHandler read_variable_handler,
                            CancelWaitHandler cancel_wait_handler)
       : condition_resolver_(std::move(condition_resolver)),
         linear_move_handler_(std::move(linear_move_handler)),
         arc_move_handler_(std::move(arc_move_handler)),
         dwell_handler_(std::move(dwell_handler)),
+        tool_change_handler_(std::move(tool_change_handler)),
         read_variable_handler_(std::move(read_variable_handler)),
         cancel_wait_handler_(std::move(cancel_wait_handler)) {}
 
@@ -57,6 +61,11 @@ public:
     return dwell_handler_(cmd);
   }
 
+  RuntimeResult<WaitToken>
+  submitToolChange(const ToolChangeCommand &cmd) override {
+    return tool_change_handler_(cmd);
+  }
+
   RuntimeResult<double> readSystemVariable(std::string_view name) override {
     return read_variable_handler_(name);
   }
@@ -70,6 +79,7 @@ private:
   LinearMoveHandler linear_move_handler_;
   ArcMoveHandler arc_move_handler_;
   DwellHandler dwell_handler_;
+  ToolChangeHandler tool_change_handler_;
   ReadVariableHandler read_variable_handler_;
   CancelWaitHandler cancel_wait_handler_;
 };
