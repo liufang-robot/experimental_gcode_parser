@@ -1,5 +1,28 @@
 # CHANGELOG_AGENT
 
+## 2026-03-13 (plan cleanup and WU-4 execution plan)
+- Declared `implementation_plan_from_requirements.md` as the authoritative
+  current implementation plan and marked the older implementation-plan pages as
+  summary/reference documents.
+- Updated the requirements-driven implementation plan to reflect that `WU-1`
+  through `WU-3` are completed and that `WU-4` is the next remaining work unit.
+- Added a detailed superpowers-style execution plan for `WU-4 Executor State
+  Cleanup` under `docs/superpowers/plans/`.
+
+SPEC sections / tests:
+- SPEC: no normative behavior change
+- Tests: not run (docs/planning-only slice)
+
+Known limitations:
+- The new `WU-4` execution plan is a handoff-quality plan, but it still needs
+  implementation review if the executor structure changes materially before
+  execution starts.
+
+How to reproduce locally (commands):
+- `sed -n '1,120p' docs/src/development/design/implementation_plan_from_requirements.md`
+- `sed -n '1,80p' docs/src/development/design/implementation_plan.md`
+- `sed -n '1,120p' docs/superpowers/plans/2026-03-13-wu4-executor-state-cleanup.md`
+
 ## 2026-03-12 (publish root architecture docs in mdbook nav)
 - Added mdBook pages that mirror the repo-root `ARCHITECTURE.md` and
   `IMPLEMENTATION_PLAN.md` so they can be read directly from generated HTML.
