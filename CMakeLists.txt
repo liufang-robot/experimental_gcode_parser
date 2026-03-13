@@ -101,6 +101,7 @@ add_library(
                       src/ail.cpp src/ail_json.cpp
                       src/packet.cpp src/packet_json.cpp
                       src/streaming_execution_engine.cpp
+                      src/execution_session.cpp
                       src/streaming_event_log.cpp
                       src/execution_modal_state.cpp
                       src/execution_command_builder.cpp
@@ -249,6 +250,13 @@ target_link_libraries(streaming_execution_gmock_tests PRIVATE GTest::gtest_main
 target_include_directories(streaming_execution_gmock_tests
                            PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
 gtest_discover_tests(streaming_execution_gmock_tests DISCOVERY_MODE PRE_TEST)
+
+add_executable(execution_session_tests test/execution_session_tests.cpp)
+target_link_libraries(execution_session_tests PRIVATE gcode_parser)
+target_link_libraries(execution_session_tests PRIVATE GTest::gtest_main)
+target_include_directories(execution_session_tests
+                           PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
+gtest_discover_tests(execution_session_tests DISCOVERY_MODE PRE_TEST)
 
 add_executable(public_headers_tests test/public_headers_tests.cpp)
 target_link_libraries(public_headers_tests PRIVATE gcode_parser)

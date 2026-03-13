@@ -87,7 +87,7 @@ StreamingExecutionEngine::StreamingExecutionEngine(IExecutionSink &sink,
 
 bool StreamingExecutionEngine::pushChunk(std::string_view chunk) {
   if (state_ == EngineState::Cancelled || state_ == EngineState::Completed ||
-      state_ == EngineState::Faulted) {
+      state_ == EngineState::Faulted || state_ == EngineState::Rejected) {
     return false;
   }
   input_buffer_.append(chunk.data(), chunk.size());
@@ -98,6 +98,12 @@ StepResult StreamingExecutionEngine::pump() {
   if (state_ == EngineState::Faulted) {
     StepResult result;
     result.status = StepStatus::Faulted;
+    return result;
+  }
+  if (state_ == EngineState::Rejected) {
+    StepResult result;
+    result.status = StepStatus::Rejected;
+    result.rejected = rejected_;
     return result;
   }
   if (state_ == EngineState::Cancelled) {
@@ -163,6 +169,7 @@ StepResult StreamingExecutionEngine::resume(const WaitToken &token) {
     active_executor_->notifyEvent(token);
   }
   blocked_.reset();
+  rejected_.reset();
   state_ =
       active_executor_ == nullptr && pending_lines_.empty() && input_finished_
           ? EngineState::Completed
@@ -224,12 +231,16 @@ StepResult StreamingExecutionEngine::executeNextLine() {
             makeRejectedEvent(line_result.rejected_lines.front());
         rejected.has_value()) {
       sink_.onRejectedLine(*rejected);
-      if (!rejected->reasons.empty()) {
-        return faultWithDiagnostic(rejected->reasons.front());
-      }
+      RejectedState rejected_state;
+      rejected_state.source = rejected->source;
+      rejected_state.reasons = rejected->reasons;
+      return makeRejectedResult(rejected_state);
     }
-    Diagnostic diag = makeFaultDiagnostic(line.line, "line rejected");
-    return faultWithDiagnostic(diag);
+    RejectedState rejected_state;
+    rejected_state.source.line = line.line;
+    rejected_state.reasons.push_back(
+        makeFaultDiagnostic(line.line, "line rejected"));
+    return makeRejectedResult(rejected_state);
   }
   if (line_result.instructions.empty()) {
     state_ = pending_lines_.empty() && input_finished_
@@ -332,6 +343,7 @@ StepResult StreamingExecutionEngine::makeBlockedResult(int line,
                                                        const WaitToken &token,
                                                        std::string reason) {
   blocked_ = BlockedState{line, token, std::move(reason)};
+  rejected_.reset();
   state_ = EngineState::Blocked;
   StepResult result;
   result.status = StepStatus::Blocked;
@@ -340,7 +352,20 @@ StepResult StreamingExecutionEngine::makeBlockedResult(int line,
 }
 
 StepResult
+StreamingExecutionEngine::makeRejectedResult(const RejectedState &rejected) {
+  blocked_.reset();
+  rejected_ = rejected;
+  state_ = EngineState::Rejected;
+  StepResult result;
+  result.status = StepStatus::Rejected;
+  result.rejected = rejected_;
+  return result;
+}
+
+StepResult
 StreamingExecutionEngine::faultWithDiagnostic(const Diagnostic &diag) {
+  blocked_.reset();
+  rejected_.reset();
   sink_.onDiagnostic(diag);
   state_ = EngineState::Faulted;
   StepResult result;
@@ -379,6 +404,28 @@ void StreamingExecutionEngine::remapRejectedLines(
       diag.location.line = line;
     }
   }
+}
+
+AilExecutorInitialState StreamingExecutionEngine::exportInitialState() const {
+  AilExecutorInitialState initial_state;
+  initial_state.motion_code_current = current_motion_code_;
+  initial_state.rapid_mode_current = current_rapid_mode_;
+  initial_state.tool_radius_comp_current = current_tool_radius_comp_;
+  initial_state.working_plane_current = current_working_plane_;
+  initial_state.active_tool_selection = current_active_tool_selection_;
+  initial_state.pending_tool_selection = current_pending_tool_selection_;
+  return initial_state;
+}
+
+void StreamingExecutionEngine::importInitialState(
+    const AilExecutorInitialState &state, int next_line_number) {
+  current_motion_code_ = state.motion_code_current;
+  current_rapid_mode_ = state.rapid_mode_current;
+  current_tool_radius_comp_ = state.tool_radius_comp_current;
+  current_working_plane_ = state.working_plane_current;
+  current_active_tool_selection_ = state.active_tool_selection;
+  current_pending_tool_selection_ = state.pending_tool_selection;
+  next_line_number_ = next_line_number;
 }
 
 } // namespace gcode

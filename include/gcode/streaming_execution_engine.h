@@ -13,6 +13,8 @@
 
 namespace gcode {
 
+class ExecutionSession;
+
 class StreamingExecutionEngine {
 public:
   StreamingExecutionEngine(IExecutionSink &sink, IRuntime &runtime,
@@ -41,6 +43,7 @@ private:
   StepResult advanceActiveExecutor();
   StepResult makeBlockedResult(int line, const WaitToken &token,
                                std::string reason);
+  StepResult makeRejectedResult(const RejectedState &rejected);
   StepResult faultWithDiagnostic(const Diagnostic &diag);
   void emitDiagnostics(const std::vector<Diagnostic> &diagnostics);
   std::optional<RejectedLineEvent>
@@ -49,6 +52,9 @@ private:
   void
   remapRejectedLines(std::vector<MessageResult::RejectedLine> *rejected_lines,
                      int line) const;
+  AilExecutorInitialState exportInitialState() const;
+  void importInitialState(const AilExecutorInitialState &state,
+                          int next_line_number);
 
   IExecutionSink &sink_;
   IRuntime &runtime_;
@@ -59,6 +65,7 @@ private:
   std::string input_buffer_;
   std::deque<PendingLine> pending_lines_;
   std::optional<BlockedState> blocked_;
+  std::optional<RejectedState> rejected_;
   std::unique_ptr<AilExecutor> active_executor_;
   int active_executor_line_ = 0;
   size_t active_executor_emitted_diagnostics_ = 0;
@@ -70,6 +77,8 @@ private:
   ToolRadiusCompMode current_tool_radius_comp_ = ToolRadiusCompMode::Off;
   std::optional<ToolSelectionState> current_active_tool_selection_;
   std::optional<ToolSelectionState> current_pending_tool_selection_;
+
+  friend class ExecutionSession;
 };
 
 } // namespace gcode

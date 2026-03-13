@@ -386,8 +386,11 @@ TEST(StreamingExecutionGmockTest, InvalidLineEmitsDiagnosticAndRejectedLine) {
 
   ASSERT_TRUE(engine.pushChunk("G1 G2 X10\n"));
   const auto step = engine.pump();
-  EXPECT_EQ(step.status, gcode::StepStatus::Faulted);
-  EXPECT_EQ(engine.state(), gcode::EngineState::Faulted);
+  EXPECT_EQ(step.status, gcode::StepStatus::Rejected);
+  ASSERT_TRUE(step.rejected.has_value());
+  EXPECT_EQ(step.rejected->source.line, 1);
+  ASSERT_FALSE(step.rejected->reasons.empty());
+  EXPECT_EQ(engine.state(), gcode::EngineState::Rejected);
 }
 
 } // namespace

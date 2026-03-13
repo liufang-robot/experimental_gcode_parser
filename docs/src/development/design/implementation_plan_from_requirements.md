@@ -26,7 +26,7 @@ Use this document to answer:
 - `WU-3 Runtime Dispatch Cleanup`: completed and merged
 - `WU-4 Executor State Cleanup`: completed and merged
 - `WU-5 Tool Execution Completion`: completed and merged
-- `WU-6 Diagnostics/Recovery Alignment`: pending
+- `WU-6 Diagnostics/Recovery Alignment`: completed
 - `WU-7 Final Public API Cleanup`: pending
 
 ## Goal
@@ -194,6 +194,12 @@ The requirements now include halt-fix-continue behavior for line failures, but
 the exact edit/reprocess session mechanics are not yet tied cleanly to the
 streaming/executor API surface.
 
+Direction chosen for `WU-6`:
+
+- keep `StreamingExecutionEngine` focused on execution
+- add a new `ExecutionSession` for editable rejected-suffix recovery
+- use a recoverable `Rejected` state distinct from unrecoverable `Faulted`
+
 ## Design Decisions To Apply Next
 
 ### A. Introduce a full effective modal snapshot type
@@ -354,6 +360,7 @@ Deliver:
 
 - clear halt-fix-continue path for line failures
 - consistent rejected-line vs fault behavior through streaming execution
+- new `ExecutionSession` API for editable rejected-suffix recovery
 
 Tests:
 
@@ -378,8 +385,7 @@ Tests:
 
 Recommended order:
 
-1. WU-6 Diagnostics/Recovery Alignment
-2. WU-7 Final Public API Cleanup
+1. WU-7 Final Public API Cleanup
 
 ## Definition Of Ready For Code Work
 

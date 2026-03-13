@@ -4498,3 +4498,56 @@ How to reproduce locally (commands):
 - `./build/streaming_execution_gmock_tests --gtest_filter='StreamingExecutionGmockTest.DeferredM6CallsToolChangeRuntime:StreamingExecutionGmockTest.DirectTCallsToolChangeRuntimeImmediately'`
 - `./build/cli_tests --gtest_filter='CliFormatTest.StreamingExecDebugOutputsToolChangeEventSequence'`
 - `./dev/check.sh`
+
+## 2026-03-13 (wu-6 execution-session recovery design and plan)
+- Added a dedicated WU-6 design doc for recoverable rejected-line execution
+  flow using a new `ExecutionSession`.
+- Added the detailed WU-6 implementation plan with a recoverable `Rejected`
+  state, suffix-edit recovery API, and required tests.
+- Updated the authoritative implementation plan with the chosen WU-6 direction.
+
+SPEC sections / tests:
+- Planning/design only:
+  - `docs/superpowers/specs/2026-03-13-wu6-execution-session-recovery-design.md`
+  - `docs/superpowers/plans/2026-03-13-wu6-diagnostics-recovery-alignment.md`
+  - `docs/src/development/design/implementation_plan_from_requirements.md`
+
+Known limitations:
+- This is a design/planning slice only; no execution-session recovery code is
+  implemented yet.
+
+How to reproduce locally (commands):
+- `sed -n '1,240p' docs/superpowers/specs/2026-03-13-wu6-execution-session-recovery-design.md`
+- `sed -n '1,260p' docs/superpowers/plans/2026-03-13-wu6-diagnostics-recovery-alignment.md`
+- `sed -n '1,220p' docs/src/development/design/implementation_plan_from_requirements.md`
+
+## 2026-03-13 (wu-6 diagnostics and recovery alignment)
+- Added a recoverable `Rejected` execution state and stopped collapsing
+  rejected lines directly into unrecoverable streaming faults.
+- Added public `ExecutionSession` with halt-fix-continue recovery using
+  `replaceEditableSuffix(...)` from the rejected line onward.
+- Added execution-session tests covering rejected-suffix replacement,
+  rejected-vs-blocked boundaries, and deterministic continuation of the locked
+  prefix.
+
+SPEC sections / tests:
+- `SPEC.md`:
+  - section 6 streaming execution API
+  - section 6 execution-session recovery API
+- `test/public_headers_tests.cpp`
+- `test/streaming_execution_tests.cpp`
+- `test/streaming_execution_gmock_tests.cpp`
+- `test/execution_session_tests.cpp`
+
+Known limitations:
+- `ExecutionSession` first slice supports suffix replacement from the rejected
+  line onward only; arbitrary earlier-line execution recovery edits remain out
+  of scope.
+
+How to reproduce locally (commands):
+- `cmake --build build -j --target public_headers_tests streaming_execution_tests streaming_execution_gmock_tests execution_session_tests`
+- `./build/public_headers_tests`
+- `./build/streaming_execution_tests`
+- `./build/streaming_execution_gmock_tests --gtest_filter='StreamingExecutionGmockTest.InvalidLineEmitsDiagnosticAndRejectedLine'`
+- `./build/execution_session_tests`
+- `./dev/check.sh`
