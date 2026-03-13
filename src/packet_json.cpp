@@ -1,4 +1,4 @@
-#include "gcode/packet_json.h"
+#include "packet_json.h"
 
 #include <type_traits>
 
@@ -103,7 +103,7 @@ nlohmann::json arcToJson(const ArcParams &arc) {
   return j;
 }
 
-nlohmann::json rejectedLineToJson(const MessageResult::RejectedLine &line) {
+nlohmann::json rejectedLineToJson(const RejectedLine &line) {
   nlohmann::json j;
   j["source"] = sourceToJson(line.source);
   j["reasons"] = nlohmann::json::array();

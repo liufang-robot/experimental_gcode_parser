@@ -4551,3 +4551,34 @@ How to reproduce locally (commands):
 - `./build/streaming_execution_gmock_tests --gtest_filter='StreamingExecutionGmockTest.InvalidLineEmitsDiagnosticAndRejectedLine'`
 - `./build/execution_session_tests`
 - `./dev/check.sh`
+
+## 2026-03-13 (wu-7 final public api cleanup)
+- Removed the old public message/session/packet compatibility headers from
+  `include/gcode/` and kept the supported public surface focused on parser/AST,
+  AIL, and the new execution APIs.
+- Added narrow public `gcode/lowering_types.h` for shared source/lowering
+  support types that still belong in public signatures.
+- Added user-facing execution workflow docs plus the `gcode_exec_session` demo
+  CLI for recoverable rejected-line execution flow.
+
+SPEC sections / tests:
+- `SPEC.md`:
+  - section 2.2 public output and execution API wording
+  - section 6 execution-session and legacy/internal compatibility note
+- `docs/src/execution_workflow.md`
+- `docs/src/program_reference.md`
+- `test/public_headers_tests.cpp`
+- `test/cli_tests.cpp`
+
+Known limitations:
+- Internal tooling and CLI code still use the older message/packet/session
+  helpers under `src/`; this slice removes them from the public API surface
+  without deleting all internal implementation code.
+
+How to reproduce locally (commands):
+- `cmake --build build -j --target public_headers_tests cli_tests gcode_exec_session`
+- `./build/public_headers_tests`
+- `./build/cli_tests --gtest_filter='CliFormatTest.StreamingExec*:CliFormatTest.ExecutionSessionCli*'`
+- `./build/gcode_exec_session --format debug testdata/execution/session_reject.ngc`
+- `./build/gcode_exec_session --format debug --replace-editable-suffix testdata/execution/session_fix_suffix.ngc testdata/execution/session_reject.ngc`
+- `./dev/check.sh`

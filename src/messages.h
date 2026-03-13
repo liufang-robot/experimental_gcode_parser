@@ -8,36 +8,9 @@
 #include <variant>
 #include <vector>
 
-#include "gcode/ast.h"
-#include "gcode/policy_types.h"
+#include "gcode/lowering_types.h"
 
 namespace gcode {
-
-struct SourceInfo {
-  std::optional<std::string> filename;
-  int line = 0;
-  std::optional<int> line_number;
-};
-
-struct Pose6 {
-  std::optional<double> x;
-  std::optional<double> y;
-  std::optional<double> z;
-  std::optional<double> a;
-  std::optional<double> b;
-  std::optional<double> c;
-};
-
-enum class ModalGroupId {
-  Motion = 1,
-  NonModal = 2,
-};
-
-struct ModalState {
-  ModalGroupId group = ModalGroupId::Motion;
-  std::string code;
-  bool updates_state = false;
-};
 
 struct G1Message {
   SourceInfo source;
@@ -51,13 +24,6 @@ struct G0Message {
   ModalState modal;
   Pose6 target_pose;
   std::optional<double> feed;
-};
-
-struct ArcParams {
-  std::optional<double> i;
-  std::optional<double> j;
-  std::optional<double> k;
-  std::optional<double> r;
 };
 
 struct G2Message {
@@ -76,8 +42,6 @@ struct G3Message {
   std::optional<double> feed;
 };
 
-enum class DwellMode { Seconds, Revolutions };
-
 struct G4Message {
   SourceInfo source;
   ModalState modal;
@@ -88,19 +52,7 @@ struct G4Message {
 using ParsedMessage =
     std::variant<G0Message, G1Message, G2Message, G3Message, G4Message>;
 
-struct LowerOptions {
-  std::optional<std::string> filename;
-  std::vector<int> active_skip_levels;
-  std::optional<ToolChangeMode> tool_change_mode;
-  bool enable_iso_m98_calls = false;
-};
-
 struct MessageResult {
-  struct RejectedLine {
-    SourceInfo source;
-    std::vector<Diagnostic> reasons;
-  };
-
   std::vector<ParsedMessage> messages;
   std::vector<Diagnostic> diagnostics;
   std::vector<RejectedLine> rejected_lines;
@@ -109,8 +61,7 @@ struct MessageResult {
 struct StreamCallbacks {
   std::function<void(const ParsedMessage &message)> on_message;
   std::function<void(const Diagnostic &diagnostic)> on_diagnostic;
-  std::function<void(const MessageResult::RejectedLine &rejected_line)>
-      on_rejected_line;
+  std::function<void(const RejectedLine &rejected_line)> on_rejected_line;
 };
 
 struct StreamOptions {

@@ -45,7 +45,7 @@ struct MotionPacket {
 struct PacketResult {
   std::vector<MotionPacket> packets;
   std::vector<Diagnostic> diagnostics;
-  std::vector<MessageResult::RejectedLine> rejected_lines;
+  std::vector<RejectedLine> rejected_lines;
 };
 
 PacketResult lowerAilToPackets(const AilResult &ail_result);

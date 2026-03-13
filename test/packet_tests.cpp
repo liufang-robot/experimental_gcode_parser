@@ -10,8 +10,8 @@
 
 #include "gtest/gtest.h"
 
-#include "gcode/packet.h"
-#include "gcode/packet_json.h"
+#include "packet.h"
+#include "packet_json.h"
 
 namespace {
 

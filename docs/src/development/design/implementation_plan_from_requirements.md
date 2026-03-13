@@ -27,7 +27,7 @@ Use this document to answer:
 - `WU-4 Executor State Cleanup`: completed and merged
 - `WU-5 Tool Execution Completion`: completed and merged
 - `WU-6 Diagnostics/Recovery Alignment`: completed
-- `WU-7 Final Public API Cleanup`: pending
+- `WU-7 Final Public API Cleanup`: completed
 
 ## Goal
 
@@ -370,6 +370,8 @@ Tests:
 
 ### WU-7 Final Public API Cleanup
 
+Status: `Completed`
+
 Deliver:
 
 - align public headers with final execution architecture
@@ -385,7 +387,7 @@ Tests:
 
 Recommended order:
 
-1. WU-7 Final Public API Cleanup
+1. No remaining refactor work units in the current requirements-derived plan
 
 ## Definition Of Ready For Code Work
 

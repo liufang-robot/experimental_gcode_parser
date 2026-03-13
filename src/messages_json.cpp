@@ -1,4 +1,4 @@
-#include "gcode/messages_json.h"
+#include "messages_json.h"
 
 #include <nlohmann/json.hpp>
 
@@ -279,7 +279,7 @@ ParsedMessage messageFromJson(const nlohmann::json &j) {
   return G1Message{};
 }
 
-nlohmann::json rejectedLineToJson(const MessageResult::RejectedLine &line) {
+nlohmann::json rejectedLineToJson(const RejectedLine &line) {
   nlohmann::json j;
   j["source"] = sourceToJson(line.source);
   j["reasons"] = nlohmann::json::array();
@@ -289,8 +289,8 @@ nlohmann::json rejectedLineToJson(const MessageResult::RejectedLine &line) {
   return j;
 }
 
-MessageResult::RejectedLine rejectedLineFromJson(const nlohmann::json &j) {
-  MessageResult::RejectedLine line;
+RejectedLine rejectedLineFromJson(const nlohmann::json &j) {
+  RejectedLine line;
   if (j.contains("source")) {
     line.source = sourceFromJson(j["source"]);
   }

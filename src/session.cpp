@@ -1,4 +1,4 @@
-#include "gcode/session.h"
+#include "session.h"
 
 #include <algorithm>
 #include <sstream>

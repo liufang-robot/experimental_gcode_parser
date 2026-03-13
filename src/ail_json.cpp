@@ -139,7 +139,7 @@ std::string toolActionTimingToString(ToolActionTiming timing) {
                                                : "deferred_until_m6";
 }
 
-nlohmann::json rejectedLineToJson(const MessageResult::RejectedLine &line) {
+nlohmann::json rejectedLineToJson(const RejectedLine &line) {
   nlohmann::json j;
   j["source"] = sourceToJson(line.source);
   j["reasons"] = nlohmann::json::array();

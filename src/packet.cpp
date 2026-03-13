@@ -1,4 +1,4 @@
-#include "gcode/packet.h"
+#include "packet.h"
 
 #include <type_traits>
 

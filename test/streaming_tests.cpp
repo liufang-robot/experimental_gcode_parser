@@ -6,7 +6,7 @@
 
 #include "gtest/gtest.h"
 
-#include "gcode/messages.h"
+#include "messages.h"
 
 namespace {
 
@@ -62,11 +62,10 @@ TEST(StreamingTest, StreamsRejectedLineOnError) {
 
   gcode::StreamCallbacks callbacks;
   callbacks.on_message = [&](const gcode::ParsedMessage &) { ++message_count; };
-  callbacks.on_rejected_line =
-      [&](const gcode::MessageResult::RejectedLine &rejected) {
-        ++rejected_count;
-        EXPECT_EQ(rejected.source.line, 2);
-      };
+  callbacks.on_rejected_line = [&](const gcode::RejectedLine &rejected) {
+    ++rejected_count;
+    EXPECT_EQ(rejected.source.line, 2);
+  };
 
   const bool completed = gcode::parseAndLowerStream(input, {}, callbacks);
   EXPECT_FALSE(completed);

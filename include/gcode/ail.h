@@ -12,7 +12,7 @@
 #include <vector>
 
 #include "gcode/condition_runtime.h"
-#include "gcode/messages.h"
+#include "gcode/lowering_types.h"
 #include "gcode/policy_types.h"
 #include "gcode/runtime_status.h"
 
@@ -167,7 +167,7 @@ using AilInstruction =
 struct AilResult {
   std::vector<AilInstruction> instructions;
   std::vector<Diagnostic> diagnostics;
-  std::vector<MessageResult::RejectedLine> rejected_lines;
+  std::vector<RejectedLine> rejected_lines;
 };
 
 AilResult lowerToAil(const Program &program,
