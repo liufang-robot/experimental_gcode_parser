@@ -30,6 +30,7 @@ public:
   void onLinearMove(const LinearMoveCommand &cmd) override;
   void onArcMove(const ArcMoveCommand &cmd) override;
   void onDwell(const DwellCommand &cmd) override;
+  void onToolChange(const ToolChangeCommand &cmd) override;
 
 private:
   EventLogRecorder &recorder_;
@@ -44,6 +45,8 @@ public:
   submitLinearMove(const LinearMoveCommand &cmd) override;
   RuntimeResult<WaitToken> submitArcMove(const ArcMoveCommand &cmd) override;
   RuntimeResult<WaitToken> submitDwell(const DwellCommand &cmd) override;
+  RuntimeResult<WaitToken>
+  submitToolChange(const ToolChangeCommand &cmd) override;
   RuntimeResult<double> readSystemVariable(std::string_view name) override;
   RuntimeResult<WaitToken> cancelWait(const WaitToken &token) override;
 

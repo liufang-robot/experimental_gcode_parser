@@ -26,6 +26,8 @@ public:
               (override));
   MOCK_METHOD(void, onArcMove, (const gcode::ArcMoveCommand &cmd), (override));
   MOCK_METHOD(void, onDwell, (const gcode::DwellCommand &cmd), (override));
+  MOCK_METHOD(void, onToolChange, (const gcode::ToolChangeCommand &cmd),
+              (override));
 };
 
 class MockRuntime : public gcode::IRuntime {
@@ -36,6 +38,8 @@ public:
               (const gcode::ArcMoveCommand &cmd), (override));
   MOCK_METHOD(gcode::RuntimeResult<gcode::WaitToken>, submitDwell,
               (const gcode::DwellCommand &cmd), (override));
+  MOCK_METHOD(gcode::RuntimeResult<gcode::WaitToken>, submitToolChange,
+              (const gcode::ToolChangeCommand &cmd), (override));
   MOCK_METHOD(gcode::RuntimeResult<double>, readSystemVariable,
               (std::string_view name), (override));
   MOCK_METHOD(gcode::RuntimeResult<gcode::WaitToken>, cancelWait,
@@ -307,6 +311,59 @@ TEST(StreamingExecutionGmockTest,
   EXPECT_EQ(engine.pump().status, gcode::StepStatus::Progress);
 }
 
+TEST(StreamingExecutionGmockTest, DeferredM6CallsToolChangeRuntime) {
+  MockExecutionSink sink;
+  MockRuntime runtime;
+  MockCancellation cancellation;
+  gcode::LowerOptions options;
+  options.tool_change_mode = gcode::ToolChangeMode::DeferredM6;
+  gcode::StreamingExecutionEngine engine(sink, runtime, cancellation, options);
+
+  EXPECT_CALL(cancellation, isCancelled())
+      .Times(2)
+      .WillRepeatedly(Return(false));
+  EXPECT_CALL(sink, onDiagnostic(_)).Times(0);
+  EXPECT_CALL(sink, onRejectedLine(_)).Times(0);
+  EXPECT_CALL(sink, onToolChange(_))
+      .WillOnce(Invoke([](const gcode::ToolChangeCommand &cmd) {
+        EXPECT_EQ(cmd.target_tool_selection.selector_value, "12");
+        EXPECT_FALSE(cmd.effective.active_tool_selection.has_value());
+        EXPECT_FALSE(cmd.effective.pending_tool_selection.has_value());
+        ASSERT_TRUE(cmd.effective.selected_tool_selection.has_value());
+        EXPECT_EQ(cmd.effective.selected_tool_selection->selector_value, "12");
+      }));
+  EXPECT_CALL(runtime, submitToolChange(_)).WillOnce(Return(readyMove()));
+
+  ASSERT_TRUE(engine.pushChunk("T12\nM6\n"));
+  EXPECT_EQ(engine.pump().status, gcode::StepStatus::Progress);
+  EXPECT_EQ(engine.pump().status, gcode::StepStatus::Progress);
+}
+
+TEST(StreamingExecutionGmockTest, DirectTCallsToolChangeRuntimeImmediately) {
+  MockExecutionSink sink;
+  MockRuntime runtime;
+  MockCancellation cancellation;
+  gcode::LowerOptions options;
+  options.tool_change_mode = gcode::ToolChangeMode::DirectT;
+  gcode::StreamingExecutionEngine engine(sink, runtime, cancellation, options);
+
+  EXPECT_CALL(cancellation, isCancelled()).WillOnce(Return(false));
+  EXPECT_CALL(sink, onDiagnostic(_)).Times(0);
+  EXPECT_CALL(sink, onRejectedLine(_)).Times(0);
+  EXPECT_CALL(sink, onToolChange(_))
+      .WillOnce(Invoke([](const gcode::ToolChangeCommand &cmd) {
+        EXPECT_EQ(cmd.target_tool_selection.selector_value, "12");
+        EXPECT_FALSE(cmd.effective.active_tool_selection.has_value());
+        EXPECT_FALSE(cmd.effective.pending_tool_selection.has_value());
+        ASSERT_TRUE(cmd.effective.selected_tool_selection.has_value());
+        EXPECT_EQ(cmd.effective.selected_tool_selection->selector_value, "12");
+      }));
+  EXPECT_CALL(runtime, submitToolChange(_)).WillOnce(Return(readyMove()));
+
+  ASSERT_TRUE(engine.pushChunk("T12\n"));
+  EXPECT_EQ(engine.pump().status, gcode::StepStatus::Progress);
+}
+
 TEST(StreamingExecutionGmockTest, InvalidLineEmitsDiagnosticAndRejectedLine) {
   NiceMock<MockExecutionSink> sink;
   MockRuntime runtime;
@@ -325,6 +382,7 @@ TEST(StreamingExecutionGmockTest, InvalidLineEmitsDiagnosticAndRejectedLine) {
   EXPECT_CALL(runtime, submitLinearMove(_)).Times(0);
   EXPECT_CALL(runtime, submitArcMove(_)).Times(0);
   EXPECT_CALL(runtime, submitDwell(_)).Times(0);
+  EXPECT_CALL(runtime, submitToolChange(_)).Times(0);
 
   ASSERT_TRUE(engine.pushChunk("G1 G2 X10\n"));
   const auto step = engine.pump();

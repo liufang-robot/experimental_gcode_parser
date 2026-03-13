@@ -43,6 +43,10 @@ toolSelectionToJson(const std::optional<ToolSelectionState> &selection) {
   return j;
 }
 
+nlohmann::json toolSelectionToJson(const ToolSelectionState &selection) {
+  return toolSelectionToJson(std::optional<ToolSelectionState>{selection});
+}
+
 nlohmann::json effectiveModalToJson(const EffectiveModalSnapshot &effective) {
   return {{"motion_code", effective.motion_code},
           {"working_plane",
@@ -61,7 +65,9 @@ nlohmann::json effectiveModalToJson(const EffectiveModalSnapshot &effective) {
           {"active_tool_selection",
            toolSelectionToJson(effective.active_tool_selection)},
           {"pending_tool_selection",
-           toolSelectionToJson(effective.pending_tool_selection)}};
+           toolSelectionToJson(effective.pending_tool_selection)},
+          {"selected_tool_selection",
+           toolSelectionToJson(effective.selected_tool_selection)}};
 }
 
 nlohmann::json linearMoveToJson(const LinearMoveCommand &cmd) {
@@ -93,6 +99,14 @@ nlohmann::json dwellToJson(const DwellCommand &cmd) {
   j["dwell_mode"] =
       cmd.dwell_mode == DwellMode::Revolutions ? "revolutions" : "seconds";
   j["dwell_value"] = cmd.dwell_value;
+  j["effective"] = effectiveModalToJson(cmd.effective);
+  return j;
+}
+
+nlohmann::json toolChangeToJson(const ToolChangeCommand &cmd) {
+  nlohmann::json j;
+  j["source"] = sourceToJson(cmd.source);
+  j["target_tool_selection"] = toolSelectionToJson(cmd.target_tool_selection);
   j["effective"] = effectiveModalToJson(cmd.effective);
   return j;
 }
@@ -134,7 +148,7 @@ std::string EventLogRecorder::toDebugText() const {
     const auto &entry = entries_[i];
     const std::string event = entry.value("event", "");
     if ((event == "sink.linear_move" || event == "sink.arc_move" ||
-         event == "sink.dwell") &&
+         event == "sink.dwell" || event == "sink.tool_change") &&
         i + 1 < entries_.size()) {
       const auto &next = entries_[i + 1];
       const std::string next_event = next.value("event", "");
@@ -143,7 +157,9 @@ std::string EventLogRecorder::toDebugText() const {
            next_event == "runtime.submit_linear_move") ||
           (event == "sink.arc_move" &&
            next_event == "runtime.submit_arc_move") ||
-          (event == "sink.dwell" && next_event == "runtime.submit_dwell");
+          (event == "sink.dwell" && next_event == "runtime.submit_dwell") ||
+          (event == "sink.tool_change" &&
+           next_event == "runtime.submit_tool_change");
       if (is_matching_runtime) {
         const auto &params = entry["params"];
         const auto &source = params["source"];
@@ -193,12 +209,37 @@ std::string EventLogRecorder::toDebugText() const {
           out << " plane=" << effective["working_plane"].get<std::string>();
           out << "\n";
           out << "  runtime: submit_arc_move";
-        } else {
+        } else if (event == "sink.dwell") {
           out << "  emit dwell:";
           out << " mode=" << params.value("dwell_mode", "");
           out << " value=" << params.value("dwell_value", 0.0);
           out << "\n";
           out << "  runtime: submit_dwell";
+        } else {
+          out << "  emit tool_change:";
+          const auto &effective = params["effective"];
+          if (!params["target_tool_selection"].is_null()) {
+            out << " target="
+                << params["target_tool_selection"]["selector_value"]
+                       .get<std::string>();
+          }
+          if (!effective["active_tool_selection"].is_null()) {
+            out << " active="
+                << effective["active_tool_selection"]["selector_value"]
+                       .get<std::string>();
+          }
+          if (!effective["pending_tool_selection"].is_null()) {
+            out << " pending="
+                << effective["pending_tool_selection"]["selector_value"]
+                       .get<std::string>();
+          }
+          if (!effective["selected_tool_selection"].is_null()) {
+            out << " selected="
+                << effective["selected_tool_selection"]["selector_value"]
+                       .get<std::string>();
+          }
+          out << "\n";
+          out << "  runtime: submit_tool_change";
         }
         out << "\n";
         ++i;
@@ -211,7 +252,8 @@ std::string EventLogRecorder::toDebugText() const {
       out << " line=" << entry["line"].get<int>();
     }
     if (event == "runtime.submit_linear_move" ||
-        event == "runtime.submit_arc_move" || event == "runtime.submit_dwell") {
+        event == "runtime.submit_arc_move" || event == "runtime.submit_dwell" ||
+        event == "runtime.submit_tool_change") {
       out << "\n";
       out << "  paired_runtime_event_without_sink";
     } else if (event == "diagnostic") {
@@ -284,6 +326,12 @@ void RecordingExecutionSink::onDwell(const DwellCommand &cmd) {
                  {"params", dwellToJson(cmd)}});
 }
 
+void RecordingExecutionSink::onToolChange(const ToolChangeCommand &cmd) {
+  recorder_.add({{"event", "sink.tool_change"},
+                 {"line", cmd.source.line},
+                 {"params", toolChangeToJson(cmd)}});
+}
+
 RuntimeResult<WaitToken>
 ReadyRuntimeRecorder::submitLinearMove(const LinearMoveCommand &cmd) {
   recorder_.add({{"event", "runtime.submit_linear_move"},
@@ -305,6 +353,14 @@ ReadyRuntimeRecorder::submitDwell(const DwellCommand &cmd) {
   recorder_.add({{"event", "runtime.submit_dwell"},
                  {"line", cmd.source.line},
                  {"params", dwellToJson(cmd)}});
+  return readyWaitResult();
+}
+
+RuntimeResult<WaitToken>
+ReadyRuntimeRecorder::submitToolChange(const ToolChangeCommand &cmd) {
+  recorder_.add({{"event", "runtime.submit_tool_change"},
+                 {"line", cmd.source.line},
+                 {"params", toolChangeToJson(cmd)}});
   return readyWaitResult();
 }
 

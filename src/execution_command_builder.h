@@ -15,5 +15,9 @@ ArcMoveCommand buildArcMoveCommand(const AilArcMoveInstruction &inst, int line,
                                    const ExecutionModalState &state);
 DwellCommand buildDwellCommand(const AilDwellInstruction &inst, int line,
                                const ExecutionModalState &state);
+ToolChangeCommand
+buildToolChangeCommand(const SourceInfo &source, int line,
+                       const ToolSelectionState &target_tool_selection,
+                       ExecutionModalState state);
 
 } // namespace gcode

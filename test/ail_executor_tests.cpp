@@ -65,6 +65,13 @@ public:
     return result;
   }
 
+  gcode::RuntimeResult<gcode::WaitToken>
+  submitToolChange(const gcode::ToolChangeCommand &) override {
+    gcode::RuntimeResult<gcode::WaitToken> result;
+    result.status = gcode::RuntimeCallStatus::Ready;
+    return result;
+  }
+
   gcode::RuntimeResult<double> readSystemVariable(std::string_view) override {
     gcode::RuntimeResult<double> result;
     result.status = gcode::RuntimeCallStatus::Error;
@@ -111,11 +118,16 @@ public:
     dwells.push_back(cmd);
   }
 
+  void onToolChange(const gcode::ToolChangeCommand &cmd) override {
+    tool_changes.push_back(cmd);
+  }
+
   std::vector<gcode::Diagnostic> diagnostics;
   std::vector<gcode::RejectedLineEvent> rejected_lines;
   std::vector<gcode::LinearMoveCommand> linear_moves;
   std::vector<gcode::ArcMoveCommand> arc_moves;
   std::vector<gcode::DwellCommand> dwells;
+  std::vector<gcode::ToolChangeCommand> tool_changes;
 };
 
 class RecordingExecutionRuntime final : public gcode::IExecutionRuntime {
@@ -149,6 +161,12 @@ public:
     return next_dwell_result.value_or(readyRuntimeResult());
   }
 
+  gcode::RuntimeResult<gcode::WaitToken>
+  submitToolChange(const gcode::ToolChangeCommand &cmd) override {
+    tool_changes.push_back(cmd);
+    return next_tool_change_result.value_or(readyRuntimeResult());
+  }
+
   gcode::RuntimeResult<double> readSystemVariable(std::string_view) override {
     gcode::RuntimeResult<double> result;
     result.status = gcode::RuntimeCallStatus::Error;
@@ -166,9 +184,11 @@ public:
   std::optional<gcode::RuntimeResult<gcode::WaitToken>> next_linear_move_result;
   std::optional<gcode::RuntimeResult<gcode::WaitToken>> next_arc_move_result;
   std::optional<gcode::RuntimeResult<gcode::WaitToken>> next_dwell_result;
+  std::optional<gcode::RuntimeResult<gcode::WaitToken>> next_tool_change_result;
   std::vector<gcode::LinearMoveCommand> linear_moves;
   std::vector<gcode::ArcMoveCommand> arc_moves;
   std::vector<gcode::DwellCommand> dwells;
+  std::vector<gcode::ToolChangeCommand> tool_changes;
   std::vector<gcode::WaitToken> cancelled_tokens;
 };
 
@@ -241,6 +261,11 @@ TEST(AilExecutorTest, AcceptsFunctionExecutionRuntimeAdapter) {
         return result;
       },
       [](const gcode::DwellCommand &) {
+        gcode::RuntimeResult<gcode::WaitToken> result;
+        result.status = gcode::RuntimeCallStatus::Ready;
+        return result;
+      },
+      [](const gcode::ToolChangeCommand &) {
         gcode::RuntimeResult<gcode::WaitToken> result;
         result.status = gcode::RuntimeCallStatus::Ready;
         return result;
@@ -1546,6 +1571,51 @@ TEST(AilExecutorTest, DeferredToolModeUsesPendingSelectionUntilM6) {
   EXPECT_FALSE(exec.state().pending_tool_selection.has_value());
 }
 
+TEST(AilExecutorTest, DeferredToolChangeCanBlockAndActivateOnResume) {
+  gcode::LowerOptions options;
+  options.tool_change_mode = gcode::ToolChangeMode::DeferredM6;
+  const auto lowered = gcode::parseAndLowerAil("T12\nM6\n", options);
+  gcode::AilExecutor exec(lowered.instructions);
+  RecordingExecutionSink sink;
+  RecordingExecutionRuntime runtime(
+      [](const gcode::Condition &, const gcode::SourceInfo &) {
+        gcode::ConditionResolution r;
+        r.kind = gcode::ConditionResolutionKind::False;
+        return r;
+      });
+  gcode::RuntimeResult<gcode::WaitToken> pending;
+  pending.status = gcode::RuntimeCallStatus::Pending;
+  pending.wait_token = gcode::WaitToken{"tool", "change-1"};
+  runtime.next_tool_change_result = pending;
+
+  ASSERT_TRUE(exec.step(0, sink, runtime)); // T12
+  ASSERT_TRUE(exec.state().pending_tool_selection.has_value());
+  EXPECT_EQ(exec.state().pending_tool_selection->selector_value, "12");
+
+  ASSERT_TRUE(exec.step(0, sink, runtime)); // M6
+  EXPECT_EQ(exec.state().status, gcode::ExecutorStatus::Blocked);
+  EXPECT_FALSE(exec.state().active_tool_selection.has_value());
+  EXPECT_FALSE(exec.state().pending_tool_selection.has_value());
+  ASSERT_TRUE(exec.state().selected_tool_selection.has_value());
+  EXPECT_EQ(exec.state().selected_tool_selection->selector_value, "12");
+  ASSERT_TRUE(exec.state().blocked.has_value());
+  ASSERT_TRUE(exec.state().blocked->tool_change_target_on_resume.has_value());
+  EXPECT_EQ(exec.state().blocked->tool_change_target_on_resume->selector_value,
+            "12");
+  ASSERT_EQ(sink.tool_changes.size(), 1u);
+  ASSERT_EQ(runtime.tool_changes.size(), 1u);
+  EXPECT_EQ(runtime.tool_changes.front().target_tool_selection.selector_value,
+            "12");
+
+  exec.notifyEvent(gcode::WaitToken{"tool", "change-1"});
+  ASSERT_TRUE(exec.step(0, sink, runtime));
+  EXPECT_EQ(exec.state().status, gcode::ExecutorStatus::Completed);
+  ASSERT_TRUE(exec.state().active_tool_selection.has_value());
+  EXPECT_EQ(exec.state().active_tool_selection->selector_value, "12");
+  EXPECT_FALSE(exec.state().pending_tool_selection.has_value());
+  EXPECT_FALSE(exec.state().selected_tool_selection.has_value());
+}
+
 TEST(AilExecutorTest, DeferredToolModeUsesLastSelectionBeforeM6) {
   gcode::LowerOptions options;
   options.tool_change_mode = gcode::ToolChangeMode::DeferredM6;
@@ -1592,6 +1662,42 @@ TEST(AilExecutorTest, DirectToolModeActivatesImmediatelyOnToolSelect) {
   EXPECT_FALSE(exec.state().pending_tool_selection.has_value());
 }
 
+TEST(AilExecutorTest, M6WithoutPendingSelectionUsesActiveToolIfAvailable) {
+  gcode::LowerOptions options;
+  options.tool_change_mode = gcode::ToolChangeMode::DeferredM6;
+  const auto lowered = gcode::parseAndLowerAil("M6\n", options);
+  gcode::AilExecutorOptions exec_options;
+  exec_options.initial_state =
+      gcode::AilExecutorInitialState{"G1",
+                                     gcode::RapidInterpolationMode::Linear,
+                                     gcode::ToolRadiusCompMode::Off,
+                                     gcode::WorkingPlane::XY,
+                                     gcode::ToolSelectionState{12, "12"},
+                                     std::nullopt,
+                                     std::nullopt};
+  RecordingExecutionSink sink;
+  RecordingExecutionRuntime runtime(
+      [](const gcode::Condition &, const gcode::SourceInfo &) {
+        gcode::ConditionResolution r;
+        r.kind = gcode::ConditionResolutionKind::False;
+        return r;
+      });
+  gcode::AilExecutor exec(lowered.instructions, exec_options);
+
+  ASSERT_TRUE(exec.step(0, sink, runtime));
+  EXPECT_EQ(exec.state().status, gcode::ExecutorStatus::Ready);
+  ASSERT_EQ(sink.tool_changes.size(), 1u);
+  EXPECT_EQ(sink.tool_changes.front().target_tool_selection.selector_value,
+            "12");
+  ASSERT_EQ(runtime.tool_changes.size(), 1u);
+  EXPECT_EQ(runtime.tool_changes.front().target_tool_selection.selector_value,
+            "12");
+  ASSERT_TRUE(exec.state().active_tool_selection.has_value());
+  EXPECT_EQ(exec.state().active_tool_selection->selector_value, "12");
+  EXPECT_FALSE(exec.state().pending_tool_selection.has_value());
+  EXPECT_FALSE(exec.state().selected_tool_selection.has_value());
+}
+
 TEST(AilExecutorTest, M6WithoutPendingSelectionFaultsByDefault) {
   gcode::LowerOptions options;
   options.tool_change_mode = gcode::ToolChangeMode::DeferredM6;
@@ -1608,7 +1714,7 @@ TEST(AilExecutorTest, M6WithoutPendingSelectionFaultsByDefault) {
   ASSERT_TRUE(exec.step(0, resolver));
   EXPECT_EQ(exec.state().status, gcode::ExecutorStatus::Fault);
   ASSERT_FALSE(exec.diagnostics().empty());
-  EXPECT_NE(exec.diagnostics().back().message.find("no pending tool selection"),
+  EXPECT_NE(exec.diagnostics().back().message.find("no pending or active"),
             std::string::npos);
 }
 

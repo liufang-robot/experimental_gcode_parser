@@ -59,6 +59,17 @@ bool wakeBlockedExecutorIfReady(
     return false;
   }
 
+  if (state->blocked->tool_change_target_on_resume.has_value()) {
+    const auto &selection = *state->blocked->tool_change_target_on_resume;
+    if (!selection.selector_index.has_value() &&
+        selection.selector_value == "0") {
+      state->active_tool_selection.reset();
+    } else {
+      state->active_tool_selection = selection;
+    }
+    state->selected_tool_selection.reset();
+  }
+
   state->status = ExecutorStatus::Ready;
   state->pc = state->blocked->instruction_index;
   state->blocked.reset();
@@ -1281,7 +1292,61 @@ bool AilExecutor::handleMCodeAtPc() {
   return true;
 }
 
-bool AilExecutor::handleToolSelectAtPc() {
+void AilExecutor::applyResolvedToolSelection(
+    const ToolSelectionState &selection) {
+  if (isDeselectSelector(selection)) {
+    state_.active_tool_selection.reset();
+  } else {
+    state_.active_tool_selection = selection;
+  }
+}
+
+bool AilExecutor::dispatchToolChangeAtPc(
+    const SourceInfo &source, const ToolSelectionState &target_selection,
+    IExecutionSink *sink, IRuntime *runtime) {
+  if (sink == nullptr || runtime == nullptr) {
+    state_.selected_tool_selection = target_selection;
+    applyResolvedToolSelection(target_selection);
+    state_.pending_tool_selection.reset();
+    state_.selected_tool_selection.reset();
+    ++state_.pc;
+    return true;
+  }
+
+  ExecutionModalState command_state = makeExecutionModalState(state_);
+  command_state.pending_tool_selection.reset();
+  command_state.selected_tool_selection = target_selection;
+  ToolChangeCommand cmd = buildToolChangeCommand(
+      source, source.line, target_selection, std::move(command_state));
+  sink->onToolChange(cmd);
+  const auto runtime_result = runtime->submitToolChange(cmd);
+  if (runtime_result.status == RuntimeCallStatus::Error) {
+    addFault(source, runtime_result.error_message);
+    return true;
+  }
+
+  state_.selected_tool_selection = target_selection;
+  if (runtime_result.status == RuntimeCallStatus::Pending &&
+      runtime_result.wait_token.has_value()) {
+    state_.status = ExecutorStatus::Blocked;
+    ExecutorBlockedState blocked;
+    blocked.instruction_index = state_.pc + 1;
+    blocked.wait_token = runtime_result.wait_token;
+    blocked.tool_change_target_on_resume = target_selection;
+    state_.blocked = blocked;
+    state_.pending_tool_selection.reset();
+    return true;
+  }
+
+  applyResolvedToolSelection(target_selection);
+  state_.pending_tool_selection.reset();
+  state_.selected_tool_selection.reset();
+  ++state_.pc;
+  return true;
+}
+
+bool AilExecutor::handleToolSelectAtPc(IExecutionSink *sink,
+                                       IRuntime *runtime) {
   const auto &inst =
       std::get<AilToolSelectInstruction>(instructions_[state_.pc]);
   ToolSelectionState selection;
@@ -1301,11 +1366,9 @@ bool AilExecutor::handleToolSelectAtPc() {
                    "tool selection substituted: " + selection.selector_value +
                        " -> " + resolved.selection.selector_value + suffix);
       }
-      if (isDeselectSelector(resolved.selection)) {
-        state_.active_tool_selection.reset();
-      } else {
-        state_.active_tool_selection = resolved.selection;
-      }
+      state_.pending_tool_selection.reset();
+      return dispatchToolChangeAtPc(inst.source, resolved.selection, sink,
+                                    runtime);
     } else {
       const bool unresolved =
           resolved.kind == ToolSelectionResolutionKind::Unresolved;
@@ -1332,27 +1395,35 @@ bool AilExecutor::handleToolSelectAtPc() {
   return true;
 }
 
-bool AilExecutor::handleToolChangeAtPc() {
+bool AilExecutor::handleToolChangeAtPc(IExecutionSink *sink,
+                                       IRuntime *runtime) {
   const auto &inst =
       std::get<AilToolChangeInstruction>(instructions_[state_.pc]);
-  if (state_.pending_tool_selection.has_value()) {
-    const ToolSelectionState pending = *state_.pending_tool_selection;
-    const auto resolved = options_.tool_selection_resolver
-                              ? options_.tool_selection_resolver(pending)
-                              : defaultResolveToolSelection(pending, options_);
+  if (state_.pending_tool_selection.has_value() ||
+      state_.active_tool_selection.has_value()) {
+    const bool using_pending = state_.pending_tool_selection.has_value();
+    const ToolSelectionState pending_or_active =
+        using_pending ? *state_.pending_tool_selection
+                      : *state_.active_tool_selection;
+    ToolSelectionResolution resolved;
+    if (!using_pending) {
+      resolved.kind = ToolSelectionResolutionKind::Resolved;
+      resolved.selection = pending_or_active;
+    } else {
+      resolved = options_.tool_selection_resolver
+                     ? options_.tool_selection_resolver(pending_or_active)
+                     : defaultResolveToolSelection(pending_or_active, options_);
+    }
     if (resolved.kind == ToolSelectionResolutionKind::Resolved) {
       if (resolved.substituted) {
         const std::string suffix =
             resolved.message.empty() ? "" : " (" + resolved.message + ")";
-        addWarning(inst.source,
-                   "tool selection substituted: " + pending.selector_value +
-                       " -> " + resolved.selection.selector_value + suffix);
+        addWarning(inst.source, "tool selection substituted: " +
+                                    pending_or_active.selector_value + " -> " +
+                                    resolved.selection.selector_value + suffix);
       }
-      if (isDeselectSelector(resolved.selection)) {
-        state_.active_tool_selection.reset();
-      } else {
-        state_.active_tool_selection = resolved.selection;
-      }
+      return dispatchToolChangeAtPc(inst.source, resolved.selection, sink,
+                                    runtime);
     } else {
       const bool unresolved =
           resolved.kind == ToolSelectionResolutionKind::Unresolved;
@@ -1376,7 +1447,8 @@ bool AilExecutor::handleToolChangeAtPc() {
     return true;
   }
 
-  const std::string message = "M6 requested with no pending tool selection";
+  const std::string message =
+      "M6 requested with no pending or active tool selection";
   if (options_.m6_without_pending_policy == ErrorPolicy::Error) {
     addFault(inst.source, message);
     return true;
@@ -1429,6 +1501,12 @@ bool AilExecutor::advanceOneInstruction(int64_t now_ms,
     ++state_.pc;
     return true;
   }
+  if (std::holds_alternative<AilToolSelectInstruction>(inst)) {
+    return handleToolSelectAtPc(sink, runtime);
+  }
+  if (std::holds_alternative<AilToolChangeInstruction>(inst)) {
+    return handleToolChangeAtPc(sink, runtime);
+  }
   if (sink != nullptr && runtime != nullptr) {
     const auto line = std::visit(
         [](const auto &instruction) { return instruction.source.line; }, inst);
@@ -1462,12 +1540,6 @@ bool AilExecutor::advanceOneInstruction(int64_t now_ms,
       ++state_.pc;
       return true;
     }
-  }
-  if (std::holds_alternative<AilToolSelectInstruction>(inst)) {
-    return handleToolSelectAtPc();
-  }
-  if (std::holds_alternative<AilToolChangeInstruction>(inst)) {
-    return handleToolChangeAtPc();
   }
   if (std::holds_alternative<AilReturnBoundaryInstruction>(inst)) {
     const auto &ret = std::get<AilReturnBoundaryInstruction>(inst);

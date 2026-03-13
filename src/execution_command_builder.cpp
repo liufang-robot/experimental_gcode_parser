@@ -56,4 +56,17 @@ DwellCommand buildDwellCommand(const AilDwellInstruction &inst, int line,
   return cmd;
 }
 
+ToolChangeCommand
+buildToolChangeCommand(const SourceInfo &source, int line,
+                       const ToolSelectionState &target_tool_selection,
+                       ExecutionModalState state) {
+  ToolChangeCommand cmd;
+  cmd.source = toSourceRef(source);
+  cmd.source.line = line;
+  cmd.target_tool_selection = target_tool_selection;
+  state.selected_tool_selection = target_tool_selection;
+  cmd.effective = std::move(state);
+  return cmd;
+}
+
 } // namespace gcode
