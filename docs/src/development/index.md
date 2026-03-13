@@ -13,3 +13,5 @@ Key subsections:
 - [Workflow](workflow.md)
 - [G-code Text Flow](gcode_text_flow.md)
 - [Architecture and Design](design/index.md)
+  - including mirrored repo-root architecture and implementation-plan pages for
+    HTML reading

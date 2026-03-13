@@ -1,5 +1,24 @@
 # CHANGELOG_AGENT
 
+## 2026-03-12 (publish root architecture docs in mdbook nav)
+- Added mdBook pages that mirror the repo-root `ARCHITECTURE.md` and
+  `IMPLEMENTATION_PLAN.md` so they can be read directly from generated HTML.
+- Linked those mirrored pages into the `Development: Architecture and Design`
+  navigation section and updated the development index text.
+- This is a docs-navigation slice only; no parser/runtime behavior changed.
+
+SPEC sections / tests:
+- SPEC: Section 8 (docs publication policy)
+- Tests: not run (docs-only slice)
+
+Known limitations:
+- The mirrored mdBook pages must still be kept manually in sync with the
+  repo-root source documents.
+
+How to reproduce locally (commands):
+- `sed -n '1,220p' docs/src/development/design/repo_architecture.md`
+- `sed -n '1,220p' docs/src/development/design/repo_implementation_plan.md`
+- `sed -n '1,80p' docs/src/SUMMARY.md`
 ## 2026-03-12 (wu-2 normalize execution command payloads)
 - Replaced loose per-axis execution-command fields with a single `target`
   payload on linear and arc commands, preserving per-axis assignment via
