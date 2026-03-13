@@ -406,4 +406,26 @@ void StreamingExecutionEngine::remapRejectedLines(
   }
 }
 
+AilExecutorInitialState StreamingExecutionEngine::exportInitialState() const {
+  AilExecutorInitialState initial_state;
+  initial_state.motion_code_current = current_motion_code_;
+  initial_state.rapid_mode_current = current_rapid_mode_;
+  initial_state.tool_radius_comp_current = current_tool_radius_comp_;
+  initial_state.working_plane_current = current_working_plane_;
+  initial_state.active_tool_selection = current_active_tool_selection_;
+  initial_state.pending_tool_selection = current_pending_tool_selection_;
+  return initial_state;
+}
+
+void StreamingExecutionEngine::importInitialState(
+    const AilExecutorInitialState &state, int next_line_number) {
+  current_motion_code_ = state.motion_code_current;
+  current_rapid_mode_ = state.rapid_mode_current;
+  current_tool_radius_comp_ = state.tool_radius_comp_current;
+  current_working_plane_ = state.working_plane_current;
+  current_active_tool_selection_ = state.active_tool_selection;
+  current_pending_tool_selection_ = state.pending_tool_selection;
+  next_line_number_ = next_line_number;
+}
+
 } // namespace gcode

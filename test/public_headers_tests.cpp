@@ -7,6 +7,7 @@
 #include "gcode/execution_commands.h"
 #include "gcode/execution_interfaces.h"
 #include "gcode/execution_runtime.h"
+#include "gcode/execution_session.h"
 #include "gcode/gcode_parser.h"
 #include "gcode/message_diff.h"
 #include "gcode/messages.h"
@@ -22,6 +23,7 @@ TEST(PublicHeadersTest, PublicFacadeHeadersCompileAndExposeKeyTypes) {
   static_assert(std::is_class_v<gcode::AilResult>);
   static_assert(std::is_class_v<gcode::PacketResult>);
   static_assert(std::is_class_v<gcode::StreamingExecutionEngine>);
+  static_assert(std::is_class_v<gcode::ExecutionSession>);
   static_assert(std::is_class_v<gcode::IExecutionSink>);
   static_assert(std::is_class_v<gcode::IRuntime>);
   static_assert(std::is_class_v<gcode::IExecutionRuntime>);

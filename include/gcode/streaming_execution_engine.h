@@ -13,6 +13,8 @@
 
 namespace gcode {
 
+class ExecutionSession;
+
 class StreamingExecutionEngine {
 public:
   StreamingExecutionEngine(IExecutionSink &sink, IRuntime &runtime,
@@ -50,6 +52,9 @@ private:
   void
   remapRejectedLines(std::vector<MessageResult::RejectedLine> *rejected_lines,
                      int line) const;
+  AilExecutorInitialState exportInitialState() const;
+  void importInitialState(const AilExecutorInitialState &state,
+                          int next_line_number);
 
   IExecutionSink &sink_;
   IRuntime &runtime_;
@@ -72,6 +77,8 @@ private:
   ToolRadiusCompMode current_tool_radius_comp_ = ToolRadiusCompMode::Off;
   std::optional<ToolSelectionState> current_active_tool_selection_;
   std::optional<ToolSelectionState> current_pending_tool_selection_;
+
+  friend class ExecutionSession;
 };
 
 } // namespace gcode
