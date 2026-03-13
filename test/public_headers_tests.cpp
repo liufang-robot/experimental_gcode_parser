@@ -28,8 +28,13 @@ TEST(PublicHeadersTest, PublicFacadeHeadersCompileAndExposeKeyTypes) {
   static_assert(std::is_class_v<gcode::FunctionExecutionRuntime>);
   static_assert(std::is_class_v<gcode::IConditionResolver>);
   static_assert(std::is_class_v<gcode::WaitToken>);
+  static_assert(std::is_class_v<gcode::RejectedState>);
   static_assert(std::is_class_v<gcode::AilExecutorOptions>);
   static_assert(std::is_class_v<gcode::ToolSelectionState>);
   static_assert(std::is_enum_v<gcode::ToolChangeMode>);
   static_assert(std::is_enum_v<gcode::ErrorPolicy>);
+  static_assert(static_cast<int>(gcode::EngineState::Rejected) >= 0);
+  static_assert(static_cast<int>(gcode::StepStatus::Rejected) >= 0);
+  static_assert(std::is_same_v<decltype(gcode::StepResult{}.rejected),
+                               std::optional<gcode::RejectedState>>);
 }
