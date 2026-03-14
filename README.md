@@ -6,6 +6,7 @@ ANTLR-based parser/lowering library for CNC G-code with:
 - AIL as executable IR
 - execution through a single public `ExecutionSession` API
 - halt-fix-continue recovery through `ExecutionSession`
+- normalized runtime-facing commands and injected machine interfaces
 
 Current source-of-truth docs:
 
@@ -16,7 +17,8 @@ Current source-of-truth docs:
 ## Implemented Status
 
 - Parser: words/comments/line numbers and syntax diagnostics.
-- Semantic rules: motion-family exclusivity, `G1` mode mixing, `G4` constraints.
+- Semantic rules: motion-family exclusivity, `G1` mode mixing, `G4` constraints,
+  reviewed control-flow semantics.
 - Execution session:
   - `ExecutionSession`
   - `gcode_exec_session` fake-log CLI for rejected-line recovery review
@@ -80,10 +82,12 @@ interfaces:
   and variable reads
 - cancellation interface for cooperative stop
 
-Implemented in the current slice for `G0/G1/G2/G3/G4`:
+Key docs for the execution model:
 
 - `docs/src/development/design/streaming_execution_architecture.md`
 - `SPEC.md` section 6 / 6.1 / 6.2
+- `docs/src/execution_workflow.md`
+- `docs/src/program_reference.md`
 
 Execution-session shape:
 
@@ -106,6 +110,13 @@ if (step.status == StepStatus::Blocked) {
 }
 ```
 
+Control-flow examples are documented in:
+
+- `docs/src/execution_workflow.md`
+  - `GOTO`
+  - `IF / ELSE / ENDIF`
+- `docs/src/program_reference.md`
+
 Recovery demo CLI:
 
 ```bash
@@ -118,6 +129,7 @@ If you are starting from zero and just want the practical integration steps,
 read:
 
 - `docs/src/execution_workflow.md`
+- `docs/src/program_reference.md`
 
 The internal engine-inspection CLI still exists for development and tests:
 
