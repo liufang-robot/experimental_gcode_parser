@@ -4629,3 +4629,21 @@ Known limitations:
 How to reproduce locally (commands):
 - `sed -n '150,320p' docs/src/execution_workflow.md`
 - `sed -n '1,140p' docs/src/program_reference.md`
+
+## 2026-03-14 (readme execution workflow alignment)
+- Updated `README.md` to describe the final public execution model through
+  `ExecutionSession`.
+- Added direct pointers from the README to the new control-flow examples in the
+  execution workflow and program reference docs.
+
+SPEC sections / tests:
+- Docs-only:
+  - `README.md`
+  - `docs/src/execution_workflow.md`
+  - `docs/src/program_reference.md`
+
+Known limitations:
+- This is a docs-only alignment change; no library behavior changed.
+
+How to reproduce locally (commands):
+- `sed -n '1,180p' README.md`
