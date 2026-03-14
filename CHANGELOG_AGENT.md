@@ -4612,3 +4612,20 @@ How to reproduce locally (commands):
 - `./build/streaming_execution_tests`
 - `./build/streaming_execution_gmock_tests`
 - `./dev/check.sh`
+
+## 2026-03-14 (docs control-flow execution examples)
+- Added concrete `GOTO` and `IF / ELSE / ENDIF` execution examples to the
+  public execution workflow guide.
+- Added matching control-flow execution examples to the program reference.
+
+SPEC sections / tests:
+- Docs-only:
+  - `docs/src/execution_workflow.md`
+  - `docs/src/program_reference.md`
+
+Known limitations:
+- Examples are explanatory only; no behavior change was made in this slice.
+
+How to reproduce locally (commands):
+- `sed -n '150,320p' docs/src/execution_workflow.md`
+- `sed -n '1,140p' docs/src/program_reference.md`

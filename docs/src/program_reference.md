@@ -80,6 +80,48 @@ Current Siemens-aligned baseline for supported functions:
     - block-delete lines (`/` => level `0`, `/n` => level `n`) are skipped when
       level is active
 
+## Control-Flow Execution Examples
+
+### `GOTO`
+
+Input:
+
+```gcode
+N10 GOTO END
+N20 G1 X10
+END:
+N30 G1 X20
+```
+
+Runtime effect:
+
+- parser lowers `GOTO END` and `END:` into control-flow instructions
+- execution jumps to `END`
+- `N20 G1 X10` is skipped
+- only `N30 G1 X20` reaches the runtime as a move command
+
+### `IF / ELSE / ENDIF`
+
+Input:
+
+```gcode
+IF $P_ACT_X > 100
+  G1 X0
+ELSE
+  G1 X10
+ENDIF
+```
+
+Runtime effect:
+
+- condition is evaluated at execution time, not parse time
+- if `$P_ACT_X > 100`, only `G1 X0` reaches the runtime
+- otherwise only `G1 X10` reaches the runtime
+
+See [Execution Workflow](execution_workflow.md) for a fuller end-to-end example
+showing what the user code does versus what the parser/executor handles
+internally.
+
 ## Motion Packets
 
 Status:
