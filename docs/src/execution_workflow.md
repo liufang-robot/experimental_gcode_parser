@@ -269,125 +269,39 @@ This pattern applies to:
 - tool change
 - other runtime-managed actions
 
-## Simple Use Case 5: `GOTO` Control Flow
+## Current Control-Flow Boundary
 
-Program:
+The reviewed control-flow runtime model exists in `AilExecutor`, but the
+current public `ExecutionSession` contract is narrower.
 
-```gcode
-N10 GOTO END
-N20 G1 X10
-END:
-N30 G1 X20
-```
+Today `ExecutionSession`:
 
-User code:
+- executes one parsed logical line at a time
+- handles motion/dwell/tool-change dispatch, async waiting, rejection
+  recovery, and modal carry-forward
+- does not yet preserve later labels or structured multi-line control-flow
+  blocks in buffered session state
+
+Practical consequences:
+
+- forward `GOTO`/branch targets fault immediately instead of waiting for later
+  input
+- structured `IF/ELSE/ENDIF` is not yet executed through `ExecutionSession`
+- branch conditions need `IExecutionRuntime`; the plain `IRuntime` adapter
+  reports condition resolution as unavailable
+
+If you need the reviewed control-flow execution semantics today, use
+`parseAndLowerAil(...)` plus `AilExecutor` with an `IExecutionRuntime`
+resolver.
 
 ```cpp
-gcode::ExecutionSession session(sink, runtime, cancellation);
-session.pushChunk("N10 GOTO END\n");
-session.pushChunk("N20 G1 X10\n");
-session.pushChunk("END:\n");
-session.pushChunk("N30 G1 X20\n");
+const auto lowered = gcode::parseAndLowerAil(program_text);
+gcode::AilExecutor exec(lowered.instructions);
 
-gcode::StepResult step = session.finish();
-while (step.status == gcode::StepStatus::Progress) {
-  step = session.pump();
+while (exec.state().status == gcode::ExecutorStatus::Ready) {
+  exec.step(0, sink, execution_runtime);
 }
 ```
-
-What the user handles:
-
-- provide input text
-- provide sink/runtime/cancellation
-- keep calling `pump()` until execution stops at a boundary
-
-What the parser/executor handles internally:
-
-1. parse `GOTO END` as a goto statement
-2. parse `END:` as a label
-3. lower both into executable AIL control-flow instructions
-4. execute `GOTO END`
-5. jump the program counter to the `END` label
-6. skip `N20 G1 X10`
-7. execute only `N30 G1 X20`
-
-What your runtime sees:
-
-- one linear-move submission for `X20`
-- no move submission for `X10`
-
-Important streaming rule:
-
-- if `GOTO END` arrives before `END:` has been received, execution waits for
-  more input
-- if `finish()` is called and `END:` still never appears, execution faults
-
-## Simple Use Case 6: `IF / ELSE / ENDIF`
-
-Program:
-
-```gcode
-IF $P_ACT_X > 100
-  G1 X0
-ELSE
-  G1 X10
-ENDIF
-```
-
-Example runtime for the system variable:
-
-```cpp
-class MyRuntime : public gcode::IRuntime {
-public:
-  gcode::RuntimeResult<double> readSystemVariable(std::string_view name) override {
-    gcode::RuntimeResult<double> result;
-    if (name == "$P_ACT_X") {
-      result.status = gcode::RuntimeCallStatus::Ready;
-      result.value = 120.0;
-      return result;
-    }
-    result.status = gcode::RuntimeCallStatus::Error;
-    result.error_message = "unknown variable";
-    return result;
-  }
-
-  // submitLinearMove / submitArcMove / submitDwell / submitToolChange / cancelWait ...
-};
-```
-
-User code:
-
-```cpp
-gcode::ExecutionSession session(sink, runtime, cancellation);
-session.pushChunk(program_text);
-
-gcode::StepResult step = session.finish();
-while (step.status == gcode::StepStatus::Progress) {
-  step = session.pump();
-}
-```
-
-What the parser/executor handles internally:
-
-1. parse `IF / ELSE / ENDIF` as structured control flow
-2. lower the structure into executable branch/label-style AIL
-3. evaluate `$P_ACT_X > 100` at execution time
-4. if true, execute only `G1 X0`
-5. if false, execute only `G1 X10`
-
-If `$P_ACT_X = 120`, your runtime sees:
-
-- one linear-move submission for `X0`
-
-If `$P_ACT_X = 80`, your runtime sees:
-
-- one linear-move submission for `X10`
-
-Important rule:
-
-- the user does not manually choose the branch
-- the session/executor evaluates the condition and updates the program counter
-- the runtime is only asked for primitive values or actions
 
 ## Demo CLIs
 
