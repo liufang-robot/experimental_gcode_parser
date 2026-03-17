@@ -51,9 +51,9 @@ void writeFile(const std::filesystem::path &path, const std::string &contents) {
 std::string casePageHtml(const ExecutionContractCaseReport &report) {
   const std::string case_base = report.case_name;
   std::ostringstream out;
-  out << "<!doctype html><html><head><meta charset=\"utf-8\">"
-      << "<title>" << escapeHtml(report.case_name) << "</title>"
-      << "<style>body{font-family:sans-serif;max-width:1200px;margin:2rem "
+  out << "<!doctype html><html><head><meta charset=\"utf-8\">";
+  out << "<title>" << escapeHtml(report.case_name) << "</title>";
+  out << "<style>body{font-family:sans-serif;max-width:1200px;margin:2rem "
          "auto;padding:0 "
          "1rem;}pre{background:#f5f5f5;padding:1rem;overflow:auto;}table{"
          "border-collapse:collapse;}td,th{border:1px "
@@ -86,9 +86,9 @@ std::string casePageHtml(const ExecutionContractCaseReport &report) {
 std::string
 indexPageHtml(const std::vector<ExecutionContractCaseReport> &cases) {
   std::ostringstream out;
-  out << "<!doctype html><html><head><meta charset=\"utf-8\">"
-      << "<title>Execution Contract Review</title>"
-      << "<style>body{font-family:sans-serif;max-width:1200px;margin:2rem "
+  out << "<!doctype html><html><head><meta charset=\"utf-8\">";
+  out << "<title>Execution Contract Review</title>";
+  out << "<style>body{font-family:sans-serif;max-width:1200px;margin:2rem "
          "auto;padding:0 1rem;}table{border-collapse:collapse;width:100%;}"
          "td,th{border:1px solid #ddd;padding:0.5rem;text-align:left;}"
          ".status-match{color:#0a7d2c;} .status-mismatch{color:#b00020;}"
