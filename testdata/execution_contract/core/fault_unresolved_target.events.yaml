@@ -1,0 +1,44 @@
+{
+  "name": "fault_unresolved_target",
+  "description": "forward goto target unresolved at EOF faults execution",
+  "initial_state": {
+    "modal": {
+      "motion_code": "",
+      "working_plane": "xy",
+      "rapid_mode": "linear",
+      "tool_radius_comp": "off",
+      "active_tool_selection": null,
+      "pending_tool_selection": null,
+      "selected_tool_selection": null
+    }
+  },
+  "expected_events": [
+    {
+      "type": "diagnostic",
+      "severity": "error",
+      "message": "unresolved goto target: END",
+      "location": {
+        "line": 1,
+        "column": 1
+      }
+    },
+    {
+      "type": "diagnostic",
+      "severity": "error",
+      "message": "unresolved goto target: END",
+      "location": {
+        "line": 1,
+        "column": 1
+      }
+    },
+    {
+      "type": "faulted",
+      "severity": "error",
+      "message": "unresolved goto target: END",
+      "location": {
+        "line": 1,
+        "column": 1
+      }
+    }
+  ]
+}

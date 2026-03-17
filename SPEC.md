@@ -579,6 +579,8 @@ N130 G01 X20 Y20
     seeded from the session/engine carried modal state, so the executor and
     streaming paths share the same instruction-level runtime stepping for the
     supported control/runtime subset.
+  - Modal-only instructions emit explicit `ModalUpdateEvent` sink callbacks on
+    the public execution path.
   - Ordinary line rejection now returns a recoverable `Rejected` result with
     rejected-line reasons instead of collapsing directly into `Faulted`.
 - Execution-session recovery API (current):
@@ -713,6 +715,22 @@ N130 G01 X20 Y20
 - Integration-test contract:
   - deterministic event logs should capture interface call order and parameter
     values for a given input program
+- Execution contract fixture baseline:
+  - public fixture verification is driven through `ExecutionSession`
+  - persistent source-of-truth files live under
+    `testdata/execution_contract/core/`
+  - current enforced Step 1 fixture cases are:
+    - `modal_update`
+    - `linear_move_completed`
+    - `rejected_invalid_line`
+    - `fault_unresolved_target`
+  - pending reviewed-but-not-yet-enforced control-flow examples live under
+    `testdata/execution_contract/pending/`
+  - reference vs actual comparison is exact semantic equality
+  - generated actual traces are written under
+    `output/execution_contract_review/`
+  - generated review HTML can be published under
+    `docs/book/execution-contract-review/`
 - M-function runtime boundary (v0):
   - `m_function` instructions are present in AIL and seen by executor
   - known predefined Siemens M values:

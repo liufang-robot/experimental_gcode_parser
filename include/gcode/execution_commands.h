@@ -63,6 +63,17 @@ struct ToolChangeCommand {
   EffectiveModalSnapshot effective;
 };
 
+struct ModalUpdateChanges {
+  std::optional<WorkingPlane> working_plane;
+  std::optional<RapidInterpolationMode> rapid_mode;
+  std::optional<ToolRadiusCompMode> tool_radius_comp;
+};
+
+struct ModalUpdateEvent {
+  SourceRef source;
+  ModalUpdateChanges changes;
+};
+
 struct RejectedLineEvent {
   SourceRef source;
   std::vector<Diagnostic> reasons;

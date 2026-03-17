@@ -10,6 +10,7 @@ class NullSink : public gcode::IExecutionSink {
 public:
   void onDiagnostic(const gcode::Diagnostic &) override {}
   void onRejectedLine(const gcode::RejectedLineEvent &) override {}
+  void onModalUpdate(const gcode::ModalUpdateEvent &) override {}
   void onLinearMove(const gcode::LinearMoveCommand &) override {}
   void onArcMove(const gcode::ArcMoveCommand &) override {}
   void onDwell(const gcode::DwellCommand &) override {}

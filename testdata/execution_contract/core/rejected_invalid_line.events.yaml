@@ -1,0 +1,44 @@
+{
+  "name": "rejected_invalid_line",
+  "description": "invalid line emits diagnostics and a recoverable rejected event",
+  "initial_state": {
+    "modal": {
+      "motion_code": "",
+      "working_plane": "xy",
+      "rapid_mode": "linear",
+      "tool_radius_comp": "off",
+      "active_tool_selection": null,
+      "pending_tool_selection": null,
+      "selected_tool_selection": null
+    }
+  },
+  "expected_events": [
+    {
+      "type": "diagnostic",
+      "severity": "error",
+      "message": "multiple motion commands in one line; choose only one of G0/G1/G2/G3",
+      "location": {
+        "line": 1,
+        "column": 4
+      }
+    },
+    {
+      "type": "rejected",
+      "source": {
+        "filename": null,
+        "line": 1,
+        "line_number": null
+      },
+      "reasons": [
+        {
+          "severity": "error",
+          "message": "multiple motion commands in one line; choose only one of G0/G1/G2/G3",
+          "location": {
+            "line": 1,
+            "column": 4
+          }
+        }
+      ]
+    }
+  ]
+}

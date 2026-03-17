@@ -12,6 +12,7 @@ public:
   void onRejectedLine(const gcode::RejectedLineEvent &event) override {
     rejected_lines.push_back(event);
   }
+  void onModalUpdate(const gcode::ModalUpdateEvent &) override {}
   void onLinearMove(const gcode::LinearMoveCommand &cmd) override {
     linear_moves.push_back(cmd);
   }

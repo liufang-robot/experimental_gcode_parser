@@ -1,5 +1,7 @@
 #include "execution_command_builder.h"
 
+#include <type_traits>
+
 namespace gcode {
 
 SourceRef toSourceRef(const SourceInfo &source) {
@@ -67,6 +69,26 @@ buildToolChangeCommand(const SourceInfo &source, int line,
   state.selected_tool_selection = target_tool_selection;
   cmd.effective = std::move(state);
   return cmd;
+}
+
+ModalUpdateEvent buildModalUpdateEvent(const AilInstruction &instruction) {
+  ModalUpdateEvent event;
+  std::visit(
+      [&event](const auto &inst) {
+        event.source = toSourceRef(inst.source);
+        if constexpr (std::is_same_v<std::decay_t<decltype(inst)>,
+                                     AilRapidTraverseModeInstruction>) {
+          event.changes.rapid_mode = inst.mode;
+        } else if constexpr (std::is_same_v<std::decay_t<decltype(inst)>,
+                                            AilToolRadiusCompInstruction>) {
+          event.changes.tool_radius_comp = inst.mode;
+        } else if constexpr (std::is_same_v<std::decay_t<decltype(inst)>,
+                                            AilWorkingPlaneInstruction>) {
+          event.changes.working_plane = inst.plane;
+        }
+      },
+      instruction);
+  return event;
 }
 
 } // namespace gcode

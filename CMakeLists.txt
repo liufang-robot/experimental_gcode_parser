@@ -102,6 +102,9 @@ add_library(
                       src/packet.cpp src/packet_json.cpp
                       src/streaming_execution_engine.cpp
                       src/execution_session.cpp
+                      src/execution_contract_fixture.cpp
+                      src/execution_contract_runner.cpp
+                      src/execution_contract_html.cpp
                       src/streaming_event_log.cpp
                       src/execution_modal_state.cpp
                       src/execution_command_builder.cpp
@@ -133,6 +136,13 @@ add_executable(gcode_exec_session src/execution_session_main.cpp)
 target_link_libraries(gcode_exec_session PRIVATE gcode_parser)
 target_link_libraries(gcode_exec_session PRIVATE nlohmann_json::nlohmann_json)
 target_include_directories(gcode_exec_session
+                           PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
+
+add_executable(gcode_execution_contract_review src/execution_contract_main.cpp)
+target_link_libraries(gcode_execution_contract_review PRIVATE gcode_parser)
+target_link_libraries(gcode_execution_contract_review PRIVATE
+                                                     nlohmann_json::nlohmann_json)
+target_include_directories(gcode_execution_contract_review
                            PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
 
 add_executable(gcode_bench bench/gcode_bench.cpp)
@@ -264,6 +274,32 @@ target_link_libraries(execution_session_tests PRIVATE GTest::gtest_main)
 target_include_directories(execution_session_tests
                            PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
 gtest_discover_tests(execution_session_tests DISCOVERY_MODE PRE_TEST)
+
+add_executable(execution_contract_fixture_tests
+               test/execution_contract_fixture_tests.cpp)
+target_link_libraries(execution_contract_fixture_tests PRIVATE gcode_parser)
+target_link_libraries(execution_contract_fixture_tests PRIVATE GTest::gtest_main)
+target_include_directories(execution_contract_fixture_tests
+                           PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
+gtest_discover_tests(execution_contract_fixture_tests DISCOVERY_MODE PRE_TEST)
+
+add_executable(execution_contract_runner_tests
+               test/execution_contract_runner_tests.cpp)
+target_link_libraries(execution_contract_runner_tests PRIVATE gcode_parser)
+target_link_libraries(execution_contract_runner_tests PRIVATE GTest::gtest_main)
+target_include_directories(execution_contract_runner_tests
+                           PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
+target_compile_definitions(execution_contract_runner_tests PRIVATE
+                           GCODE_SOURCE_DIR="${CMAKE_CURRENT_SOURCE_DIR}")
+gtest_discover_tests(execution_contract_runner_tests DISCOVERY_MODE PRE_TEST)
+
+add_executable(execution_contract_html_tests
+               test/execution_contract_html_tests.cpp)
+target_link_libraries(execution_contract_html_tests PRIVATE gcode_parser)
+target_link_libraries(execution_contract_html_tests PRIVATE GTest::gtest_main)
+target_include_directories(execution_contract_html_tests
+                           PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
+gtest_discover_tests(execution_contract_html_tests DISCOVERY_MODE PRE_TEST)
 
 add_executable(public_headers_tests test/public_headers_tests.cpp)
 target_link_libraries(public_headers_tests PRIVATE gcode_parser)

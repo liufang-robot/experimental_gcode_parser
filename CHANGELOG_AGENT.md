@@ -4647,3 +4647,75 @@ Known limitations:
 
 How to reproduce locally (commands):
 - `sed -n '1,180p' README.md`
+
+## 2026-03-16 (execution contract fixture spec and step-1 plan)
+- Added a design spec for human-reviewable execution contract fixtures based on
+  `ExecutionSession`, persistent reference traces, generated actual traces, and
+  a GitHub Pages review subsite.
+- Added the Step 1 implementation plan covering schema/loader work, six initial
+  fixture families, exact-equality comparison, HTML generation, and build/docs
+  integration.
+- Updated the authoritative implementation plan with the follow-up
+  optimization track (`WU-9` through `WU-11`).
+
+SPEC sections / tests:
+- Planning/design only:
+  - `docs/superpowers/specs/2026-03-16-execution-contract-fixtures-design.md`
+  - `docs/superpowers/plans/2026-03-16-execution-contract-fixtures-step1.md`
+  - `docs/src/development/design/implementation_plan_from_requirements.md`
+
+Known limitations:
+- This is a design/planning slice only; no execution fixture runner or review
+  site has been implemented yet.
+
+How to reproduce locally (commands):
+- `sed -n '1,260p' docs/superpowers/specs/2026-03-16-execution-contract-fixtures-design.md`
+- `sed -n '1,320p' docs/superpowers/plans/2026-03-16-execution-contract-fixtures-step1.md`
+- `sed -n '1,120p' docs/src/development/design/implementation_plan_from_requirements.md`
+
+## 2026-03-17 (execution contract fixtures step-1 skeleton)
+- Added the Step 1 execution-contract fixture skeleton:
+  loader/serializer, `ExecutionSession`-based runner, supported reference
+  fixtures, HTML review generation, and the `gcode_execution_contract_review`
+  CLI.
+- Added public `ModalUpdateEvent` sink callbacks so modal-only execution lines
+  can be part of the reviewed contract trace.
+- Split unsupported reviewed control-flow examples into
+  `testdata/execution_contract/pending/` so the enforced Step 1 gate reflects
+  the currently supported public execution path.
+
+SPEC sections / tests:
+- `SPEC.md`
+  - section 2.2 execution API wording
+  - section 6.0 / 6.2 execution contract fixture baseline
+- `README.md`
+- `docs/src/execution_workflow.md`
+- `docs/src/execution_contract_review.md`
+- `docs/src/SUMMARY.md`
+- `docs/src/development/design/implementation_plan_from_requirements.md`
+- `docs/superpowers/specs/2026-03-16-execution-contract-fixtures-design.md`
+- `docs/superpowers/plans/2026-03-16-execution-contract-fixtures-step1.md`
+- `test/execution_contract_fixture_tests.cpp`
+- `test/execution_contract_runner_tests.cpp`
+- `test/execution_contract_html_tests.cpp`
+- `test/public_headers_tests.cpp`
+
+Known limitations:
+- Step 1 currently enforces only the supported baseline cases:
+  `modal_update`, `linear_move_completed`, `rejected_invalid_line`,
+  `fault_unresolved_target`.
+- Reviewed control-flow examples (`goto_skips_line`, `if_else_branch`) remain
+  under `testdata/execution_contract/pending/` until the public
+  `ExecutionSession` path supports them directly.
+- Reference traces use JSON-compatible YAML syntax in this first slice to avoid
+  introducing a new YAML dependency into the core library.
+
+How to reproduce locally (commands):
+- `cmake --build build -j --target gcode_execution_contract_review execution_contract_fixture_tests execution_contract_runner_tests execution_contract_html_tests public_headers_tests`
+- `./build/execution_contract_fixture_tests`
+- `./build/execution_contract_runner_tests`
+- `./build/execution_contract_html_tests`
+- `./build/public_headers_tests`
+- `./build/gcode_execution_contract_review --fixtures-root testdata/execution_contract/core --output-root output/execution_contract_review --publish-root docs/book/execution-contract-review`
+- `mdbook build docs`
+- `./dev/check.sh`

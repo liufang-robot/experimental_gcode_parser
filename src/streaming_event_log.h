@@ -27,6 +27,7 @@ public:
 
   void onDiagnostic(const Diagnostic &diag) override;
   void onRejectedLine(const RejectedLineEvent &event) override;
+  void onModalUpdate(const ModalUpdateEvent &event) override;
   void onLinearMove(const LinearMoveCommand &cmd) override;
   void onArcMove(const ArcMoveCommand &cmd) override;
   void onDwell(const DwellCommand &cmd) override;

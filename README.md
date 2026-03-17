@@ -7,6 +7,8 @@ ANTLR-based parser/lowering library for CNC G-code with:
 - execution through a single public `ExecutionSession` API
 - halt-fix-continue recovery through `ExecutionSession`
 - normalized runtime-facing commands and injected machine interfaces
+- execution contract fixtures and review-site generation for supported
+  `ExecutionSession` traces
 
 Current source-of-truth docs:
 
@@ -22,6 +24,7 @@ Current source-of-truth docs:
 - Execution session:
   - `ExecutionSession`
   - `gcode_exec_session` fake-log CLI for rejected-line recovery review
+  - `gcode_execution_contract_review` fixture and HTML review CLI
 - Internal execution engine:
   - `gcode_stream_exec` fake-log CLI for internal engine/event inspection
 
@@ -87,6 +90,7 @@ Key docs for the execution model:
 - `docs/src/development/design/streaming_execution_architecture.md`
 - `SPEC.md` section 6 / 6.1 / 6.2
 - `docs/src/execution_workflow.md`
+- `docs/src/execution_contract_review.md`
 - `docs/src/program_reference.md`
 
 Execution-session shape:
@@ -129,7 +133,16 @@ If you are starting from zero and just want the practical integration steps,
 read:
 
 - `docs/src/execution_workflow.md`
+- `docs/src/execution_contract_review.md`
 - `docs/src/program_reference.md`
+
+Execution contract review CLI:
+
+```bash
+./build/gcode_execution_contract_review \
+  --fixtures-root testdata/execution_contract/core \
+  --output-root output/execution_contract_review
+```
 
 The internal engine-inspection CLI still exists for development and tests:
 
