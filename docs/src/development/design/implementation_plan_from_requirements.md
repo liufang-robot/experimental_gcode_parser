@@ -30,6 +30,23 @@ Use this document to answer:
 - `WU-7 Final Public API Cleanup`: completed
 - `WU-8 Public Execution API Simplification`: completed
 
+## Follow-Up Optimization Track
+
+The original refactor work units are complete. The next optimization work should
+be tracked separately:
+
+- `WU-9 Documentation Information Architecture Cleanup`
+  - reduce duplicated content across README, spec, reference, and design docs
+  - make function-level documentation more concise and structured for humans
+    and LLM agents
+- `WU-10 Execution Contract Fixtures Step 1`
+  - add human-readable execution contract fixtures for the public
+    `ExecutionSession` API
+  - generate actual results and a GitHub Pages review subsite
+- `WU-11 Execution Contract Fixtures Step 2`
+  - extend the same system to asynchronous `blocked` / `resume` /
+    `cancelled` cases
+
 ## Goal
 
 Move the project to one clear execution-oriented architecture that is

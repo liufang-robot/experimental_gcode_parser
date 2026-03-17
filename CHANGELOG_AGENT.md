@@ -4647,3 +4647,28 @@ Known limitations:
 
 How to reproduce locally (commands):
 - `sed -n '1,180p' README.md`
+
+## 2026-03-16 (execution contract fixture spec and step-1 plan)
+- Added a design spec for human-reviewable execution contract fixtures based on
+  `ExecutionSession`, persistent reference traces, generated actual traces, and
+  a GitHub Pages review subsite.
+- Added the Step 1 implementation plan covering schema/loader work, six initial
+  fixture families, exact-equality comparison, HTML generation, and build/docs
+  integration.
+- Updated the authoritative implementation plan with the follow-up
+  optimization track (`WU-9` through `WU-11`).
+
+SPEC sections / tests:
+- Planning/design only:
+  - `docs/superpowers/specs/2026-03-16-execution-contract-fixtures-design.md`
+  - `docs/superpowers/plans/2026-03-16-execution-contract-fixtures-step1.md`
+  - `docs/src/development/design/implementation_plan_from_requirements.md`
+
+Known limitations:
+- This is a design/planning slice only; no execution fixture runner or review
+  site has been implemented yet.
+
+How to reproduce locally (commands):
+- `sed -n '1,260p' docs/superpowers/specs/2026-03-16-execution-contract-fixtures-design.md`
+- `sed -n '1,320p' docs/superpowers/plans/2026-03-16-execution-contract-fixtures-step1.md`
+- `sed -n '1,120p' docs/src/development/design/implementation_plan_from_requirements.md`
