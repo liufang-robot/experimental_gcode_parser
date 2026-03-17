@@ -1,0 +1,4 @@
+GOTO END
+G1 X10
+END:
+G1 X20

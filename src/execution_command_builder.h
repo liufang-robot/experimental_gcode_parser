@@ -19,5 +19,6 @@ ToolChangeCommand
 buildToolChangeCommand(const SourceInfo &source, int line,
                        const ToolSelectionState &target_tool_selection,
                        ExecutionModalState state);
+ModalUpdateEvent buildModalUpdateEvent(const AilInstruction &instruction);
 
 } // namespace gcode

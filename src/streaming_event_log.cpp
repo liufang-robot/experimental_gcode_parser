@@ -111,6 +111,39 @@ nlohmann::json toolChangeToJson(const ToolChangeCommand &cmd) {
   return j;
 }
 
+nlohmann::json modalUpdateToJson(const ModalUpdateEvent &event) {
+  nlohmann::json j;
+  j["source"] = sourceToJson(event.source);
+  nlohmann::json changes;
+  changes["working_plane"] =
+      event.changes.working_plane.has_value()
+          ? nlohmann::json(
+                event.changes.working_plane == WorkingPlane::XY
+                    ? "xy"
+                    : (event.changes.working_plane == WorkingPlane::ZX ? "zx"
+                                                                       : "yz"))
+          : nlohmann::json(nullptr);
+  changes["rapid_mode"] =
+      event.changes.rapid_mode.has_value()
+          ? nlohmann::json(*event.changes.rapid_mode ==
+                                   RapidInterpolationMode::Linear
+                               ? "linear"
+                               : "nonlinear")
+          : nlohmann::json(nullptr);
+  changes["tool_radius_comp"] =
+      event.changes.tool_radius_comp.has_value()
+          ? nlohmann::json(*event.changes.tool_radius_comp ==
+                                   ToolRadiusCompMode::Off
+                               ? "off"
+                               : (*event.changes.tool_radius_comp ==
+                                          ToolRadiusCompMode::Left
+                                      ? "left"
+                                      : "right"))
+          : nlohmann::json(nullptr);
+  j["changes"] = std::move(changes);
+  return j;
+}
+
 nlohmann::json diagnosticToJson(const Diagnostic &diag) {
   nlohmann::json j;
   j["severity"] =
@@ -306,6 +339,12 @@ void RecordingExecutionSink::onRejectedLine(const RejectedLineEvent &event) {
        {"line", event.source.line},
        {"params",
         {{"source", sourceToJson(event.source)}, {"reasons", reasons}}}});
+}
+
+void RecordingExecutionSink::onModalUpdate(const ModalUpdateEvent &event) {
+  recorder_.add({{"event", "sink.modal_update"},
+                 {"line", event.source.line},
+                 {"params", modalUpdateToJson(event)}});
 }
 
 void RecordingExecutionSink::onLinearMove(const LinearMoveCommand &cmd) {

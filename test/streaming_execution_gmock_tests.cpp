@@ -22,6 +22,8 @@ public:
   MOCK_METHOD(void, onDiagnostic, (const gcode::Diagnostic &diag), (override));
   MOCK_METHOD(void, onRejectedLine, (const gcode::RejectedLineEvent &event),
               (override));
+  MOCK_METHOD(void, onModalUpdate, (const gcode::ModalUpdateEvent &event),
+              (override));
   MOCK_METHOD(void, onLinearMove, (const gcode::LinearMoveCommand &cmd),
               (override));
   MOCK_METHOD(void, onArcMove, (const gcode::ArcMoveCommand &cmd), (override));

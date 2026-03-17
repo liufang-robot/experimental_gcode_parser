@@ -12,6 +12,7 @@
 #include "gcode/execution_runtime.h"
 #include "gcode/gcode_parser.h"
 
+#include "execution_command_builder.h"
 #include "execution_instruction_dispatcher.h"
 #include "execution_modal_state.h"
 #include "messages.h"
@@ -1499,6 +1500,9 @@ bool AilExecutor::advanceOneInstruction(int64_t now_ms,
   if (applyExecutionModalInstruction(inst, &state_.working_plane_current,
                                      &state_.rapid_mode_current,
                                      &state_.tool_radius_comp_current)) {
+    if (sink != nullptr) {
+      sink->onModalUpdate(buildModalUpdateEvent(inst));
+    }
     ++state_.pc;
     return true;
   }

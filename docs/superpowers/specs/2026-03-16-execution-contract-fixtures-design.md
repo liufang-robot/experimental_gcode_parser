@@ -272,6 +272,13 @@ Initial Step 1 case families:
 5. rejected invalid line
 6. unrecoverable fault case
 
+Current implementation note:
+
+- the fixture framework and supported baseline cases are in scope for Step 1
+- cross-line control-flow examples (`goto_skips_line`, `if_else_branch`) remain
+  under `testdata/execution_contract/pending/` until the public
+  `ExecutionSession` path supports them directly
+
 ### Step 2
 
 Add asynchronous behavior:

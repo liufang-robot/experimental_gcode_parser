@@ -106,6 +106,10 @@ public:
     rejected_lines.push_back(event);
   }
 
+  void onModalUpdate(const gcode::ModalUpdateEvent &event) override {
+    modal_updates.push_back(event);
+  }
+
   void onLinearMove(const gcode::LinearMoveCommand &cmd) override {
     linear_moves.push_back(cmd);
   }
@@ -124,6 +128,7 @@ public:
 
   std::vector<gcode::Diagnostic> diagnostics;
   std::vector<gcode::RejectedLineEvent> rejected_lines;
+  std::vector<gcode::ModalUpdateEvent> modal_updates;
   std::vector<gcode::LinearMoveCommand> linear_moves;
   std::vector<gcode::ArcMoveCommand> arc_moves;
   std::vector<gcode::DwellCommand> dwells;

@@ -43,6 +43,11 @@ be tracked separately:
   - add human-readable execution contract fixtures for the public
     `ExecutionSession` API
   - generate actual results and a GitHub Pages review subsite
+  - current completed skeleton enforces the supported baseline cases:
+    `modal_update`, `linear_move_completed`, `rejected_invalid_line`,
+    `fault_unresolved_target`
+  - reviewed control-flow examples remain pending until the public execution
+    path supports them directly
 - `WU-11 Execution Contract Fixtures Step 2`
   - extend the same system to asynchronous `blocked` / `resume` /
     `cancelled` cases

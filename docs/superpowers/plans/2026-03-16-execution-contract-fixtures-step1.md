@@ -4,6 +4,13 @@
 
 **Goal:** Add Step 1 execution-contract fixtures for the public `ExecutionSession` API, including persistent `.ngc` and reference `.events.yaml` files, generated `.actual.yaml` results, and a static HTML comparison site.
 
+Current implementation cut:
+
+- finish the fixture/review skeleton and enforce only the supported Step 1
+  baseline cases
+- keep reviewed but not yet supported cross-line control-flow examples under
+  `testdata/execution_contract/pending/`
+
 **Architecture:** The fixture system tests only public execution-visible behavior. Source-of-truth lives in `testdata/execution_contract/`, generated actual traces and HTML review pages live under `output/` and the published docs tree, and automated tests compare actual vs reference with exact semantic equality. The implementation should reuse the existing execution-session behavior and logging patterns instead of inventing a second execution path.
 
 **Tech Stack:** C++17, CMake, GoogleTest, existing `ExecutionSession` + sink/runtime contracts, YAML serialization, static HTML generation, `./dev/check.sh`

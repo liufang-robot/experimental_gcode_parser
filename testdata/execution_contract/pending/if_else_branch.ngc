@@ -1,0 +1,6 @@
+R1=0
+IF R1 == 0
+G1 X10
+ELSE
+G1 X20
+ENDIF

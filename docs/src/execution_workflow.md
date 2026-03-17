@@ -33,6 +33,7 @@ To execute G-code you usually provide three objects:
 
 1. `IExecutionSink`
    - receives normalized commands and diagnostics
+   - receives explicit modal-only updates through `onModalUpdate(...)`
 2. `IRuntime` or `IExecutionRuntime`
    - performs slow or external work
 3. `ICancellation`
@@ -53,6 +54,10 @@ public:
 
   void onRejectedLine(const gcode::RejectedLineEvent &event) override {
     // Show a recoverable rejected-line error in the UI.
+  }
+
+  void onModalUpdate(const gcode::ModalUpdateEvent &event) override {
+    // Observe modal-only changes such as G17/G18/G19 or G40/G41/G42.
   }
 
   void onLinearMove(const gcode::LinearMoveCommand &cmd) override {
@@ -110,6 +115,7 @@ public:
 
 The session emits normalized command structs:
 
+- `ModalUpdateEvent`
 - `LinearMoveCommand`
 - `ArcMoveCommand`
 - `DwellCommand`
@@ -122,7 +128,7 @@ Each command carries:
   - physical line number
   - `N...` block number if present
 - command payload
-  - pose target, feed, arc parameters, dwell mode/value, or tool target
+  - modal changes, pose target, feed, arc parameters, dwell mode/value, or tool target
 - `EffectiveModalSnapshot`
   - effective modal state attached to that command
 

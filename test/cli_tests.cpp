@@ -335,26 +335,38 @@ TEST(CliFormatTest, StreamingExecFixtureShowsWorkingPlaneTransitions) {
     events.push_back(nlohmann::json::parse(line));
   }
 
-  ASSERT_EQ(events.size(), 7u);
-  EXPECT_EQ(events[0]["event"], "sink.linear_move");
-  EXPECT_EQ(events[1]["event"], "runtime.submit_linear_move");
-  EXPECT_EQ(events[2]["event"], "sink.linear_move");
-  EXPECT_EQ(events[3]["event"], "runtime.submit_linear_move");
+  ASSERT_EQ(events.size(), 10u);
+  EXPECT_EQ(events[0]["event"], "sink.modal_update");
+  EXPECT_EQ(events[1]["event"], "sink.linear_move");
+  EXPECT_EQ(events[2]["event"], "runtime.submit_linear_move");
+  EXPECT_EQ(events[3]["event"], "sink.modal_update");
   EXPECT_EQ(events[4]["event"], "sink.linear_move");
   EXPECT_EQ(events[5]["event"], "runtime.submit_linear_move");
-  EXPECT_EQ(events[6]["event"], "engine.completed");
+  EXPECT_EQ(events[6]["event"], "sink.modal_update");
+  EXPECT_EQ(events[7]["event"], "sink.linear_move");
+  EXPECT_EQ(events[8]["event"], "runtime.submit_linear_move");
+  EXPECT_EQ(events[9]["event"], "engine.completed");
 
-  EXPECT_EQ(events[0]["line"], 2);
-  EXPECT_EQ(events[0]["params"]["source"]["line_number"], 10);
-  EXPECT_EQ(events[0]["params"]["effective"]["working_plane"], "xy");
+  EXPECT_EQ(events[0]["line"], 1);
+  EXPECT_EQ(events[0]["params"]["changes"]["working_plane"], "xy");
 
-  EXPECT_EQ(events[2]["line"], 4);
-  EXPECT_EQ(events[2]["params"]["source"]["line_number"], 20);
-  EXPECT_EQ(events[2]["params"]["effective"]["working_plane"], "zx");
+  EXPECT_EQ(events[1]["line"], 2);
+  EXPECT_EQ(events[1]["params"]["source"]["line_number"], 10);
+  EXPECT_EQ(events[1]["params"]["effective"]["working_plane"], "xy");
 
-  EXPECT_EQ(events[4]["line"], 6);
-  EXPECT_EQ(events[4]["params"]["source"]["line_number"], 30);
-  EXPECT_EQ(events[4]["params"]["effective"]["working_plane"], "yz");
+  EXPECT_EQ(events[3]["line"], 3);
+  EXPECT_EQ(events[3]["params"]["changes"]["working_plane"], "zx");
+
+  EXPECT_EQ(events[4]["line"], 4);
+  EXPECT_EQ(events[4]["params"]["source"]["line_number"], 20);
+  EXPECT_EQ(events[4]["params"]["effective"]["working_plane"], "zx");
+
+  EXPECT_EQ(events[6]["line"], 5);
+  EXPECT_EQ(events[6]["params"]["changes"]["working_plane"], "yz");
+
+  EXPECT_EQ(events[7]["line"], 6);
+  EXPECT_EQ(events[7]["params"]["source"]["line_number"], 30);
+  EXPECT_EQ(events[7]["params"]["effective"]["working_plane"], "yz");
 }
 
 TEST(CliFormatTest, ExecutionSessionCliReportsRecoverableRejectedState) {

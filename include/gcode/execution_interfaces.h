@@ -13,6 +13,7 @@ public:
 
   virtual void onDiagnostic(const Diagnostic &diag) = 0;
   virtual void onRejectedLine(const RejectedLineEvent &event) = 0;
+  virtual void onModalUpdate(const ModalUpdateEvent &event) = 0;
   virtual void onLinearMove(const LinearMoveCommand &cmd) = 0;
   virtual void onArcMove(const ArcMoveCommand &cmd) = 0;
   virtual void onDwell(const DwellCommand &cmd) = 0;
