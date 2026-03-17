@@ -15,6 +15,11 @@ Current implementation cut:
 
 **Tech Stack:** C++17, CMake, GoogleTest, existing `ExecutionSession` + sink/runtime contracts, YAML serialization, static HTML generation, `./dev/check.sh`
 
+Control-flow note: Step 1 covers only behavior that the current public
+`ExecutionSession` contract already supports. Cross-line `GOTO` / structured
+`IF/ELSE/ENDIF` fixtures are deferred until buffered control-flow support lands
+in the public session path.
+
 ---
 
 ## File Structure
@@ -157,10 +162,10 @@ git commit -m "feat: add execution contract fixture loading"
   - `testdata/execution_contract/core/modal_update.events.yaml`
   - `testdata/execution_contract/core/linear_move_completed.ngc`
   - `testdata/execution_contract/core/linear_move_completed.events.yaml`
-  - `testdata/execution_contract/core/goto_skips_line.ngc`
-  - `testdata/execution_contract/core/goto_skips_line.events.yaml`
-  - `testdata/execution_contract/core/if_else_branch.ngc`
-  - `testdata/execution_contract/core/if_else_branch.events.yaml`
+  - `testdata/execution_contract/core/dwell_completed.ngc`
+  - `testdata/execution_contract/core/dwell_completed.events.yaml`
+  - `testdata/execution_contract/core/tool_change_completed.ngc`
+  - `testdata/execution_contract/core/tool_change_completed.events.yaml`
   - `testdata/execution_contract/core/rejected_invalid_line.ngc`
   - `testdata/execution_contract/core/rejected_invalid_line.events.yaml`
   - `testdata/execution_contract/core/fault_unresolved_target.ngc`

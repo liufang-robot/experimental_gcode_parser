@@ -647,6 +647,13 @@ N130 G01 X20 Y20
     such as `IF $P_ACT_X == 1 ...`
   - compatibility overloads may still accept function/lambda resolvers, but
     they adapt into the same interface contract
+- Executor-scope note:
+  - the target-resolution and branch-evaluation rules in this section describe
+    `AilExecutor`
+  - the current `StreamingExecutionEngine` / public `ExecutionSession` path
+    still feeds one parsed line at a time and does not yet preserve later
+    labels or structured multi-line control-flow blocks in buffered session
+    state
 - Streaming execution contract:
   - execution is driven by an injected runtime interface rather than direct
     global or static machine calls
@@ -712,6 +719,13 @@ N130 G01 X20 Y20
   - runtime performs variable reads and may return value, pending, or error
   - current implementation keeps this interface but does not yet execute
     variable-backed expressions through the streaming engine
+- Current public-session control-flow limitation:
+  - unresolved forward goto/branch targets fault immediately instead of
+    entering `WaitingForInput`
+  - structured `IF/ELSE/ENDIF` is not yet executed through
+    `ExecutionSession`
+  - branch conditions require `IExecutionRuntime`; the plain `IRuntime`
+    adapter reports condition-resolution as unavailable
 - Integration-test contract:
   - deterministic event logs should capture interface call order and parameter
     values for a given input program
@@ -731,6 +745,14 @@ N130 G01 X20 Y20
     `output/execution_contract_review/`
   - generated review HTML can be published under
     `docs/book/execution-contract-review/`
+- Fault-diagnostic emission rule:
+  - executor-originated streaming/session faults must surface one diagnostic
+    per fault cause; the session must not emit a duplicate copy of the same
+    executor diagnostic
+  - executor-originated streaming/session faults must surface one diagnostic
+    per fault cause; the session must not emit a duplicate copy of the same
+    executor diagnostic
+>>>>>>> bb7f63d (fix: align execution session control-flow contract)
 - M-function runtime boundary (v0):
   - `m_function` instructions are present in AIL and seen by executor
   - known predefined Siemens M values:

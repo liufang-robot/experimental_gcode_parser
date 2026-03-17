@@ -4648,6 +4648,33 @@ Known limitations:
 How to reproduce locally (commands):
 - `sed -n '1,180p' README.md`
 
+## 2026-03-17 (execution-session control-flow contract alignment)
+- Fixed `StreamingExecutionEngine` fault handling so executor-originated faults
+  emit one diagnostic instead of duplicating the same error through
+  `ExecutionSession`.
+- Added a public-session regression test for forward-`GOTO` fault reporting and
+  aligned the execution docs/spec with the current `ExecutionSession`
+  control-flow boundary.
+- Updated the execution-contract fixture design/Step 1 plan to defer
+  cross-line control-flow fixtures until the public session preserves buffered
+  labels/targets.
+
+SPEC sections / tests:
+- SPEC: Section 6.1 and Section 6.2
+- Tests:
+  - `test/execution_session_tests.cpp`
+  - `./build/execution_session_tests --gtest_filter='ExecutionSessionTest.ForwardGotoFaultEmitsSingleDiagnostic'`
+
+Known limitations:
+- Public `ExecutionSession` control-flow support is still narrower than the
+  reviewed `AilExecutor` control-flow model; cross-line `GOTO` and structured
+  `IF/ELSE/ENDIF` execution remain deferred on the public session path.
+
+How to reproduce locally (commands):
+- `./build/execution_session_tests --gtest_filter='ExecutionSessionTest.ForwardGotoFaultEmitsSingleDiagnostic'`
+- `./build/gcode_exec_session --format json /tmp/goto_end.ngc`
+- `sed -n '620,730p' SPEC.md`
+
 ## 2026-03-16 (execution contract fixture spec and step-1 plan)
 - Added a design spec for human-reviewable execution contract fixtures based on
   `ExecutionSession`, persistent reference traces, generated actual traces, and

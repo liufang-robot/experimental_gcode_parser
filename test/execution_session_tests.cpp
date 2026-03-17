@@ -161,4 +161,23 @@ TEST(ExecutionSessionTest, BlockedSessionRejectsEditableSuffixReplacement) {
   EXPECT_FALSE(session.replaceEditableSuffix("G1 X2\n"));
 }
 
+TEST(ExecutionSessionTest, ForwardGotoFaultEmitsSingleDiagnostic) {
+  RecordingSink sink;
+  ReadyRuntime runtime;
+  StaticCancellation cancellation;
+  gcode::ExecutionSession session(sink, runtime, cancellation);
+
+  ASSERT_TRUE(
+      session.pushChunk("N10 GOTO END\nN20 G1 X10\nEND:\nN30 G1 X20\n"));
+
+  const auto faulted = session.finish();
+  EXPECT_EQ(faulted.status, gcode::StepStatus::Faulted);
+  EXPECT_EQ(session.state(), gcode::EngineState::Faulted);
+  EXPECT_TRUE(sink.linear_moves.empty());
+
+  ASSERT_EQ(sink.diagnostics.size(), 1u);
+  EXPECT_EQ(sink.diagnostics[0].message, "unresolved goto target: END");
+  EXPECT_EQ(sink.diagnostics[0].location.line, 1);
+}
+
 } // namespace

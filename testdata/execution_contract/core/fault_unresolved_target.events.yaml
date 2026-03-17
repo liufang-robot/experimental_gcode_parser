@@ -23,15 +23,6 @@
       }
     },
     {
-      "type": "diagnostic",
-      "severity": "error",
-      "message": "unresolved goto target: END",
-      "location": {
-        "line": 1,
-        "column": 1
-      }
-    },
-    {
       "type": "faulted",
       "severity": "error",
       "message": "unresolved goto target: END",

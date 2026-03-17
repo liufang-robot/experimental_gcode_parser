@@ -301,13 +301,23 @@ StepResult StreamingExecutionEngine::advanceActiveExecutor() {
                                "instruction execution in progress");
     }
     if (executor_state.status == ExecutorStatus::Fault) {
+      const bool has_executor_fault_diagnostic = !executor_diagnostics.empty();
       const Diagnostic diag =
-          executor_diagnostics.empty()
-              ? makeFaultDiagnostic(active_executor_line_,
-                                    "executor faulted without diagnostic")
-              : executor_diagnostics.back();
+          has_executor_fault_diagnostic
+              ? executor_diagnostics.back()
+              : makeFaultDiagnostic(active_executor_line_,
+                                    "executor faulted without diagnostic");
       active_executor_.reset();
-      return faultWithDiagnostic(diag);
+      if (!has_executor_fault_diagnostic) {
+        return faultWithDiagnostic(diag);
+      }
+      blocked_.reset();
+      rejected_.reset();
+      state_ = EngineState::Faulted;
+      StepResult result;
+      result.status = StepStatus::Faulted;
+      result.fault = diag;
+      return result;
     }
     if (executor_state.status == ExecutorStatus::Completed) {
       current_motion_code_ = executor_state.motion_code_current;

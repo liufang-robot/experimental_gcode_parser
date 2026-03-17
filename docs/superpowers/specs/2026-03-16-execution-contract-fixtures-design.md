@@ -267,8 +267,8 @@ Initial Step 1 case families:
 
 1. modal-only update
 2. simple linear move completed
-3. `GOTO` skips a line
-4. `IF / ELSE` chooses one branch
+3. dwell completed
+4. tool change completed
 5. rejected invalid line
 6. unrecoverable fault case
 
