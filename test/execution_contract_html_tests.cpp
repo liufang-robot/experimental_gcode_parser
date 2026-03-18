@@ -16,12 +16,22 @@ std::string readFile(const std::filesystem::path &path) {
 }
 
 TEST(ExecutionContractHtmlTest, WritesIndexAndCasePage) {
+  const auto temp_root =
+      std::filesystem::temp_directory_path() / "execution_contract_html_test";
+  std::filesystem::remove_all(temp_root);
+  std::filesystem::create_directories(temp_root / "core");
+
+  const auto program_path = temp_root / "core" / "linear_move_completed.ngc";
+  {
+    std::ofstream out(program_path);
+    out << "N10 G1 X10 Y20 F100\n";
+  }
+
   gcode::ExecutionContractCaseReport report;
   report.suite_name = "core";
   report.case_name = "linear_move_completed";
   report.description = "simple linear move";
-  report.program_path =
-      "testdata/execution_contract/core/linear_move_completed.ngc";
+  report.program_path = program_path.string();
   report.reference_path =
       "testdata/execution_contract/core/linear_move_completed.events.yaml";
   report.actual_path =
@@ -30,8 +40,7 @@ TEST(ExecutionContractHtmlTest, WritesIndexAndCasePage) {
   report.reference_trace.name = "linear_move_completed";
   report.actual_trace.name = "linear_move_completed";
 
-  const auto output_root =
-      std::filesystem::temp_directory_path() / "execution_contract_html_test";
+  const auto output_root = temp_root / "site";
   std::filesystem::remove_all(output_root);
 
   gcode::writeExecutionContractHtmlSite({report}, output_root.string());
@@ -45,9 +54,10 @@ TEST(ExecutionContractHtmlTest, WritesIndexAndCasePage) {
   const auto case_html = readFile(case_path);
   EXPECT_NE(index_html.find("linear_move_completed"), std::string::npos);
   EXPECT_NE(index_html.find("Mismatch"), std::string::npos);
+  EXPECT_NE(case_html.find("Input G-code"), std::string::npos);
   EXPECT_NE(case_html.find("Expected Trace"), std::string::npos);
   EXPECT_NE(case_html.find("Actual Trace"), std::string::npos);
-  EXPECT_NE(case_html.find("linear_move_completed.ngc"), std::string::npos);
+  EXPECT_NE(case_html.find("N10 G1 X10"), std::string::npos);
 }
 
 } // namespace
