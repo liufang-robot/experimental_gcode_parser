@@ -4721,11 +4721,11 @@ How to reproduce locally (commands):
 - `./dev/check.sh`
 ## 2026-03-18 (publish execution contract review with docs site)
 - Added `dev/build_docs_site.sh` to build the mdBook and generate the
-  `execution-contract-review` subsite in one step.
+  execution-contract review subsite in one step.
 - Updated the GitHub Actions docs jobs to publish the generated
   execution-contract review alongside the rest of the docs site.
 - Clarified the docs and README so the generated review subsite is treated as
-  part of the published documentation.
+  part of the published documentation on the same `mdbook serve` site.
 
 SPEC sections / tests:
 - Docs/workflow only; no SPEC behavior change
@@ -4738,4 +4738,4 @@ Known limitations:
 
 How to reproduce locally (commands):
 - `./dev/build_docs_site.sh`
-- `test -f docs/book/execution-contract-review/index.html`
+- `test -f docs/book/generated/execution-contract-review/index.html`

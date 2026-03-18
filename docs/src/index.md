@@ -20,4 +20,4 @@ Policy:
   same PR.
 - CI builds this book and publishes it to GitHub Pages from `main`.
 - The published docs site also includes the generated execution-contract review
-  subsite at `execution-contract-review/index.html`.
+  subsite at `generated/execution-contract-review/index.html`.

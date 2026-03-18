@@ -186,7 +186,8 @@ Main pages:
 - `docs/src/program_reference.md`
 
 GitHub Pages publishes `docs/book` on pushes to `main`, including the generated
-execution contract review subsite under `docs/book/execution-contract-review/`.
+execution contract review subsite under
+`docs/book/generated/execution-contract-review/`.
 
 ## Project Layout
 
