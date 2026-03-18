@@ -49,7 +49,6 @@ void writeFile(const std::filesystem::path &path, const std::string &contents) {
 }
 
 std::string casePageHtml(const ExecutionContractCaseReport &report) {
-  const std::string case_base = report.case_name;
   std::ostringstream out;
   out << "<!doctype html><html><head><meta charset=\"utf-8\">";
   out << "<title>" << escapeHtml(report.case_name) << "</title>";
@@ -65,14 +64,8 @@ std::string casePageHtml(const ExecutionContractCaseReport &report) {
       << (report.matches_reference ? "status-match\">Match"
                                    : "status-mismatch\">Mismatch")
       << "</strong></p>";
-  out << "<ul>";
-  out << "<li>Input: <a href=\"" << escapeHtml(case_base + ".ngc") << "\">"
-      << escapeHtml(report.program_path) << "</a></li>";
-  out << "<li>Reference: <a href=\"" << escapeHtml(case_base + ".events.yaml")
-      << "\">" << escapeHtml(report.reference_path) << "</a></li>";
-  out << "<li>Actual: <a href=\"" << escapeHtml(case_base + ".actual.yaml")
-      << "\">" << escapeHtml(report.actual_path) << "</a></li>";
-  out << "</ul>";
+  out << "<h2>Input G-code</h2><pre>"
+      << escapeHtml(readFileIfExists(report.program_path)) << "</pre>";
   out << "<h2>Expected Trace</h2><pre>"
       << escapeHtml(serializeExecutionContractTrace(report.reference_trace))
       << "</pre>";
