@@ -480,7 +480,7 @@ TEST(AilExecutorTest, GotocWithSystemVariableTargetContinuesWhenUnresolved) {
 
 TEST(AilExecutorTest, BranchCanBlockAndResumeOnEvent) {
   const auto lowered = gcode::parseAndLowerAil(
-      "IF R1 == 1 GOTOF TARGET\nGOTO END\nTARGET:\nEND:\n");
+      "IF $P_ACT_X == 1 GOTOF TARGET\nGOTO END\nTARGET:\nEND:\n");
   gcode::AilExecutor exec(lowered.instructions);
 
   int calls = 0;
@@ -551,7 +551,7 @@ TEST(AilExecutorTest, SystemVariableConditionCanBlockAndResumeOnEvent) {
 
 TEST(AilExecutorTest, BranchCanResumeWhenRetryTimeElapses) {
   const auto lowered = gcode::parseAndLowerAil(
-      "IF R1 == 1 GOTOF TARGET\nGOTO END\nTARGET:\nEND:\n");
+      "IF $P_ACT_X == 1 GOTOF TARGET\nGOTO END\nTARGET:\nEND:\n");
   gcode::AilExecutor exec(lowered.instructions);
 
   int calls = 0;
@@ -609,7 +609,8 @@ TEST(AilExecutorTest, SystemVariableConditionErrorFaultsRuntime) {
 }
 
 TEST(AilExecutorTest, BranchWithSystemVariableTargetFaultsWhenTaken) {
-  const auto lowered = gcode::parseAndLowerAil("IF R1 == 1 GOTOF $DEST\n");
+  const auto lowered =
+      gcode::parseAndLowerAil("IF $P_ACT_X == 1 GOTOF $DEST\n");
   gcode::AilExecutor exec(lowered.instructions);
 
   const auto resolver = [](const gcode::Condition &,
@@ -646,7 +647,7 @@ TEST(AilExecutorTest, BranchWithSystemVariableGotocTargetContinuesWhenTaken) {
 
 TEST(AilExecutorTest, StructuredIfElseExecutesSingleBranchAtRuntime) {
   const auto lowered =
-      gcode::parseAndLowerAil("IF R1 == 1\nG1 X1\nELSE\nG1 X2\nENDIF\n");
+      gcode::parseAndLowerAil("IF $P_ACT_X == 1\nG1 X1\nELSE\nG1 X2\nENDIF\n");
   ASSERT_TRUE(lowered.diagnostics.empty());
 
   const auto collectVisited =

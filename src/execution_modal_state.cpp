@@ -16,6 +16,7 @@ void applyExecutionInitialState(
   state->active_tool_selection = initial_state->active_tool_selection;
   state->pending_tool_selection = initial_state->pending_tool_selection;
   state->selected_tool_selection = initial_state->selected_tool_selection;
+  state->user_variables = initial_state->user_variables;
 }
 
 ExecutionModalState makeExecutionModalState(

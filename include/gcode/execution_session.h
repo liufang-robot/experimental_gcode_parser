@@ -38,8 +38,9 @@ private:
   bool enqueueCompleteLinesFromBuffer();
   void appendReplacementText(std::string_view text);
   void rebuildEngineFromLockedPrefix();
+  bool syncEngineWithEditableSuffix();
   StepResult runEngineStep(const StepResult &result);
-  void commitAcceptedCurrentLine();
+  void commitAcceptedEditablePrefix(size_t line_count);
 
   IExecutionSink &sink_;
   IRuntime &runtime_;
@@ -49,12 +50,13 @@ private:
   std::unique_ptr<StreamingExecutionEngine> engine_;
   std::vector<std::string> locked_prefix_lines_;
   std::deque<std::string> editable_lines_;
-  std::optional<std::string> current_line_;
   std::string input_buffer_;
   bool input_finished_ = false;
+  bool engine_dirty_ = false;
   EngineState state_ = EngineState::AcceptingInput;
   std::optional<RejectedState> rejected_;
   AilExecutorInitialState prefix_state_;
+  size_t in_flight_line_count_ = 0;
 };
 
 } // namespace gcode

@@ -17,10 +17,56 @@ Diagnostic makeFaultDiagnostic(int line, const std::string &message) {
   return diag;
 }
 
+bool messageStartsWith(const std::string &text, const std::string &prefix) {
+  return text.rfind(prefix, 0) == 0;
+}
+
+bool shouldWaitForMoreInputOnRejected(const RejectedLine &rejected) {
+  for (const auto &reason : rejected.reasons) {
+    if (reason.message == "missing ENDIF for IF block") {
+      return true;
+    }
+  }
+  return false;
+}
+
+bool shouldWaitForMoreInputOnFault(const Diagnostic &diag) {
+  return messageStartsWith(diag.message, "unresolved goto target: ") ||
+         messageStartsWith(diag.message, "unresolved branch target: ");
+}
+
+std::string joinPendingLines(
+    const std::deque<StreamingExecutionEngine::PendingLine> &lines) {
+  std::string text;
+  for (const auto &line : lines) {
+    text += line.text;
+    text.push_back('\n');
+  }
+  return text;
+}
+
+std::vector<int>
+sourceLineMap(const std::deque<StreamingExecutionEngine::PendingLine> &lines) {
+  std::vector<int> mapping;
+  mapping.reserve(lines.size());
+  for (const auto &line : lines) {
+    mapping.push_back(line.line);
+  }
+  return mapping;
+}
+
 void remapInstructionSourceLines(std::vector<AilInstruction> *instructions,
-                                 int line) {
+                                 const std::vector<int> &line_map) {
   for (auto &instruction : *instructions) {
-    std::visit([line](auto &inst) { inst.source.line = line; }, instruction);
+    std::visit(
+        [&line_map](auto &inst) {
+          if (inst.source.line > 0 &&
+              static_cast<size_t>(inst.source.line) <= line_map.size()) {
+            inst.source.line =
+                line_map[static_cast<size_t>(inst.source.line - 1)];
+          }
+        },
+        instruction);
   }
 }
 
@@ -132,7 +178,7 @@ StepResult StreamingExecutionEngine::pump() {
     return result;
   }
   if (!pending_lines_.empty()) {
-    return executeNextLine();
+    return executePendingProgram();
   }
   if (input_finished_) {
     state_ = EngineState::Completed;
@@ -211,51 +257,64 @@ bool StreamingExecutionEngine::enqueueCompleteLines() {
   return true;
 }
 
-StepResult StreamingExecutionEngine::executeNextLine() {
+StepResult StreamingExecutionEngine::executePendingProgram() {
   if (pending_lines_.empty()) {
     StepResult result;
     result.status = StepStatus::Progress;
     return result;
   }
-  const PendingLine line = std::move(pending_lines_.front());
-  pending_lines_.pop_front();
+  AilResult line_result =
+      parseAndLowerAil(joinPendingLines(pending_lines_), options_);
+  const auto line_map = sourceLineMap(pending_lines_);
+  remapDiagnostics(&line_result.diagnostics, line_map.front());
+  remapRejectedLines(&line_result.rejected_lines, line_map.front());
+  remapInstructionSourceLines(&line_result.instructions, line_map);
 
-  std::string line_text = line.text;
-  line_text.push_back('\n');
-  AilResult line_result = parseAndLowerAil(line_text, options_);
-  remapDiagnostics(&line_result.diagnostics, line.line);
-  remapRejectedLines(&line_result.rejected_lines, line.line);
-  emitDiagnostics(line_result.diagnostics);
-  if (!line_result.rejected_lines.empty()) {
-    if (const auto rejected =
-            makeRejectedEvent(line_result.rejected_lines.front());
-        rejected.has_value()) {
-      sink_.onRejectedLine(*rejected);
+  if (!line_result.rejected_lines.empty() && !input_finished_ &&
+      shouldWaitForMoreInputOnRejected(line_result.rejected_lines.front())) {
+    state_ = EngineState::ReadyToExecute;
+    StepResult result;
+    result.status = StepStatus::Progress;
+    return result;
+  }
+
+  if (line_result.instructions.empty()) {
+    emitDiagnostics(line_result.diagnostics);
+    if (!line_result.rejected_lines.empty()) {
+      if (const auto rejected =
+              makeRejectedEvent(line_result.rejected_lines.front());
+          rejected.has_value()) {
+        sink_.onRejectedLine(*rejected);
+        RejectedState rejected_state;
+        rejected_state.source = rejected->source;
+        rejected_state.reasons = rejected->reasons;
+        return makeRejectedResult(rejected_state);
+      }
       RejectedState rejected_state;
-      rejected_state.source = rejected->source;
-      rejected_state.reasons = rejected->reasons;
+      rejected_state.source.line = pending_lines_.front().line;
+      rejected_state.reasons.push_back(
+          makeFaultDiagnostic(pending_lines_.front().line, "line rejected"));
       return makeRejectedResult(rejected_state);
     }
-    RejectedState rejected_state;
-    rejected_state.source.line = line.line;
-    rejected_state.reasons.push_back(
-        makeFaultDiagnostic(line.line, "line rejected"));
-    return makeRejectedResult(rejected_state);
-  }
-  if (line_result.instructions.empty()) {
-    state_ = pending_lines_.empty() && input_finished_
-                 ? EngineState::Completed
-                 : EngineState::ReadyToExecute;
-    if (state_ == EngineState::Completed) {
-      StepResult step_result;
-      step_result.status = StepStatus::Completed;
-      return step_result;
-    }
+    pending_lines_.clear();
+    state_ =
+        input_finished_ ? EngineState::Completed : EngineState::ReadyToExecute;
     StepResult step_result;
-    step_result.status = StepStatus::Progress;
+    step_result.status = state_ == EngineState::Completed
+                             ? StepStatus::Completed
+                             : StepStatus::Progress;
     return step_result;
   }
-  remapInstructionSourceLines(&line_result.instructions, line.line);
+
+  if (!line_result.rejected_lines.empty()) {
+    deferred_rejected_ = RejectedState{};
+    deferred_rejected_->source =
+        toSourceRef(line_result.rejected_lines.front().source);
+    deferred_rejected_->reasons = line_result.rejected_lines.front().reasons;
+  } else {
+    emitDiagnostics(line_result.diagnostics);
+    deferred_rejected_.reset();
+  }
 
   AilExecutorOptions executor_options;
   AilExecutorInitialState initial_state;
@@ -268,7 +327,7 @@ StepResult StreamingExecutionEngine::executeNextLine() {
   executor_options.initial_state = std::move(initial_state);
   active_executor_ = std::make_unique<AilExecutor>(
       std::move(line_result.instructions), std::move(executor_options));
-  active_executor_line_ = line.line;
+  active_executor_line_ = pending_lines_.front().line;
   active_executor_emitted_diagnostics_ = 0;
   return advanceActiveExecutor();
 }
@@ -287,26 +346,42 @@ StepResult StreamingExecutionEngine::advanceActiveExecutor() {
   while (active_executor_ != nullptr) {
     const bool progressed = active_executor_->step(0, sink_, execution_runtime);
     const auto &executor_diagnostics = active_executor_->diagnostics();
-    while (active_executor_emitted_diagnostics_ < executor_diagnostics.size()) {
-      sink_.onDiagnostic(
-          executor_diagnostics[active_executor_emitted_diagnostics_++]);
-    }
-
     const auto &executor_state = active_executor_->state();
     if (executor_state.status == ExecutorStatus::Blocked &&
         executor_state.blocked.has_value() &&
         executor_state.blocked->wait_token.has_value()) {
+      while (active_executor_emitted_diagnostics_ <
+             executor_diagnostics.size()) {
+        sink_.onDiagnostic(
+            executor_diagnostics[active_executor_emitted_diagnostics_++]);
+      }
       return makeBlockedResult(active_executor_line_,
                                *executor_state.blocked->wait_token,
                                "instruction execution in progress");
     }
     if (executor_state.status == ExecutorStatus::Fault) {
-      const bool has_executor_fault_diagnostic = !executor_diagnostics.empty();
+      const bool has_executor_fault_diagnostic =
+          active_executor_emitted_diagnostics_ < executor_diagnostics.size() ||
+          !executor_diagnostics.empty();
       const Diagnostic diag =
-          has_executor_fault_diagnostic
+          !executor_diagnostics.empty()
               ? executor_diagnostics.back()
               : makeFaultDiagnostic(active_executor_line_,
                                     "executor faulted without diagnostic");
+      if (!input_finished_ && shouldWaitForMoreInputOnFault(diag)) {
+        active_executor_.reset();
+        active_executor_emitted_diagnostics_ = 0;
+        deferred_rejected_.reset();
+        state_ = EngineState::ReadyToExecute;
+        StepResult result;
+        result.status = StepStatus::Progress;
+        return result;
+      }
+      while (active_executor_emitted_diagnostics_ <
+             executor_diagnostics.size()) {
+        sink_.onDiagnostic(
+            executor_diagnostics[active_executor_emitted_diagnostics_++]);
+      }
       active_executor_.reset();
       if (!has_executor_fault_diagnostic) {
         return faultWithDiagnostic(diag);
@@ -320,13 +395,31 @@ StepResult StreamingExecutionEngine::advanceActiveExecutor() {
       return result;
     }
     if (executor_state.status == ExecutorStatus::Completed) {
+      while (active_executor_emitted_diagnostics_ <
+             executor_diagnostics.size()) {
+        sink_.onDiagnostic(
+            executor_diagnostics[active_executor_emitted_diagnostics_++]);
+      }
       current_motion_code_ = executor_state.motion_code_current;
       current_working_plane_ = executor_state.working_plane_current;
       current_rapid_mode_ = executor_state.rapid_mode_current;
       current_tool_radius_comp_ = executor_state.tool_radius_comp_current;
       current_active_tool_selection_ = executor_state.active_tool_selection;
       current_pending_tool_selection_ = executor_state.pending_tool_selection;
+      current_user_variables_ = executor_state.user_variables;
       active_executor_.reset();
+      active_executor_emitted_diagnostics_ = 0;
+      if (deferred_rejected_.has_value()) {
+        for (const auto &diag : deferred_rejected_->reasons) {
+          sink_.onDiagnostic(diag);
+        }
+        sink_.onRejectedLine(RejectedLineEvent{deferred_rejected_->source,
+                                               deferred_rejected_->reasons});
+        const auto rejected = *deferred_rejected_;
+        deferred_rejected_.reset();
+        return makeRejectedResult(rejected);
+      }
+      pending_lines_.clear();
       state_ = pending_lines_.empty() && input_finished_
                    ? EngineState::Completed
                    : EngineState::ReadyToExecute;
@@ -338,6 +431,10 @@ StepResult StreamingExecutionEngine::advanceActiveExecutor() {
       StepResult result;
       result.status = StepStatus::Progress;
       return result;
+    }
+    while (active_executor_emitted_diagnostics_ < executor_diagnostics.size()) {
+      sink_.onDiagnostic(
+          executor_diagnostics[active_executor_emitted_diagnostics_++]);
     }
     if (!progressed) {
       break;
@@ -402,16 +499,16 @@ std::optional<RejectedLineEvent> StreamingExecutionEngine::makeRejectedEvent(
 void StreamingExecutionEngine::remapDiagnostics(
     std::vector<Diagnostic> *diagnostics, int line) const {
   for (auto &diag : *diagnostics) {
-    diag.location.line = line;
+    diag.location.line = line + diag.location.line - 1;
   }
 }
 
 void StreamingExecutionEngine::remapRejectedLines(
     std::vector<RejectedLine> *rejected_lines, int line) const {
   for (auto &rejected : *rejected_lines) {
-    rejected.source.line = line;
+    rejected.source.line = line + rejected.source.line - 1;
     for (auto &diag : rejected.reasons) {
-      diag.location.line = line;
+      diag.location.line = line + diag.location.line - 1;
     }
   }
 }
@@ -424,6 +521,7 @@ AilExecutorInitialState StreamingExecutionEngine::exportInitialState() const {
   initial_state.working_plane_current = current_working_plane_;
   initial_state.active_tool_selection = current_active_tool_selection_;
   initial_state.pending_tool_selection = current_pending_tool_selection_;
+  initial_state.user_variables = current_user_variables_;
   return initial_state;
 }
 
@@ -435,6 +533,7 @@ void StreamingExecutionEngine::importInitialState(
   current_working_plane_ = state.working_plane_current;
   current_active_tool_selection_ = state.active_tool_selection;
   current_pending_tool_selection_ = state.pending_tool_selection;
+  current_user_variables_ = state.user_variables;
   next_line_number_ = next_line_number;
 }
 

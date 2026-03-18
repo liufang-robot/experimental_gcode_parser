@@ -271,28 +271,22 @@ This pattern applies to:
 
 ## Current Control-Flow Boundary
 
-The reviewed control-flow runtime model exists in `AilExecutor`, but the
-current public `ExecutionSession` contract is narrower.
-
 Today `ExecutionSession`:
 
-- executes one parsed logical line at a time
+- buffers the editable suffix as one executable program view
 - handles motion/dwell/tool-change dispatch, async waiting, rejection
-  recovery, and modal carry-forward
-- does not yet preserve later labels or structured multi-line control-flow
-  blocks in buffered session state
+  recovery, modal carry-forward, and buffered control-flow resolution
+- executes forward `GOTO`/label flows and structured `IF/ELSE/ENDIF` on the
+  public path
 
 Practical consequences:
 
-- forward `GOTO`/branch targets fault immediately instead of waiting for later
-  input
-- structured `IF/ELSE/ENDIF` is not yet executed through `ExecutionSession`
-- branch conditions need `IExecutionRuntime`; the plain `IRuntime` adapter
-  reports condition resolution as unavailable
-
-If you need the reviewed control-flow execution semantics today, use
-`parseAndLowerAil(...)` plus `AilExecutor` with an `IExecutionRuntime`
-resolver.
+- unresolved forward `GOTO`/branch targets can wait for later input before EOF
+- structured `IF/ELSE/ENDIF` runs through `ExecutionSession`
+- branch conditions in the baseline expression subset do not need
+  `IExecutionRuntime`; the plain `IRuntime` adapter only reports condition
+  resolution as unavailable when the condition falls outside the
+  executor-owned supported subset
 
 ```cpp
 const auto lowered = gcode::parseAndLowerAil(program_text);

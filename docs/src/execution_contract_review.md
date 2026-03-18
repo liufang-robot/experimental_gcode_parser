@@ -20,11 +20,6 @@ Each supported case uses:
 - `<case>.ngc`
 - `<case>.events.yaml`
 
-Pending examples that describe reviewed requirements but are not yet enforced by
-the public `ExecutionSession` path live in:
-
-- `testdata/execution_contract/pending/`
-
 ## Step 1 Scope
 
 The current enforced Step 1 suite covers:
@@ -33,14 +28,8 @@ The current enforced Step 1 suite covers:
 - `linear_move_completed`
 - `rejected_invalid_line`
 - `fault_unresolved_target`
-
-The current pending control-flow examples are:
-
 - `goto_skips_line`
 - `if_else_branch`
-
-Those pending cases are kept for future work but are not part of the exact
-equality gate yet.
 
 ## Event Model
 

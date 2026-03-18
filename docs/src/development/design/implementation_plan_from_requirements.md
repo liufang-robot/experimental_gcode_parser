@@ -45,9 +45,7 @@ be tracked separately:
   - generate actual results and a GitHub Pages review subsite
   - current completed skeleton enforces the supported baseline cases:
     `modal_update`, `linear_move_completed`, `rejected_invalid_line`,
-    `fault_unresolved_target`
-  - reviewed control-flow examples remain pending until the public execution
-    path supports them directly
+    `fault_unresolved_target`, `goto_skips_line`, and `if_else_branch`
 - `WU-11 Execution Contract Fixtures Step 2`
   - extend the same system to asynchronous `blocked` / `resume` /
     `cancelled` cases
