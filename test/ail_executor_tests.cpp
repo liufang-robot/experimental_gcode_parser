@@ -172,7 +172,15 @@ public:
     return next_tool_change_result.value_or(readyRuntimeResult());
   }
 
-  gcode::RuntimeResult<double> readSystemVariable(std::string_view) override {
+  gcode::RuntimeResult<double>
+  readSystemVariable(std::string_view name) override {
+    const auto it = system_variables.find(std::string(name));
+    if (it != system_variables.end()) {
+      gcode::RuntimeResult<double> result;
+      result.status = gcode::RuntimeCallStatus::Ready;
+      result.value = it->second;
+      return result;
+    }
     gcode::RuntimeResult<double> result;
     result.status = gcode::RuntimeCallStatus::Error;
     result.error_message = "not implemented in test runtime";
@@ -195,6 +203,7 @@ public:
   std::vector<gcode::DwellCommand> dwells;
   std::vector<gcode::ToolChangeCommand> tool_changes;
   std::vector<gcode::WaitToken> cancelled_tokens;
+  std::unordered_map<std::string, double> system_variables;
 };
 
 TEST(AilExecutorTest, ResolvesGotoAndCompletes) {
@@ -685,6 +694,40 @@ TEST(AilExecutorTest, StructuredIfElseExecutesSingleBranchAtRuntime) {
             visited_true.end());
   EXPECT_NE(std::find(visited_false.begin(), visited_false.end(), 5u),
             visited_false.end());
+}
+
+TEST(AilExecutorTest, RuntimeBackedSystemVariableConditionCanTakeTrueBranch) {
+  const auto lowered = gcode::parseAndLowerAil("IF $P_ACT_X == 0 GOTOF TARGET\n"
+                                               "G1 X20\n"
+                                               "GOTO END\n"
+                                               "TARGET:\n"
+                                               "G1 X10\n"
+                                               "END:\n");
+  ASSERT_TRUE(lowered.diagnostics.empty());
+
+  gcode::AilExecutor exec(lowered.instructions);
+  RecordingExecutionSink sink;
+  RecordingExecutionRuntime runtime(
+      [](const gcode::Condition &, const gcode::SourceInfo &) {
+        gcode::ConditionResolution r;
+        r.kind = gcode::ConditionResolutionKind::Error;
+        r.error_message = "fallback resolver should not be used";
+        return r;
+      });
+  runtime.system_variables["$P_ACT_X"] = 0.0;
+
+  int guard = 0;
+  while (exec.state().status != gcode::ExecutorStatus::Completed &&
+         exec.state().status != gcode::ExecutorStatus::Fault && guard < 32) {
+    ASSERT_TRUE(exec.step(0, sink, runtime));
+    ++guard;
+  }
+
+  EXPECT_EQ(exec.state().status, gcode::ExecutorStatus::Completed);
+  ASSERT_EQ(sink.linear_moves.size(), 1u);
+  ASSERT_TRUE(sink.linear_moves[0].target.x.has_value());
+  EXPECT_EQ(*sink.linear_moves[0].target.x, 10.0);
+  EXPECT_TRUE(sink.diagnostics.empty());
 }
 
 TEST(AilExecutorTest, ResolvesDirectionalGotoByLineNumber) {

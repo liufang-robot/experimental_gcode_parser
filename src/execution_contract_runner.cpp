@@ -2,6 +2,7 @@
 
 #include <filesystem>
 #include <fstream>
+#include <map>
 #include <sstream>
 #include <utility>
 
@@ -189,6 +190,9 @@ private:
 
 class ReadyRuntime final : public IRuntime {
 public:
+  explicit ReadyRuntime(std::map<std::string, double> system_variables = {})
+      : system_variables_(std::move(system_variables)) {}
+
   RuntimeResult<WaitToken>
   submitLinearMove(const LinearMoveCommand &) override {
     RuntimeResult<WaitToken> result;
@@ -215,8 +219,14 @@ public:
     return result;
   }
 
-  RuntimeResult<double> readSystemVariable(std::string_view) override {
+  RuntimeResult<double> readSystemVariable(std::string_view name) override {
     RuntimeResult<double> result;
+    const auto it = system_variables_.find(std::string(name));
+    if (it != system_variables_.end()) {
+      result.status = RuntimeCallStatus::Ready;
+      result.value = it->second;
+      return result;
+    }
     result.status = RuntimeCallStatus::Error;
     result.error_message = "system variable reads are not configured";
     return result;
@@ -227,6 +237,9 @@ public:
     result.status = RuntimeCallStatus::Ready;
     return result;
   }
+
+private:
+  std::map<std::string, double> system_variables_;
 };
 
 class NeverCancelled final : public ICancellation {
@@ -277,7 +290,9 @@ runExecutionContractFixture(const std::string &program_path,
                             const std::string &actual_output_path) {
   std::vector<ExecutionContractEvent> actual_events;
   ContractRecordingSink sink(&actual_events);
-  ReadyRuntime runtime;
+  ReadyRuntime runtime(reference_trace.runtime.has_value()
+                           ? reference_trace.runtime->system_variables
+                           : std::map<std::string, double>{});
   NeverCancelled cancellation;
   LowerOptions options;
 
@@ -296,6 +311,7 @@ runExecutionContractFixture(const std::string &program_path,
   actual_trace.name = reference_trace.name;
   actual_trace.description = reference_trace.description;
   actual_trace.initial_state = reference_trace.initial_state;
+  actual_trace.runtime = reference_trace.runtime;
   actual_trace.events = std::move(actual_events);
 
   std::filesystem::path output_path(actual_output_path);

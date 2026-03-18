@@ -1,0 +1,51 @@
+{
+  "name": "if_system_variable_false_branch",
+  "description": "System-variable-backed IF/GOTOF resolves through the fixture runtime.",
+  "initial_state": {
+    "modal": {
+      "motion_code": "",
+      "working_plane": "xy",
+      "rapid_mode": "linear",
+      "tool_radius_comp": "off",
+      "active_tool_selection": null,
+      "pending_tool_selection": null,
+      "selected_tool_selection": null
+    }
+  },
+  "runtime": {
+    "system_variables": {
+      "$P_ACT_X": 0.0
+    }
+  },
+  "expected_events": [
+    {
+      "type": "linear_move",
+      "source": {
+        "filename": null,
+        "line": 2,
+        "line_number": null
+      },
+      "target": {
+        "x": 20.0,
+        "y": null,
+        "z": null,
+        "a": null,
+        "b": null,
+        "c": null
+      },
+      "feed": null,
+      "effective": {
+        "motion_code": "G1",
+        "working_plane": "xy",
+        "rapid_mode": "linear",
+        "tool_radius_comp": "off",
+        "active_tool_selection": null,
+        "pending_tool_selection": null,
+        "selected_tool_selection": null
+      }
+    },
+    {
+      "type": "completed"
+    }
+  ]
+}
