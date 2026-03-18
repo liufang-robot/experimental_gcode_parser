@@ -166,6 +166,30 @@ effectiveModalSnapshotToJson(const EffectiveModalSnapshot &snapshot) {
   return j;
 }
 
+ExecutionContractRuntimeInputs
+runtimeInputsFromJson(const nlohmann::ordered_json &j) {
+  ExecutionContractRuntimeInputs runtime;
+  if (!j.contains("system_variables") || j["system_variables"].is_null()) {
+    return runtime;
+  }
+
+  for (auto it = j["system_variables"].begin();
+       it != j["system_variables"].end(); ++it) {
+    runtime.system_variables[it.key()] = it.value().get<double>();
+  }
+  return runtime;
+}
+
+nlohmann::ordered_json
+runtimeInputsToJson(const ExecutionContractRuntimeInputs &runtime) {
+  nlohmann::ordered_json j;
+  j["system_variables"] = nlohmann::ordered_json::object();
+  for (const auto &entry : runtime.system_variables) {
+    j["system_variables"][entry.first] = entry.second;
+  }
+  return j;
+}
+
 ExecutionContractEvent eventFromJson(const nlohmann::ordered_json &j) {
   ExecutionContractEvent event;
   event.type = j.at("type").get<std::string>();
@@ -214,6 +238,9 @@ ExecutionContractTrace loadExecutionContractTrace(const std::string &path) {
   }
   trace.initial_state.modal =
       effectiveModalSnapshotFromJson(root.at("initial_state").at("modal"));
+  if (root.contains("runtime") && !root["runtime"].is_null()) {
+    trace.runtime = runtimeInputsFromJson(root["runtime"]);
+  }
 
   for (const auto &event_json : root.at("expected_events")) {
     trace.events.push_back(eventFromJson(event_json));
@@ -231,6 +258,9 @@ executionContractTraceToJson(const ExecutionContractTrace &trace) {
   }
   root["initial_state"] = {
       {"modal", effectiveModalSnapshotToJson(trace.initial_state.modal)}};
+  if (trace.runtime.has_value()) {
+    root["runtime"] = runtimeInputsToJson(*trace.runtime);
+  }
   root["expected_events"] = nlohmann::ordered_json::array();
   for (const auto &event : trace.events) {
     root["expected_events"].push_back(eventToJson(event));

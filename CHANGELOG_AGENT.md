@@ -27,6 +27,34 @@ How to reproduce locally (commands):
 - `./build/gcode_execution_contract_review --fixtures-root testdata/execution_contract/core --output-root output/execution_contract_review --publish-root docs/src/generated/execution-contract-review`
 - `./dev/check.sh`
 
+## 2026-03-18 (execution-contract runtime inputs)
+- Extended execution-contract fixtures with an optional `runtime` section so
+  reference traces can configure deterministic system-variable values.
+- Taught the execution-contract runner to use configured
+  `runtime.system_variables` values on the public `ExecutionSession` path and
+  to persist that runtime section into generated `.actual.yaml` traces.
+- Added the first enforced core runtime-backed public fixture:
+  `if_system_variable_false_branch`.
+
+SPEC sections / tests:
+- SPEC: Section 6.2 execution contract / system-variable runtime notes
+- Tests: `test/execution_contract_fixture_tests.cpp`,
+  `test/execution_contract_runner_tests.cpp`,
+  `test/ail_executor_tests.cpp`
+
+Known limitations:
+- Public execution-contract coverage currently enforces scalar system-variable
+  condition reads only.
+- Motion address expressions such as `G1 X=$P_ACT_X` remain a separate
+  follow-up because the motion word/lowering path is still numeric-only.
+
+How to reproduce locally (commands):
+- `cmake -S . -B build`
+- `cmake --build build -j --target execution_contract_fixture_tests execution_contract_runner_tests ail_executor_tests gcode_execution_contract_review`
+- `./build/execution_contract_fixture_tests`
+- `./build/execution_contract_runner_tests`
+- `./build/ail_executor_tests --gtest_filter='AilExecutorTest.RuntimeBackedSystemVariableConditionCanTakeTrueBranch'`
+- `./build/gcode_execution_contract_review --fixtures-root testdata/execution_contract/core --output-root output/execution_contract_review --publish-root docs/src/generated/execution-contract-review`
 ## 2026-03-13 (wu-4 executor state cleanup)
 - Centralized executor initial-state seeding and command-facing modal snapshot
   construction in `src/execution_modal_state.*`.

@@ -20,6 +20,12 @@ Each supported case uses:
 - `<case>.ngc`
 - `<case>.events.yaml`
 
+Fixtures may also declare deterministic runtime inputs in the reference trace:
+
+- `runtime.system_variables`
+
+This first runtime-input slice uses that only for ready-valued system-variable
+reads on the public `ExecutionSession` path.
 ## Step 1 Scope
 
 The current enforced Step 1 suite covers:
@@ -30,6 +36,7 @@ The current enforced Step 1 suite covers:
 - `fault_unresolved_target`
 - `goto_skips_line`
 - `if_else_branch`
+- `if_system_variable_false_branch`
 
 ## Event Model
 

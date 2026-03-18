@@ -64,4 +64,47 @@ TEST(ExecutionContractFixtureTest, LoadsInitialStateAndModalUpdateChanges) {
   EXPECT_EQ(trace.events[1].type, "completed");
 }
 
+TEST(ExecutionContractFixtureTest, LoadsRuntimeSystemVariables) {
+  const auto path =
+      writeFixtureFile("execution_contract_runtime_inputs.events.yaml",
+                       R"({
+  "name": "runtime_inputs",
+  "initial_state": {
+    "modal": {
+      "motion_code": "",
+      "working_plane": "xy",
+      "rapid_mode": "linear",
+      "tool_radius_comp": "off",
+      "active_tool_selection": null,
+      "pending_tool_selection": null,
+      "selected_tool_selection": null
+    }
+  },
+  "runtime": {
+    "system_variables": {
+      "$P_ACT_X": 12.5,
+      "$AA_IM[X]": 8.0
+    }
+  },
+  "expected_events": [
+    {
+      "type": "completed"
+    }
+  ]
+})");
+
+  const auto trace = gcode::loadExecutionContractTrace(path.string());
+
+  ASSERT_TRUE(trace.runtime.has_value());
+  ASSERT_EQ(trace.runtime->system_variables.size(), 2u);
+  EXPECT_EQ(trace.runtime->system_variables.at("$P_ACT_X"), 12.5);
+  EXPECT_EQ(trace.runtime->system_variables.at("$AA_IM[X]"), 8.0);
+
+  const auto roundtrip = gcode::executionContractTraceToJson(trace);
+  ASSERT_TRUE(roundtrip.contains("runtime"));
+  ASSERT_TRUE(roundtrip["runtime"].contains("system_variables"));
+  EXPECT_EQ(roundtrip["runtime"]["system_variables"]["$P_ACT_X"], 12.5);
+  EXPECT_EQ(roundtrip["runtime"]["system_variables"]["$AA_IM[X]"], 8.0);
+}
+
 } // namespace

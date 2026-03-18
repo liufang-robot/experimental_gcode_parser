@@ -1,5 +1,6 @@
 #pragma once
 
+#include <map>
 #include <optional>
 #include <string>
 #include <vector>
@@ -14,6 +15,10 @@ struct ExecutionContractInitialState {
   EffectiveModalSnapshot modal;
 };
 
+struct ExecutionContractRuntimeInputs {
+  std::map<std::string, double> system_variables;
+};
+
 struct ExecutionContractEvent {
   std::string type;
   std::optional<SourceRef> source;
@@ -24,6 +29,7 @@ struct ExecutionContractTrace {
   std::string name;
   std::optional<std::string> description;
   ExecutionContractInitialState initial_state;
+  std::optional<ExecutionContractRuntimeInputs> runtime;
   std::vector<ExecutionContractEvent> events;
 };
 

@@ -717,15 +717,18 @@ N130 G01 X20 Y20
   - intended for deterministic event-sequence review during refactor
 - System-variable execution contract:
   - runtime performs variable reads and may return value, pending, or error
-  - current implementation keeps this interface but does not yet execute
-    variable-backed expressions through the streaming engine
-- Current public-session control-flow limitation:
-  - unresolved forward goto/branch targets fault immediately instead of
-    entering `WaitingForInput`
-  - structured `IF/ELSE/ENDIF` is not yet executed through
-    `ExecutionSession`
-  - branch conditions require `IExecutionRuntime`; the plain `IRuntime`
-    adapter reports condition-resolution as unavailable
+  - execution-contract fixtures may provide deterministic ready-valued
+    `runtime.system_variables` inputs for public `ExecutionSession` review
+  - current enforced runtime-backed public case is
+    `if_system_variable_false_branch`
+  - motion address expressions such as `G1 X=$P_ACT_X` remain deferred; the
+    current motion lowering path still expects numeric word values
+- Current public-session control-flow status:
+  - cross-line `GOTO` and baseline structured `IF/ELSE/ENDIF` execution are
+    supported through `ExecutionSession`
+  - baseline system-variable conditions can be evaluated on the plain
+    `IRuntime` path through runtime reads
+  - richer condition semantics still require `IExecutionRuntime`
 - Integration-test contract:
   - deterministic event logs should capture interface call order and parameter
     values for a given input program
@@ -740,6 +743,7 @@ N130 G01 X20 Y20
     - `fault_unresolved_target`
     - `goto_skips_line`
     - `if_else_branch`
+    - `if_system_variable_false_branch`
   - reference vs actual comparison is exact semantic equality
   - generated actual traces are written under
     `output/execution_contract_review/`
@@ -749,10 +753,6 @@ N130 G01 X20 Y20
   - executor-originated streaming/session faults must surface one diagnostic
     per fault cause; the session must not emit a duplicate copy of the same
     executor diagnostic
-  - executor-originated streaming/session faults must surface one diagnostic
-    per fault cause; the session must not emit a duplicate copy of the same
-    executor diagnostic
->>>>>>> bb7f63d (fix: align execution session control-flow contract)
 - M-function runtime boundary (v0):
   - `m_function` instructions are present in AIL and seen by executor
   - known predefined Siemens M values:
