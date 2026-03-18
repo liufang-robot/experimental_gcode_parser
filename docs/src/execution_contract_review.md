@@ -78,15 +78,20 @@ This writes:
 - actual traces under `output/execution_contract_review/core/`
 - a local HTML site under `output/execution_contract_review/site/`
 
-To publish the review site into the GitHub Pages output tree after `mdbook build
-docs`, use:
+For the normal combined docs build, use:
 
 ```bash
-./build/gcode_execution_contract_review \
-  --fixtures-root testdata/execution_contract/core \
-  --output-root output/execution_contract_review \
-  --publish-root docs/book/execution-contract-review
+./dev/build_docs_site.sh
 ```
+
+When published, the generated review site is available under:
+
+- [Open the generated execution contract review site](generated/execution-contract-review/index.html)
+
+That generated subtree is written into `docs/src/generated/` during the docs
+build, ignored by git, and then copied into the final mdBook output so one
+`mdbook serve` instance can host both the handwritten pages and the generated
+review site on the same port.
 
 ## Equality Rule
 

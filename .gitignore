@@ -7,3 +7,4 @@ build-sanitize
 cmake-build-*
 output/
 docs/book
+docs/src/generated/

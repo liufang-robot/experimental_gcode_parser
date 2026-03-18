@@ -172,7 +172,7 @@ fuzz-smoke), tidy, and sanitizer tests.
 
 ```bash
 cargo install mdbook mdbook-mermaid
-mdbook build docs
+./dev/build_docs_site.sh
 mdbook serve docs --open
 ```
 
@@ -185,7 +185,9 @@ Main pages:
 - `docs/src/development/index.md`
 - `docs/src/program_reference.md`
 
-GitHub Pages publishes `docs/book` on pushes to `main`.
+GitHub Pages publishes `docs/book` on pushes to `main`, including the generated
+execution contract review subsite under
+`docs/book/generated/execution-contract-review/`.
 
 ## Project Layout
 

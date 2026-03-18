@@ -81,6 +81,11 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Install docs generation dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y curl default-jre-headless cmake ninja-build libantlr4-runtime-dev nlohmann-json3-dev
+
       - name: Install mdBook
         uses: peaceiris/actions-mdbook@v2
         with:
@@ -89,9 +94,27 @@ jobs:
       - name: Install mdbook-mermaid
         run: cargo install mdbook-mermaid
 
-      - name: Build docs
+      - name: Install ANTLR tool (4.10.1)
+        id: antlr-cache
+        uses: actions/cache@v4
+        with:
+          path: .tools/antlr-4.10.1-complete.jar
+          key: antlr-4.10.1
+
+      - name: Download ANTLR tool (4.10.1)
+        if: steps.antlr-cache.outputs.cache-hit != 'true'
         run: |
-          mdbook build docs
+          mkdir -p .tools
+          curl -fsSL -o .tools/antlr-4.10.1-complete.jar https://www.antlr.org/download/antlr-4.10.1-complete.jar
+
+      - name: Build docs
+        env:
+          ANTLR4_EXECUTABLE: ${{ github.workspace }}/dev/antlr4.sh
+          ANTLR4_JAR: ${{ github.workspace }}/.tools/antlr-4.10.1-complete.jar
+          ANTLR4_RUNTIME_INCLUDE_DIR: /usr/include/antlr4-runtime
+          ANTLR4_RUNTIME_LIB: /usr/lib/x86_64-linux-gnu/libantlr4-runtime.so
+        run: |
+          ./dev/build_docs_site.sh
 
   benchmark-smoke:
     if: github.event_name != 'pull_request'
@@ -160,6 +183,11 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Install docs generation dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y curl default-jre-headless cmake ninja-build libantlr4-runtime-dev nlohmann-json3-dev
+
       - name: Install mdBook
         uses: peaceiris/actions-mdbook@v2
         with:
@@ -168,9 +196,27 @@ jobs:
       - name: Install mdbook-mermaid
         run: cargo install mdbook-mermaid
 
-      - name: Build docs
+      - name: Install ANTLR tool (4.10.1)
+        id: antlr-cache
+        uses: actions/cache@v4
+        with:
+          path: .tools/antlr-4.10.1-complete.jar
+          key: antlr-4.10.1
+
+      - name: Download ANTLR tool (4.10.1)
+        if: steps.antlr-cache.outputs.cache-hit != 'true'
         run: |
-          mdbook build docs
+          mkdir -p .tools
+          curl -fsSL -o .tools/antlr-4.10.1-complete.jar https://www.antlr.org/download/antlr-4.10.1-complete.jar
+
+      - name: Build docs
+        env:
+          ANTLR4_EXECUTABLE: ${{ github.workspace }}/dev/antlr4.sh
+          ANTLR4_JAR: ${{ github.workspace }}/.tools/antlr-4.10.1-complete.jar
+          ANTLR4_RUNTIME_INCLUDE_DIR: /usr/include/antlr4-runtime
+          ANTLR4_RUNTIME_LIB: /usr/lib/x86_64-linux-gnu/libantlr4-runtime.so
+        run: |
+          ./dev/build_docs_site.sh
 
       - name: Setup Pages
         uses: actions/configure-pages@v5
