@@ -91,24 +91,18 @@ TEST(ExecutionSessionTest, RejectedSuffixCanBeReplacedAndExecutionContinues) {
   ASSERT_TRUE(session.pushChunk("G1 X10\nG1 G2 X15\nG1 X20\n"));
 
   const auto first = session.finish();
-  EXPECT_EQ(first.status, gcode::StepStatus::Progress);
-  ASSERT_EQ(sink.linear_moves.size(), 1u);
-
-  const auto rejected = session.pump();
-  EXPECT_EQ(rejected.status, gcode::StepStatus::Rejected);
-  ASSERT_TRUE(rejected.rejected.has_value());
-  EXPECT_EQ(rejected.rejected->source.line, 2);
+  EXPECT_EQ(first.status, gcode::StepStatus::Rejected);
+  ASSERT_TRUE(first.rejected.has_value());
+  EXPECT_EQ(first.rejected->source.line, 2);
   EXPECT_EQ(session.rejectedLine(), 2);
+  ASSERT_EQ(sink.linear_moves.size(), 1u);
 
   ASSERT_TRUE(session.replaceEditableSuffix("G1 X15\nG1 X20\n"));
 
-  const auto resumed_line_2 = session.pump();
-  EXPECT_EQ(resumed_line_2.status, gcode::StepStatus::Progress);
-
-  const auto resumed_line_3 = session.pump();
-  EXPECT_EQ(resumed_line_3.status, gcode::StepStatus::Progress);
-
-  const auto completed = session.pump();
+  auto completed = session.pump();
+  while (completed.status == gcode::StepStatus::Progress) {
+    completed = session.pump();
+  }
   EXPECT_EQ(completed.status, gcode::StepStatus::Completed);
 
   ASSERT_EQ(sink.linear_moves.size(), 3u);
@@ -167,8 +161,7 @@ TEST(ExecutionSessionTest, ForwardGotoFaultEmitsSingleDiagnostic) {
   StaticCancellation cancellation;
   gcode::ExecutionSession session(sink, runtime, cancellation);
 
-  ASSERT_TRUE(
-      session.pushChunk("N10 GOTO END\nN20 G1 X10\nEND:\nN30 G1 X20\n"));
+  ASSERT_TRUE(session.pushChunk("N10 GOTO END\nN20 G1 X10\n"));
 
   const auto faulted = session.finish();
   EXPECT_EQ(faulted.status, gcode::StepStatus::Faulted);
@@ -178,6 +171,50 @@ TEST(ExecutionSessionTest, ForwardGotoFaultEmitsSingleDiagnostic) {
   ASSERT_EQ(sink.diagnostics.size(), 1u);
   EXPECT_EQ(sink.diagnostics[0].message, "unresolved goto target: END");
   EXPECT_EQ(sink.diagnostics[0].location.line, 1);
+}
+
+TEST(ExecutionSessionTest, ForwardGotoResolvesAcrossBufferedLines) {
+  RecordingSink sink;
+  ReadyRuntime runtime;
+  StaticCancellation cancellation;
+  gcode::ExecutionSession session(sink, runtime, cancellation);
+
+  ASSERT_TRUE(
+      session.pushChunk("N10 GOTO END\nN20 G1 X10\nEND:\nN30 G1 X20\n"));
+
+  auto step = session.finish();
+  while (step.status == gcode::StepStatus::Progress) {
+    step = session.pump();
+  }
+
+  EXPECT_EQ(step.status, gcode::StepStatus::Completed);
+  EXPECT_EQ(session.state(), gcode::EngineState::Completed);
+  ASSERT_EQ(sink.linear_moves.size(), 1u);
+  ASSERT_TRUE(sink.linear_moves[0].target.x.has_value());
+  EXPECT_EQ(*sink.linear_moves[0].target.x, 20.0);
+  EXPECT_TRUE(sink.diagnostics.empty());
+}
+
+TEST(ExecutionSessionTest, StructuredIfElseExecutesTrueBranchAcrossLines) {
+  RecordingSink sink;
+  ReadyRuntime runtime;
+  StaticCancellation cancellation;
+  gcode::ExecutionSession session(sink, runtime, cancellation);
+
+  ASSERT_TRUE(
+      session.pushChunk("R1=0\nIF R1 == 0\nG1 X10\nELSE\nG1 X20\nENDIF\n"));
+
+  auto step = session.finish();
+  while (step.status == gcode::StepStatus::Progress) {
+    step = session.pump();
+  }
+
+  EXPECT_EQ(step.status, gcode::StepStatus::Completed);
+  EXPECT_EQ(session.state(), gcode::EngineState::Completed);
+  ASSERT_EQ(sink.linear_moves.size(), 1u);
+  ASSERT_TRUE(sink.linear_moves[0].target.x.has_value());
+  EXPECT_EQ(*sink.linear_moves[0].target.x, 10.0);
+  EXPECT_TRUE(sink.diagnostics.empty());
 }
 
 } // namespace

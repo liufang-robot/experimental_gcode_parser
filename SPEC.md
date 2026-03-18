@@ -738,8 +738,8 @@ N130 G01 X20 Y20
     - `linear_move_completed`
     - `rejected_invalid_line`
     - `fault_unresolved_target`
-  - pending reviewed-but-not-yet-enforced control-flow examples live under
-    `testdata/execution_contract/pending/`
+    - `goto_skips_line`
+    - `if_else_branch`
   - reference vs actual comparison is exact semantic equality
   - generated actual traces are written under
     `output/execution_contract_review/`

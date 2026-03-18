@@ -381,6 +381,159 @@ std::string toUpper(std::string value) {
   return value;
 }
 
+enum class ExpressionEvaluationKind { Ready, Pending, Unsupported, Error };
+
+struct ExpressionEvaluation {
+  ExpressionEvaluationKind kind = ExpressionEvaluationKind::Unsupported;
+  double value = 0.0;
+  std::optional<WaitToken> wait_token;
+  std::string error_message;
+};
+
+ExpressionEvaluation makeReadyEvaluation(double value) {
+  ExpressionEvaluation evaluation;
+  evaluation.kind = ExpressionEvaluationKind::Ready;
+  evaluation.value = value;
+  return evaluation;
+}
+
+ExpressionEvaluation makePendingEvaluation(std::optional<WaitToken> wait_token,
+                                           std::string error_message = {}) {
+  ExpressionEvaluation evaluation;
+  evaluation.kind = ExpressionEvaluationKind::Pending;
+  evaluation.wait_token = std::move(wait_token);
+  evaluation.error_message = std::move(error_message);
+  return evaluation;
+}
+
+ExpressionEvaluation makeUnsupportedEvaluation(std::string error_message = {}) {
+  ExpressionEvaluation evaluation;
+  evaluation.kind = ExpressionEvaluationKind::Unsupported;
+  evaluation.error_message = std::move(error_message);
+  return evaluation;
+}
+
+ExpressionEvaluation makeErrorEvaluation(std::string error_message) {
+  ExpressionEvaluation evaluation;
+  evaluation.kind = ExpressionEvaluationKind::Error;
+  evaluation.error_message = std::move(error_message);
+  return evaluation;
+}
+
+bool isSystemVariableName(std::string_view name) {
+  return !name.empty() && name.front() == '$';
+}
+
+ExpressionEvaluation
+evaluateExpressionNode(const std::shared_ptr<ExprNode> &node,
+                       const std::unordered_map<std::string, double> &variables,
+                       IRuntime *runtime) {
+  if (!node) {
+    return makeErrorEvaluation("missing expression");
+  }
+
+  if (const auto *literal = std::get_if<ExprLiteral>(&node->node)) {
+    return makeReadyEvaluation(literal->value);
+  }
+
+  if (const auto *variable = std::get_if<ExprVariable>(&node->node)) {
+    if (variable->is_system || isSystemVariableName(variable->name)) {
+      if (runtime == nullptr) {
+        return makeUnsupportedEvaluation();
+      }
+      const auto result = runtime->readSystemVariable(variable->name);
+      if (result.status == RuntimeCallStatus::Pending) {
+        return makePendingEvaluation(result.wait_token);
+      }
+      if (result.status == RuntimeCallStatus::Error) {
+        const std::string message =
+            result.error_message.empty()
+                ? "system variable read failed: " + variable->name
+                : result.error_message;
+        return makeErrorEvaluation(message);
+      }
+      if (!result.value.has_value()) {
+        return makeErrorEvaluation("system variable read returned no value: " +
+                                   variable->name);
+      }
+      return makeReadyEvaluation(*result.value);
+    }
+
+    const auto it = variables.find(toUpper(variable->name));
+    return makeReadyEvaluation(it == variables.end() ? 0.0 : it->second);
+  }
+
+  if (const auto *unary = std::get_if<ExprUnary>(&node->node)) {
+    const auto operand =
+        evaluateExpressionNode(unary->operand, variables, runtime);
+    if (operand.kind != ExpressionEvaluationKind::Ready) {
+      return operand;
+    }
+    if (unary->op == "+") {
+      return makeReadyEvaluation(operand.value);
+    }
+    if (unary->op == "-") {
+      return makeReadyEvaluation(-operand.value);
+    }
+    return makeUnsupportedEvaluation("unsupported unary operator: " +
+                                     unary->op);
+  }
+
+  if (const auto *binary = std::get_if<ExprBinary>(&node->node)) {
+    const auto lhs = evaluateExpressionNode(binary->lhs, variables, runtime);
+    if (lhs.kind != ExpressionEvaluationKind::Ready) {
+      return lhs;
+    }
+    const auto rhs = evaluateExpressionNode(binary->rhs, variables, runtime);
+    if (rhs.kind != ExpressionEvaluationKind::Ready) {
+      return rhs;
+    }
+
+    if (binary->op == "+") {
+      return makeReadyEvaluation(lhs.value + rhs.value);
+    }
+    if (binary->op == "-") {
+      return makeReadyEvaluation(lhs.value - rhs.value);
+    }
+    if (binary->op == "*") {
+      return makeReadyEvaluation(lhs.value * rhs.value);
+    }
+    if (binary->op == "/") {
+      if (rhs.value == 0.0) {
+        return makeErrorEvaluation("division by zero in expression");
+      }
+      return makeReadyEvaluation(lhs.value / rhs.value);
+    }
+    return makeUnsupportedEvaluation("unsupported binary operator: " +
+                                     binary->op);
+  }
+
+  return makeUnsupportedEvaluation("unsupported expression form");
+}
+
+std::optional<bool> compareConditionValues(double lhs, double rhs,
+                                           std::string_view op) {
+  if (op == "==" || op == "=" || op == "EQ") {
+    return lhs == rhs;
+  }
+  if (op == "!=" || op == "<>" || op == "NE") {
+    return lhs != rhs;
+  }
+  if (op == "<" || op == "LT") {
+    return lhs < rhs;
+  }
+  if (op == "<=" || op == "LE") {
+    return lhs <= rhs;
+  }
+  if (op == ">" || op == "GT") {
+    return lhs > rhs;
+  }
+  if (op == ">=" || op == "GE") {
+    return lhs >= rhs;
+  }
+  return std::nullopt;
+}
+
 bool isDigits(std::string_view text) {
   if (text.empty()) {
     return false;
@@ -1220,10 +1373,65 @@ AilExecutor::resolveGotoTarget(size_t current_index,
 }
 
 bool AilExecutor::evaluateBranchAtPc(int64_t now_ms,
-                                     const IConditionResolver &resolver) {
+                                     const IConditionResolver &resolver,
+                                     IRuntime *runtime) {
   const auto &branch =
       std::get<AilBranchIfInstruction>(instructions_[state_.pc]);
-  const auto resolved = resolver.resolve(branch.condition, branch.source);
+  ConditionResolution resolved;
+  bool used_direct_evaluation = false;
+
+  if (!branch.condition.has_logical_and && branch.condition.lhs &&
+      branch.condition.rhs) {
+    const auto lhs = evaluateExpressionNode(branch.condition.lhs,
+                                            state_.user_variables, runtime);
+    if (lhs.kind == ExpressionEvaluationKind::Pending) {
+      state_.status = ExecutorStatus::Blocked;
+      ExecutorBlockedState blocked;
+      blocked.instruction_index = state_.pc;
+      blocked.wait_token = lhs.wait_token;
+      state_.blocked = std::move(blocked);
+      (void)now_ms;
+      return true;
+    }
+    if (lhs.kind == ExpressionEvaluationKind::Error) {
+      addFault(branch.source, lhs.error_message);
+      return true;
+    }
+
+    const auto rhs = evaluateExpressionNode(branch.condition.rhs,
+                                            state_.user_variables, runtime);
+    if (rhs.kind == ExpressionEvaluationKind::Pending) {
+      state_.status = ExecutorStatus::Blocked;
+      ExecutorBlockedState blocked;
+      blocked.instruction_index = state_.pc;
+      blocked.wait_token = rhs.wait_token;
+      state_.blocked = std::move(blocked);
+      (void)now_ms;
+      return true;
+    }
+    if (rhs.kind == ExpressionEvaluationKind::Error) {
+      addFault(branch.source, rhs.error_message);
+      return true;
+    }
+
+    if (lhs.kind == ExpressionEvaluationKind::Ready &&
+        rhs.kind == ExpressionEvaluationKind::Ready) {
+      const auto comparison =
+          compareConditionValues(lhs.value, rhs.value, branch.condition.op);
+      if (!comparison.has_value()) {
+        addFault(branch.source, "unsupported branch comparison operator: " +
+                                    branch.condition.op);
+        return true;
+      }
+      resolved.kind = *comparison ? ConditionResolutionKind::True
+                                  : ConditionResolutionKind::False;
+      used_direct_evaluation = true;
+    }
+  }
+
+  if (!used_direct_evaluation) {
+    resolved = resolver.resolve(branch.condition, branch.source);
+  }
   if (resolved.kind == ConditionResolutionKind::Pending) {
     state_.status = ExecutorStatus::Blocked;
     ExecutorBlockedState blocked;
@@ -1271,6 +1479,36 @@ bool AilExecutor::evaluateBranchAtPc(int64_t now_ms,
     return true;
   }
   state_.pc = *target;
+  return true;
+}
+
+bool AilExecutor::handleAssignAtPc(IRuntime *runtime) {
+  const auto &assign = std::get<AilAssignInstruction>(instructions_[state_.pc]);
+  const auto value =
+      evaluateExpressionNode(assign.rhs, state_.user_variables, runtime);
+  if (value.kind == ExpressionEvaluationKind::Pending) {
+    state_.status = ExecutorStatus::Blocked;
+    ExecutorBlockedState blocked;
+    blocked.instruction_index = state_.pc;
+    blocked.wait_token = value.wait_token;
+    state_.blocked = std::move(blocked);
+    return true;
+  }
+  if (value.kind == ExpressionEvaluationKind::Error ||
+      value.kind == ExpressionEvaluationKind::Unsupported) {
+    addFault(assign.source, value.error_message.empty()
+                                ? "assignment evaluation failed at runtime"
+                                : value.error_message);
+    return true;
+  }
+  if (isSystemVariableName(assign.lhs)) {
+    addFault(assign.source,
+             "system variable writes are unsupported at execution time: " +
+                 assign.lhs);
+    return true;
+  }
+  state_.user_variables[toUpper(assign.lhs)] = value.value;
+  ++state_.pc;
   return true;
 }
 
@@ -1492,7 +1730,10 @@ bool AilExecutor::advanceOneInstruction(int64_t now_ms,
     return true;
   }
   if (std::holds_alternative<AilBranchIfInstruction>(inst)) {
-    return evaluateBranchAtPc(now_ms, resolver);
+    return evaluateBranchAtPc(now_ms, resolver, runtime);
+  }
+  if (std::holds_alternative<AilAssignInstruction>(inst)) {
+    return handleAssignAtPc(runtime);
   }
   if (std::holds_alternative<AilMCodeInstruction>(inst)) {
     return handleMCodeAtPc();

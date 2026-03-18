@@ -28,9 +28,9 @@ Current limitations:
   now internal
 - `AilExecutor::step(now_ms, sink, runtime)` currently dispatches motion/dwell
   instructions through the shared runtime path
-- cross-line control flow is executable in `AilExecutor`, but the current
-  public `ExecutionSession` path still executes one parsed line at a time and
-  does not yet preserve buffered labels or structured blocks
+- loops remain parse-only; the public execution path currently implements
+  buffered `GOTO`/label flow and structured `IF/ELSE/ENDIF`, but not
+  `WHILE/ENDWHILE`, `FOR/ENDFOR`, `REPEAT/UNTIL`, or `LOOP/ENDLOOP`
 
 ## Modal Metadata
 
@@ -58,12 +58,12 @@ Current Siemens-aligned baseline for supported functions:
 | `G3` arc CCW | Implemented | Emits `G3Message`; streaming engine and executor runtime-step overload can dispatch normalized arc commands. |
 | `G4` dwell | Implemented | Emits `G4Message`; streaming engine and executor runtime-step overload can dispatch normalized dwell commands. |
 | `M` functions (`M<value>`, `M<ext>=<value>`) | Partial | Parse + validation only in current slice; runtime machine actions not yet mapped. |
-| `R... = expr` assignment | Partial | Parsed and lowered to AIL `assign`; runtime evaluation/store policy not implemented. |
+| `R... = expr` assignment | Partial | Parsed and lowered to AIL `assign`; public execution stores the baseline expression subset for user variables, but system-variable writes and richer expression forms are not yet implemented. |
 | `N...` line number at block start | Implemented | Parsed into source metadata; duplicate-warning support for line-number jumps. |
 | Block delete `/` and `/0.. /9` | Implemented | Parsed with skip level metadata; skip policy applied by `LowerOptions.active_skip_levels`. |
-| `GOTO/GOTOF/GOTOB/GOTOC` + labels | Partial | Parsed, lowered to AIL, and executable in `AilExecutor`; the current public `ExecutionSession` path still faults unresolved forward targets because it does not yet preserve buffered labels/targets. |
-| `IF cond GOTO ... [ELSE GOTO ...]` | Partial | Parsed/lowered to AIL `branch_if`; executor runtime resolves the branch. Public `ExecutionSession` requires `IExecutionRuntime` for branch conditions and does not yet execute buffered multi-line control flow. |
-| Structured `IF/ELSE/ENDIF` | Partial | Parsed and lowered into label/goto control-flow pattern; executor runtime can execute one branch, but public `ExecutionSession` support is pending. |
+| `GOTO/GOTOF/GOTOB/GOTOC` + labels | Implemented | Parsed, lowered to AIL, and executable through the public `ExecutionSession` path with buffered forward-label resolution. |
+| `IF cond GOTO ... [ELSE GOTO ...]` | Partial | Parsed/lowered to AIL `branch_if`; public execution evaluates the baseline expression subset directly and can read system variables through runtime, but richer condition semantics still require `IExecutionRuntime`. |
+| Structured `IF/ELSE/ENDIF` | Partial | Parsed and lowered into label/goto control-flow pattern; public `ExecutionSession` now executes buffered structured blocks for the baseline branch-expression subset. |
 | `WHILE/ENDWHILE`, `FOR/ENDFOR`, `REPEAT/UNTIL`, `LOOP/ENDLOOP` | Partial | Parse-only in current implementation (no lowering/executor semantics yet). |
 | Comments `;...`, `( ... )`, `(* ... *)` | Implemented | Preserved as comment items in parse output. |
 | Comments `// ...` | Partial | Supported only when `ParseOptions.enable_double_slash_comments=true`; error by default. |

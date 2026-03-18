@@ -197,6 +197,7 @@ struct ExecutorState {
   std::optional<ToolSelectionState> active_tool_selection;
   std::optional<ToolSelectionState> pending_tool_selection;
   std::optional<ToolSelectionState> selected_tool_selection;
+  std::unordered_map<std::string, double> user_variables;
   std::optional<ExecutorBlockedState> blocked;
   std::optional<std::string> fault_message;
 };
@@ -209,6 +210,7 @@ struct AilExecutorInitialState {
   std::optional<ToolSelectionState> active_tool_selection;
   std::optional<ToolSelectionState> pending_tool_selection;
   std::optional<ToolSelectionState> selected_tool_selection;
+  std::unordered_map<std::string, double> user_variables;
 };
 
 struct AilExecutorOptions {
@@ -251,7 +253,9 @@ private:
 
   std::optional<size_t> resolveGotoTarget(size_t current_index,
                                           const AilGotoInstruction &inst);
-  bool evaluateBranchAtPc(int64_t now_ms, const IConditionResolver &resolver);
+  bool evaluateBranchAtPc(int64_t now_ms, const IConditionResolver &resolver,
+                          IRuntime *runtime = nullptr);
+  bool handleAssignAtPc(IRuntime *runtime = nullptr);
   bool handleMCodeAtPc();
   bool handleToolSelectAtPc(IExecutionSink *sink = nullptr,
                             IRuntime *runtime = nullptr);

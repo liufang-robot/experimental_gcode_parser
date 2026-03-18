@@ -1,5 +1,32 @@
 # CHANGELOG_AGENT
 
+## 2026-03-18 (wu-12 control-flow execution fix)
+- Reworked `ExecutionSession` and the internal streaming engine so the public
+  execution path lowers and executes the editable suffix as a shared buffered
+  program view instead of one isolated line at a time.
+- Added executor-owned user-variable assignment and baseline branch-expression
+  evaluation in `src/ail.cpp`, enabling buffered `GOTO` resolution and
+  structured `IF/ELSE/ENDIF` on the public `ExecutionSession` path.
+- Promoted `goto_skips_line` and `if_else_branch` from pending execution
+  contracts into the enforced core fixture suite and aligned the public docs
+  with the new control-flow boundary.
+
+SPEC sections / tests:
+- SPEC: execution contract fixture baseline; control-flow public behavior notes
+- Tests: `test/execution_session_tests.cpp`,
+  `test/execution_contract_runner_tests.cpp`
+
+Known limitations:
+- Public execution still evaluates only the baseline expression subset
+  directly; richer conditions and loop families remain outside this slice.
+
+How to reproduce locally (commands):
+- `cmake --build build -j --target execution_session_tests execution_contract_runner_tests gcode_execution_contract_review`
+- `./build/execution_session_tests`
+- `./build/execution_contract_runner_tests`
+- `./build/gcode_execution_contract_review --fixtures-root testdata/execution_contract/core --output-root output/execution_contract_review --publish-root docs/src/generated/execution-contract-review`
+- `./dev/check.sh`
+
 ## 2026-03-13 (wu-4 executor state cleanup)
 - Centralized executor initial-state seeding and command-facing modal snapshot
   construction in `src/execution_modal_state.*`.
