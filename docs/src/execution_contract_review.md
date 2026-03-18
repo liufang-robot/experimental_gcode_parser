@@ -88,6 +88,16 @@ docs`, use:
   --publish-root docs/book/execution-contract-review
 ```
 
+For the normal combined docs build, use:
+
+```bash
+./dev/build_docs_site.sh
+```
+
+When published, the generated review site is available under:
+
+- `execution-contract-review/index.html`
+
 ## Equality Rule
 
 Automated tests compare reference and actual traces with exact semantic
