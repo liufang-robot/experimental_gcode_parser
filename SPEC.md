@@ -739,6 +739,8 @@ N130 G01 X20 Y20
   - current enforced Step 1 fixture cases are:
     - `modal_update`
     - `linear_move_completed`
+    - `dwell_seconds_completed`
+    - `tool_change_deferred_m6`
     - `rejected_invalid_line`
     - `fault_unresolved_target`
     - `goto_skips_line`
