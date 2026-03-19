@@ -26,6 +26,8 @@ TEST(ExecutionContractRunnerTest, Step1FixturesMatchReferenceTraces) {
   const std::vector<std::string> case_names = {
       "modal_update",
       "linear_move_completed",
+      "linear_move_blocked",
+      "linear_move_block_resume",
       "dwell_seconds_completed",
       "tool_change_deferred_m6",
       "rejected_invalid_line",
@@ -196,6 +198,135 @@ TEST(ExecutionContractRunnerTest, FixtureOptionsCanDriveDirectToolMode) {
       program_path.string(), reference,
       sourcePath("output/execution_contract_review/core/"
                  "tool_change_direct_t.actual.yaml"));
+
+  EXPECT_TRUE(
+      gcode::executionContractTracesEqual(actual.actual_trace, reference))
+      << gcode::serializeExecutionContractTrace(actual.actual_trace);
+}
+
+TEST(ExecutionContractRunnerTest, DriverCanBlockAndResumeLinearMove) {
+  const auto program_path =
+      writeTempFile("linear_move_block_resume.ngc", "G1 X10\nG1 Y10\n");
+  const auto fixture_path =
+      writeTempFile("linear_move_block_resume.events.yaml",
+                    R"({
+  "name": "linear_move_block_resume",
+  "description": "First move blocks, then resume continues with the next move.",
+  "initial_state": {
+    "modal": {
+      "motion_code": "",
+      "working_plane": "xy",
+      "rapid_mode": "linear",
+      "tool_radius_comp": "off",
+      "active_tool_selection": null,
+      "pending_tool_selection": null,
+      "selected_tool_selection": null
+    }
+  },
+  "options": {
+    "filename": null,
+    "active_skip_levels": [],
+    "tool_change_mode": "deferred_m6",
+    "enable_iso_m98_calls": false
+  },
+  "driver": [
+    {
+      "action": "finish"
+    },
+    {
+      "action": "resume_blocked"
+    }
+  ],
+  "runtime": {
+    "system_variables": {},
+    "linear_move_results": [
+      {
+        "status": "pending",
+        "token": {
+          "kind": "motion",
+          "id": "move-001"
+        }
+      },
+      {
+        "status": "ready"
+      }
+    ]
+  },
+  "expected_events": [
+    {
+      "type": "linear_move",
+      "source": {
+        "filename": null,
+        "line": 1,
+        "line_number": null
+      },
+      "target": {
+        "x": 10.0,
+        "y": null,
+        "z": null,
+        "a": null,
+        "b": null,
+        "c": null
+      },
+      "feed": null,
+      "effective": {
+        "motion_code": "G1",
+        "working_plane": "xy",
+        "rapid_mode": "linear",
+        "tool_radius_comp": "off",
+        "active_tool_selection": null,
+        "pending_tool_selection": null,
+        "selected_tool_selection": null
+      }
+    },
+    {
+      "type": "blocked",
+      "line": 1,
+      "token": {
+        "kind": "motion",
+        "id": "move-001"
+      },
+      "reason": "instruction execution in progress"
+    },
+    {
+      "type": "linear_move",
+      "source": {
+        "filename": null,
+        "line": 2,
+        "line_number": null
+      },
+      "target": {
+        "x": null,
+        "y": 10.0,
+        "z": null,
+        "a": null,
+        "b": null,
+        "c": null
+      },
+      "feed": null,
+      "effective": {
+        "motion_code": "G1",
+        "working_plane": "xy",
+        "rapid_mode": "linear",
+        "tool_radius_comp": "off",
+        "active_tool_selection": null,
+        "pending_tool_selection": null,
+        "selected_tool_selection": null
+      }
+    },
+    {
+      "type": "completed"
+    }
+  ]
+})");
+
+  const auto reference =
+      gcode::loadExecutionContractTrace(fixture_path.string());
+
+  const auto actual = gcode::runExecutionContractFixture(
+      program_path.string(), reference,
+      sourcePath("output/execution_contract_review/core/"
+                 "linear_move_block_resume.actual.yaml"));
 
   EXPECT_TRUE(
       gcode::executionContractTracesEqual(actual.actual_trace, reference))

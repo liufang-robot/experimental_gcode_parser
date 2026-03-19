@@ -2,6 +2,10 @@
 
 This page documents the human-reviewable execution contract fixture workflow.
 
+Direct entry:
+
+- [Open the generated execution contract review site](generated/execution-contract-review/index.html)
+
 The fixture system validates the public `ExecutionSession` behavior with:
 
 - persistent `.ngc` input files
@@ -24,9 +28,15 @@ Fixtures also declare explicit execution/lowering inputs under:
 
 - `options`
 
+Fixtures may also declare an explicit session driver for multi-step public
+interactions:
+
+- `driver`
+
 Fixtures may also declare deterministic runtime inputs in the reference trace:
 
 - `runtime.system_variables`
+- `runtime.linear_move_results`
 
 The current fixture-level options mirror the public `LowerOptions` fields that
 can affect observable execution behavior:
@@ -38,12 +48,26 @@ can affect observable execution behavior:
 
 The runtime-input slice still uses `runtime.system_variables` only for
 ready-valued system-variable reads on the public `ExecutionSession` path.
-## Step 1 Scope
 
-The current enforced Step 1 suite covers:
+For the first async fixture slice, `runtime.linear_move_results` can declare a
+deterministic sequence of linear-move submission outcomes such as:
+
+- `ready`
+- `pending` with an explicit wait token
+
+If a fixture omits `driver`, the review runner uses the current default
+single-step behavior:
+
+- one implicit `finish`
+
+## Enforced Scope
+
+The current enforced core suite covers:
 
 - `modal_update`
 - `linear_move_completed`
+- `linear_move_blocked`
+- `linear_move_block_resume`
 - `dwell_seconds_completed`
 - `tool_change_deferred_m6`
 - `rejected_invalid_line`
@@ -67,6 +91,16 @@ Reference traces are ordered event lists. Step 1 uses:
 
 `modal_update` events contain only the changed modal fields, so every fixture
 declares an explicit `initial_state`.
+
+The first async extension keeps the same event model and adds a fixture-level
+driver so reviewed traces can cover:
+
+- `linear_move` -> `blocked`
+- `linear_move` -> `blocked` -> `linear_move` -> `completed`
+
+`cancelled` remains follow-up work for the fixture driver and is still covered
+through direct public-session tests rather than persistent execution-contract
+review fixtures.
 
 ## Review CLI
 

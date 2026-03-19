@@ -72,6 +72,11 @@ std::string casePageHtml(const ExecutionContractCaseReport &report) {
       << escapeHtml(readFileIfExists(report.program_path)) << "</pre>";
   out << "<h2>Options</h2><pre>"
       << escapeHtml(prettyJson(reference_json["options"])) << "</pre>";
+  if (reference_json.contains("driver") &&
+      reference_json["driver"].is_array()) {
+    out << "<h2>Driver</h2><pre>"
+        << escapeHtml(prettyJson(reference_json["driver"])) << "</pre>";
+  }
   if (reference_json.contains("runtime") &&
       !reference_json["runtime"].is_null()) {
     out << "<h2>Runtime Inputs</h2><pre>"

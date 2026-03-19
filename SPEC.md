@@ -711,6 +711,19 @@ N130 G01 X20 Y20
   - engine then invokes runtime linear-move submission with the same command
   - runtime returns `ready`, `pending`, or `error`
   - on `pending`, engine becomes blocked and requires explicit resume
+  - `pending` means the runtime accepted responsibility for the command and
+    owns the wait for that command
+  - `pending` does not mean “re-submit the same move later from the
+    engine/session side”
+  - `resume(token)` means the external/runtime wait for that exact token is
+    satisfied
+  - `resume(token)` must continue from the existing blocked state and must not
+    resubmit the original move
+  - readiness for a token is determined by the embedding runtime or run
+    manager, not by the library
+  - queue-backed runtimes should return `pending` quickly when they hold a
+    move internally and later ask the session-owning thread to resume once that
+    held move has actually been pushed downstream
 - Fake-log CLI:
   - `gcode_stream_exec` runs the streaming engine with a recording execution
     sink and ready fake runtime
@@ -742,6 +755,17 @@ N130 G01 X20 Y20
     - `active_skip_levels`
     - `tool_change_mode`
     - `enable_iso_m98_calls`
+  - fixtures may declare an explicit driver for multi-step public session
+    interactions
+    - current first async driver actions:
+      - `finish`
+      - `resume_blocked`
+    - if omitted, the runner behaves as one implicit `finish`
+  - fixtures may declare deterministic runtime submission outcomes for linear
+    moves under `runtime.linear_move_results`
+    - current supported statuses:
+      - `ready`
+      - `pending` with explicit wait token
   - current enforced Step 1 fixture cases are:
     - `modal_update`
     - `linear_move_completed`
@@ -752,6 +776,8 @@ N130 G01 X20 Y20
     - `goto_skips_line`
     - `if_else_branch`
     - `if_system_variable_false_branch`
+  - first async slice is implemented in the fixture system but not yet promoted
+    into the enforced core dataset
   - reference vs actual comparison is exact semantic equality
   - generated actual traces are written under
     `output/execution_contract_review/`

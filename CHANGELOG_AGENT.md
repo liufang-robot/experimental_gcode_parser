@@ -1,5 +1,111 @@
 # CHANGELOG_AGENT
 
+## 2026-03-19 (async runtime contract clarification)
+- Clarified in the public execution docs and reviewed execution requirements
+  that `Pending(token)` means accepted responsibility for the command, not
+  “retry submit later.”
+- Clarified that `resume(token)` continues the existing blocked execution
+  state and must not resubmit the original command.
+- Added explicit queue-backed runtime guidance: return `Pending(token)`
+  quickly, manage the wait asynchronously, and let the session-owning thread
+  call `resume(token)` once the held work is actually accepted downstream.
+
+SPEC sections / tests:
+- SPEC: Section 6.2 streaming execution contract
+- Docs only; no runtime behavior change
+
+Known limitations:
+- This clarifies the async contract but does not add a library-owned promise,
+  callback, or event-loop abstraction for token readiness.
+
+How to reproduce locally (commands):
+- `sed -n '245,290p' docs/src/execution_workflow.md`
+- `sed -n '232,292p' docs/src/requirements/gcode_execution_requirements.md`
+- `sed -n '704,724p' SPEC.md`
+
+## 2026-03-19 (wu-11 integration tester fixtures and public coverage)
+- Promoted two reviewed async execution-contract cases into the enforced core
+  dataset: one `blocked` motion case and one `blocked` -> `resume` motion case.
+- Added direct public `ExecutionSession` tests for blocked-session `resume()`
+  continuation and `cancel()` wait cancellation behavior.
+- Updated execution-contract docs to reflect the new enforced async slice and
+  the remaining fixture-level `cancelled` limitation.
+
+SPEC sections / tests:
+- SPEC: Section 6.2 execution contract fixture baseline
+- Tests: `test/execution_contract_runner_tests.cpp`,
+  `test/execution_session_tests.cpp`
+- Fixtures/docs:
+  - `testdata/execution_contract/core/linear_move_blocked.ngc`
+  - `testdata/execution_contract/core/linear_move_blocked.events.yaml`
+  - `testdata/execution_contract/core/linear_move_block_resume.ngc`
+  - `testdata/execution_contract/core/linear_move_block_resume.events.yaml`
+  - `testdata/execution_contract/README.md`
+  - `docs/src/execution_contract_review.md`
+
+Known limitations:
+- Persistent execution-contract fixtures still do not drive `cancelled`; that
+  remains a follow-up runner capability.
+- The async fixture runtime is still limited to deterministic
+  `linear_move_results`.
+
+How to reproduce locally (commands):
+- `cmake -S . -B build`
+- `cmake --build build -j --target execution_contract_runner_tests execution_session_tests`
+- `./build/execution_contract_runner_tests`
+- `./build/execution_session_tests`
+
+## 2026-03-19 (wu-11 async fixture implementation slice)
+- Extended execution-contract fixtures with an optional explicit `driver`
+  section and first async runner actions:
+  `finish` and `resume_blocked`.
+- Extended fixture runtime inputs with deterministic
+  `runtime.linear_move_results` so the review runner can drive a first async
+  motion case without inventing hidden runtime behavior.
+- Updated the contract runner and HTML site to preserve/display driver data and
+  added internal test coverage for the new async block/resume path.
+
+SPEC sections / tests:
+- SPEC: Section 6.2 execution contract fixture baseline
+- Tests: `test/execution_contract_fixture_tests.cpp`,
+  `test/execution_contract_runner_tests.cpp`,
+  `test/execution_contract_html_tests.cpp`
+
+Known limitations:
+- This slice only supports the first async motion contract path.
+- `cancelled`, invalid-resume edge cases, and async dwell/tool-change fixtures
+  remain follow-up work.
+- The reviewed async reference case is not yet promoted into the enforced core
+  dataset in this developer slice.
+
+How to reproduce locally (commands):
+- `cmake -S . -B build`
+- `cmake --build build -j --target execution_contract_fixture_tests execution_contract_runner_tests execution_contract_html_tests`
+- `./build/execution_contract_fixture_tests`
+- `./build/execution_contract_runner_tests`
+- `./build/execution_contract_html_tests`
+
+## 2026-03-19 (wu-11 async fixture planning)
+- Added a focused `WU-11` design note for the first async execution-contract
+  slice: one motion case using an explicit fixture `driver` with
+  `finish` + `resume_blocked`.
+- Added a matching implementation plan that keeps `cancelled` and other async
+  edge cases out of the first slice.
+
+SPEC sections / tests:
+- Planning/docs only; no runtime behavior change
+- Files:
+  - `docs/superpowers/specs/2026-03-19-wu11-async-execution-contract-fixtures.md`
+  - `docs/superpowers/plans/2026-03-19-wu11-async-execution-contract-fixtures.md`
+
+Known limitations:
+- This is planning only; the fixture schema and runner still do not support
+  async driver actions yet.
+
+How to reproduce locally (commands):
+- `sed -n '1,240p' docs/superpowers/specs/2026-03-19-wu11-async-execution-contract-fixtures.md`
+- `sed -n '1,220p' docs/superpowers/plans/2026-03-19-wu11-async-execution-contract-fixtures.md`
+
 ## 2026-03-19 (dual-agent workflow guidance)
 - Added a lightweight development guide for a two-session workflow with a
   `developer` role and an `integration tester` role.

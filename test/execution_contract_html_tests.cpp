@@ -40,6 +40,9 @@ TEST(ExecutionContractHtmlTest, WritesIndexAndCasePage) {
   report.reference_trace.name = "linear_move_completed";
   report.reference_trace.options.tool_change_mode =
       gcode::ToolChangeMode::DeferredM6;
+  report.reference_trace.driver = {
+      {gcode::ExecutionContractDriverAction::Finish},
+      {gcode::ExecutionContractDriverAction::ResumeBlocked}};
   report.actual_trace.name = "linear_move_completed";
 
   const auto output_root = temp_root / "site";
@@ -58,10 +61,12 @@ TEST(ExecutionContractHtmlTest, WritesIndexAndCasePage) {
   EXPECT_NE(index_html.find("Mismatch"), std::string::npos);
   EXPECT_NE(case_html.find("Input G-code"), std::string::npos);
   EXPECT_NE(case_html.find("Options"), std::string::npos);
+  EXPECT_NE(case_html.find("Driver"), std::string::npos);
   EXPECT_NE(case_html.find("Expected Trace"), std::string::npos);
   EXPECT_NE(case_html.find("Actual Trace"), std::string::npos);
   EXPECT_NE(case_html.find("N10 G1 X10"), std::string::npos);
   EXPECT_NE(case_html.find("deferred_m6"), std::string::npos);
+  EXPECT_NE(case_html.find("resume_blocked"), std::string::npos);
 }
 
 } // namespace

@@ -1,0 +1,110 @@
+{
+  "name": "linear_move_block_resume",
+  "description": "first move blocks, then resume continues with the next move",
+  "initial_state": {
+    "modal": {
+      "motion_code": "",
+      "working_plane": "xy",
+      "rapid_mode": "linear",
+      "tool_radius_comp": "off",
+      "active_tool_selection": null,
+      "pending_tool_selection": null,
+      "selected_tool_selection": null
+    }
+  },
+  "options": {
+    "filename": null,
+    "active_skip_levels": [],
+    "tool_change_mode": "deferred_m6",
+    "enable_iso_m98_calls": false
+  },
+  "driver": [
+    {
+      "action": "finish"
+    },
+    {
+      "action": "resume_blocked"
+    }
+  ],
+  "runtime": {
+    "system_variables": {},
+    "linear_move_results": [
+      {
+        "status": "pending",
+        "token": {
+          "kind": "motion",
+          "id": "move-001"
+        }
+      },
+      {
+        "status": "ready"
+      }
+    ]
+  },
+  "expected_events": [
+    {
+      "type": "linear_move",
+      "source": {
+        "filename": null,
+        "line": 1,
+        "line_number": null
+      },
+      "target": {
+        "x": 10.0,
+        "y": null,
+        "z": null,
+        "a": null,
+        "b": null,
+        "c": null
+      },
+      "feed": null,
+      "effective": {
+        "motion_code": "G1",
+        "working_plane": "xy",
+        "rapid_mode": "linear",
+        "tool_radius_comp": "off",
+        "active_tool_selection": null,
+        "pending_tool_selection": null,
+        "selected_tool_selection": null
+      }
+    },
+    {
+      "type": "blocked",
+      "line": 1,
+      "token": {
+        "kind": "motion",
+        "id": "move-001"
+      },
+      "reason": "instruction execution in progress"
+    },
+    {
+      "type": "linear_move",
+      "source": {
+        "filename": null,
+        "line": 2,
+        "line_number": null
+      },
+      "target": {
+        "x": null,
+        "y": 10.0,
+        "z": null,
+        "a": null,
+        "b": null,
+        "c": null
+      },
+      "feed": null,
+      "effective": {
+        "motion_code": "G1",
+        "working_plane": "xy",
+        "rapid_mode": "linear",
+        "tool_radius_comp": "off",
+        "active_tool_selection": null,
+        "pending_tool_selection": null,
+        "selected_tool_selection": null
+      }
+    },
+    {
+      "type": "completed"
+    }
+  ]
+}

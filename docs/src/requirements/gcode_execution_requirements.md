@@ -239,8 +239,21 @@ Reviewed decisions:
   - `Error`: execution faults
 - in the async model, `Pending` means the motion command was accepted by the
   runtime boundary, not necessarily physically completed
+- `Pending` does not mean “retry the same motion submission later from the
+  engine/session side”
 - once runtime/external logic resolves the pending motion, `resume(...)`
   continues execution
+- readiness for a pending motion token is determined by the embedding runtime
+  or run manager, not by the library
+- `resume(...)` must continue from the existing blocked execution state; it
+  must not resubmit the original motion command
+- `resume(...)` should be invoked by the thread that owns the execution
+  session/engine
+- for queue-backed runtimes, a valid readiness condition is that the held move
+  was successfully pushed into the downstream queue
+- the runtime boundary is a poor fit for long blocking inside motion-submission
+  calls; the preferred design is to return `Pending` quickly and manage the
+  wait asynchronously on the runtime side
 - `cancel()` should attempt runtime cancellation of in-flight motion/wait and
   then move the engine to `Cancelled`
 
@@ -278,8 +291,14 @@ Reviewed decisions:
   - `Error`: execution faults
 - in the async model, `Pending` means the dwell/timing command was accepted by
   the runtime boundary, not necessarily fully completed
+- `Pending` does not mean “retry the same dwell/timing submission later from
+  the engine/session side”
 - once runtime/external logic resolves the pending dwell/timing action,
   `resume(...)` continues execution
+- readiness for a pending dwell/timing token is determined by the embedding
+  runtime or run manager, not by the library
+- `resume(...)` must continue from the existing blocked execution state; it
+  must not resubmit the original dwell/timing command
 - `cancel()` should attempt runtime cancellation of in-flight dwell/timing wait
   and then move the engine to `Cancelled`
 

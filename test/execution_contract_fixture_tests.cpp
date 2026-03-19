@@ -97,11 +97,31 @@ TEST(ExecutionContractFixtureTest, LoadsRuntimeSystemVariables) {
     "tool_change_mode": "direct_t",
     "enable_iso_m98_calls": true
   },
+  "driver": [
+    {
+      "action": "finish"
+    },
+    {
+      "action": "resume_blocked"
+    }
+  ],
   "runtime": {
     "system_variables": {
       "$P_ACT_X": 12.5,
       "$AA_IM[X]": 8.0
-    }
+    },
+    "linear_move_results": [
+      {
+        "status": "pending",
+        "token": {
+          "kind": "motion",
+          "id": "move-001"
+        }
+      },
+      {
+        "status": "ready"
+      }
+    ]
   },
   "expected_events": [
     {
@@ -121,9 +141,21 @@ TEST(ExecutionContractFixtureTest, LoadsRuntimeSystemVariables) {
   ASSERT_TRUE(trace.options.tool_change_mode.has_value());
   EXPECT_EQ(*trace.options.tool_change_mode, gcode::ToolChangeMode::DirectT);
   EXPECT_TRUE(trace.options.enable_iso_m98_calls);
+  ASSERT_EQ(trace.driver.size(), 2u);
+  EXPECT_EQ(trace.driver[0].action,
+            gcode::ExecutionContractDriverAction::Finish);
+  EXPECT_EQ(trace.driver[1].action,
+            gcode::ExecutionContractDriverAction::ResumeBlocked);
   ASSERT_EQ(trace.runtime->system_variables.size(), 2u);
   EXPECT_EQ(trace.runtime->system_variables.at("$P_ACT_X"), 12.5);
   EXPECT_EQ(trace.runtime->system_variables.at("$AA_IM[X]"), 8.0);
+  ASSERT_EQ(trace.runtime->linear_move_results.size(), 2u);
+  EXPECT_EQ(trace.runtime->linear_move_results[0].status,
+            gcode::ExecutionContractRuntimeWaitStatus::Pending);
+  ASSERT_TRUE(trace.runtime->linear_move_results[0].token.has_value());
+  EXPECT_EQ(trace.runtime->linear_move_results[0].token->id, "move-001");
+  EXPECT_EQ(trace.runtime->linear_move_results[1].status,
+            gcode::ExecutionContractRuntimeWaitStatus::Ready);
 
   const auto roundtrip = gcode::executionContractTraceToJson(trace);
   ASSERT_TRUE(roundtrip.contains("options"));
@@ -135,6 +167,12 @@ TEST(ExecutionContractFixtureTest, LoadsRuntimeSystemVariables) {
   ASSERT_TRUE(roundtrip["runtime"].contains("system_variables"));
   EXPECT_EQ(roundtrip["runtime"]["system_variables"]["$P_ACT_X"], 12.5);
   EXPECT_EQ(roundtrip["runtime"]["system_variables"]["$AA_IM[X]"], 8.0);
+  ASSERT_TRUE(roundtrip.contains("driver"));
+  ASSERT_EQ(roundtrip["driver"].size(), 2u);
+  ASSERT_TRUE(roundtrip["runtime"].contains("linear_move_results"));
+  ASSERT_EQ(roundtrip["runtime"]["linear_move_results"].size(), 2u);
+  EXPECT_EQ(roundtrip["runtime"]["linear_move_results"][0]["status"],
+            "pending");
 }
 
 } // namespace

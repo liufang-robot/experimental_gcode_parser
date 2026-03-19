@@ -15,20 +15,26 @@ Rules:
 - comparison is exact semantic equality against the generated actual trace.
 - generated output does not overwrite these files automatically.
 
-Step 1 covers only simple end states:
+The enforced core suite covers:
 
 - `completed`
 - `rejected`
 - `faulted`
+- `blocked`
+- `resume`
 
-Step 2 will extend the suite to asynchronous cases such as `blocked`,
-`resume`, and `cancelled`.
+The current async Step 2 slice is limited to deterministic linear-move wait
+cases driven by fixture-level `driver` steps plus `runtime.linear_move_results`.
+
+`cancelled` remains a follow-up fixture workflow item and is currently covered
+by direct public-session tests rather than persistent execution-contract review
+fixtures.
 
 Cases that describe reviewed requirements but are not yet supported by the
 public `ExecutionSession` path should live under `pending/`. They are reference
-examples for future work, not enforced Step 1 fixtures.
+examples for future work, not enforced core fixtures.
 
 Implementation note:
 
-- Step 1 `.events.yaml` files use JSON-compatible YAML syntax so they remain
-  readable while avoiding a new YAML dependency in the library code.
+- `.events.yaml` files use JSON-compatible YAML syntax so they remain readable
+  while avoiding a new YAML dependency in the library code.
