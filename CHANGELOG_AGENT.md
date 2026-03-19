@@ -1,5 +1,56 @@
 # CHANGELOG_AGENT
 
+## 2026-03-19 (wu-11 async fixture implementation slice)
+- Extended execution-contract fixtures with an optional explicit `driver`
+  section and first async runner actions:
+  `finish` and `resume_blocked`.
+- Extended fixture runtime inputs with deterministic
+  `runtime.linear_move_results` so the review runner can drive a first async
+  motion case without inventing hidden runtime behavior.
+- Updated the contract runner and HTML site to preserve/display driver data and
+  added internal test coverage for the new async block/resume path.
+
+SPEC sections / tests:
+- SPEC: Section 6.2 execution contract fixture baseline
+- Tests: `test/execution_contract_fixture_tests.cpp`,
+  `test/execution_contract_runner_tests.cpp`,
+  `test/execution_contract_html_tests.cpp`
+
+Known limitations:
+- This slice only supports the first async motion contract path.
+- `cancelled`, invalid-resume edge cases, and async dwell/tool-change fixtures
+  remain follow-up work.
+- The reviewed async reference case is not yet promoted into the enforced core
+  dataset in this developer slice.
+
+How to reproduce locally (commands):
+- `cmake -S . -B build`
+- `cmake --build build -j --target execution_contract_fixture_tests execution_contract_runner_tests execution_contract_html_tests`
+- `./build/execution_contract_fixture_tests`
+- `./build/execution_contract_runner_tests`
+- `./build/execution_contract_html_tests`
+
+## 2026-03-19 (wu-11 async fixture planning)
+- Added a focused `WU-11` design note for the first async execution-contract
+  slice: one motion case using an explicit fixture `driver` with
+  `finish` + `resume_blocked`.
+- Added a matching implementation plan that keeps `cancelled` and other async
+  edge cases out of the first slice.
+
+SPEC sections / tests:
+- Planning/docs only; no runtime behavior change
+- Files:
+  - `docs/superpowers/specs/2026-03-19-wu11-async-execution-contract-fixtures.md`
+  - `docs/superpowers/plans/2026-03-19-wu11-async-execution-contract-fixtures.md`
+
+Known limitations:
+- This is planning only; the fixture schema and runner still do not support
+  async driver actions yet.
+
+How to reproduce locally (commands):
+- `sed -n '1,240p' docs/superpowers/specs/2026-03-19-wu11-async-execution-contract-fixtures.md`
+- `sed -n '1,220p' docs/superpowers/plans/2026-03-19-wu11-async-execution-contract-fixtures.md`
+
 ## 2026-03-19 (dual-agent workflow guidance)
 - Added a lightweight development guide for a two-session workflow with a
   `developer` role and an `integration tester` role.

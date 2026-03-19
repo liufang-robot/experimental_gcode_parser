@@ -186,6 +186,90 @@ std::string toolChangeModeToString(ToolChangeMode mode) {
   return "deferred_m6";
 }
 
+ExecutionContractDriverAction
+driverActionFromString(const std::string &value) {
+  if (value == "finish") {
+    return ExecutionContractDriverAction::Finish;
+  }
+  if (value == "resume_blocked") {
+    return ExecutionContractDriverAction::ResumeBlocked;
+  }
+  throw std::runtime_error("unsupported driver action: " + value);
+}
+
+std::string driverActionToString(ExecutionContractDriverAction action) {
+  switch (action) {
+  case ExecutionContractDriverAction::Finish:
+    return "finish";
+  case ExecutionContractDriverAction::ResumeBlocked:
+    return "resume_blocked";
+  }
+  return "finish";
+}
+
+ExecutionContractDriverStep
+driverStepFromJson(const nlohmann::ordered_json &j) {
+  ExecutionContractDriverStep step;
+  step.action = driverActionFromString(j.at("action").get<std::string>());
+  return step;
+}
+
+nlohmann::ordered_json
+driverStepToJson(const ExecutionContractDriverStep &step) {
+  nlohmann::ordered_json j;
+  j["action"] = driverActionToString(step.action);
+  return j;
+}
+
+ExecutionContractRuntimeWaitStatus
+runtimeWaitStatusFromString(const std::string &value) {
+  if (value == "ready") {
+    return ExecutionContractRuntimeWaitStatus::Ready;
+  }
+  if (value == "pending") {
+    return ExecutionContractRuntimeWaitStatus::Pending;
+  }
+  throw std::runtime_error("unsupported runtime wait status: " + value);
+}
+
+std::string
+runtimeWaitStatusToString(ExecutionContractRuntimeWaitStatus status) {
+  switch (status) {
+  case ExecutionContractRuntimeWaitStatus::Ready:
+    return "ready";
+  case ExecutionContractRuntimeWaitStatus::Pending:
+    return "pending";
+  }
+  return "ready";
+}
+
+ExecutionContractRuntimeWaitResult
+runtimeWaitResultFromJson(const nlohmann::ordered_json &j) {
+  ExecutionContractRuntimeWaitResult result;
+  result.status = runtimeWaitStatusFromString(j.at("status").get<std::string>());
+  if (j.contains("token") && !j["token"].is_null()) {
+    WaitToken token;
+    token.kind = j["token"].value("kind", "");
+    token.id = j["token"].value("id", "");
+    result.token = std::move(token);
+  }
+  if (result.status == ExecutionContractRuntimeWaitStatus::Pending &&
+      !result.token.has_value()) {
+    throw std::runtime_error("pending runtime wait result requires token");
+  }
+  return result;
+}
+
+nlohmann::ordered_json
+runtimeWaitResultToJson(const ExecutionContractRuntimeWaitResult &result) {
+  nlohmann::ordered_json j;
+  j["status"] = runtimeWaitStatusToString(result.status);
+  if (result.token.has_value()) {
+    j["token"] = {{"kind", result.token->kind}, {"id", result.token->id}};
+  }
+  return j;
+}
+
 ExecutionContractOptions optionsFromJson(const nlohmann::ordered_json &j) {
   ExecutionContractOptions options;
   if (j.contains("filename") && !j["filename"].is_null()) {
@@ -228,6 +312,12 @@ runtimeInputsFromJson(const nlohmann::ordered_json &j) {
        it != j["system_variables"].end(); ++it) {
     runtime.system_variables[it.key()] = it.value().get<double>();
   }
+  if (j.contains("linear_move_results") && j["linear_move_results"].is_array()) {
+    for (const auto &result_json : j["linear_move_results"]) {
+      runtime.linear_move_results.push_back(
+          runtimeWaitResultFromJson(result_json));
+    }
+  }
   return runtime;
 }
 
@@ -237,6 +327,10 @@ runtimeInputsToJson(const ExecutionContractRuntimeInputs &runtime) {
   j["system_variables"] = nlohmann::ordered_json::object();
   for (const auto &entry : runtime.system_variables) {
     j["system_variables"][entry.first] = entry.second;
+  }
+  j["linear_move_results"] = nlohmann::ordered_json::array();
+  for (const auto &result : runtime.linear_move_results) {
+    j["linear_move_results"].push_back(runtimeWaitResultToJson(result));
   }
   return j;
 }
@@ -292,6 +386,11 @@ ExecutionContractTrace loadExecutionContractTrace(const std::string &path) {
   if (root.contains("options") && !root["options"].is_null()) {
     trace.options = optionsFromJson(root["options"]);
   }
+  if (root.contains("driver") && root["driver"].is_array()) {
+    for (const auto &driver_json : root["driver"]) {
+      trace.driver.push_back(driverStepFromJson(driver_json));
+    }
+  }
   if (root.contains("runtime") && !root["runtime"].is_null()) {
     trace.runtime = runtimeInputsFromJson(root["runtime"]);
   }
@@ -313,6 +412,12 @@ executionContractTraceToJson(const ExecutionContractTrace &trace) {
   root["initial_state"] = {
       {"modal", effectiveModalSnapshotToJson(trace.initial_state.modal)}};
   root["options"] = optionsToJson(trace.options);
+  if (!trace.driver.empty()) {
+    root["driver"] = nlohmann::ordered_json::array();
+    for (const auto &step : trace.driver) {
+      root["driver"].push_back(driverStepToJson(step));
+    }
+  }
   if (trace.runtime.has_value()) {
     root["runtime"] = runtimeInputsToJson(*trace.runtime);
   }

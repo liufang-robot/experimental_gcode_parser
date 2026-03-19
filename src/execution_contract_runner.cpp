@@ -3,6 +3,7 @@
 #include <filesystem>
 #include <fstream>
 #include <map>
+#include <stdexcept>
 #include <sstream>
 #include <utility>
 
@@ -190,11 +191,23 @@ private:
 
 class ReadyRuntime final : public IRuntime {
 public:
-  explicit ReadyRuntime(std::map<std::string, double> system_variables = {})
-      : system_variables_(std::move(system_variables)) {}
+  explicit ReadyRuntime(ExecutionContractRuntimeInputs runtime_inputs = {})
+      : runtime_inputs_(std::move(runtime_inputs)) {}
 
   RuntimeResult<WaitToken>
   submitLinearMove(const LinearMoveCommand &) override {
+    if (linear_move_result_index_ < runtime_inputs_.linear_move_results.size()) {
+      const auto &configured =
+          runtime_inputs_.linear_move_results[linear_move_result_index_++];
+      RuntimeResult<WaitToken> result;
+      if (configured.status == ExecutionContractRuntimeWaitStatus::Pending) {
+        result.status = RuntimeCallStatus::Pending;
+        result.wait_token = configured.token;
+        return result;
+      }
+      result.status = RuntimeCallStatus::Ready;
+      return result;
+    }
     RuntimeResult<WaitToken> result;
     result.status = RuntimeCallStatus::Ready;
     return result;
@@ -221,8 +234,8 @@ public:
 
   RuntimeResult<double> readSystemVariable(std::string_view name) override {
     RuntimeResult<double> result;
-    const auto it = system_variables_.find(std::string(name));
-    if (it != system_variables_.end()) {
+    const auto it = runtime_inputs_.system_variables.find(std::string(name));
+    if (it != runtime_inputs_.system_variables.end()) {
       result.status = RuntimeCallStatus::Ready;
       result.value = it->second;
       return result;
@@ -239,7 +252,8 @@ public:
   }
 
 private:
-  std::map<std::string, double> system_variables_;
+  ExecutionContractRuntimeInputs runtime_inputs_;
+  size_t linear_move_result_index_ = 0;
 };
 
 class NeverCancelled final : public ICancellation {
@@ -282,6 +296,21 @@ void appendTerminalStepEvent(std::vector<ExecutionContractEvent> *events,
   }
 }
 
+StepResult driveUntilBoundary(ExecutionSession *session, StepResult step) {
+  while (step.status == StepStatus::Progress) {
+    step = session->pump();
+  }
+  return step;
+}
+
+std::vector<ExecutionContractDriverStep>
+effectiveDriver(const ExecutionContractTrace &reference_trace) {
+  if (!reference_trace.driver.empty()) {
+    return reference_trace.driver;
+  }
+  return {{ExecutionContractDriverAction::Finish}};
+}
+
 } // namespace
 
 ExecutionContractRunResult
@@ -290,9 +319,8 @@ runExecutionContractFixture(const std::string &program_path,
                             const std::string &actual_output_path) {
   std::vector<ExecutionContractEvent> actual_events;
   ContractRecordingSink sink(&actual_events);
-  ReadyRuntime runtime(reference_trace.runtime.has_value()
-                           ? reference_trace.runtime->system_variables
-                           : std::map<std::string, double>{});
+  ReadyRuntime runtime(reference_trace.runtime.value_or(
+      ExecutionContractRuntimeInputs{}));
   NeverCancelled cancellation;
   LowerOptions options;
   options.filename = reference_trace.options.filename;
@@ -305,17 +333,29 @@ runExecutionContractFixture(const std::string &program_path,
     throw std::runtime_error("failed to enqueue execution contract input");
   }
 
-  StepResult step = session.finish();
-  while (step.status == StepStatus::Progress) {
-    step = session.pump();
+  StepResult step;
+  for (const auto &driver_step : effectiveDriver(reference_trace)) {
+    switch (driver_step.action) {
+    case ExecutionContractDriverAction::Finish:
+      step = driveUntilBoundary(&session, session.finish());
+      break;
+    case ExecutionContractDriverAction::ResumeBlocked:
+      if (!step.blocked.has_value()) {
+        throw std::runtime_error(
+            "resume_blocked driver action requires blocked session state");
+      }
+      step = driveUntilBoundary(&session, session.resume(step.blocked->token));
+      break;
+    }
+    appendTerminalStepEvent(&actual_events, step);
   }
-  appendTerminalStepEvent(&actual_events, step);
 
   ExecutionContractTrace actual_trace;
   actual_trace.name = reference_trace.name;
   actual_trace.description = reference_trace.description;
   actual_trace.initial_state = reference_trace.initial_state;
   actual_trace.options = reference_trace.options;
+  actual_trace.driver = reference_trace.driver;
   actual_trace.runtime = reference_trace.runtime;
   actual_trace.events = std::move(actual_events);
 

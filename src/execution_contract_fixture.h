@@ -23,8 +23,29 @@ struct ExecutionContractOptions {
   bool enable_iso_m98_calls = false;
 };
 
+enum class ExecutionContractDriverAction {
+  Finish,
+  ResumeBlocked,
+};
+
+struct ExecutionContractDriverStep {
+  ExecutionContractDriverAction action = ExecutionContractDriverAction::Finish;
+};
+
+enum class ExecutionContractRuntimeWaitStatus {
+  Ready,
+  Pending,
+};
+
+struct ExecutionContractRuntimeWaitResult {
+  ExecutionContractRuntimeWaitStatus status =
+      ExecutionContractRuntimeWaitStatus::Ready;
+  std::optional<WaitToken> token;
+};
+
 struct ExecutionContractRuntimeInputs {
   std::map<std::string, double> system_variables;
+  std::vector<ExecutionContractRuntimeWaitResult> linear_move_results;
 };
 
 struct ExecutionContractEvent {
@@ -38,6 +59,7 @@ struct ExecutionContractTrace {
   std::optional<std::string> description;
   ExecutionContractInitialState initial_state;
   ExecutionContractOptions options;
+  std::vector<ExecutionContractDriverStep> driver;
   std::optional<ExecutionContractRuntimeInputs> runtime;
   std::vector<ExecutionContractEvent> events;
 };

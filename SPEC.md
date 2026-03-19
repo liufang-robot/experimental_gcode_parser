@@ -742,6 +742,17 @@ N130 G01 X20 Y20
     - `active_skip_levels`
     - `tool_change_mode`
     - `enable_iso_m98_calls`
+  - fixtures may declare an explicit driver for multi-step public session
+    interactions
+    - current first async driver actions:
+      - `finish`
+      - `resume_blocked`
+    - if omitted, the runner behaves as one implicit `finish`
+  - fixtures may declare deterministic runtime submission outcomes for linear
+    moves under `runtime.linear_move_results`
+    - current supported statuses:
+      - `ready`
+      - `pending` with explicit wait token
   - current enforced Step 1 fixture cases are:
     - `modal_update`
     - `linear_move_completed`
@@ -752,6 +763,8 @@ N130 G01 X20 Y20
     - `goto_skips_line`
     - `if_else_branch`
     - `if_system_variable_false_branch`
+  - first async slice is implemented in the fixture system but not yet promoted
+    into the enforced core dataset
   - reference vs actual comparison is exact semantic equality
   - generated actual traces are written under
     `output/execution_contract_review/`
