@@ -295,6 +295,10 @@ runExecutionContractFixture(const std::string &program_path,
                            : std::map<std::string, double>{});
   NeverCancelled cancellation;
   LowerOptions options;
+  options.filename = reference_trace.options.filename;
+  options.active_skip_levels = reference_trace.options.active_skip_levels;
+  options.tool_change_mode = reference_trace.options.tool_change_mode;
+  options.enable_iso_m98_calls = reference_trace.options.enable_iso_m98_calls;
 
   ExecutionSession session(sink, runtime, cancellation, options);
   if (!session.pushChunk(readTextFile(program_path))) {
@@ -311,6 +315,7 @@ runExecutionContractFixture(const std::string &program_path,
   actual_trace.name = reference_trace.name;
   actual_trace.description = reference_trace.description;
   actual_trace.initial_state = reference_trace.initial_state;
+  actual_trace.options = reference_trace.options;
   actual_trace.runtime = reference_trace.runtime;
   actual_trace.events = std::move(actual_events);
 

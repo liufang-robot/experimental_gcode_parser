@@ -12,6 +12,12 @@
       "selected_tool_selection": null
     }
   },
+  "options": {
+    "filename": null,
+    "active_skip_levels": [],
+    "tool_change_mode": "deferred_m6",
+    "enable_iso_m98_calls": false
+  },
   "runtime": {
     "system_variables": {
       "$P_ACT_X": 0.0

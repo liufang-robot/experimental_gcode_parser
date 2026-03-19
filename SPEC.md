@@ -736,6 +736,12 @@ N130 G01 X20 Y20
   - public fixture verification is driven through `ExecutionSession`
   - persistent source-of-truth files live under
     `testdata/execution_contract/core/`
+  - each fixture must declare the execution/lowering `options` that can affect
+    observable behavior
+    - `filename`
+    - `active_skip_levels`
+    - `tool_change_mode`
+    - `enable_iso_m98_calls`
   - current enforced Step 1 fixture cases are:
     - `modal_update`
     - `linear_move_completed`

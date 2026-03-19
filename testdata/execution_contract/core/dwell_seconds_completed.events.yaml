@@ -12,6 +12,12 @@
       "selected_tool_selection": null
     }
   },
+  "options": {
+    "filename": null,
+    "active_skip_levels": [],
+    "tool_change_mode": "deferred_m6",
+    "enable_iso_m98_calls": false
+  },
   "expected_events": [
     {
       "type": "dwell",

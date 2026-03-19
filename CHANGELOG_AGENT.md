@@ -1,5 +1,33 @@
 # CHANGELOG_AGENT
 
+## 2026-03-19 (execution-contract fixture options)
+- Added an explicit fixture-level `options` block so execution-contract cases
+  declare the public policy inputs that affect observable results instead of
+  relying on hidden defaults.
+- Taught the fixture loader/serializer and review runner to round-trip and
+  apply those options on the public `ExecutionSession` path.
+- Updated all enforced core fixtures to carry explicit options and added a
+  focused runner test for `tool_change_mode = direct_t`.
+
+SPEC sections / tests:
+- SPEC: Section 6.2 execution contract fixture baseline
+- Tests: `test/execution_contract_fixture_tests.cpp`,
+  `test/execution_contract_runner_tests.cpp`
+
+Known limitations:
+- The options block currently mirrors the existing `LowerOptions` fields only;
+  future public policy inputs must be added explicitly if they start affecting
+  execution-contract results.
+- Async `blocked`/`resume`/`cancelled` coverage remains follow-up work.
+
+How to reproduce locally (commands):
+- `cmake -S . -B build`
+- `cmake --build build -j --target execution_contract_fixture_tests execution_contract_runner_tests gcode_execution_contract_review`
+- `./build/execution_contract_fixture_tests`
+- `./build/execution_contract_runner_tests`
+- `./build/gcode_execution_contract_review --fixtures-root testdata/execution_contract/core --output-root output/execution_contract_review --publish-root docs/src/generated/execution-contract-review`
+- `./dev/check.sh`
+
 ## 2026-03-19 (execution-contract dataset expansion: dwell and tool change)
 - Expanded the enforced execution-contract core suite with one `dwell` case and
   one deferred `tool_change` case so the review system now covers those public

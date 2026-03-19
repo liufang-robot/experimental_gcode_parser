@@ -20,12 +20,24 @@ Each supported case uses:
 - `<case>.ngc`
 - `<case>.events.yaml`
 
+Fixtures also declare explicit execution/lowering inputs under:
+
+- `options`
+
 Fixtures may also declare deterministic runtime inputs in the reference trace:
 
 - `runtime.system_variables`
 
-This first runtime-input slice uses that only for ready-valued system-variable
-reads on the public `ExecutionSession` path.
+The current fixture-level options mirror the public `LowerOptions` fields that
+can affect observable execution behavior:
+
+- `filename`
+- `active_skip_levels`
+- `tool_change_mode`
+- `enable_iso_m98_calls`
+
+The runtime-input slice still uses `runtime.system_variables` only for
+ready-valued system-variable reads on the public `ExecutionSession` path.
 ## Step 1 Scope
 
 The current enforced Step 1 suite covers:
