@@ -711,6 +711,19 @@ N130 G01 X20 Y20
   - engine then invokes runtime linear-move submission with the same command
   - runtime returns `ready`, `pending`, or `error`
   - on `pending`, engine becomes blocked and requires explicit resume
+  - `pending` means the runtime accepted responsibility for the command and
+    owns the wait for that command
+  - `pending` does not mean “re-submit the same move later from the
+    engine/session side”
+  - `resume(token)` means the external/runtime wait for that exact token is
+    satisfied
+  - `resume(token)` must continue from the existing blocked state and must not
+    resubmit the original move
+  - readiness for a token is determined by the embedding runtime or run
+    manager, not by the library
+  - queue-backed runtimes should return `pending` quickly when they hold a
+    move internally and later ask the session-owning thread to resume once that
+    held move has actually been pushed downstream
 - Fake-log CLI:
   - `gcode_stream_exec` runs the streaming engine with a recording execution
     sink and ready fake runtime

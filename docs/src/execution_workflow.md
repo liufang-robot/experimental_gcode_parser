@@ -258,9 +258,43 @@ Meaning:
 - `Ready`
   - accepted and execution can continue now
 - `Pending`
-  - accepted, but execution must pause until you later call `resume(...)`
+  - accepted by the runtime boundary, but execution must pause until you later
+    call `resume(...)`
 - `Error`
   - execution becomes `Faulted`
+
+Important async contract details:
+
+- `Pending` does not mean “call the same submission again later”
+- once the runtime returns `Pending(token)`, the runtime side owns the wait for
+  that command
+- `resume(token)` means the external/runtime wait for that exact token is now
+  satisfied
+- `resume(token)` must continue the existing blocked execution state; it does
+  not resubmit the original command
+- readiness for a token is determined by the embedding runtime or run manager,
+  not by the library
+- `resume(token)` should be invoked by the thread that owns
+  `ExecutionSession`
+- `cancel()` is mainly intended for a session that is already `Blocked`, so the
+  runtime can abort the pending work through `cancelWait(token)`
+
+For a queue-backed runtime, a valid definition of “token satisfied” is:
+
+- the runtime held the move because the downstream queue was full
+- later, queue space became available
+- the runtime successfully pushed the held move into that queue
+- then the session-owning thread calls `resume(token)`
+
+That means the API is a poor fit for long blocking inside
+`submitLinearMove(...)`. A better integration shape is:
+
+- return `Pending(token)` quickly
+- manage the wait asynchronously in the runtime/run manager
+- notify the session-owning thread when the token is ready to resume
+
+The library does not provide that notification channel; it belongs to the
+embedding application.
 
 This pattern applies to:
 
