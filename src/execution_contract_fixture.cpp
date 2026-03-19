@@ -186,8 +186,7 @@ std::string toolChangeModeToString(ToolChangeMode mode) {
   return "deferred_m6";
 }
 
-ExecutionContractDriverAction
-driverActionFromString(const std::string &value) {
+ExecutionContractDriverAction driverActionFromString(const std::string &value) {
   if (value == "finish") {
     return ExecutionContractDriverAction::Finish;
   }
@@ -246,7 +245,8 @@ runtimeWaitStatusToString(ExecutionContractRuntimeWaitStatus status) {
 ExecutionContractRuntimeWaitResult
 runtimeWaitResultFromJson(const nlohmann::ordered_json &j) {
   ExecutionContractRuntimeWaitResult result;
-  result.status = runtimeWaitStatusFromString(j.at("status").get<std::string>());
+  result.status =
+      runtimeWaitStatusFromString(j.at("status").get<std::string>());
   if (j.contains("token") && !j["token"].is_null()) {
     WaitToken token;
     token.kind = j["token"].value("kind", "");
@@ -312,7 +312,8 @@ runtimeInputsFromJson(const nlohmann::ordered_json &j) {
        it != j["system_variables"].end(); ++it) {
     runtime.system_variables[it.key()] = it.value().get<double>();
   }
-  if (j.contains("linear_move_results") && j["linear_move_results"].is_array()) {
+  if (j.contains("linear_move_results") &&
+      j["linear_move_results"].is_array()) {
     for (const auto &result_json : j["linear_move_results"]) {
       runtime.linear_move_results.push_back(
           runtimeWaitResultFromJson(result_json));

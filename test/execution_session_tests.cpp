@@ -75,10 +75,37 @@ class BlockingLinearRuntime : public ReadyRuntime {
 public:
   gcode::RuntimeResult<gcode::WaitToken>
   submitLinearMove(const gcode::LinearMoveCommand &) override {
+    ++linear_calls;
     gcode::RuntimeResult<gcode::WaitToken> result;
     result.status = gcode::RuntimeCallStatus::Pending;
     result.wait_token = gcode::WaitToken{"motion", "line-1"};
     return result;
+  }
+
+  gcode::RuntimeResult<gcode::WaitToken>
+  cancelWait(const gcode::WaitToken &token) override {
+    ++cancel_wait_calls;
+    cancelled_token = token;
+    return ReadyRuntime::cancelWait(token);
+  }
+
+  int linear_calls = 0;
+  int cancel_wait_calls = 0;
+  std::optional<gcode::WaitToken> cancelled_token;
+};
+
+class FirstMoveBlocksRuntime : public BlockingLinearRuntime {
+public:
+  gcode::RuntimeResult<gcode::WaitToken>
+  submitLinearMove(const gcode::LinearMoveCommand &) override {
+    ++linear_calls;
+    if (linear_calls == 1) {
+      gcode::RuntimeResult<gcode::WaitToken> result;
+      result.status = gcode::RuntimeCallStatus::Pending;
+      result.wait_token = gcode::WaitToken{"motion", "line-1"};
+      return result;
+    }
+    return ReadyRuntime::submitLinearMove(gcode::LinearMoveCommand{});
   }
 };
 
@@ -153,6 +180,63 @@ TEST(ExecutionSessionTest, BlockedSessionRejectsEditableSuffixReplacement) {
   ASSERT_EQ(blocked.status, gcode::StepStatus::Blocked);
   EXPECT_EQ(session.state(), gcode::EngineState::Blocked);
   EXPECT_FALSE(session.replaceEditableSuffix("G1 X2\n"));
+}
+
+TEST(ExecutionSessionTest,
+     BlockedSessionCanResumeAndContinueBufferedExecution) {
+  RecordingSink sink;
+  FirstMoveBlocksRuntime runtime;
+  StaticCancellation cancellation;
+  gcode::ExecutionSession session(sink, runtime, cancellation);
+
+  ASSERT_TRUE(session.pushChunk("G1 X1\nG1 X2\n"));
+
+  const auto blocked = session.finish();
+  ASSERT_EQ(blocked.status, gcode::StepStatus::Blocked);
+  ASSERT_TRUE(blocked.blocked.has_value());
+  EXPECT_EQ(blocked.blocked->token.kind, "motion");
+  EXPECT_EQ(blocked.blocked->token.id, "line-1");
+  EXPECT_EQ(session.state(), gcode::EngineState::Blocked);
+  ASSERT_EQ(sink.linear_moves.size(), 1u);
+
+  auto step = session.resume(blocked.blocked->token);
+  while (step.status == gcode::StepStatus::Progress) {
+    step = session.pump();
+  }
+
+  EXPECT_EQ(step.status, gcode::StepStatus::Completed);
+  EXPECT_EQ(session.state(), gcode::EngineState::Completed);
+  ASSERT_EQ(sink.linear_moves.size(), 2u);
+  ASSERT_TRUE(sink.linear_moves[0].target.x.has_value());
+  ASSERT_TRUE(sink.linear_moves[1].target.x.has_value());
+  EXPECT_EQ(*sink.linear_moves[0].target.x, 1.0);
+  EXPECT_EQ(*sink.linear_moves[1].target.x, 2.0);
+}
+
+TEST(ExecutionSessionTest,
+     CancelWhileBlockedCancelsWaitAndPumpReturnsCancelled) {
+  RecordingSink sink;
+  BlockingLinearRuntime runtime;
+  StaticCancellation cancellation;
+  gcode::ExecutionSession session(sink, runtime, cancellation);
+
+  ASSERT_TRUE(session.pushChunk("G1 X1\n"));
+
+  const auto blocked = session.finish();
+  ASSERT_EQ(blocked.status, gcode::StepStatus::Blocked);
+  ASSERT_TRUE(blocked.blocked.has_value());
+  EXPECT_EQ(session.state(), gcode::EngineState::Blocked);
+
+  session.cancel();
+
+  EXPECT_EQ(session.state(), gcode::EngineState::Cancelled);
+  EXPECT_EQ(runtime.cancel_wait_calls, 1);
+  ASSERT_TRUE(runtime.cancelled_token.has_value());
+  EXPECT_EQ(runtime.cancelled_token->kind, "motion");
+  EXPECT_EQ(runtime.cancelled_token->id, "line-1");
+
+  const auto cancelled = session.pump();
+  EXPECT_EQ(cancelled.status, gcode::StepStatus::Cancelled);
 }
 
 TEST(ExecutionSessionTest, ForwardGotoFaultEmitsSingleDiagnostic) {

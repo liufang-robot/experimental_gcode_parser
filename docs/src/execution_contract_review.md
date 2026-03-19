@@ -56,12 +56,14 @@ single-step behavior:
 
 - one implicit `finish`
 
-## Step 1 Scope
+## Enforced Scope
 
-The current enforced Step 1 suite covers:
+The current enforced core suite covers:
 
 - `modal_update`
 - `linear_move_completed`
+- `linear_move_blocked`
+- `linear_move_block_resume`
 - `dwell_seconds_completed`
 - `tool_change_deferred_m6`
 - `rejected_invalid_line`
@@ -87,12 +89,14 @@ Reference traces are ordered event lists. Step 1 uses:
 declares an explicit `initial_state`.
 
 The first async extension keeps the same event model and adds a fixture-level
-driver so one reviewed trace can cover:
+driver so reviewed traces can cover:
 
-- `linear_move`
-- `blocked`
-- `linear_move`
-- `completed`
+- `linear_move` -> `blocked`
+- `linear_move` -> `blocked` -> `linear_move` -> `completed`
+
+`cancelled` remains follow-up work for the fixture driver and is still covered
+through direct public-session tests rather than persistent execution-contract
+review fixtures.
 
 ## Review CLI
 

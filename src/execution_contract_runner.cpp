@@ -3,8 +3,8 @@
 #include <filesystem>
 #include <fstream>
 #include <map>
-#include <stdexcept>
 #include <sstream>
+#include <stdexcept>
 #include <utility>
 
 #include "gcode/execution_session.h"
@@ -196,7 +196,8 @@ public:
 
   RuntimeResult<WaitToken>
   submitLinearMove(const LinearMoveCommand &) override {
-    if (linear_move_result_index_ < runtime_inputs_.linear_move_results.size()) {
+    if (linear_move_result_index_ <
+        runtime_inputs_.linear_move_results.size()) {
       const auto &configured =
           runtime_inputs_.linear_move_results[linear_move_result_index_++];
       RuntimeResult<WaitToken> result;
@@ -319,8 +320,8 @@ runExecutionContractFixture(const std::string &program_path,
                             const std::string &actual_output_path) {
   std::vector<ExecutionContractEvent> actual_events;
   ContractRecordingSink sink(&actual_events);
-  ReadyRuntime runtime(reference_trace.runtime.value_or(
-      ExecutionContractRuntimeInputs{}));
+  ReadyRuntime runtime(
+      reference_trace.runtime.value_or(ExecutionContractRuntimeInputs{}));
   NeverCancelled cancellation;
   LowerOptions options;
   options.filename = reference_trace.options.filename;

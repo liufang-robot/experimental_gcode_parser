@@ -26,6 +26,8 @@ TEST(ExecutionContractRunnerTest, Step1FixturesMatchReferenceTraces) {
   const std::vector<std::string> case_names = {
       "modal_update",
       "linear_move_completed",
+      "linear_move_blocked",
+      "linear_move_block_resume",
       "dwell_seconds_completed",
       "tool_change_deferred_m6",
       "rejected_invalid_line",

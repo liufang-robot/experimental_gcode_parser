@@ -171,7 +171,8 @@ TEST(ExecutionContractFixtureTest, LoadsRuntimeSystemVariables) {
   ASSERT_EQ(roundtrip["driver"].size(), 2u);
   ASSERT_TRUE(roundtrip["runtime"].contains("linear_move_results"));
   ASSERT_EQ(roundtrip["runtime"]["linear_move_results"].size(), 2u);
-  EXPECT_EQ(roundtrip["runtime"]["linear_move_results"][0]["status"], "pending");
+  EXPECT_EQ(roundtrip["runtime"]["linear_move_results"][0]["status"],
+            "pending");
 }
 
 } // namespace
