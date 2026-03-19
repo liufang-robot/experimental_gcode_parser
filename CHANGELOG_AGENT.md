@@ -1,5 +1,30 @@
 # CHANGELOG_AGENT
 
+## 2026-03-19 (dual-agent workflow guidance)
+- Added a lightweight development guide for a two-session workflow with a
+  `developer` role and an `integration tester` role.
+- Made the role boundary explicit: developer may still own internal unit tests,
+  while the integration tester owns public-behavior, integration, and contract
+  tests.
+- Linked the new workflow page from the mdBook development section.
+- Added a compact per-feature checklist page so the same handoff loop can be
+  reused without re-explaining the process each time.
+
+SPEC sections / tests:
+- Docs/process only; no runtime behavior change
+- Files:
+  - `docs/src/development/dual_agent_workflow.md`
+  - `docs/src/development/dual_agent_feature_checklist.md`
+  - `docs/src/development/index.md`
+  - `docs/src/SUMMARY.md`
+
+Known limitations:
+- This is guidance only; it is not enforced by tooling or CI.
+
+How to reproduce locally (commands):
+- `mdbook build docs`
+- `sed -n '1,220p' docs/src/development/dual_agent_workflow.md`
+
 ## 2026-03-19 (execution-contract fixture options)
 - Added an explicit fixture-level `options` block so execution-contract cases
   declare the public policy inputs that affect observable results instead of

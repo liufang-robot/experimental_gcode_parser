@@ -9,6 +9,8 @@
   - [Requirements: G-code Execution](requirements/gcode_execution_requirements.md)
 - [Development Reference](development/index.md)
   - [Development: Workflow](development/workflow.md)
+  - [Development: Dual-Agent Workflow](development/dual_agent_workflow.md)
+  - [Development: Dual-Agent Feature Checklist](development/dual_agent_feature_checklist.md)
   - [Development: G-code Text Flow](development/gcode_text_flow.md)
   - [Development: Architecture and Design](development/design/index.md)
     - [Development: Repository Architecture](development/design/repo_architecture.md)
