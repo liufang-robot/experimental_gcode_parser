@@ -38,6 +38,8 @@ TEST(ExecutionContractHtmlTest, WritesIndexAndCasePage) {
       "output/execution_contract_review/core/linear_move_completed.actual.yaml";
   report.matches_reference = false;
   report.reference_trace.name = "linear_move_completed";
+  report.reference_trace.options.tool_change_mode =
+      gcode::ToolChangeMode::DeferredM6;
   report.actual_trace.name = "linear_move_completed";
 
   const auto output_root = temp_root / "site";
@@ -55,9 +57,11 @@ TEST(ExecutionContractHtmlTest, WritesIndexAndCasePage) {
   EXPECT_NE(index_html.find("linear_move_completed"), std::string::npos);
   EXPECT_NE(index_html.find("Mismatch"), std::string::npos);
   EXPECT_NE(case_html.find("Input G-code"), std::string::npos);
+  EXPECT_NE(case_html.find("Options"), std::string::npos);
   EXPECT_NE(case_html.find("Expected Trace"), std::string::npos);
   EXPECT_NE(case_html.find("Actual Trace"), std::string::npos);
   EXPECT_NE(case_html.find("N10 G1 X10"), std::string::npos);
+  EXPECT_NE(case_html.find("deferred_m6"), std::string::npos);
 }
 
 } // namespace

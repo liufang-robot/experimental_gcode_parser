@@ -78,6 +78,12 @@ TEST(ExecutionContractRunnerTest,
       "selected_tool_selection": null
     }
   },
+  "options": {
+    "filename": null,
+    "active_skip_levels": [],
+    "tool_change_mode": "deferred_m6",
+    "enable_iso_m98_calls": false
+  },
   "runtime": {
     "system_variables": {
       "$P_ACT_X": 12.5
@@ -123,6 +129,73 @@ TEST(ExecutionContractRunnerTest,
       program_path.string(), reference,
       sourcePath("output/execution_contract_review/core/"
                  "if_system_variable_false_branch.actual.yaml"));
+
+  EXPECT_TRUE(
+      gcode::executionContractTracesEqual(actual.actual_trace, reference))
+      << gcode::serializeExecutionContractTrace(actual.actual_trace);
+}
+
+TEST(ExecutionContractRunnerTest, FixtureOptionsCanDriveDirectToolMode) {
+  const auto program_path = writeTempFile("tool_change_direct_t.ngc", "T12\n");
+  const auto fixture_path = writeTempFile("tool_change_direct_t.events.yaml",
+                                          R"({
+  "name": "tool_change_direct_t",
+  "description": "Fixture options expose the direct tool-change policy.",
+  "initial_state": {
+    "modal": {
+      "motion_code": "",
+      "working_plane": "xy",
+      "rapid_mode": "linear",
+      "tool_radius_comp": "off",
+      "active_tool_selection": null,
+      "pending_tool_selection": null,
+      "selected_tool_selection": null
+    }
+  },
+  "options": {
+    "filename": null,
+    "active_skip_levels": [],
+    "tool_change_mode": "direct_t",
+    "enable_iso_m98_calls": false
+  },
+  "expected_events": [
+    {
+      "type": "tool_change",
+      "source": {
+        "filename": null,
+        "line": 1,
+        "line_number": null
+      },
+      "target_tool_selection": {
+        "selector_index": null,
+        "selector_value": "12"
+      },
+      "effective": {
+        "motion_code": "G1",
+        "working_plane": "xy",
+        "rapid_mode": "linear",
+        "tool_radius_comp": "off",
+        "active_tool_selection": null,
+        "pending_tool_selection": null,
+        "selected_tool_selection": {
+          "selector_index": null,
+          "selector_value": "12"
+        }
+      }
+    },
+    {
+      "type": "completed"
+    }
+  ]
+})");
+
+  const auto reference =
+      gcode::loadExecutionContractTrace(fixture_path.string());
+
+  const auto actual = gcode::runExecutionContractFixture(
+      program_path.string(), reference,
+      sourcePath("output/execution_contract_review/core/"
+                 "tool_change_direct_t.actual.yaml"));
 
   EXPECT_TRUE(
       gcode::executionContractTracesEqual(actual.actual_trace, reference))

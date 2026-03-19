@@ -8,11 +8,19 @@
 #include <nlohmann/json.hpp>
 
 #include "gcode/execution_commands.h"
+#include "gcode/lowering_types.h"
 
 namespace gcode {
 
 struct ExecutionContractInitialState {
   EffectiveModalSnapshot modal;
+};
+
+struct ExecutionContractOptions {
+  std::optional<std::string> filename;
+  std::vector<int> active_skip_levels;
+  std::optional<ToolChangeMode> tool_change_mode;
+  bool enable_iso_m98_calls = false;
 };
 
 struct ExecutionContractRuntimeInputs {
@@ -29,6 +37,7 @@ struct ExecutionContractTrace {
   std::string name;
   std::optional<std::string> description;
   ExecutionContractInitialState initial_state;
+  ExecutionContractOptions options;
   std::optional<ExecutionContractRuntimeInputs> runtime;
   std::vector<ExecutionContractEvent> events;
 };

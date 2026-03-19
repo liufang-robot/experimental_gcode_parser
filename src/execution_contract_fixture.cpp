@@ -166,6 +166,57 @@ effectiveModalSnapshotToJson(const EffectiveModalSnapshot &snapshot) {
   return j;
 }
 
+ToolChangeMode toolChangeModeFromString(const std::string &value) {
+  if (value == "direct_t") {
+    return ToolChangeMode::DirectT;
+  }
+  if (value == "deferred_m6") {
+    return ToolChangeMode::DeferredM6;
+  }
+  throw std::runtime_error("unsupported tool_change_mode value: " + value);
+}
+
+std::string toolChangeModeToString(ToolChangeMode mode) {
+  switch (mode) {
+  case ToolChangeMode::DirectT:
+    return "direct_t";
+  case ToolChangeMode::DeferredM6:
+    return "deferred_m6";
+  }
+  return "deferred_m6";
+}
+
+ExecutionContractOptions optionsFromJson(const nlohmann::ordered_json &j) {
+  ExecutionContractOptions options;
+  if (j.contains("filename") && !j["filename"].is_null()) {
+    options.filename = j["filename"].get<std::string>();
+  }
+  if (j.contains("active_skip_levels") && j["active_skip_levels"].is_array()) {
+    options.active_skip_levels =
+        j["active_skip_levels"].get<std::vector<int>>();
+  }
+  if (j.contains("tool_change_mode") && !j["tool_change_mode"].is_null()) {
+    options.tool_change_mode =
+        toolChangeModeFromString(j["tool_change_mode"].get<std::string>());
+  }
+  options.enable_iso_m98_calls = j.value("enable_iso_m98_calls", false);
+  return options;
+}
+
+nlohmann::ordered_json optionsToJson(const ExecutionContractOptions &options) {
+  nlohmann::ordered_json j;
+  j["filename"] = options.filename.has_value()
+                      ? nlohmann::ordered_json(*options.filename)
+                      : nlohmann::ordered_json(nullptr);
+  j["active_skip_levels"] = options.active_skip_levels;
+  j["tool_change_mode"] = options.tool_change_mode.has_value()
+                              ? nlohmann::ordered_json(toolChangeModeToString(
+                                    *options.tool_change_mode))
+                              : nlohmann::ordered_json(nullptr);
+  j["enable_iso_m98_calls"] = options.enable_iso_m98_calls;
+  return j;
+}
+
 ExecutionContractRuntimeInputs
 runtimeInputsFromJson(const nlohmann::ordered_json &j) {
   ExecutionContractRuntimeInputs runtime;
@@ -238,6 +289,9 @@ ExecutionContractTrace loadExecutionContractTrace(const std::string &path) {
   }
   trace.initial_state.modal =
       effectiveModalSnapshotFromJson(root.at("initial_state").at("modal"));
+  if (root.contains("options") && !root["options"].is_null()) {
+    trace.options = optionsFromJson(root["options"]);
+  }
   if (root.contains("runtime") && !root["runtime"].is_null()) {
     trace.runtime = runtimeInputsFromJson(root["runtime"]);
   }
@@ -258,6 +312,7 @@ executionContractTraceToJson(const ExecutionContractTrace &trace) {
   }
   root["initial_state"] = {
       {"modal", effectiveModalSnapshotToJson(trace.initial_state.modal)}};
+  root["options"] = optionsToJson(trace.options);
   if (trace.runtime.has_value()) {
     root["runtime"] = runtimeInputsToJson(*trace.runtime);
   }
