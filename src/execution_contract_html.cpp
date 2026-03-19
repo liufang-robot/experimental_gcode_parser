@@ -48,8 +48,12 @@ void writeFile(const std::filesystem::path &path, const std::string &contents) {
   out << contents;
 }
 
+std::string prettyJson(const nlohmann::ordered_json &j) { return j.dump(2); }
+
 std::string casePageHtml(const ExecutionContractCaseReport &report) {
   std::ostringstream out;
+  const auto reference_json =
+      executionContractTraceToJson(report.reference_trace);
   out << "<!doctype html><html><head><meta charset=\"utf-8\">";
   out << "<title>" << escapeHtml(report.case_name) << "</title>";
   out << "<style>body{font-family:sans-serif;max-width:1200px;margin:2rem "
@@ -66,6 +70,13 @@ std::string casePageHtml(const ExecutionContractCaseReport &report) {
       << "</strong></p>";
   out << "<h2>Input G-code</h2><pre>"
       << escapeHtml(readFileIfExists(report.program_path)) << "</pre>";
+  out << "<h2>Options</h2><pre>"
+      << escapeHtml(prettyJson(reference_json["options"])) << "</pre>";
+  if (reference_json.contains("runtime") &&
+      !reference_json["runtime"].is_null()) {
+    out << "<h2>Runtime Inputs</h2><pre>"
+        << escapeHtml(prettyJson(reference_json["runtime"])) << "</pre>";
+  }
   out << "<h2>Expected Trace</h2><pre>"
       << escapeHtml(serializeExecutionContractTrace(report.reference_trace))
       << "</pre>";
