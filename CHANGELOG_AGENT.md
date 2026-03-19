@@ -1,5 +1,32 @@
 # CHANGELOG_AGENT
 
+## 2026-03-19 (execution-contract dataset expansion: dwell and tool change)
+- Expanded the enforced execution-contract core suite with one `dwell` case and
+  one deferred `tool_change` case so the review system now covers those public
+  event families in addition to motion, modal updates, diagnostics, and control
+  flow.
+- Added deterministic reference traces for `G4 F3` and `T12`/`M6` using the
+  existing public `ExecutionSession` path and review-site generator.
+- Updated the execution-contract review docs and SPEC fixture list to reflect
+  the expanded enforced core set.
+
+SPEC sections / tests:
+- SPEC: Section 6.2 execution contract fixture baseline
+- Tests: `test/execution_contract_runner_tests.cpp`
+
+Known limitations:
+- This slice still covers ready/completed behavior only; async
+  `blocked`/`resume`/`cancelled` cases remain follow-up work.
+- Motion address expressions such as `G1 X=$P_ACT_X` remain a separate follow-up
+  because the motion word/lowering path is still numeric-only.
+
+How to reproduce locally (commands):
+- `cmake -S . -B build`
+- `cmake --build build -j --target execution_contract_runner_tests gcode_execution_contract_review`
+- `./build/execution_contract_runner_tests`
+- `./build/gcode_execution_contract_review --fixtures-root testdata/execution_contract/core --output-root output/execution_contract_review --publish-root docs/src/generated/execution-contract-review`
+- `./dev/check.sh`
+
 ## 2026-03-18 (wu-12 control-flow execution fix)
 - Reworked `ExecutionSession` and the internal streaming engine so the public
   execution path lowers and executes the editable suffix as a shared buffered

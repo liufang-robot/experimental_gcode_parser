@@ -1,0 +1,44 @@
+{
+  "name": "tool_change_deferred_m6",
+  "description": "deferred T/M6 emits a tool_change event when M6 executes",
+  "initial_state": {
+    "modal": {
+      "motion_code": "",
+      "working_plane": "xy",
+      "rapid_mode": "linear",
+      "tool_radius_comp": "off",
+      "active_tool_selection": null,
+      "pending_tool_selection": null,
+      "selected_tool_selection": null
+    }
+  },
+  "expected_events": [
+    {
+      "type": "tool_change",
+      "source": {
+        "filename": null,
+        "line": 2,
+        "line_number": null
+      },
+      "target_tool_selection": {
+        "selector_index": null,
+        "selector_value": "12"
+      },
+      "effective": {
+        "motion_code": "G1",
+        "working_plane": "xy",
+        "rapid_mode": "linear",
+        "tool_radius_comp": "off",
+        "active_tool_selection": null,
+        "pending_tool_selection": null,
+        "selected_tool_selection": {
+          "selector_index": null,
+          "selector_value": "12"
+        }
+      }
+    },
+    {
+      "type": "completed"
+    }
+  ]
+}

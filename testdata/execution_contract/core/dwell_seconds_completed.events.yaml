@@ -1,0 +1,39 @@
+{
+  "name": "dwell_seconds_completed",
+  "description": "simple G4 dwell emits a dwell event with the effective modal snapshot",
+  "initial_state": {
+    "modal": {
+      "motion_code": "",
+      "working_plane": "xy",
+      "rapid_mode": "linear",
+      "tool_radius_comp": "off",
+      "active_tool_selection": null,
+      "pending_tool_selection": null,
+      "selected_tool_selection": null
+    }
+  },
+  "expected_events": [
+    {
+      "type": "dwell",
+      "source": {
+        "filename": null,
+        "line": 1,
+        "line_number": null
+      },
+      "dwell_mode": "seconds",
+      "dwell_value": 3.0,
+      "effective": {
+        "motion_code": "G1",
+        "working_plane": "xy",
+        "rapid_mode": "linear",
+        "tool_radius_comp": "off",
+        "active_tool_selection": null,
+        "pending_tool_selection": null,
+        "selected_tool_selection": null
+      }
+    },
+    {
+      "type": "completed"
+    }
+  ]
+}
