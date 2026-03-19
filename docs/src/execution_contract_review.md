@@ -2,6 +2,10 @@
 
 This page documents the human-reviewable execution contract fixture workflow.
 
+Direct entry:
+
+- [Open the generated execution contract review site](generated/execution-contract-review/index.html)
+
 The fixture system validates the public `ExecutionSession` behavior with:
 
 - persistent `.ngc` input files

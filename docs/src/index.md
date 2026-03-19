@@ -8,6 +8,8 @@ Use these sections:
   `ExecutionSession`.
 - Execution Contract Review: the source-of-truth fixture model and the generated
   review site.
+  Direct generated review entry:
+  [Open the generated execution contract review site](generated/execution-contract-review/index.html)
 - Requirements: target syntax, semantic validation, and execution behavior to
   review before implementation work starts.
 - Development Reference: build/test workflow, contribution gates, and
