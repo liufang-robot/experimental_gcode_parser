@@ -44,8 +44,14 @@ struct ExecutionContractRuntimeWaitResult {
   std::optional<WaitToken> token;
 };
 
+struct ExecutionContractSystemVariableRead {
+  std::string name;
+  double value = 0.0;
+};
+
 struct ExecutionContractRuntimeInputs {
   std::map<std::string, double> system_variables;
+  std::vector<ExecutionContractSystemVariableRead> system_variable_reads;
   std::vector<ExecutionContractRuntimeWaitResult> linear_move_results;
 };
 

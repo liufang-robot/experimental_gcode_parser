@@ -43,6 +43,9 @@ TEST(ExecutionContractHtmlTest, WritesIndexAndCasePage) {
   report.reference_trace.driver = {
       {gcode::ExecutionContractDriverAction::Finish},
       {gcode::ExecutionContractDriverAction::ResumeBlocked}};
+  report.reference_trace.runtime = gcode::ExecutionContractRuntimeInputs{};
+  report.reference_trace.runtime->system_variable_reads = {
+      {"$P_ACT_X", 10.0}};
   report.actual_trace.name = "linear_move_completed";
 
   const auto output_root = temp_root / "site";
@@ -67,6 +70,8 @@ TEST(ExecutionContractHtmlTest, WritesIndexAndCasePage) {
   EXPECT_NE(case_html.find("N10 G1 X10"), std::string::npos);
   EXPECT_NE(case_html.find("deferred_m6"), std::string::npos);
   EXPECT_NE(case_html.find("resume_blocked"), std::string::npos);
+  EXPECT_NE(case_html.find("system_variable_reads"), std::string::npos);
+  EXPECT_NE(case_html.find("$P_ACT_X"), std::string::npos);
 }
 
 } // namespace

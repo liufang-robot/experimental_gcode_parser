@@ -110,6 +110,16 @@ TEST(ExecutionContractFixtureTest, LoadsRuntimeSystemVariables) {
       "$P_ACT_X": 12.5,
       "$AA_IM[X]": 8.0
     },
+    "system_variable_reads": [
+      {
+        "name": "$P_ACT_X",
+        "value": 10.0
+      },
+      {
+        "name": "$P_ACT_X",
+        "value": 20.0
+      }
+    ],
     "linear_move_results": [
       {
         "status": "pending",
@@ -149,6 +159,10 @@ TEST(ExecutionContractFixtureTest, LoadsRuntimeSystemVariables) {
   ASSERT_EQ(trace.runtime->system_variables.size(), 2u);
   EXPECT_EQ(trace.runtime->system_variables.at("$P_ACT_X"), 12.5);
   EXPECT_EQ(trace.runtime->system_variables.at("$AA_IM[X]"), 8.0);
+  ASSERT_EQ(trace.runtime->system_variable_reads.size(), 2u);
+  EXPECT_EQ(trace.runtime->system_variable_reads[0].name, "$P_ACT_X");
+  EXPECT_EQ(trace.runtime->system_variable_reads[0].value, 10.0);
+  EXPECT_EQ(trace.runtime->system_variable_reads[1].value, 20.0);
   ASSERT_EQ(trace.runtime->linear_move_results.size(), 2u);
   EXPECT_EQ(trace.runtime->linear_move_results[0].status,
             gcode::ExecutionContractRuntimeWaitStatus::Pending);
@@ -167,6 +181,11 @@ TEST(ExecutionContractFixtureTest, LoadsRuntimeSystemVariables) {
   ASSERT_TRUE(roundtrip["runtime"].contains("system_variables"));
   EXPECT_EQ(roundtrip["runtime"]["system_variables"]["$P_ACT_X"], 12.5);
   EXPECT_EQ(roundtrip["runtime"]["system_variables"]["$AA_IM[X]"], 8.0);
+  ASSERT_TRUE(roundtrip["runtime"].contains("system_variable_reads"));
+  ASSERT_EQ(roundtrip["runtime"]["system_variable_reads"].size(), 2u);
+  EXPECT_EQ(roundtrip["runtime"]["system_variable_reads"][0]["name"],
+            "$P_ACT_X");
+  EXPECT_EQ(roundtrip["runtime"]["system_variable_reads"][1]["value"], 20.0);
   ASSERT_TRUE(roundtrip.contains("driver"));
   ASSERT_EQ(roundtrip["driver"].size(), 2u);
   ASSERT_TRUE(roundtrip["runtime"].contains("linear_move_results"));

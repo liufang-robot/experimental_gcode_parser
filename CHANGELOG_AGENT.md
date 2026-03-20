@@ -1,5 +1,36 @@
 # CHANGELOG_AGENT
 
+## 2026-03-20 (execution contract runtime read trace developer slice)
+- Added ordered `runtime.system_variable_reads` support to the execution-contract
+  fixture model while keeping `runtime.system_variables` as shorthand for
+  simple fixed-value cases.
+- Added internal runtime-read tracing so execution-contract runs can emit
+  ordered `system_variable_read` events with source attribution without
+  changing the public runtime API.
+- Updated contract docs/spec so this slice is explicit before tester-owned
+  persistent fixtures are promoted.
+
+SPEC sections / tests:
+- SPEC: Section 6.2 system-variable execution contract
+- Developer verification:
+  - `test/execution_contract_fixture_tests.cpp`
+  - `test/execution_contract_runner_tests.cpp`
+  - `test/execution_contract_html_tests.cpp`
+
+Known limitations:
+- This slice only records ready-valued system-variable reads in the contract
+  trace.
+- Persistent reviewed fixtures for repeated-read cases remain tester-owned
+  follow-up.
+- Runtime-backed writes and indexed selector forms remain deferred.
+
+How to reproduce locally (commands):
+- `cmake -S . -B build`
+- `cmake --build build -j --target execution_contract_fixture_tests execution_contract_runner_tests execution_contract_html_tests`
+- `./build/execution_contract_fixture_tests`
+- `./build/execution_contract_runner_tests`
+- `./build/execution_contract_html_tests`
+
 ## 2026-03-20 (execution contract runtime read trace planning)
 - Added a focused design note for ordered system-variable runtime-read scripts
   and explicit `system_variable_read` trace events in execution-contract

@@ -96,6 +96,16 @@ TEST(ExecutionContractRunnerTest,
   },
   "expected_events": [
     {
+      "type": "system_variable_read",
+      "source": {
+        "filename": null,
+        "line": 1,
+        "line_number": null
+      },
+      "name": "$P_ACT_X",
+      "value": 12.5
+    },
+    {
       "type": "linear_move",
       "source": {
         "filename": null,
@@ -201,6 +211,137 @@ TEST(ExecutionContractRunnerTest, FixtureOptionsCanDriveDirectToolMode) {
       program_path.string(), reference,
       sourcePath("output/execution_contract_review/core/"
                  "tool_change_direct_t.actual.yaml"));
+
+  EXPECT_TRUE(
+      gcode::executionContractTracesEqual(actual.actual_trace, reference))
+      << gcode::serializeExecutionContractTrace(actual.actual_trace);
+}
+
+TEST(ExecutionContractRunnerTest,
+     RuntimeReadScriptCanDriveRepeatedSystemVariableReads) {
+  const auto program_path = writeTempFile("repeated_system_variable_reads.ngc",
+                                          "G1 X=$P_ACT_X\nG1 Y=$P_ACT_X\n");
+  const auto fixture_path =
+      writeTempFile("repeated_system_variable_reads.events.yaml",
+                    R"({
+  "name": "repeated_system_variable_reads",
+  "description": "Ordered runtime read scripts drive repeated variable reads in trace order.",
+  "initial_state": {
+    "modal": {
+      "motion_code": "",
+      "working_plane": "xy",
+      "rapid_mode": "linear",
+      "tool_radius_comp": "off",
+      "active_tool_selection": null,
+      "pending_tool_selection": null,
+      "selected_tool_selection": null
+    }
+  },
+  "options": {
+    "filename": null,
+    "active_skip_levels": [],
+    "tool_change_mode": "deferred_m6",
+    "enable_iso_m98_calls": false
+  },
+  "runtime": {
+    "system_variables": {},
+    "system_variable_reads": [
+      {
+        "name": "$P_ACT_X",
+        "value": 10.0
+      },
+      {
+        "name": "$P_ACT_X",
+        "value": 20.0
+      }
+    ]
+  },
+  "expected_events": [
+    {
+      "type": "system_variable_read",
+      "source": {
+        "filename": null,
+        "line": 1,
+        "line_number": null
+      },
+      "name": "$P_ACT_X",
+      "value": 10.0
+    },
+    {
+      "type": "linear_move",
+      "source": {
+        "filename": null,
+        "line": 1,
+        "line_number": null
+      },
+      "target": {
+        "x": 10.0,
+        "y": null,
+        "z": null,
+        "a": null,
+        "b": null,
+        "c": null
+      },
+      "feed": null,
+      "effective": {
+        "motion_code": "G1",
+        "working_plane": "xy",
+        "rapid_mode": "linear",
+        "tool_radius_comp": "off",
+        "active_tool_selection": null,
+        "pending_tool_selection": null,
+        "selected_tool_selection": null
+      }
+    },
+    {
+      "type": "system_variable_read",
+      "source": {
+        "filename": null,
+        "line": 2,
+        "line_number": null
+      },
+      "name": "$P_ACT_X",
+      "value": 20.0
+    },
+    {
+      "type": "linear_move",
+      "source": {
+        "filename": null,
+        "line": 2,
+        "line_number": null
+      },
+      "target": {
+        "x": null,
+        "y": 20.0,
+        "z": null,
+        "a": null,
+        "b": null,
+        "c": null
+      },
+      "feed": null,
+      "effective": {
+        "motion_code": "G1",
+        "working_plane": "xy",
+        "rapid_mode": "linear",
+        "tool_radius_comp": "off",
+        "active_tool_selection": null,
+        "pending_tool_selection": null,
+        "selected_tool_selection": null
+      }
+    },
+    {
+      "type": "completed"
+    }
+  ]
+})");
+
+  const auto reference =
+      gcode::loadExecutionContractTrace(fixture_path.string());
+
+  const auto actual = gcode::runExecutionContractFixture(
+      program_path.string(), reference,
+      sourcePath("output/execution_contract_review/core/"
+                 "repeated_system_variable_reads.actual.yaml"));
 
   EXPECT_TRUE(
       gcode::executionContractTracesEqual(actual.actual_trace, reference))

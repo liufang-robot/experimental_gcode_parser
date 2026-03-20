@@ -102,6 +102,7 @@ add_library(
                       src/packet.cpp src/packet_json.cpp
                       src/streaming_execution_engine.cpp
                       src/execution_session.cpp
+                      src/runtime_read_trace.cpp
                       src/execution_contract_fixture.cpp
                       src/execution_contract_runner.cpp
                       src/execution_contract_html.cpp

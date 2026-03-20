@@ -36,6 +36,7 @@ interactions:
 Fixtures may also declare deterministic runtime inputs in the reference trace:
 
 - `runtime.system_variables`
+- `runtime.system_variable_reads`
 - `runtime.linear_move_results`
 
 The current fixture-level options mirror the public `LowerOptions` fields that
@@ -46,9 +47,19 @@ can affect observable execution behavior:
 - `tool_change_mode`
 - `enable_iso_m98_calls`
 
-The runtime-input slice still uses `runtime.system_variables` only for
-ready-valued system-variable reads on the public `ExecutionSession` path,
-including both `IF` conditions and scalar `G0/G1` axis words.
+For simple fixed-value cases, fixtures may keep using:
+
+- `runtime.system_variables`
+
+When trace timing matters, fixtures may declare an ordered runtime-read script:
+
+- `runtime.system_variable_reads`
+
+The read script is consumed in strict execution order, so it can model:
+
+- repeated reads of the same variable with different values
+- motion reads followed by later condition reads
+- post-resume reads that should appear later in the trace
 
 For the first async fixture slice, `runtime.linear_move_results` can declare a
 deterministic sequence of linear-move submission outcomes such as:
@@ -87,6 +98,7 @@ Reference traces are ordered event lists. Step 1 uses:
 - `diagnostic`
 - `rejected`
 - `modal_update`
+- `system_variable_read`
 - `linear_move`
 - `dwell`
 - `tool_change`
@@ -108,6 +120,13 @@ The driver now supports:
 - `finish`
 - `resume_blocked`
 - `cancel_blocked`
+
+`system_variable_read` is a contract-trace event, not a new public sink
+callback. It records:
+
+- the source line where execution performed the read
+- the variable name
+- the ready value returned by the runtime
 
 ## Review CLI
 

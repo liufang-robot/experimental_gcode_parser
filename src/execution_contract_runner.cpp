@@ -8,6 +8,7 @@
 #include <utility>
 
 #include "gcode/execution_session.h"
+#include "runtime_read_trace.h"
 
 namespace gcode {
 namespace {
@@ -189,10 +190,11 @@ private:
   std::vector<ExecutionContractEvent> *events_;
 };
 
-class ReadyRuntime final : public IRuntime {
+class ReadyRuntime : public IRuntime {
 public:
-  explicit ReadyRuntime(ExecutionContractRuntimeInputs runtime_inputs = {})
-      : runtime_inputs_(std::move(runtime_inputs)) {}
+  ReadyRuntime(std::vector<ExecutionContractEvent> *events,
+               ExecutionContractRuntimeInputs runtime_inputs = {})
+      : events_(events), runtime_inputs_(std::move(runtime_inputs)) {}
 
   RuntimeResult<WaitToken>
   submitLinearMove(const LinearMoveCommand &) override {
@@ -235,10 +237,45 @@ public:
 
   RuntimeResult<double> readSystemVariable(std::string_view name) override {
     RuntimeResult<double> result;
+    auto record_read = [&](double value) {
+      if (events_ == nullptr) {
+        return;
+      }
+      const auto *source = currentRuntimeReadTraceSource();
+      if (source == nullptr) {
+        return;
+      }
+      nlohmann::ordered_json data;
+      data["name"] = std::string(name);
+      data["value"] = value;
+      SourceRef event_source;
+      event_source.filename = source->filename;
+      event_source.line = source->line;
+      event_source.line_number = source->line_number;
+      events_->push_back(
+          {"system_variable_read", std::move(event_source), std::move(data)});
+    };
+    if (system_variable_read_index_ <
+        runtime_inputs_.system_variable_reads.size()) {
+      const auto &configured =
+          runtime_inputs_.system_variable_reads[system_variable_read_index_];
+      if (configured.name != name) {
+        result.status = RuntimeCallStatus::Error;
+        result.error_message = "unexpected system variable read: expected " +
+                               configured.name + ", got " + std::string(name);
+        return result;
+      }
+      ++system_variable_read_index_;
+      result.status = RuntimeCallStatus::Ready;
+      result.value = configured.value;
+      record_read(configured.value);
+      return result;
+    }
     const auto it = runtime_inputs_.system_variables.find(std::string(name));
     if (it != runtime_inputs_.system_variables.end()) {
       result.status = RuntimeCallStatus::Ready;
       result.value = it->second;
+      record_read(it->second);
       return result;
     }
     result.status = RuntimeCallStatus::Error;
@@ -252,9 +289,24 @@ public:
     return result;
   }
 
+  bool allScriptedSystemVariableReadsConsumed() const {
+    return system_variable_read_index_ >=
+           runtime_inputs_.system_variable_reads.size();
+  }
+
+  std::string nextPendingSystemVariableReadName() const {
+    if (allScriptedSystemVariableReadsConsumed()) {
+      return {};
+    }
+    return runtime_inputs_.system_variable_reads[system_variable_read_index_]
+        .name;
+  }
+
 private:
+  std::vector<ExecutionContractEvent> *events_ = nullptr;
   ExecutionContractRuntimeInputs runtime_inputs_;
   size_t linear_move_result_index_ = 0;
+  size_t system_variable_read_index_ = 0;
 };
 
 class NeverCancelled final : public ICancellation {
@@ -321,6 +373,7 @@ runExecutionContractFixture(const std::string &program_path,
   std::vector<ExecutionContractEvent> actual_events;
   ContractRecordingSink sink(&actual_events);
   ReadyRuntime runtime(
+      &actual_events,
       reference_trace.runtime.value_or(ExecutionContractRuntimeInputs{}));
   NeverCancelled cancellation;
   LowerOptions options;
@@ -357,6 +410,11 @@ runExecutionContractFixture(const std::string &program_path,
       break;
     }
     appendTerminalStepEvent(&actual_events, step);
+  }
+
+  if (!runtime.allScriptedSystemVariableReadsConsumed()) {
+    throw std::runtime_error("unused system_variable_reads entry remains: " +
+                             runtime.nextPendingSystemVariableReadName());
   }
 
   ExecutionContractTrace actual_trace;
