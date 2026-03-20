@@ -1,5 +1,34 @@
 # CHANGELOG_AGENT
 
+## 2026-03-20 (runtime-backed scalar axis motion developer slice)
+- Added public execution support for scalar system-variable axis words on
+  `G0/G1`, for example `G1 X=$P_ACT_X`, by preserving those refs in AIL and
+  resolving them through `IRuntime.readSystemVariable(...)` before emitting a
+  numeric `LinearMoveCommand`.
+- Extended the active grammar so `WORD` tokens may carry scalar `$...` values
+  after `=`, allowing `X=$P_ACT_X` to parse as a normal motion word instead of
+  failing at syntax time.
+- Updated AIL and packet JSON/debug output so runtime-backed scalar axis refs
+  remain visible before execution resolves them.
+
+SPEC sections / tests:
+- SPEC: Section 3.3 G0/G1 baseline, Section 6.2 system-variable execution contract
+- Developer verification only in this slice:
+  - `cmake -S . -B build`
+  - `cmake --build build -j --target gcode_parse gcode_execution_contract_review execution_session_tests execution_contract_runner_tests`
+  - temporary smoke checks:
+    - `./build/gcode_parse /tmp/runtime_axis_scalar.ngc --mode ail --format json`
+    - `./build/gcode_parse /tmp/runtime_axis_scalar.ngc --mode packet --format json`
+    - `./build/gcode_execution_contract_review --fixtures-root /tmp/runtime_axis_fixture --output-root /tmp/runtime_axis_review`
+
+Known limitations:
+- This developer slice supports only scalar system variables on `G0/G1` axis
+  words `X/Y/Z/A/B/C`.
+- Indexed selector forms like `$AA_IM[X]`, feed expressions, and arc-word
+  expressions remain deferred.
+- Persistent execution-contract fixtures and public/integration tests for this
+  feature remain tester-owned follow-up work.
+
 ## 2026-03-20 (wu-11 cancelled fixture promotion)
 - Promoted a persistent reviewed `linear_move_cancelled` execution-contract
   fixture into the enforced core dataset, covering the public

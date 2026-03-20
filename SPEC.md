@@ -105,7 +105,7 @@ AST shape (v0.1):
       Decimals: `1.0`, `- 2.5`, `.5`, `5.`, `+ .25` -
                                                 No scientific notation in v0.1
 
-                                                    ## #3.3 G0
+                                                        ## #3.3 G0
                                                     / G1(rapid +
                                                          linear interpolation
                                                              baseline) -
@@ -129,6 +129,19 @@ AST shape (v0.1):
               -
               mode state as it executes
     `RTLION`/`RTLIOF` instructions
+          - scalar system-variable axis words are supported on `G0/G1`
+            execution paths with explicit `=` form, for example:
+            `G1 X=$P_ACT_X`
+          - current scalar runtime-backed motion support is limited to
+            axis words `X/Y/Z/A/B/C`
+          - indexed selector forms (for example `$AA_IM[X]`), feed expressions,
+            and arc-word expressions remain deferred
+          - execution resolves those scalar system-variable axis words through
+            `IRuntime.readSystemVariable(...)` before emitting/submitting a
+            numeric `LinearMoveCommand`
+          - a pending system-variable read blocks at the current motion
+            instruction; resume re-evaluates the same axis words and does not
+            resubmit an already-accepted move
 
                   Examples(from `testdata / g1_samples.ngc`):
 ``` G0 X20 Y10 G1 Z
@@ -734,8 +747,13 @@ N130 G01 X20 Y20
     `runtime.system_variables` inputs for public `ExecutionSession` review
   - current enforced runtime-backed public case is
     `if_system_variable_false_branch`
-  - motion address expressions such as `G1 X=$P_ACT_X` remain deferred; the
-    current motion lowering path still expects numeric word values
+  - `G0/G1` scalar axis expressions such as `G1 X=$P_ACT_X` are supported on
+    the public execution path and resolve through `IRuntime.readSystemVariable`
+    before command submission
+  - a pending scalar axis read blocks before the move is emitted/submitted and
+    resume re-evaluates that same instruction
+  - indexed selector forms such as `G1 X=$AA_IM[X]`, feed expressions, and
+    arc-word expressions remain deferred
 - Current public-session control-flow status:
   - cross-line `GOTO` and baseline structured `IF/ELSE/ENDIF` execution are
     supported through `ExecutionSession`

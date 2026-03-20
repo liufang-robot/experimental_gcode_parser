@@ -50,6 +50,23 @@ void appendOptionalDouble(std::ostringstream &out, const char *key,
   out << " " << key << "=" << std::setprecision(12) << *value;
 }
 
+void appendAxisSystemVariableRefs(std::ostringstream &out,
+                                  const gcode::AxisSystemVariableRefs &refs) {
+  auto append = [&out](const char *key,
+                       const std::optional<std::string> &value) {
+    if (!value.has_value()) {
+      return;
+    }
+    out << " " << key << "=" << *value;
+  };
+  append("x_var", refs.x);
+  append("y_var", refs.y);
+  append("z_var", refs.z);
+  append("a_var", refs.a);
+  append("b_var", refs.b);
+  append("c_var", refs.c);
+}
+
 void appendModal(std::ostringstream &out, const gcode::ModalState &modal) {
   out << " group=" << groupText(modal.group) << " code=" << modal.code
       << " updates=" << boolText(modal.updates_state);
@@ -195,6 +212,7 @@ std::string formatAilDebug(const gcode::AilResult &result) {
             appendOptionalDouble(out, "a", i.target_pose.a);
             appendOptionalDouble(out, "b", i.target_pose.b);
             appendOptionalDouble(out, "c", i.target_pose.c);
+            appendAxisSystemVariableRefs(out, i.target_system_variables);
             appendOptionalDouble(out, "feed", i.feed);
           } else if constexpr (std::is_same_v<std::decay_t<decltype(i)>,
                                               gcode::AilArcMoveInstruction>) {
@@ -392,6 +410,7 @@ std::string formatPacketDebug(const gcode::PacketResult &result) {
             appendOptionalDouble(out, "a", payload.target_pose.a);
             appendOptionalDouble(out, "b", payload.target_pose.b);
             appendOptionalDouble(out, "c", payload.target_pose.c);
+            appendAxisSystemVariableRefs(out, payload.target_system_variables);
             appendOptionalDouble(out, "feed", payload.feed);
           } else if constexpr (std::is_same_v<T, gcode::MotionArcPayload>) {
             out << " clockwise=" << boolText(payload.clockwise);
