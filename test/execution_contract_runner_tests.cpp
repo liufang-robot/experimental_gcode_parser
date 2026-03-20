@@ -27,6 +27,7 @@ TEST(ExecutionContractRunnerTest, Step1FixturesMatchReferenceTraces) {
       "modal_update",
       "linear_move_completed",
       "linear_move_blocked",
+      "linear_move_cancelled",
       "linear_move_block_resume",
       "dwell_seconds_completed",
       "tool_change_deferred_m6",

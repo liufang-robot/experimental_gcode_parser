@@ -1,5 +1,31 @@
 # CHANGELOG_AGENT
 
+## 2026-03-20 (wu-11 cancelled fixture promotion)
+- Promoted a persistent reviewed `linear_move_cancelled` execution-contract
+  fixture into the enforced core dataset, covering the public
+  `linear_move` -> `blocked` -> `cancelled` path.
+- Extended the core contract runner test list and review docs so cancelled is
+  enforced alongside the existing blocked and resume async cases.
+
+SPEC sections / tests:
+- SPEC: Section 6.2 execution contract fixture baseline
+- Tests: `test/execution_contract_runner_tests.cpp`
+- Fixtures/docs:
+  - `testdata/execution_contract/core/linear_move_cancelled.ngc`
+  - `testdata/execution_contract/core/linear_move_cancelled.events.yaml`
+  - `testdata/execution_contract/README.md`
+  - `docs/src/execution_contract_review.md`
+
+Known limitations:
+- Async fixture runtime coverage remains limited to deterministic
+  `linear_move_results`.
+
+How to reproduce locally (commands):
+- `cmake -S . -B build`
+- `cmake --build build -j --target execution_contract_runner_tests`
+- `./build/execution_contract_runner_tests --gtest_filter='ExecutionContractRunnerTest.Step1FixturesMatchReferenceTraces'`
+- `./dev/check.sh`
+
 ## 2026-03-20 (wu-11 cancelled driver support)
 - Extended the execution-contract fixture driver with `cancel_blocked`, which
   cancels an already-blocked public `ExecutionSession` and records the

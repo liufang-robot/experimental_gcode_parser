@@ -67,6 +67,7 @@ The current enforced core suite covers:
 - `modal_update`
 - `linear_move_completed`
 - `linear_move_blocked`
+- `linear_move_cancelled`
 - `linear_move_block_resume`
 - `dwell_seconds_completed`
 - `tool_change_deferred_m6`
@@ -104,10 +105,6 @@ The driver now supports:
 - `finish`
 - `resume_blocked`
 - `cancel_blocked`
-
-Persistent reviewed `cancelled` fixtures are still a tester-owned follow-up for
-the enforced core dataset. This developer slice only adds the driver/runtime
-support plus focused unit coverage.
 
 ## Review CLI
 
