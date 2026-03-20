@@ -1,5 +1,65 @@
 # CHANGELOG_AGENT
 
+## 2026-03-20 (execution contract runtime read trace planning)
+- Added a focused design note for ordered system-variable runtime-read scripts
+  and explicit `system_variable_read` trace events in execution-contract
+  fixtures.
+- Added the matching implementation plan for extending the fixture schema,
+  runner, and HTML review rendering while keeping existing static runtime maps
+  as shorthand.
+- Updated the implementation-plan note so this becomes an explicit follow-up
+  execution-contract slice after the current scalar-motion work is tester
+  reviewed.
+
+SPEC sections / tests:
+- Planning/design only:
+  - `docs/superpowers/specs/2026-03-20-execution-contract-runtime-read-trace.md`
+  - `docs/superpowers/plans/2026-03-20-execution-contract-runtime-read-trace.md`
+  - `docs/src/development/design/implementation_plan_from_requirements.md`
+
+Known limitations:
+- This is planning only; the execution-contract fixture schema and runner still
+  use the current static `runtime.system_variables` map today.
+
+How to reproduce locally (commands):
+- `sed -n '1,240p' docs/superpowers/specs/2026-03-20-execution-contract-runtime-read-trace.md`
+- `sed -n '1,220p' docs/superpowers/plans/2026-03-20-execution-contract-runtime-read-trace.md`
+- `sed -n '1,80p' docs/src/development/design/implementation_plan_from_requirements.md`
+
+## 2026-03-20 (runtime-backed scalar axis motion tester slice)
+- Promoted two persistent reviewed execution-contract fixtures for
+  runtime-backed scalar axis words: `G1 X=$P_ACT_X` and `G0 Z=$P_SET_Z`.
+- Added direct public `ExecutionSession` coverage for a pending
+  `readSystemVariable(...)` on a `G1` axis word, verifying that execution
+  blocks before any move is emitted and re-evaluates on `resume(token)`.
+- Updated execution-contract docs so the enforced core dataset now includes
+  the reviewed runtime-backed axis cases.
+
+SPEC sections / tests:
+- SPEC: Section 3.3 G0/G1 baseline, Section 6.2 system-variable execution contract
+- Tests:
+  - `test/execution_contract_runner_tests.cpp`
+  - `test/execution_session_tests.cpp`
+- Fixtures/docs:
+  - `testdata/execution_contract/core/linear_move_system_variable_x.ngc`
+  - `testdata/execution_contract/core/linear_move_system_variable_x.events.yaml`
+  - `testdata/execution_contract/core/rapid_move_system_variable_z.ngc`
+  - `testdata/execution_contract/core/rapid_move_system_variable_z.events.yaml`
+  - `testdata/execution_contract/README.md`
+  - `docs/src/execution_contract_review.md`
+
+Known limitations:
+- Coverage remains limited to scalar system variables on `G0/G1` axis words.
+- Indexed selector forms like `$AA_IM[X]`, feed expressions, and arc-word
+  expressions remain deferred.
+
+How to reproduce locally (commands):
+- `cmake -S . -B build`
+- `cmake --build build -j --target execution_contract_runner_tests execution_session_tests`
+- `./build/execution_contract_runner_tests --gtest_filter='ExecutionContractRunnerTest.Step1FixturesMatchReferenceTraces'`
+- `./build/execution_session_tests --gtest_filter='ExecutionSessionTest.PendingSystemVariableAxisReadBlocksBeforeEmittingMoveAndResumes'`
+- `./dev/check.sh`
+
 ## 2026-03-20 (runtime-backed scalar axis motion developer slice)
 - Added public execution support for scalar system-variable axis words on
   `G0/G1`, for example `G1 X=$P_ACT_X`, by preserving those refs in AIL and

@@ -27,6 +27,10 @@ The enforced core suite covers:
 The current async Step 2 slice is limited to deterministic linear-move wait
 cases driven by fixture-level `driver` steps plus `runtime.linear_move_results`.
 
+`runtime.system_variables` also backs reviewed ready-path fixtures for
+runtime-resolved scalar system variables on the public `ExecutionSession`
+path, including `IF` conditions and `G0/G1` axis words.
+
 Cases that describe reviewed requirements but are not yet supported by the
 public `ExecutionSession` path should live under `pending/`. They are reference
 examples for future work, not enforced core fixtures.

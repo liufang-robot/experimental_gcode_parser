@@ -109,6 +109,38 @@ public:
   }
 };
 
+class PendingSystemVariableRuntime : public ReadyRuntime {
+public:
+  gcode::RuntimeResult<double>
+  readSystemVariable(std::string_view name) override {
+    ++read_calls;
+    read_names.emplace_back(name);
+    if (read_calls == 1) {
+      gcode::RuntimeResult<double> result;
+      result.status = gcode::RuntimeCallStatus::Pending;
+      result.wait_token = gcode::WaitToken{"condition", "sysvar-ready"};
+      return result;
+    }
+
+    gcode::RuntimeResult<double> result;
+    result.status = gcode::RuntimeCallStatus::Ready;
+    result.value = 12.5;
+    return result;
+  }
+
+  gcode::RuntimeResult<gcode::WaitToken>
+  submitLinearMove(const gcode::LinearMoveCommand &cmd) override {
+    ++linear_calls;
+    submitted_moves.push_back(cmd);
+    return ReadyRuntime::submitLinearMove(cmd);
+  }
+
+  int read_calls = 0;
+  int linear_calls = 0;
+  std::vector<std::string> read_names;
+  std::vector<gcode::LinearMoveCommand> submitted_moves;
+};
+
 TEST(ExecutionSessionTest, RejectedSuffixCanBeReplacedAndExecutionContinues) {
   RecordingSink sink;
   ReadyRuntime runtime;
@@ -237,6 +269,47 @@ TEST(ExecutionSessionTest,
 
   const auto cancelled = session.pump();
   EXPECT_EQ(cancelled.status, gcode::StepStatus::Cancelled);
+}
+
+TEST(ExecutionSessionTest,
+     PendingSystemVariableAxisReadBlocksBeforeEmittingMoveAndResumes) {
+  RecordingSink sink;
+  PendingSystemVariableRuntime runtime;
+  StaticCancellation cancellation;
+  gcode::ExecutionSession session(sink, runtime, cancellation);
+
+  ASSERT_TRUE(session.pushChunk("G1 X=$P_ACT_X\n"));
+
+  const auto blocked = session.finish();
+  ASSERT_EQ(blocked.status, gcode::StepStatus::Blocked);
+  ASSERT_TRUE(blocked.blocked.has_value());
+  EXPECT_EQ(blocked.blocked->token.kind, "condition");
+  EXPECT_EQ(blocked.blocked->token.id, "sysvar-ready");
+  EXPECT_EQ(session.state(), gcode::EngineState::Blocked);
+  EXPECT_EQ(runtime.read_calls, 1);
+  ASSERT_EQ(runtime.read_names.size(), 1u);
+  EXPECT_EQ(runtime.read_names[0], "$P_ACT_X");
+  EXPECT_EQ(runtime.linear_calls, 0);
+  EXPECT_TRUE(runtime.submitted_moves.empty());
+  EXPECT_TRUE(sink.linear_moves.empty());
+
+  auto step = session.resume(blocked.blocked->token);
+  while (step.status == gcode::StepStatus::Progress) {
+    step = session.pump();
+  }
+
+  EXPECT_EQ(step.status, gcode::StepStatus::Completed);
+  EXPECT_EQ(session.state(), gcode::EngineState::Completed);
+  EXPECT_EQ(runtime.read_calls, 2);
+  ASSERT_EQ(runtime.read_names.size(), 2u);
+  EXPECT_EQ(runtime.read_names[1], "$P_ACT_X");
+  EXPECT_EQ(runtime.linear_calls, 1);
+  ASSERT_EQ(runtime.submitted_moves.size(), 1u);
+  ASSERT_TRUE(runtime.submitted_moves[0].target.x.has_value());
+  EXPECT_EQ(*runtime.submitted_moves[0].target.x, 12.5);
+  ASSERT_EQ(sink.linear_moves.size(), 1u);
+  ASSERT_TRUE(sink.linear_moves[0].target.x.has_value());
+  EXPECT_EQ(*sink.linear_moves[0].target.x, 12.5);
 }
 
 TEST(ExecutionSessionTest, ForwardGotoFaultEmitsSingleDiagnostic) {
