@@ -22,7 +22,7 @@ The first slice is intentionally narrow:
 - one async motion case
 - explicit fixture driver steps
 - `blocked` + `resume`
-- no `cancelled` yet
+- no persistent `cancelled` reference case yet
 
 This keeps the first async contract extension small enough to review and debug
 without mixing multiple runtime behaviors at once.
@@ -91,6 +91,10 @@ Rules for the first slice:
   - uses the blocked token returned by the session
   - calls `ExecutionSession::resume(token)`
   - continues the driver loop
+- `cancel_blocked`
+  - requires the current session step to be `Blocked`
+  - calls `ExecutionSession::cancel()`
+  - then drives the session to the resulting `Cancelled` boundary
 
 This is intentionally explicit. The fixture should say how the review runner
 drives the public session, instead of the runner inferring policy silently.
@@ -209,13 +213,15 @@ reviewed trace.
 
 This first async slice does not include:
 
-- `cancelled`
 - token mismatch error contracts
 - invalid `resume(...)` contracts
 - async dwell/tool-change fixtures
 - arbitrary runtime event scripting
 
-Those can follow once the first async motion case proves the fixture model.
+Developer-side support for `cancelled` driver flow can land without promoting a
+persistent reviewed `cancelled` reference case immediately. The persistent core
+fixture remains follow-up tester work once the first async motion case proves
+the model.
 
 ## Acceptance Criteria
 
@@ -223,6 +229,7 @@ Those can follow once the first async motion case proves the fixture model.
 - the review runner can execute at least:
   - `finish`
   - `resume_blocked`
+  - `cancel_blocked`
 - one async linear-motion core case is enforced
 - the generated HTML review output shows the driver alongside the case context
 - exact equality remains the comparison rule

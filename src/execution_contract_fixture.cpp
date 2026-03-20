@@ -193,6 +193,9 @@ ExecutionContractDriverAction driverActionFromString(const std::string &value) {
   if (value == "resume_blocked") {
     return ExecutionContractDriverAction::ResumeBlocked;
   }
+  if (value == "cancel_blocked") {
+    return ExecutionContractDriverAction::CancelBlocked;
+  }
   throw std::runtime_error("unsupported driver action: " + value);
 }
 
@@ -202,6 +205,8 @@ std::string driverActionToString(ExecutionContractDriverAction action) {
     return "finish";
   case ExecutionContractDriverAction::ResumeBlocked:
     return "resume_blocked";
+  case ExecutionContractDriverAction::CancelBlocked:
+    return "cancel_blocked";
   }
   return "finish";
 }

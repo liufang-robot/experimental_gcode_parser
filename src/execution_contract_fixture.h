@@ -26,6 +26,7 @@ struct ExecutionContractOptions {
 enum class ExecutionContractDriverAction {
   Finish,
   ResumeBlocked,
+  CancelBlocked,
 };
 
 struct ExecutionContractDriverStep {

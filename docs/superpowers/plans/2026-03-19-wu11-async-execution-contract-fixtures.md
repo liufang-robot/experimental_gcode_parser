@@ -4,13 +4,14 @@
 
 - `WU-11 Execution Contract Fixtures Step 2`
 - first slice: async linear move with `blocked` + `resume`
+- follow-up developer slice: add `cancel_blocked` driver support
 
 ## Why This Next
 
 - the public `ExecutionSession` async API already exists
 - the current contract suite still stops at synchronous end states
 - one reviewed async motion case will validate the fixture-driver design before
-  we add `cancelled` or more complex async families
+  we promote `cancelled` or more complex async families
 
 ## Scope
 
@@ -20,12 +21,14 @@ Implement only:
 - runner support for:
   - `finish`
   - `resume_blocked`
+- focused developer-side support for:
+  - `cancel_blocked`
 - one enforced async motion contract case
 - HTML rendering of the new driver section
 
 Do not implement:
 
-- `cancelled`
+- persistent reviewed `cancelled` core fixtures
 - invalid resume edge cases
 - async dwell/tool-change cases
 - generalized runtime scripting
@@ -54,8 +57,10 @@ Do not implement:
 5. Add one enforced core fixture:
    - `linear_move_block_resume`
 6. Render driver data in the generated HTML review page.
-7. Update docs/spec/changelog.
-8. Run `./dev/check.sh`.
+7. Add a follow-up developer slice for `cancel_blocked` driver support and
+   focused unit coverage.
+8. Update docs/spec/changelog.
+9. Run `./dev/check.sh`.
 
 ## Verification Target
 
@@ -70,5 +75,5 @@ Do not implement:
 Before implementation starts, confirm:
 
 - first async case stays motion-only
-- `cancelled` remains a later slice
+- persistent reviewed `cancelled` fixtures remain a later slice
 - driver behavior is explicit in the fixture, not hidden in the runner

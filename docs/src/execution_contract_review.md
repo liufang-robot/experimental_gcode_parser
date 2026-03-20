@@ -97,10 +97,17 @@ driver so reviewed traces can cover:
 
 - `linear_move` -> `blocked`
 - `linear_move` -> `blocked` -> `linear_move` -> `completed`
+- `linear_move` -> `blocked` -> `cancelled`
 
-`cancelled` remains follow-up work for the fixture driver and is still covered
-through direct public-session tests rather than persistent execution-contract
-review fixtures.
+The driver now supports:
+
+- `finish`
+- `resume_blocked`
+- `cancel_blocked`
+
+Persistent reviewed `cancelled` fixtures are still a tester-owned follow-up for
+the enforced core dataset. This developer slice only adds the driver/runtime
+support plus focused unit coverage.
 
 ## Review CLI
 
