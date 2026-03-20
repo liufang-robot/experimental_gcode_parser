@@ -757,9 +757,10 @@ N130 G01 X20 Y20
     - `enable_iso_m98_calls`
   - fixtures may declare an explicit driver for multi-step public session
     interactions
-    - current first async driver actions:
+    - current async driver actions:
       - `finish`
       - `resume_blocked`
+      - `cancel_blocked`
     - if omitted, the runner behaves as one implicit `finish`
   - fixtures may declare deterministic runtime submission outcomes for linear
     moves under `runtime.linear_move_results`
@@ -776,8 +777,9 @@ N130 G01 X20 Y20
     - `goto_skips_line`
     - `if_else_branch`
     - `if_system_variable_false_branch`
-  - first async slice is implemented in the fixture system but not yet promoted
-    into the enforced core dataset
+  - async blocked/resume flow is enforced in the core dataset
+  - `cancelled` driver support exists in the fixture system, but a persistent
+    core cancelled reference case is still follow-up tester work
   - reference vs actual comparison is exact semantic equality
   - generated actual traces are written under
     `output/execution_contract_review/`

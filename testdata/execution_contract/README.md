@@ -22,13 +22,10 @@ The enforced core suite covers:
 - `faulted`
 - `blocked`
 - `resume`
+- `cancelled`
 
 The current async Step 2 slice is limited to deterministic linear-move wait
 cases driven by fixture-level `driver` steps plus `runtime.linear_move_results`.
-
-`cancelled` remains a follow-up fixture workflow item and is currently covered
-by direct public-session tests rather than persistent execution-contract review
-fixtures.
 
 Cases that describe reviewed requirements but are not yet supported by the
 public `ExecutionSession` path should live under `pending/`. They are reference

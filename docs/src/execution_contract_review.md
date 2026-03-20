@@ -67,6 +67,7 @@ The current enforced core suite covers:
 - `modal_update`
 - `linear_move_completed`
 - `linear_move_blocked`
+- `linear_move_cancelled`
 - `linear_move_block_resume`
 - `dwell_seconds_completed`
 - `tool_change_deferred_m6`
@@ -97,10 +98,13 @@ driver so reviewed traces can cover:
 
 - `linear_move` -> `blocked`
 - `linear_move` -> `blocked` -> `linear_move` -> `completed`
+- `linear_move` -> `blocked` -> `cancelled`
 
-`cancelled` remains follow-up work for the fixture driver and is still covered
-through direct public-session tests rather than persistent execution-contract
-review fixtures.
+The driver now supports:
+
+- `finish`
+- `resume_blocked`
+- `cancel_blocked`
 
 ## Review CLI
 

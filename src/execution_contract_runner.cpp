@@ -347,6 +347,14 @@ runExecutionContractFixture(const std::string &program_path,
       }
       step = driveUntilBoundary(&session, session.resume(step.blocked->token));
       break;
+    case ExecutionContractDriverAction::CancelBlocked:
+      if (step.status != StepStatus::Blocked || !step.blocked.has_value()) {
+        throw std::runtime_error(
+            "cancel_blocked driver action requires blocked session state");
+      }
+      session.cancel();
+      step = driveUntilBoundary(&session, session.pump());
+      break;
     }
     appendTerminalStepEvent(&actual_events, step);
   }
