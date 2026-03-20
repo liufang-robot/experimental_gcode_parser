@@ -101,6 +101,34 @@ public:
 If you also want one object that can handle richer language-aware evaluation,
 implement `IExecutionRuntime` instead of plain `IRuntime`.
 
+### Runtime-Backed G0/G1 Axis Words
+
+The public execution path also supports scalar system variables in `G0/G1`
+axis words with explicit `=` form, for example:
+
+```gcode
+G1 X=$P_ACT_X
+G0 Z=$P_SET_Z
+```
+
+Execution behavior is:
+
+- `ExecutionSession` resolves the scalar system-variable value through
+  `IRuntime.readSystemVariable(...)`
+- if the read is `Ready`, the sink/runtime receive a normal numeric
+  `LinearMoveCommand`
+- if the read is `Pending`, the session becomes `Blocked` before any
+  `LinearMoveCommand` is emitted or submitted
+- `resume(token)` re-evaluates that same motion instruction; it does not
+  resubmit a previously accepted move
+
+Current limits:
+
+- supported only on `G0/G1`
+- supported only on axis words `X/Y/Z/A/B/C`
+- indexed selector forms like `$AA_IM[X]`, feed expressions, and arc-word
+  expressions remain deferred
+
 ## 3. Cancellation Interface
 
 ```cpp

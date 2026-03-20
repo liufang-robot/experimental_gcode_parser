@@ -381,6 +381,116 @@ std::string toUpper(std::string value) {
   return value;
 }
 
+bool isSystemVariableName(std::string_view name);
+
+bool parseDoubleText(const std::optional<std::string> &text, double *value) {
+  if (!text.has_value()) {
+    return false;
+  }
+  try {
+    *value = std::stod(*text);
+    return true;
+  } catch (...) {
+    return false;
+  }
+}
+
+bool isAxisHead(std::string_view head) {
+  return head == "X" || head == "Y" || head == "Z" || head == "A" ||
+         head == "B" || head == "C";
+}
+
+std::optional<double> *poseAxisByHead(Pose6 *pose, std::string_view head) {
+  if (head == "X") {
+    return &pose->x;
+  }
+  if (head == "Y") {
+    return &pose->y;
+  }
+  if (head == "Z") {
+    return &pose->z;
+  }
+  if (head == "A") {
+    return &pose->a;
+  }
+  if (head == "B") {
+    return &pose->b;
+  }
+  if (head == "C") {
+    return &pose->c;
+  }
+  return nullptr;
+}
+
+std::optional<std::string> *
+axisSystemVariableByHead(AxisSystemVariableRefs *refs, std::string_view head) {
+  if (head == "X") {
+    return &refs->x;
+  }
+  if (head == "Y") {
+    return &refs->y;
+  }
+  if (head == "Z") {
+    return &refs->z;
+  }
+  if (head == "A") {
+    return &refs->a;
+  }
+  if (head == "B") {
+    return &refs->b;
+  }
+  if (head == "C") {
+    return &refs->c;
+  }
+  return nullptr;
+}
+
+std::optional<std::string> parseScalarSystemVariableRef(const Word &word) {
+  if (!isAxisHead(word.head) || !word.has_equal || !word.value.has_value()) {
+    return std::nullopt;
+  }
+  std::string candidate = toUpper(*word.value);
+  if (!isSystemVariableName(candidate) ||
+      candidate.find('[') != std::string::npos ||
+      candidate.find(']') != std::string::npos) {
+    return std::nullopt;
+  }
+  return candidate;
+}
+
+void applyLinearMoveAxisValuesFromLine(const Line &line,
+                                       AilLinearMoveInstruction *inst) {
+  for (const auto &item : line.items) {
+    if (!std::holds_alternative<Word>(item)) {
+      continue;
+    }
+    const auto &word = std::get<Word>(item);
+    if (!isAxisHead(word.head)) {
+      continue;
+    }
+
+    auto *pose_axis = poseAxisByHead(&inst->target_pose, word.head);
+    auto *system_variable =
+        axisSystemVariableByHead(&inst->target_system_variables, word.head);
+    if (pose_axis == nullptr || system_variable == nullptr) {
+      continue;
+    }
+
+    double parsed = 0.0;
+    if (parseDoubleText(word.value, &parsed)) {
+      *pose_axis = parsed;
+      system_variable->reset();
+      continue;
+    }
+
+    const auto scalar_system_variable = parseScalarSystemVariableRef(word);
+    if (scalar_system_variable.has_value()) {
+      pose_axis->reset();
+      *system_variable = *scalar_system_variable;
+    }
+  }
+}
+
 enum class ExpressionEvaluationKind { Ready, Pending, Unsupported, Error };
 
 struct ExpressionEvaluation {
@@ -424,6 +534,29 @@ bool isSystemVariableName(std::string_view name) {
   return !name.empty() && name.front() == '$';
 }
 
+ExpressionEvaluation evaluateSystemVariableName(std::string_view name,
+                                                IRuntime *runtime) {
+  if (runtime == nullptr) {
+    return makeUnsupportedEvaluation();
+  }
+  const auto result = runtime->readSystemVariable(name);
+  if (result.status == RuntimeCallStatus::Pending) {
+    return makePendingEvaluation(result.wait_token);
+  }
+  if (result.status == RuntimeCallStatus::Error) {
+    const std::string message =
+        result.error_message.empty()
+            ? "system variable read failed: " + std::string(name)
+            : result.error_message;
+    return makeErrorEvaluation(message);
+  }
+  if (!result.value.has_value()) {
+    return makeErrorEvaluation("system variable read returned no value: " +
+                               std::string(name));
+  }
+  return makeReadyEvaluation(*result.value);
+}
+
 ExpressionEvaluation
 evaluateExpressionNode(const std::shared_ptr<ExprNode> &node,
                        const std::unordered_map<std::string, double> &variables,
@@ -438,25 +571,7 @@ evaluateExpressionNode(const std::shared_ptr<ExprNode> &node,
 
   if (const auto *variable = std::get_if<ExprVariable>(&node->node)) {
     if (variable->is_system || isSystemVariableName(variable->name)) {
-      if (runtime == nullptr) {
-        return makeUnsupportedEvaluation();
-      }
-      const auto result = runtime->readSystemVariable(variable->name);
-      if (result.status == RuntimeCallStatus::Pending) {
-        return makePendingEvaluation(result.wait_token);
-      }
-      if (result.status == RuntimeCallStatus::Error) {
-        const std::string message =
-            result.error_message.empty()
-                ? "system variable read failed: " + variable->name
-                : result.error_message;
-        return makeErrorEvaluation(message);
-      }
-      if (!result.value.has_value()) {
-        return makeErrorEvaluation("system variable read returned no value: " +
-                                   variable->name);
-      }
-      return makeReadyEvaluation(*result.value);
+      return evaluateSystemVariableName(variable->name, runtime);
     }
 
     const auto it = variables.find(toUpper(variable->name));
@@ -509,6 +624,55 @@ evaluateExpressionNode(const std::shared_ptr<ExprNode> &node,
   }
 
   return makeUnsupportedEvaluation("unsupported expression form");
+}
+
+struct LinearMoveResolution {
+  ExpressionEvaluationKind kind = ExpressionEvaluationKind::Error;
+  AilLinearMoveInstruction instruction;
+  std::optional<WaitToken> wait_token;
+  std::string error_message;
+};
+
+LinearMoveResolution
+resolveLinearMoveInstruction(const AilLinearMoveInstruction &inst,
+                             IRuntime *runtime) {
+  LinearMoveResolution resolution;
+  resolution.instruction = inst;
+
+  auto resolve_axis = [&](const std::optional<std::string> &system_variable,
+                          std::optional<double> *axis) -> bool {
+    if (!system_variable.has_value()) {
+      return true;
+    }
+    const auto value = evaluateSystemVariableName(*system_variable, runtime);
+    if (value.kind == ExpressionEvaluationKind::Ready) {
+      *axis = value.value;
+      return true;
+    }
+    resolution.kind = value.kind;
+    resolution.wait_token = value.wait_token;
+    resolution.error_message = value.error_message;
+    return false;
+  };
+
+  if (!resolve_axis(inst.target_system_variables.x,
+                    &resolution.instruction.target_pose.x) ||
+      !resolve_axis(inst.target_system_variables.y,
+                    &resolution.instruction.target_pose.y) ||
+      !resolve_axis(inst.target_system_variables.z,
+                    &resolution.instruction.target_pose.z) ||
+      !resolve_axis(inst.target_system_variables.a,
+                    &resolution.instruction.target_pose.a) ||
+      !resolve_axis(inst.target_system_variables.b,
+                    &resolution.instruction.target_pose.b) ||
+      !resolve_axis(inst.target_system_variables.c,
+                    &resolution.instruction.target_pose.c)) {
+    return resolution;
+  }
+
+  resolution.instruction.target_system_variables = {};
+  resolution.kind = ExpressionEvaluationKind::Ready;
+  return resolution;
 }
 
 std::optional<bool> compareConditionValues(double lhs, double rhs,
@@ -1165,6 +1329,7 @@ AilResult lowerToAil(const Program &program,
       auto lowered_inst = found->second;
       if (std::holds_alternative<AilLinearMoveInstruction>(lowered_inst)) {
         auto &linear = std::get<AilLinearMoveInstruction>(lowered_inst);
+        applyLinearMoveAxisValuesFromLine(line, &linear);
         if (linear.opcode == "G0") {
           linear.rapid_mode_effective = current_rapid_mode;
         }
@@ -1752,6 +1917,54 @@ bool AilExecutor::advanceOneInstruction(int64_t now_ms,
   }
   if (std::holds_alternative<AilToolChangeInstruction>(inst)) {
     return handleToolChangeAtPc(sink, runtime);
+  }
+  if (sink != nullptr && runtime != nullptr &&
+      std::holds_alternative<AilLinearMoveInstruction>(inst)) {
+    auto linear = std::get<AilLinearMoveInstruction>(inst);
+    if (!linear.target_system_variables.empty()) {
+      const auto resolved = resolveLinearMoveInstruction(linear, runtime);
+      if (resolved.kind == ExpressionEvaluationKind::Pending &&
+          resolved.wait_token.has_value()) {
+        state_.status = ExecutorStatus::Blocked;
+        ExecutorBlockedState blocked;
+        blocked.instruction_index = state_.pc;
+        blocked.wait_token = resolved.wait_token;
+        state_.blocked = blocked;
+        return true;
+      }
+      if (resolved.kind == ExpressionEvaluationKind::Error) {
+        addFault(linear.source, resolved.error_message);
+        return true;
+      }
+      linear = resolved.instruction;
+    }
+
+    const auto line = linear.source.line;
+    const ExecutionModalState modal_state =
+        makeExecutionModalState(state_, motionCodeOverrideForDispatch(inst));
+    const auto dispatch_result = dispatchExecutionInstruction(
+        AilInstruction{linear}, line, modal_state, *sink, *runtime);
+    if (dispatch_result.status == ExecutionDispatchResult::Status::Progress ||
+        dispatch_result.status == ExecutionDispatchResult::Status::Blocked) {
+      updateMotionCodeAfterDispatch(inst, &state_);
+    }
+    if (dispatch_result.status == ExecutionDispatchResult::Status::Blocked &&
+        dispatch_result.wait_token.has_value()) {
+      state_.status = ExecutorStatus::Blocked;
+      ExecutorBlockedState blocked;
+      blocked.instruction_index = state_.pc + 1;
+      blocked.wait_token = dispatch_result.wait_token;
+      state_.blocked = blocked;
+      return true;
+    }
+    if (dispatch_result.status == ExecutionDispatchResult::Status::Error) {
+      addFault(linear.source, dispatch_result.message);
+      return true;
+    }
+    if (dispatch_result.status == ExecutionDispatchResult::Status::Progress) {
+      ++state_.pc;
+      return true;
+    }
   }
   if (sink != nullptr && runtime != nullptr) {
     const auto line = std::visit(

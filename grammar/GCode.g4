@@ -304,7 +304,7 @@ QUOTED_WORD
     ;
 
 SYSTEM_VAR
-    : '$' [A-Za-z_] [A-Za-z0-9_]*
+    : DOLLAR_SIGN SYSTEM_VAR_BODY
     ;
 
 NUMBER
@@ -337,6 +337,15 @@ fragment WORD_VALUE
     : AC_NUMBER
     | REAL_NUMBER
     | INTEGER
+    | DOLLAR_SIGN SYSTEM_VAR_BODY
+    ;
+
+fragment DOLLAR_SIGN
+    : '$'
+    ;
+
+fragment SYSTEM_VAR_BODY
+    : [A-Za-z_] [A-Za-z0-9_]*
     ;
 
 fragment EQUAL

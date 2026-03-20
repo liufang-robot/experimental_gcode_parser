@@ -47,7 +47,8 @@ can affect observable execution behavior:
 - `enable_iso_m98_calls`
 
 The runtime-input slice still uses `runtime.system_variables` only for
-ready-valued system-variable reads on the public `ExecutionSession` path.
+ready-valued system-variable reads on the public `ExecutionSession` path,
+including both `IF` conditions and scalar `G0/G1` axis words.
 
 For the first async fixture slice, `runtime.linear_move_results` can declare a
 deterministic sequence of linear-move submission outcomes such as:
@@ -69,6 +70,8 @@ The current enforced core suite covers:
 - `linear_move_blocked`
 - `linear_move_cancelled`
 - `linear_move_block_resume`
+- `linear_move_system_variable_x`
+- `rapid_move_system_variable_z`
 - `dwell_seconds_completed`
 - `tool_change_deferred_m6`
 - `rejected_invalid_line`

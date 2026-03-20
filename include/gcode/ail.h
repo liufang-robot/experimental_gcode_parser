@@ -31,6 +31,20 @@ struct ToolSelectionState {
   std::string selector_value;
 };
 
+struct AxisSystemVariableRefs {
+  std::optional<std::string> x;
+  std::optional<std::string> y;
+  std::optional<std::string> z;
+  std::optional<std::string> a;
+  std::optional<std::string> b;
+  std::optional<std::string> c;
+
+  bool empty() const {
+    return !x.has_value() && !y.has_value() && !z.has_value() &&
+           !a.has_value() && !b.has_value() && !c.has_value();
+  }
+};
+
 enum class ToolSelectionResolutionKind { Resolved, Unresolved, Ambiguous };
 
 struct ToolSelectionResolution {
@@ -58,6 +72,7 @@ struct AilLinearMoveInstruction {
   ModalState modal;
   std::string opcode = "G1";
   Pose6 target_pose;
+  AxisSystemVariableRefs target_system_variables;
   std::optional<double> feed;
   std::optional<RapidInterpolationMode> rapid_mode_effective;
 };

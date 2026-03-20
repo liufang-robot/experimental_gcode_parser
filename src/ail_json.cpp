@@ -106,6 +106,23 @@ nlohmann::json arcToJson(const ArcParams &arc) {
   return j;
 }
 
+nlohmann::json axisSystemVariablesToJson(const AxisSystemVariableRefs &refs) {
+  nlohmann::json j;
+  j["x"] =
+      refs.x.has_value() ? nlohmann::json(*refs.x) : nlohmann::json(nullptr);
+  j["y"] =
+      refs.y.has_value() ? nlohmann::json(*refs.y) : nlohmann::json(nullptr);
+  j["z"] =
+      refs.z.has_value() ? nlohmann::json(*refs.z) : nlohmann::json(nullptr);
+  j["a"] =
+      refs.a.has_value() ? nlohmann::json(*refs.a) : nlohmann::json(nullptr);
+  j["b"] =
+      refs.b.has_value() ? nlohmann::json(*refs.b) : nlohmann::json(nullptr);
+  j["c"] =
+      refs.c.has_value() ? nlohmann::json(*refs.c) : nlohmann::json(nullptr);
+  return j;
+}
+
 std::string dwellModeToString(DwellMode mode) {
   return mode == DwellMode::Revolutions ? "revolutions" : "seconds";
 }
@@ -160,6 +177,10 @@ nlohmann::json instructionToJson(const AilInstruction &instruction) {
           j["source"] = sourceToJson(inst.source);
           j["modal"] = modalToJson(inst.modal);
           j["target_pose"] = poseToJson(inst.target_pose);
+          if (!inst.target_system_variables.empty()) {
+            j["target_system_variables"] =
+                axisSystemVariablesToJson(inst.target_system_variables);
+          }
           j["feed"] = optionalDoubleToJson(inst.feed);
           if (inst.rapid_mode_effective.has_value()) {
             j["rapid_mode_effective"] =

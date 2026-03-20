@@ -29,6 +29,8 @@ TEST(ExecutionContractRunnerTest, Step1FixturesMatchReferenceTraces) {
       "linear_move_blocked",
       "linear_move_cancelled",
       "linear_move_block_resume",
+      "linear_move_system_variable_x",
+      "rapid_move_system_variable_z",
       "dwell_seconds_completed",
       "tool_change_deferred_m6",
       "rejected_invalid_line",

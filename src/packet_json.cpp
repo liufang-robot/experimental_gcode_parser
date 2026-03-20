@@ -103,6 +103,23 @@ nlohmann::json arcToJson(const ArcParams &arc) {
   return j;
 }
 
+nlohmann::json axisSystemVariablesToJson(const AxisSystemVariableRefs &refs) {
+  nlohmann::json j;
+  j["x"] =
+      refs.x.has_value() ? nlohmann::json(*refs.x) : nlohmann::json(nullptr);
+  j["y"] =
+      refs.y.has_value() ? nlohmann::json(*refs.y) : nlohmann::json(nullptr);
+  j["z"] =
+      refs.z.has_value() ? nlohmann::json(*refs.z) : nlohmann::json(nullptr);
+  j["a"] =
+      refs.a.has_value() ? nlohmann::json(*refs.a) : nlohmann::json(nullptr);
+  j["b"] =
+      refs.b.has_value() ? nlohmann::json(*refs.b) : nlohmann::json(nullptr);
+  j["c"] =
+      refs.c.has_value() ? nlohmann::json(*refs.c) : nlohmann::json(nullptr);
+  return j;
+}
+
 nlohmann::json rejectedLineToJson(const RejectedLine &line) {
   nlohmann::json j;
   j["source"] = sourceToJson(line.source);
@@ -120,6 +137,10 @@ nlohmann::json payloadToJson(const PacketPayload &payload) {
         nlohmann::json j;
         if constexpr (std::is_same_v<T, MotionLinearPayload>) {
           j["target_pose"] = poseToJson(p.target_pose);
+          if (!p.target_system_variables.empty()) {
+            j["target_system_variables"] =
+                axisSystemVariablesToJson(p.target_system_variables);
+          }
           j["feed"] = optionalDoubleToJson(p.feed);
           if (p.rapid_mode_effective.has_value()) {
             j["rapid_mode_effective"] =
