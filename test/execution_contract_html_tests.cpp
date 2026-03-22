@@ -44,8 +44,7 @@ TEST(ExecutionContractHtmlTest, WritesIndexAndCasePage) {
       {gcode::ExecutionContractDriverAction::Finish},
       {gcode::ExecutionContractDriverAction::ResumeBlocked}};
   report.reference_trace.runtime = gcode::ExecutionContractRuntimeInputs{};
-  report.reference_trace.runtime->system_variable_reads = {
-      {"$P_ACT_X", 10.0}};
+  report.reference_trace.runtime->system_variable_reads = {{"$P_ACT_X", 10.0}};
   report.actual_trace.name = "linear_move_completed";
 
   const auto output_root = temp_root / "site";

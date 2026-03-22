@@ -1556,9 +1556,8 @@ bool AilExecutor::evaluateBranchAtPc(int64_t now_ms,
 
   if (!branch.condition.has_logical_and && branch.condition.lhs &&
       branch.condition.rhs) {
-    const auto lhs = evaluateExpressionNode(branch.condition.lhs,
-                                            state_.user_variables, runtime,
-                                            &branch.source);
+    const auto lhs = evaluateExpressionNode(
+        branch.condition.lhs, state_.user_variables, runtime, &branch.source);
     if (lhs.kind == ExpressionEvaluationKind::Pending) {
       state_.status = ExecutorStatus::Blocked;
       ExecutorBlockedState blocked;
@@ -1573,9 +1572,8 @@ bool AilExecutor::evaluateBranchAtPc(int64_t now_ms,
       return true;
     }
 
-    const auto rhs = evaluateExpressionNode(branch.condition.rhs,
-                                            state_.user_variables, runtime,
-                                            &branch.source);
+    const auto rhs = evaluateExpressionNode(
+        branch.condition.rhs, state_.user_variables, runtime, &branch.source);
     if (rhs.kind == ExpressionEvaluationKind::Pending) {
       state_.status = ExecutorStatus::Blocked;
       ExecutorBlockedState blocked;
@@ -1660,9 +1658,8 @@ bool AilExecutor::evaluateBranchAtPc(int64_t now_ms,
 
 bool AilExecutor::handleAssignAtPc(IRuntime *runtime) {
   const auto &assign = std::get<AilAssignInstruction>(instructions_[state_.pc]);
-  const auto value =
-      evaluateExpressionNode(assign.rhs, state_.user_variables, runtime,
-                             &assign.source);
+  const auto value = evaluateExpressionNode(assign.rhs, state_.user_variables,
+                                            runtime, &assign.source);
   if (value.kind == ExpressionEvaluationKind::Pending) {
     state_.status = ExecutorStatus::Blocked;
     ExecutorBlockedState blocked;

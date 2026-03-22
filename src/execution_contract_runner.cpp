@@ -372,9 +372,8 @@ runExecutionContractFixture(const std::string &program_path,
                             const std::string &actual_output_path) {
   std::vector<ExecutionContractEvent> actual_events;
   ContractRecordingSink sink(&actual_events);
-  ReadyRuntime runtime(
-      &actual_events,
-      reference_trace.runtime.value_or(ExecutionContractRuntimeInputs{}));
+  ReadyRuntime runtime(&actual_events, reference_trace.runtime.value_or(
+                                           ExecutionContractRuntimeInputs{}));
   NeverCancelled cancellation;
   LowerOptions options;
   options.filename = reference_trace.options.filename;
