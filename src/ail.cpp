@@ -16,6 +16,7 @@
 #include "execution_instruction_dispatcher.h"
 #include "execution_modal_state.h"
 #include "messages.h"
+#include "runtime_read_trace.h"
 
 namespace gcode {
 namespace {
@@ -535,9 +536,14 @@ bool isSystemVariableName(std::string_view name) {
 }
 
 ExpressionEvaluation evaluateSystemVariableName(std::string_view name,
-                                                IRuntime *runtime) {
+                                                IRuntime *runtime,
+                                                const SourceInfo *source) {
   if (runtime == nullptr) {
     return makeUnsupportedEvaluation();
+  }
+  std::optional<ScopedRuntimeReadTraceSource> trace_scope;
+  if (source != nullptr) {
+    trace_scope.emplace(*source);
   }
   const auto result = runtime->readSystemVariable(name);
   if (result.status == RuntimeCallStatus::Pending) {
@@ -560,7 +566,7 @@ ExpressionEvaluation evaluateSystemVariableName(std::string_view name,
 ExpressionEvaluation
 evaluateExpressionNode(const std::shared_ptr<ExprNode> &node,
                        const std::unordered_map<std::string, double> &variables,
-                       IRuntime *runtime) {
+                       IRuntime *runtime, const SourceInfo *source) {
   if (!node) {
     return makeErrorEvaluation("missing expression");
   }
@@ -571,7 +577,7 @@ evaluateExpressionNode(const std::shared_ptr<ExprNode> &node,
 
   if (const auto *variable = std::get_if<ExprVariable>(&node->node)) {
     if (variable->is_system || isSystemVariableName(variable->name)) {
-      return evaluateSystemVariableName(variable->name, runtime);
+      return evaluateSystemVariableName(variable->name, runtime, source);
     }
 
     const auto it = variables.find(toUpper(variable->name));
@@ -580,7 +586,7 @@ evaluateExpressionNode(const std::shared_ptr<ExprNode> &node,
 
   if (const auto *unary = std::get_if<ExprUnary>(&node->node)) {
     const auto operand =
-        evaluateExpressionNode(unary->operand, variables, runtime);
+        evaluateExpressionNode(unary->operand, variables, runtime, source);
     if (operand.kind != ExpressionEvaluationKind::Ready) {
       return operand;
     }
@@ -595,11 +601,13 @@ evaluateExpressionNode(const std::shared_ptr<ExprNode> &node,
   }
 
   if (const auto *binary = std::get_if<ExprBinary>(&node->node)) {
-    const auto lhs = evaluateExpressionNode(binary->lhs, variables, runtime);
+    const auto lhs =
+        evaluateExpressionNode(binary->lhs, variables, runtime, source);
     if (lhs.kind != ExpressionEvaluationKind::Ready) {
       return lhs;
     }
-    const auto rhs = evaluateExpressionNode(binary->rhs, variables, runtime);
+    const auto rhs =
+        evaluateExpressionNode(binary->rhs, variables, runtime, source);
     if (rhs.kind != ExpressionEvaluationKind::Ready) {
       return rhs;
     }
@@ -644,7 +652,8 @@ resolveLinearMoveInstruction(const AilLinearMoveInstruction &inst,
     if (!system_variable.has_value()) {
       return true;
     }
-    const auto value = evaluateSystemVariableName(*system_variable, runtime);
+    const auto value =
+        evaluateSystemVariableName(*system_variable, runtime, &inst.source);
     if (value.kind == ExpressionEvaluationKind::Ready) {
       *axis = value.value;
       return true;
@@ -1547,8 +1556,8 @@ bool AilExecutor::evaluateBranchAtPc(int64_t now_ms,
 
   if (!branch.condition.has_logical_and && branch.condition.lhs &&
       branch.condition.rhs) {
-    const auto lhs = evaluateExpressionNode(branch.condition.lhs,
-                                            state_.user_variables, runtime);
+    const auto lhs = evaluateExpressionNode(
+        branch.condition.lhs, state_.user_variables, runtime, &branch.source);
     if (lhs.kind == ExpressionEvaluationKind::Pending) {
       state_.status = ExecutorStatus::Blocked;
       ExecutorBlockedState blocked;
@@ -1563,8 +1572,8 @@ bool AilExecutor::evaluateBranchAtPc(int64_t now_ms,
       return true;
     }
 
-    const auto rhs = evaluateExpressionNode(branch.condition.rhs,
-                                            state_.user_variables, runtime);
+    const auto rhs = evaluateExpressionNode(
+        branch.condition.rhs, state_.user_variables, runtime, &branch.source);
     if (rhs.kind == ExpressionEvaluationKind::Pending) {
       state_.status = ExecutorStatus::Blocked;
       ExecutorBlockedState blocked;
@@ -1649,8 +1658,8 @@ bool AilExecutor::evaluateBranchAtPc(int64_t now_ms,
 
 bool AilExecutor::handleAssignAtPc(IRuntime *runtime) {
   const auto &assign = std::get<AilAssignInstruction>(instructions_[state_.pc]);
-  const auto value =
-      evaluateExpressionNode(assign.rhs, state_.user_variables, runtime);
+  const auto value = evaluateExpressionNode(assign.rhs, state_.user_variables,
+                                            runtime, &assign.source);
   if (value.kind == ExpressionEvaluationKind::Pending) {
     state_.status = ExecutorStatus::Blocked;
     ExecutorBlockedState blocked;

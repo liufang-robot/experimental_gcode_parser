@@ -25,6 +25,16 @@
   },
   "expected_events": [
     {
+      "type": "system_variable_read",
+      "source": {
+        "filename": null,
+        "line": 1,
+        "line_number": null
+      },
+      "name": "$P_ACT_X",
+      "value": 12.5
+    },
+    {
       "type": "linear_move",
       "source": {
         "filename": null,

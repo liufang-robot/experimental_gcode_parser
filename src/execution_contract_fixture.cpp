@@ -275,6 +275,22 @@ runtimeWaitResultToJson(const ExecutionContractRuntimeWaitResult &result) {
   return j;
 }
 
+ExecutionContractSystemVariableRead
+systemVariableReadFromJson(const nlohmann::ordered_json &j) {
+  ExecutionContractSystemVariableRead read;
+  read.name = j.at("name").get<std::string>();
+  read.value = j.at("value").get<double>();
+  return read;
+}
+
+nlohmann::ordered_json
+systemVariableReadToJson(const ExecutionContractSystemVariableRead &read) {
+  nlohmann::ordered_json j;
+  j["name"] = read.name;
+  j["value"] = read.value;
+  return j;
+}
+
 ExecutionContractOptions optionsFromJson(const nlohmann::ordered_json &j) {
   ExecutionContractOptions options;
   if (j.contains("filename") && !j["filename"].is_null()) {
@@ -309,13 +325,18 @@ nlohmann::ordered_json optionsToJson(const ExecutionContractOptions &options) {
 ExecutionContractRuntimeInputs
 runtimeInputsFromJson(const nlohmann::ordered_json &j) {
   ExecutionContractRuntimeInputs runtime;
-  if (!j.contains("system_variables") || j["system_variables"].is_null()) {
-    return runtime;
+  if (j.contains("system_variables") && !j["system_variables"].is_null()) {
+    for (auto it = j["system_variables"].begin();
+         it != j["system_variables"].end(); ++it) {
+      runtime.system_variables[it.key()] = it.value().get<double>();
+    }
   }
-
-  for (auto it = j["system_variables"].begin();
-       it != j["system_variables"].end(); ++it) {
-    runtime.system_variables[it.key()] = it.value().get<double>();
+  if (j.contains("system_variable_reads") &&
+      j["system_variable_reads"].is_array()) {
+    for (const auto &read_json : j["system_variable_reads"]) {
+      runtime.system_variable_reads.push_back(
+          systemVariableReadFromJson(read_json));
+    }
   }
   if (j.contains("linear_move_results") &&
       j["linear_move_results"].is_array()) {
@@ -333,6 +354,10 @@ runtimeInputsToJson(const ExecutionContractRuntimeInputs &runtime) {
   j["system_variables"] = nlohmann::ordered_json::object();
   for (const auto &entry : runtime.system_variables) {
     j["system_variables"][entry.first] = entry.second;
+  }
+  j["system_variable_reads"] = nlohmann::ordered_json::array();
+  for (const auto &read : runtime.system_variable_reads) {
+    j["system_variable_reads"].push_back(systemVariableReadToJson(read));
   }
   j["linear_move_results"] = nlohmann::ordered_json::array();
   for (const auto &result : runtime.linear_move_results) {

@@ -745,6 +745,11 @@ N130 G01 X20 Y20
   - runtime performs variable reads and may return value, pending, or error
   - execution-contract fixtures may provide deterministic ready-valued
     `runtime.system_variables` inputs for public `ExecutionSession` review
+  - when read timing matters, execution-contract fixtures may instead provide
+    ordered `runtime.system_variable_reads` inputs that are consumed in strict
+    trace order
+  - execution-contract traces may expose those reads explicitly through
+    `system_variable_read` events so repeated reads remain reviewable
   - current enforced runtime-backed public case is
     `if_system_variable_false_branch`
   - `G0/G1` scalar axis expressions such as `G1 X=$P_ACT_X` are supported on
@@ -785,6 +790,11 @@ N130 G01 X20 Y20
     - current supported statuses:
       - `ready`
       - `pending` with explicit wait token
+  - fixtures may declare ordered runtime read scripts under
+    `runtime.system_variable_reads`
+    - current first implementation target:
+      - ready-valued system-variable reads
+    - the script is consumed in strict trace order
   - current enforced Step 1 fixture cases are:
     - `modal_update`
     - `linear_move_completed`
@@ -795,9 +805,7 @@ N130 G01 X20 Y20
     - `goto_skips_line`
     - `if_else_branch`
     - `if_system_variable_false_branch`
-  - async blocked/resume flow is enforced in the core dataset
-  - `cancelled` driver support exists in the fixture system, but a persistent
-    core cancelled reference case is still follow-up tester work
+  - async blocked/resume/cancelled flow is enforced in the core dataset
   - reference vs actual comparison is exact semantic equality
   - generated actual traces are written under
     `output/execution_contract_review/`
