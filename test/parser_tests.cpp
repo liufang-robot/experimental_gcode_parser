@@ -165,22 +165,32 @@ TEST(ParserControlFlowTest, ParsesIfConditionWithSimpleSystemVariable) {
   EXPECT_EQ(lhs->name, "$P_ACT_X");
 }
 
-TEST(ParserExpressionTest, RejectsSystemVariableSelectorFormInAssignment) {
+TEST(ParserExpressionTest, ParsesSingleSelectorSystemVariableInAssignment) {
   const auto result = gcode::parse("R1 = $A_IN[1]\n");
-  ASSERT_FALSE(result.diagnostics.empty());
-  EXPECT_EQ(result.diagnostics[0].location.line, 1);
-  EXPECT_EQ(result.diagnostics[0].location.column, 11);
-  EXPECT_NE(result.diagnostics[0].message.find("syntax error"),
-            std::string::npos);
+  ASSERT_TRUE(result.diagnostics.empty());
+  ASSERT_EQ(result.program.lines.size(), 1u);
+  ASSERT_TRUE(result.program.lines[0].assignment.has_value());
+  ASSERT_TRUE(result.program.lines[0].assignment->rhs != nullptr);
+
+  const auto *rhs = std::get_if<gcode::ExprVariable>(
+      &result.program.lines[0].assignment->rhs->node);
+  ASSERT_NE(rhs, nullptr);
+  EXPECT_TRUE(rhs->is_system);
+  EXPECT_EQ(rhs->name, "$A_IN[1]");
 }
 
-TEST(ParserControlFlowTest, RejectsSystemVariableSelectorFormInCondition) {
-  const auto result = gcode::parse("IF $A_IN[1] == 1 GOTOF LBL\n");
-  ASSERT_FALSE(result.diagnostics.empty());
-  EXPECT_EQ(result.diagnostics[0].location.line, 1);
-  EXPECT_EQ(result.diagnostics[0].location.column, 9);
-  EXPECT_NE(result.diagnostics[0].message.find("syntax error"),
-            std::string::npos);
+TEST(ParserControlFlowTest, ParsesSingleSelectorSystemVariableInCondition) {
+  const auto result = gcode::parse("IF $AA_IM[X] == 1 GOTOF LBL\n");
+  ASSERT_TRUE(result.diagnostics.empty());
+  ASSERT_EQ(result.program.lines.size(), 1u);
+  ASSERT_TRUE(result.program.lines[0].if_goto_statement.has_value());
+
+  const auto &cond = result.program.lines[0].if_goto_statement->condition;
+  ASSERT_TRUE(cond.lhs != nullptr);
+  const auto *lhs = std::get_if<gcode::ExprVariable>(&cond.lhs->node);
+  ASSERT_NE(lhs, nullptr);
+  EXPECT_TRUE(lhs->is_system);
+  EXPECT_EQ(lhs->name, "$AA_IM[X]");
 }
 
 TEST(ParserExpressionTest, RejectsMultiPartSystemVariableSelectorForm) {

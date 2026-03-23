@@ -129,18 +129,20 @@ AST shape (v0.1):
               -
               mode state as it executes
     `RTLION`/`RTLIOF` instructions
-          - scalar system-variable axis words are supported on `G0/G1`
+          - system-variable axis words are supported on `G0/G1`
             execution paths with explicit `=` form, for example:
-            `G1 X=$P_ACT_X`
-          - current scalar runtime-backed motion support is limited to
+            `G1 X=$P_ACT_X`, `G1 X=$AA_IM[X]`
+          - current runtime-backed motion support is limited to
             axis words `X/Y/Z/A/B/C`
-          - indexed selector forms (for example `$AA_IM[X]`), feed expressions,
-            and arc-word expressions remain deferred
-          - execution resolves those scalar system-variable axis words through
+          - supported runtime-facing name forms in this slice are:
+            simple `$NAME` and single-selector `$NAME[part]`
+          - multi-selector forms (for example `$P_UIFR[1,X,TR]`), feed
+            expressions, and arc-word expressions remain deferred
+          - execution resolves those system-variable axis words through
             `IRuntime.readSystemVariable(...)` before emitting/submitting a
             numeric `LinearMoveCommand`
           - a pending system-variable read blocks at the current motion
-            instruction; resume re-evaluates the same axis words and does not
+            instruction; resume re-evaluates that same axis word and does not
             resubmit an already-accepted move
 
                   Examples(from `testdata / g1_samples.ngc`):
@@ -205,10 +207,11 @@ N50 X60
   - variable words (for example `R2`)
   - system variables (for example `$P_ACT_X`)
 - Current system-variable scope in v0:
-  - simple token form only (for example `$P_ACT_X`)
-  - simple token form is accepted in both assignment expressions and
-    control-flow conditions
-  - bracketed selector forms (for example `$P_UIFR[1,X,TR]`, `$A_IN[1]`) are
+  - simple token form (for example `$P_ACT_X`)
+  - single-selector form (for example `$A_IN[1]`, `$AA_IM[X]`)
+  - simple and single-selector forms are accepted in both assignment
+    expressions and control-flow conditions
+  - multi-selector bracket forms (for example `$P_UIFR[1,X,TR]`) are
     unsupported syntax in v0 and are reserved for
     Siemens-compatibility extension tasks
   - malformed selector attempts currently fail as parser syntax diagnostics at
@@ -752,13 +755,16 @@ N130 G01 X20 Y20
     `system_variable_read` events so repeated reads remain reviewable
   - current enforced runtime-backed public case is
     `if_system_variable_false_branch`
-  - `G0/G1` scalar axis expressions such as `G1 X=$P_ACT_X` are supported on
+  - `G0/G1` axis expressions such as `G1 X=$P_ACT_X` and `G1 X=$AA_IM[X]`
+    are supported on
     the public execution path and resolve through `IRuntime.readSystemVariable`
     before command submission
-  - a pending scalar axis read blocks before the move is emitted/submitted and
+  - a pending axis read blocks before the move is emitted/submitted and
     resume re-evaluates that same instruction
-  - indexed selector forms such as `G1 X=$AA_IM[X]`, feed expressions, and
-    arc-word expressions remain deferred
+  - supported runtime-facing names in this slice are simple `$NAME` and
+    single-selector `$NAME[part]`
+  - multi-selector forms such as `G1 X=$P_UIFR[1,X,TR]`, feed expressions,
+    and arc-word expressions remain deferred
 - Current public-session control-flow status:
   - cross-line `GOTO` and baseline structured `IF/ELSE/ENDIF` execution are
     supported through `ExecutionSession`
