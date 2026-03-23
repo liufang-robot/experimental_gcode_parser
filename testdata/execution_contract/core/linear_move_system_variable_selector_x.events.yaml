@@ -1,0 +1,67 @@
+{
+  "name": "linear_move_system_variable_selector_x",
+  "description": "G1 resolves a single-selector runtime-backed system variable on the X axis before emitting a numeric move",
+  "initial_state": {
+    "modal": {
+      "motion_code": "",
+      "working_plane": "xy",
+      "rapid_mode": "linear",
+      "tool_radius_comp": "off",
+      "active_tool_selection": null,
+      "pending_tool_selection": null,
+      "selected_tool_selection": null
+    }
+  },
+  "options": {
+    "filename": null,
+    "active_skip_levels": [],
+    "tool_change_mode": "deferred_m6",
+    "enable_iso_m98_calls": false
+  },
+  "runtime": {
+    "system_variables": {
+      "$AA_IM[X]": 12.5
+    }
+  },
+  "expected_events": [
+    {
+      "type": "system_variable_read",
+      "source": {
+        "filename": null,
+        "line": 1,
+        "line_number": null
+      },
+      "name": "$AA_IM[X]",
+      "value": 12.5
+    },
+    {
+      "type": "linear_move",
+      "source": {
+        "filename": null,
+        "line": 1,
+        "line_number": null
+      },
+      "target": {
+        "x": 12.5,
+        "y": null,
+        "z": null,
+        "a": null,
+        "b": null,
+        "c": null
+      },
+      "feed": null,
+      "effective": {
+        "motion_code": "G1",
+        "working_plane": "xy",
+        "rapid_mode": "linear",
+        "tool_radius_comp": "off",
+        "active_tool_selection": null,
+        "pending_tool_selection": null,
+        "selected_tool_selection": null
+      }
+    },
+    {
+      "type": "completed"
+    }
+  ]
+}

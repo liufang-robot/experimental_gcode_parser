@@ -30,6 +30,7 @@ TEST(ExecutionContractRunnerTest, Step1FixturesMatchReferenceTraces) {
       "linear_move_cancelled",
       "linear_move_block_resume",
       "linear_move_system_variable_x",
+      "linear_move_system_variable_selector_x",
       "motion_then_condition_system_variable_reads",
       "repeated_system_variable_reads",
       "rapid_move_system_variable_z",
@@ -40,7 +41,8 @@ TEST(ExecutionContractRunnerTest, Step1FixturesMatchReferenceTraces) {
       "fault_unresolved_target",
       "goto_skips_line",
       "if_else_branch",
-      "if_system_variable_false_branch"};
+      "if_system_variable_false_branch",
+      "if_system_variable_selector_false_branch"};
 
   for (const auto &case_name : case_names) {
     SCOPED_TRACE(case_name);

@@ -82,6 +82,7 @@ The current enforced core suite covers:
 - `linear_move_cancelled`
 - `linear_move_block_resume`
 - `linear_move_system_variable_x`
+- `linear_move_system_variable_selector_x`
 - `motion_then_condition_system_variable_reads`
 - `repeated_system_variable_reads`
 - `rapid_move_system_variable_z`
@@ -93,6 +94,7 @@ The current enforced core suite covers:
 - `goto_skips_line`
 - `if_else_branch`
 - `if_system_variable_false_branch`
+- `if_system_variable_selector_false_branch`
 
 ## Event Model
 
