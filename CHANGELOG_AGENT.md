@@ -1,5 +1,38 @@
 # CHANGELOG_AGENT
 
+## 2026-03-22 (runtime read reviewed fixture expansion)
+- Promoted three persistent reviewed execution-contract fixtures for ordered
+  runtime-read timing: repeated reads of the same variable, motion read
+  followed by condition read, and a read that appears only after
+  `resume(token)`.
+- Extended the enforced core contract suite and tester-facing fixture docs to
+  include these reviewed ordered-read cases.
+
+SPEC sections / tests:
+- SPEC: Section 6.2 system-variable execution contract
+- Tests:
+  - `test/execution_contract_runner_tests.cpp`
+- Fixtures/docs:
+  - `testdata/execution_contract/core/repeated_system_variable_reads.ngc`
+  - `testdata/execution_contract/core/repeated_system_variable_reads.events.yaml`
+  - `testdata/execution_contract/core/motion_then_condition_system_variable_reads.ngc`
+  - `testdata/execution_contract/core/motion_then_condition_system_variable_reads.events.yaml`
+  - `testdata/execution_contract/core/resumed_system_variable_read.ngc`
+  - `testdata/execution_contract/core/resumed_system_variable_read.events.yaml`
+  - `testdata/execution_contract/README.md`
+  - `docs/src/execution_contract_review.md`
+
+Known limitations:
+- These reviewed fixtures cover ready-valued ordered reads only.
+- Runtime-backed writes and indexed selector forms remain deferred.
+
+How to reproduce locally (commands):
+- `cmake -S . -B build`
+- `cmake --build build -j --target execution_contract_runner_tests gcode_execution_contract_review`
+- `./build/execution_contract_runner_tests --gtest_filter='ExecutionContractRunnerTest.Step1FixturesMatchReferenceTraces'`
+- `./build/gcode_execution_contract_review --fixtures-root testdata/execution_contract/core --output-root output/execution_contract_review`
+- `./dev/check.sh`
+
 ## 2026-03-21 (execution contract runtime read trace tester slice)
 - Updated the reviewed core execution-contract fixtures that already depend on
   runtime-backed system-variable reads so they now include explicit

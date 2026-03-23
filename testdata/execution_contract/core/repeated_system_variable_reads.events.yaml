@@ -1,0 +1,111 @@
+{
+  "name": "repeated_system_variable_reads",
+  "description": "Ordered runtime read scripts drive repeated reads of the same system variable in trace order",
+  "initial_state": {
+    "modal": {
+      "motion_code": "",
+      "working_plane": "xy",
+      "rapid_mode": "linear",
+      "tool_radius_comp": "off",
+      "active_tool_selection": null,
+      "pending_tool_selection": null,
+      "selected_tool_selection": null
+    }
+  },
+  "options": {
+    "filename": null,
+    "active_skip_levels": [],
+    "tool_change_mode": "deferred_m6",
+    "enable_iso_m98_calls": false
+  },
+  "runtime": {
+    "system_variables": {},
+    "system_variable_reads": [
+      {
+        "name": "$P_ACT_X",
+        "value": 10.0
+      },
+      {
+        "name": "$P_ACT_X",
+        "value": 20.0
+      }
+    ]
+  },
+  "expected_events": [
+    {
+      "type": "system_variable_read",
+      "source": {
+        "filename": null,
+        "line": 1,
+        "line_number": null
+      },
+      "name": "$P_ACT_X",
+      "value": 10.0
+    },
+    {
+      "type": "linear_move",
+      "source": {
+        "filename": null,
+        "line": 1,
+        "line_number": null
+      },
+      "target": {
+        "x": 10.0,
+        "y": null,
+        "z": null,
+        "a": null,
+        "b": null,
+        "c": null
+      },
+      "feed": null,
+      "effective": {
+        "motion_code": "G1",
+        "working_plane": "xy",
+        "rapid_mode": "linear",
+        "tool_radius_comp": "off",
+        "active_tool_selection": null,
+        "pending_tool_selection": null,
+        "selected_tool_selection": null
+      }
+    },
+    {
+      "type": "system_variable_read",
+      "source": {
+        "filename": null,
+        "line": 2,
+        "line_number": null
+      },
+      "name": "$P_ACT_X",
+      "value": 20.0
+    },
+    {
+      "type": "linear_move",
+      "source": {
+        "filename": null,
+        "line": 2,
+        "line_number": null
+      },
+      "target": {
+        "x": null,
+        "y": 20.0,
+        "z": null,
+        "a": null,
+        "b": null,
+        "c": null
+      },
+      "feed": null,
+      "effective": {
+        "motion_code": "G1",
+        "working_plane": "xy",
+        "rapid_mode": "linear",
+        "tool_radius_comp": "off",
+        "active_tool_selection": null,
+        "pending_tool_selection": null,
+        "selected_tool_selection": null
+      }
+    },
+    {
+      "type": "completed"
+    }
+  ]
+}
