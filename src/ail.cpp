@@ -446,14 +446,30 @@ axisSystemVariableByHead(AxisSystemVariableRefs *refs, std::string_view head) {
   return nullptr;
 }
 
-std::optional<std::string> parseScalarSystemVariableRef(const Word &word) {
+std::optional<std::string>
+parseSingleSelectorSystemVariableRef(const Word &word) {
   if (!isAxisHead(word.head) || !word.has_equal || !word.value.has_value()) {
     return std::nullopt;
   }
   std::string candidate = toUpper(*word.value);
-  if (!isSystemVariableName(candidate) ||
-      candidate.find('[') != std::string::npos ||
-      candidate.find(']') != std::string::npos) {
+  if (!isSystemVariableName(candidate)) {
+    return std::nullopt;
+  }
+
+  const auto open = candidate.find('[');
+  const auto close = candidate.find(']');
+  if (open == std::string::npos && close == std::string::npos) {
+    return candidate;
+  }
+  if (open == std::string::npos || close == std::string::npos ||
+      close <= open || close + 1 != candidate.size() ||
+      candidate.find('[', open + 1) != std::string::npos ||
+      candidate.find(']', close + 1) != std::string::npos) {
+    return std::nullopt;
+  }
+  const auto selector =
+      std::string_view(candidate).substr(open + 1, close - open - 1);
+  if (selector.empty()) {
     return std::nullopt;
   }
   return candidate;
@@ -484,10 +500,11 @@ void applyLinearMoveAxisValuesFromLine(const Line &line,
       continue;
     }
 
-    const auto scalar_system_variable = parseScalarSystemVariableRef(word);
-    if (scalar_system_variable.has_value()) {
+    const auto parsed_system_variable =
+        parseSingleSelectorSystemVariableRef(word);
+    if (parsed_system_variable.has_value()) {
       pose_axis->reset();
-      *system_variable = *scalar_system_variable;
+      *system_variable = *parsed_system_variable;
     }
   }
 }

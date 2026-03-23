@@ -29,7 +29,8 @@ cases driven by fixture-level `driver` steps plus `runtime.linear_move_results`.
 
 `runtime.system_variables` also backs reviewed ready-path fixtures for
 runtime-resolved scalar system variables on the public `ExecutionSession`
-path, including `IF` conditions and `G0/G1` axis words.
+path, including simple and single-selector `IF` conditions plus `G0/G1` axis
+words.
 
 `runtime.system_variable_reads` backs the reviewed ordered-read fixtures where
 the trace must preserve repeated reads, motion-then-condition reads, or reads

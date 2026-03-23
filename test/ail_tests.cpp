@@ -1042,6 +1042,23 @@ TEST(AilTest, AssignmentProducesTypedExpressionTree) {
   EXPECT_EQ(json["instructions"][0]["rhs"]["lhs"]["name"], "$P_ACT_X");
 }
 
+TEST(AilTest, PreservesSingleSelectorSystemVariableAxisWordInJson) {
+  const auto result = gcode::parseAndLowerAil("G1 X=$AA_IM[X]\n");
+  ASSERT_TRUE(result.diagnostics.empty());
+  ASSERT_EQ(result.instructions.size(), 1u);
+  ASSERT_TRUE(std::holds_alternative<gcode::AilLinearMoveInstruction>(
+      result.instructions[0]));
+
+  const auto &move =
+      std::get<gcode::AilLinearMoveInstruction>(result.instructions[0]);
+  ASSERT_TRUE(move.target_system_variables.x.has_value());
+  EXPECT_EQ(*move.target_system_variables.x, "$AA_IM[X]");
+
+  const auto json = nlohmann::json::parse(gcode::ailToJsonString(result));
+  EXPECT_EQ(json["instructions"][0]["target_system_variables"]["x"],
+            "$AA_IM[X]");
+}
+
 TEST(AilTest, LowersControlFlowInstructions) {
   const auto result = gcode::parseAndLowerAil(
       "START:\nIF R1 == 1 GOTOF END\nGOTO START\nEND:\n");
@@ -1076,6 +1093,21 @@ TEST(AilTest, PreservesSimpleSystemVariableInBranchIfConditionJson) {
   EXPECT_EQ(json["instructions"][0]["condition"]["lhs"]["kind"],
             "system_variable");
   EXPECT_EQ(json["instructions"][0]["condition"]["lhs"]["name"], "$P_ACT_X");
+}
+
+TEST(AilTest, PreservesSingleSelectorSystemVariableInBranchIfConditionJson) {
+  const auto result =
+      gcode::parseAndLowerAil("IF $AA_IM[X] == 1 GOTOF END\nEND:\n");
+  ASSERT_TRUE(result.diagnostics.empty());
+  ASSERT_EQ(result.instructions.size(), 2u);
+  ASSERT_TRUE(std::holds_alternative<gcode::AilBranchIfInstruction>(
+      result.instructions[0]));
+
+  const auto json = nlohmann::json::parse(gcode::ailToJsonString(result));
+  ASSERT_EQ(json["instructions"][0]["kind"], "branch_if");
+  EXPECT_EQ(json["instructions"][0]["condition"]["lhs"]["kind"],
+            "system_variable");
+  EXPECT_EQ(json["instructions"][0]["condition"]["lhs"]["name"], "$AA_IM[X]");
 }
 
 TEST(AilTest, PreservesSystemVariableGotoTargetKindInJson) {

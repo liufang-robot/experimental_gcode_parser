@@ -345,7 +345,7 @@ fragment DOLLAR_SIGN
     ;
 
 fragment SYSTEM_VAR_BODY
-    : [A-Za-z_] [A-Za-z0-9_]*
+    : [A-Za-z_] [A-Za-z0-9_]* ('[' [A-Za-z0-9_]+ ']')?
     ;
 
 fragment EQUAL

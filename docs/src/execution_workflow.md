@@ -103,18 +103,24 @@ implement `IExecutionRuntime` instead of plain `IRuntime`.
 
 ### Runtime-Backed G0/G1 Axis Words
 
-The public execution path also supports scalar system variables in `G0/G1`
+The public execution path also supports runtime-backed system variables in `G0/G1`
 axis words with explicit `=` form, for example:
 
 ```gcode
 G1 X=$P_ACT_X
 G0 Z=$P_SET_Z
+G1 X=$AA_IM[X]
+G0 Z=$A_IN[1]
 ```
 
 Execution behavior is:
 
-- `ExecutionSession` resolves the scalar system-variable value through
+- `ExecutionSession` preserves the exact runtime-facing variable name and
+  resolves it through
   `IRuntime.readSystemVariable(...)`
+- supported name shapes in this slice are:
+  - simple `$NAME`
+  - single-selector `$NAME[part]`
 - if the read is `Ready`, the sink/runtime receive a normal numeric
   `LinearMoveCommand`
 - if the read is `Pending`, the session becomes `Blocked` before any
@@ -126,7 +132,7 @@ Current limits:
 
 - supported only on `G0/G1`
 - supported only on axis words `X/Y/Z/A/B/C`
-- indexed selector forms like `$AA_IM[X]`, feed expressions, and arc-word
+- multi-selector forms like `$P_UIFR[1,X,TR]`, feed expressions, and arc-word
   expressions remain deferred
 
 ## 3. Cancellation Interface

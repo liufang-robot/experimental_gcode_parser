@@ -1,0 +1,67 @@
+{
+  "name": "if_system_variable_selector_false_branch",
+  "description": "Single-selector system-variable-backed IF/GOTOF resolves through the fixture runtime.",
+  "initial_state": {
+    "modal": {
+      "motion_code": "",
+      "working_plane": "xy",
+      "rapid_mode": "linear",
+      "tool_radius_comp": "off",
+      "active_tool_selection": null,
+      "pending_tool_selection": null,
+      "selected_tool_selection": null
+    }
+  },
+  "options": {
+    "filename": null,
+    "active_skip_levels": [],
+    "tool_change_mode": "deferred_m6",
+    "enable_iso_m98_calls": false
+  },
+  "runtime": {
+    "system_variables": {
+      "$AA_IM[X]": 0.0
+    }
+  },
+  "expected_events": [
+    {
+      "type": "system_variable_read",
+      "source": {
+        "filename": null,
+        "line": 1,
+        "line_number": null
+      },
+      "name": "$AA_IM[X]",
+      "value": 0.0
+    },
+    {
+      "type": "linear_move",
+      "source": {
+        "filename": null,
+        "line": 5,
+        "line_number": null
+      },
+      "target": {
+        "x": 10.0,
+        "y": null,
+        "z": null,
+        "a": null,
+        "b": null,
+        "c": null
+      },
+      "feed": null,
+      "effective": {
+        "motion_code": "G1",
+        "working_plane": "xy",
+        "rapid_mode": "linear",
+        "tool_radius_comp": "off",
+        "active_tool_selection": null,
+        "pending_tool_selection": null,
+        "selected_tool_selection": null
+      }
+    },
+    {
+      "type": "completed"
+    }
+  ]
+}

@@ -1,5 +1,66 @@
 # CHANGELOG_AGENT
 
+## 2026-03-23 (single-selector system variable tester slice)
+- Promoted two persistent reviewed execution-contract fixtures for
+  single-selector runtime-backed system variables: `G1 X=$AA_IM[X]` and
+  `IF $AA_IM[X] == 0`.
+- Extended the enforced core contract suite and tester-facing fixture docs to
+  include the reviewed selector-backed public cases.
+
+SPEC sections / tests:
+- SPEC: Section 3.3 G0/G1 baseline, Section 6.2 system-variable execution contract
+- Tests:
+  - `test/execution_contract_runner_tests.cpp`
+- Fixtures/docs:
+  - `testdata/execution_contract/core/linear_move_system_variable_selector_x.ngc`
+  - `testdata/execution_contract/core/linear_move_system_variable_selector_x.events.yaml`
+  - `testdata/execution_contract/core/if_system_variable_selector_false_branch.ngc`
+  - `testdata/execution_contract/core/if_system_variable_selector_false_branch.events.yaml`
+  - `testdata/execution_contract/README.md`
+  - `docs/src/execution_contract_review.md`
+
+Known limitations:
+- Coverage remains limited to single-selector `$NAME[part]` forms.
+- Multi-selector forms like `$P_UIFR[1,X,TR]`, feed expressions, and arc-word
+  expressions remain deferred.
+
+How to reproduce locally (commands):
+- `cmake -S . -B build`
+- `cmake --build build -j --target execution_contract_runner_tests`
+- `./build/execution_contract_runner_tests --gtest_filter='ExecutionContractRunnerTest.Step1FixturesMatchReferenceTraces'`
+- `./dev/check.sh`
+
+## 2026-03-23 (single-selector system-variable forms developer slice)
+- Added parser and execution support for single-selector system-variable forms
+  such as `$AA_IM[X]` and `$A_IN[1]` while keeping the runtime boundary as the
+  existing exact-name `readSystemVariable(std::string_view)` call.
+- Extended the `G0/G1` runtime-backed axis-word path so selector-bearing names
+  are preserved and resolved at execution time just like the existing scalar
+  `$P_ACT_X` path.
+- Updated the spec and execution workflow docs to describe the new supported
+  boundary before tester-owned reviewed fixtures are added.
+
+SPEC sections / tests:
+- SPEC: Section 3.3 `G0/G1` baseline, Section 3.6 assignments, Section 6.2
+  execution contract/runtime-read notes
+- Developer verification:
+  - `test/parser_tests.cpp`
+  - `test/ail_tests.cpp`
+  - `test/ail_executor_tests.cpp`
+
+Known limitations:
+- This slice supports only simple `$NAME` and single-selector `$NAME[part]`
+  forms.
+- Multi-selector forms such as `$P_UIFR[1,X,TR]` remain unsupported syntax.
+- Feed expressions, arc-word expressions, and typed variable values remain
+  deferred.
+
+How to reproduce locally (commands):
+- `cmake --build build -j --target parser_tests ail_tests ail_executor_tests`
+- `./build/parser_tests`
+- `./build/ail_tests --gtest_filter='AilTest.PreservesSingleSelectorSystemVariableAxisWordInJson:AilTest.PreservesSingleSelectorSystemVariableInBranchIfConditionJson'`
+- `./build/ail_executor_tests --gtest_filter='AilExecutorTest.RuntimeBackedSingleSelectorSystemVariableConditionCanTakeTrueBranch'`
+
 ## 2026-03-22 (runtime read reviewed fixture expansion)
 - Promoted three persistent reviewed execution-contract fixtures for ordered
   runtime-read timing: repeated reads of the same variable, motion read

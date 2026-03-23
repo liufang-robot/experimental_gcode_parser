@@ -730,6 +730,42 @@ TEST(AilExecutorTest, RuntimeBackedSystemVariableConditionCanTakeTrueBranch) {
   EXPECT_TRUE(sink.diagnostics.empty());
 }
 
+TEST(AilExecutorTest,
+     RuntimeBackedSingleSelectorSystemVariableConditionCanTakeTrueBranch) {
+  const auto lowered =
+      gcode::parseAndLowerAil("IF $AA_IM[X] == 0 GOTOF TARGET\n"
+                              "G1 X20\n"
+                              "GOTO END\n"
+                              "TARGET:\n"
+                              "G1 X10\n"
+                              "END:\n");
+  ASSERT_TRUE(lowered.diagnostics.empty());
+
+  gcode::AilExecutor exec(lowered.instructions);
+  RecordingExecutionSink sink;
+  RecordingExecutionRuntime runtime(
+      [](const gcode::Condition &, const gcode::SourceInfo &) {
+        gcode::ConditionResolution r;
+        r.kind = gcode::ConditionResolutionKind::Error;
+        r.error_message = "fallback resolver should not be used";
+        return r;
+      });
+  runtime.system_variables["$AA_IM[X]"] = 0.0;
+
+  int guard = 0;
+  while (exec.state().status != gcode::ExecutorStatus::Completed &&
+         exec.state().status != gcode::ExecutorStatus::Fault && guard < 32) {
+    ASSERT_TRUE(exec.step(0, sink, runtime));
+    ++guard;
+  }
+
+  EXPECT_EQ(exec.state().status, gcode::ExecutorStatus::Completed);
+  ASSERT_EQ(sink.linear_moves.size(), 1u);
+  ASSERT_TRUE(sink.linear_moves[0].target.x.has_value());
+  EXPECT_EQ(*sink.linear_moves[0].target.x, 10.0);
+  EXPECT_TRUE(sink.diagnostics.empty());
+}
+
 TEST(AilExecutorTest, ResolvesDirectionalGotoByLineNumber) {
   const auto lowered = gcode::parseAndLowerAil(
       "N100 G1 X1\nGOTOF N300\nN200 G1 X2\nN300 G1 X3\n");
