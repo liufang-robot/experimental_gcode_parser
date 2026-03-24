@@ -1,5 +1,39 @@
 # CHANGELOG_AGENT
 
+## 2026-03-24 (runtime read outcome tester slice)
+- Refreshed the reviewed ready-path runtime-read fixtures so every
+  `system_variable_read` event now records the explicit per-attempt
+  `outcome: "ready"` field.
+- Promoted persistent reviewed core fixtures for pending/resume and error
+  runtime-read outcomes.
+- Extended the enforced core contract suite and tester-facing fixture docs to
+  cover the new outcome-aware traces.
+
+SPEC sections / tests:
+- SPEC: Section 6.2 system-variable execution contract and execution-contract
+  fixture baseline
+- Tests:
+  - `test/execution_contract_runner_tests.cpp`
+- Fixtures/docs:
+  - `testdata/execution_contract/core/pending_system_variable_read.ngc`
+  - `testdata/execution_contract/core/pending_system_variable_read.events.yaml`
+  - `testdata/execution_contract/core/error_system_variable_read.ngc`
+  - `testdata/execution_contract/core/error_system_variable_read.events.yaml`
+  - refreshed ready-path `*.events.yaml` traces for runtime-backed reads
+  - `testdata/execution_contract/README.md`
+  - `docs/src/execution_contract_review.md`
+
+Known limitations:
+- The reviewed shorthand `runtime.system_variables` path still only models
+  ready-valued reads.
+- Outcome-aware reviewed coverage is limited to single-read pending/error
+  scenarios; typed variable values and runtime-backed writes remain deferred.
+
+How to reproduce locally (commands):
+- `cmake --build build -j --target execution_contract_runner_tests`
+- `./build/execution_contract_runner_tests --gtest_filter='ExecutionContractRunnerTest.Step1FixturesMatchReferenceTraces'`
+- `./dev/check.sh`
+
 ## 2026-03-24 (runtime read outcome scripting developer slice)
 - Extended execution-contract runtime-read inputs from ready-only values to
   per-attempt `ready`, `pending`, and `error` outcomes.

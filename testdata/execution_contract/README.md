@@ -34,7 +34,8 @@ words.
 
 `runtime.system_variable_reads` backs the reviewed ordered-read fixtures where
 the trace must preserve repeated reads, motion-then-condition reads, or reads
-that occur only after `resume`.
+that occur only after `resume`, including per-attempt `ready`, `pending`, and
+`error` outcomes.
 
 Cases that describe reviewed requirements but are not yet supported by the
 public `ExecutionSession` path should live under `pending/`. They are reference

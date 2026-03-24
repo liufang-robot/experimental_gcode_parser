@@ -1,6 +1,6 @@
 {
-  "name": "repeated_system_variable_reads",
-  "description": "Ordered runtime read scripts drive repeated reads of the same system variable in trace order",
+  "name": "pending_system_variable_read",
+  "description": "Pending runtime reads emit an attempted read event before blocking and a fresh ready event after resume.",
   "initial_state": {
     "modal": {
       "motion_code": "",
@@ -18,16 +18,28 @@
     "tool_change_mode": "deferred_m6",
     "enable_iso_m98_calls": false
   },
+  "driver": [
+    {
+      "action": "finish"
+    },
+    {
+      "action": "resume_blocked"
+    }
+  ],
   "runtime": {
-    "system_variables": {},
     "system_variable_reads": [
       {
         "name": "$P_ACT_X",
-        "value": 10.0
+        "outcome": "pending",
+        "token": {
+          "kind": "system_variable",
+          "id": "read-001"
+        }
       },
       {
         "name": "$P_ACT_X",
-        "value": 20.0
+        "outcome": "ready",
+        "value": 12.5
       }
     ]
   },
@@ -40,8 +52,31 @@
         "line_number": null
       },
       "name": "$P_ACT_X",
+      "outcome": "pending",
+      "token": {
+        "kind": "system_variable",
+        "id": "read-001"
+      }
+    },
+    {
+      "type": "blocked",
+      "line": 1,
+      "token": {
+        "kind": "system_variable",
+        "id": "read-001"
+      },
+      "reason": "instruction execution in progress"
+    },
+    {
+      "type": "system_variable_read",
+      "source": {
+        "filename": null,
+        "line": 1,
+        "line_number": null
+      },
+      "name": "$P_ACT_X",
       "outcome": "ready",
-      "value": 10.0
+      "value": 12.5
     },
     {
       "type": "linear_move",
@@ -51,45 +86,8 @@
         "line_number": null
       },
       "target": {
-        "x": 10.0,
+        "x": 12.5,
         "y": null,
-        "z": null,
-        "a": null,
-        "b": null,
-        "c": null
-      },
-      "feed": null,
-      "effective": {
-        "motion_code": "G1",
-        "working_plane": "xy",
-        "rapid_mode": "linear",
-        "tool_radius_comp": "off",
-        "active_tool_selection": null,
-        "pending_tool_selection": null,
-        "selected_tool_selection": null
-      }
-    },
-    {
-      "type": "system_variable_read",
-      "source": {
-        "filename": null,
-        "line": 2,
-        "line_number": null
-      },
-      "name": "$P_ACT_X",
-      "outcome": "ready",
-      "value": 20.0
-    },
-    {
-      "type": "linear_move",
-      "source": {
-        "filename": null,
-        "line": 2,
-        "line_number": null
-      },
-      "target": {
-        "x": null,
-        "y": 20.0,
         "z": null,
         "a": null,
         "b": null,

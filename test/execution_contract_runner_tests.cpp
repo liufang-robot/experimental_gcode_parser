@@ -29,6 +29,8 @@ TEST(ExecutionContractRunnerTest, Step1FixturesMatchReferenceTraces) {
       "linear_move_blocked",
       "linear_move_cancelled",
       "linear_move_block_resume",
+      "pending_system_variable_read",
+      "error_system_variable_read",
       "linear_move_system_variable_x",
       "linear_move_system_variable_selector_x",
       "motion_then_condition_system_variable_reads",
