@@ -279,7 +279,48 @@ ExecutionContractSystemVariableRead
 systemVariableReadFromJson(const nlohmann::ordered_json &j) {
   ExecutionContractSystemVariableRead read;
   read.name = j.at("name").get<std::string>();
-  read.value = j.at("value").get<double>();
+  const auto outcome = j.value("outcome", std::string("ready"));
+  if (outcome == "ready") {
+    read.outcome = ExecutionContractSystemVariableReadOutcome::Ready;
+  } else if (outcome == "pending") {
+    read.outcome = ExecutionContractSystemVariableReadOutcome::Pending;
+  } else if (outcome == "error") {
+    read.outcome = ExecutionContractSystemVariableReadOutcome::Error;
+  } else {
+    throw std::runtime_error("unsupported system variable read outcome: " +
+                             outcome);
+  }
+
+  if (j.contains("value") && !j["value"].is_null()) {
+    read.value = j["value"].get<double>();
+  }
+  if (j.contains("token") && !j["token"].is_null()) {
+    WaitToken token;
+    token.kind = j["token"].value("kind", "");
+    token.id = j["token"].value("id", "");
+    read.token = std::move(token);
+  }
+  if (j.contains("message") && !j["message"].is_null()) {
+    read.message = j["message"].get<std::string>();
+  }
+
+  switch (read.outcome) {
+  case ExecutionContractSystemVariableReadOutcome::Ready:
+    if (!read.value.has_value()) {
+      throw std::runtime_error("ready system variable read requires value");
+    }
+    break;
+  case ExecutionContractSystemVariableReadOutcome::Pending:
+    if (!read.token.has_value()) {
+      throw std::runtime_error("pending system variable read requires token");
+    }
+    break;
+  case ExecutionContractSystemVariableReadOutcome::Error:
+    if (!read.message.has_value()) {
+      throw std::runtime_error("error system variable read requires message");
+    }
+    break;
+  }
   return read;
 }
 
@@ -287,7 +328,29 @@ nlohmann::ordered_json
 systemVariableReadToJson(const ExecutionContractSystemVariableRead &read) {
   nlohmann::ordered_json j;
   j["name"] = read.name;
-  j["value"] = read.value;
+  switch (read.outcome) {
+  case ExecutionContractSystemVariableReadOutcome::Ready:
+    j["outcome"] = "ready";
+    if (read.value.has_value()) {
+      j["value"] = *read.value;
+    }
+    break;
+  case ExecutionContractSystemVariableReadOutcome::Pending:
+    j["outcome"] = "pending";
+    if (read.token.has_value()) {
+      j["token"] = {
+          {"kind", read.token->kind},
+          {"id", read.token->id},
+      };
+    }
+    break;
+  case ExecutionContractSystemVariableReadOutcome::Error:
+    j["outcome"] = "error";
+    if (read.message.has_value()) {
+      j["message"] = *read.message;
+    }
+    break;
+  }
   return j;
 }
 

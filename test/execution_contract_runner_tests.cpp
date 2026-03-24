@@ -29,6 +29,8 @@ TEST(ExecutionContractRunnerTest, Step1FixturesMatchReferenceTraces) {
       "linear_move_blocked",
       "linear_move_cancelled",
       "linear_move_block_resume",
+      "pending_system_variable_read",
+      "error_system_variable_read",
       "linear_move_system_variable_x",
       "linear_move_system_variable_selector_x",
       "motion_then_condition_system_variable_reads",
@@ -97,7 +99,9 @@ TEST(ExecutionContractRunnerTest,
   "runtime": {
     "system_variables": {
       "$P_ACT_X": 12.5
-    }
+    },
+    "system_variable_reads": [],
+    "linear_move_results": []
   },
   "expected_events": [
     {
@@ -108,6 +112,7 @@ TEST(ExecutionContractRunnerTest,
         "line_number": null
       },
       "name": "$P_ACT_X",
+      "outcome": "ready",
       "value": 12.5
     },
     {
@@ -259,7 +264,8 @@ TEST(ExecutionContractRunnerTest,
         "name": "$P_ACT_X",
         "value": 20.0
       }
-    ]
+    ],
+    "linear_move_results": []
   },
   "expected_events": [
     {
@@ -270,6 +276,7 @@ TEST(ExecutionContractRunnerTest,
         "line_number": null
       },
       "name": "$P_ACT_X",
+      "outcome": "ready",
       "value": 10.0
     },
     {
@@ -306,6 +313,7 @@ TEST(ExecutionContractRunnerTest,
         "line_number": null
       },
       "name": "$P_ACT_X",
+      "outcome": "ready",
       "value": 20.0
     },
     {
@@ -476,6 +484,220 @@ TEST(ExecutionContractRunnerTest, DriverCanBlockAndResumeLinearMove) {
       program_path.string(), reference,
       sourcePath("output/execution_contract_review/core/"
                  "linear_move_block_resume.actual.yaml"));
+
+  EXPECT_TRUE(
+      gcode::executionContractTracesEqual(actual.actual_trace, reference))
+      << gcode::serializeExecutionContractTrace(actual.actual_trace);
+}
+
+TEST(ExecutionContractRunnerTest,
+     RuntimeReadScriptCanBlockAndResumeWithPerAttemptTraceEvents) {
+  const auto program_path =
+      writeTempFile("pending_system_variable_read.ngc", "G1 X=$P_ACT_X\n");
+  const auto fixture_path =
+      writeTempFile("pending_system_variable_read.events.yaml",
+                    R"({
+  "name": "pending_system_variable_read",
+  "description": "Pending runtime reads emit an attempted read event before blocking and a fresh ready event after resume.",
+  "initial_state": {
+    "modal": {
+      "motion_code": "",
+      "working_plane": "xy",
+      "rapid_mode": "linear",
+      "tool_radius_comp": "off",
+      "active_tool_selection": null,
+      "pending_tool_selection": null,
+      "selected_tool_selection": null
+    }
+  },
+  "options": {
+    "filename": null,
+    "active_skip_levels": [],
+    "tool_change_mode": "deferred_m6",
+    "enable_iso_m98_calls": false
+  },
+  "driver": [
+    {
+      "action": "finish"
+    },
+    {
+      "action": "resume_blocked"
+    }
+  ],
+  "runtime": {
+    "system_variable_reads": [
+      {
+        "name": "$P_ACT_X",
+        "outcome": "pending",
+        "token": {
+          "kind": "system_variable",
+          "id": "read-001"
+        }
+      },
+      {
+        "name": "$P_ACT_X",
+        "outcome": "ready",
+        "value": 12.5
+      }
+    ]
+  },
+  "expected_events": [
+    {
+      "type": "system_variable_read",
+      "source": {
+        "filename": null,
+        "line": 1,
+        "line_number": null
+      },
+      "name": "$P_ACT_X",
+      "outcome": "pending",
+      "token": {
+        "kind": "system_variable",
+        "id": "read-001"
+      }
+    },
+    {
+      "type": "blocked",
+      "line": 1,
+      "token": {
+        "kind": "system_variable",
+        "id": "read-001"
+      },
+      "reason": "instruction execution in progress"
+    },
+    {
+      "type": "system_variable_read",
+      "source": {
+        "filename": null,
+        "line": 1,
+        "line_number": null
+      },
+      "name": "$P_ACT_X",
+      "outcome": "ready",
+      "value": 12.5
+    },
+    {
+      "type": "linear_move",
+      "source": {
+        "filename": null,
+        "line": 1,
+        "line_number": null
+      },
+      "target": {
+        "x": 12.5,
+        "y": null,
+        "z": null,
+        "a": null,
+        "b": null,
+        "c": null
+      },
+      "feed": null,
+      "effective": {
+        "motion_code": "G1",
+        "working_plane": "xy",
+        "rapid_mode": "linear",
+        "tool_radius_comp": "off",
+        "active_tool_selection": null,
+        "pending_tool_selection": null,
+        "selected_tool_selection": null
+      }
+    },
+    {
+      "type": "completed"
+    }
+  ]
+})");
+
+  const auto reference =
+      gcode::loadExecutionContractTrace(fixture_path.string());
+
+  const auto actual = gcode::runExecutionContractFixture(
+      program_path.string(), reference,
+      sourcePath("output/execution_contract_review/core/"
+                 "pending_system_variable_read.actual.yaml"));
+
+  EXPECT_TRUE(
+      gcode::executionContractTracesEqual(actual.actual_trace, reference))
+      << gcode::serializeExecutionContractTrace(actual.actual_trace);
+}
+
+TEST(ExecutionContractRunnerTest,
+     RuntimeReadScriptCanFaultWithPerAttemptErrorTraceEvent) {
+  const auto program_path =
+      writeTempFile("error_system_variable_read.ngc", "G1 X=$P_ACT_X\n");
+  const auto fixture_path =
+      writeTempFile("error_system_variable_read.events.yaml",
+                    R"({
+  "name": "error_system_variable_read",
+  "description": "Runtime read errors emit an attempted read event before faulting.",
+  "initial_state": {
+    "modal": {
+      "motion_code": "",
+      "working_plane": "xy",
+      "rapid_mode": "linear",
+      "tool_radius_comp": "off",
+      "active_tool_selection": null,
+      "pending_tool_selection": null,
+      "selected_tool_selection": null
+    }
+  },
+  "options": {
+    "filename": null,
+    "active_skip_levels": [],
+    "tool_change_mode": "deferred_m6",
+    "enable_iso_m98_calls": false
+  },
+  "runtime": {
+    "system_variables": {},
+    "system_variable_reads": [
+      {
+        "name": "$P_ACT_X",
+        "outcome": "error",
+        "message": "system variable unavailable"
+      }
+    ],
+    "linear_move_results": []
+  },
+  "expected_events": [
+    {
+      "type": "system_variable_read",
+      "source": {
+        "filename": null,
+        "line": 1,
+        "line_number": null
+      },
+      "name": "$P_ACT_X",
+      "outcome": "error",
+      "message": "system variable unavailable"
+    },
+    {
+      "type": "diagnostic",
+      "severity": "error",
+      "message": "system variable unavailable",
+      "location": {
+        "line": 1,
+        "column": 1
+      }
+    },
+    {
+      "type": "faulted",
+      "severity": "error",
+      "message": "system variable unavailable",
+      "location": {
+        "line": 1,
+        "column": 1
+      }
+    }
+  ]
+})");
+
+  const auto reference =
+      gcode::loadExecutionContractTrace(fixture_path.string());
+
+  const auto actual = gcode::runExecutionContractFixture(
+      program_path.string(), reference,
+      sourcePath("output/execution_contract_review/core/"
+                 "error_system_variable_read.actual.yaml"));
 
   EXPECT_TRUE(
       gcode::executionContractTracesEqual(actual.actual_trace, reference))

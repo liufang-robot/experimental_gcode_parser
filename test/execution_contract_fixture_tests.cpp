@@ -194,4 +194,96 @@ TEST(ExecutionContractFixtureTest, LoadsRuntimeSystemVariables) {
             "pending");
 }
 
+TEST(ExecutionContractFixtureTest, LoadsOutcomeAwareSystemVariableReads) {
+  const auto path =
+      writeFixtureFile("execution_contract_runtime_read_outcomes.events.yaml",
+                       R"({
+  "name": "runtime_read_outcomes",
+  "initial_state": {
+    "modal": {
+      "motion_code": "",
+      "working_plane": "xy",
+      "rapid_mode": "linear",
+      "tool_radius_comp": "off",
+      "active_tool_selection": null,
+      "pending_tool_selection": null,
+      "selected_tool_selection": null
+    }
+  },
+  "options": {
+    "filename": null,
+    "active_skip_levels": [],
+    "tool_change_mode": "deferred_m6",
+    "enable_iso_m98_calls": false
+  },
+  "runtime": {
+    "system_variable_reads": [
+      {
+        "name": "$P_ACT_X",
+        "outcome": "pending",
+        "token": {
+          "kind": "system_variable",
+          "id": "read-001"
+        }
+      },
+      {
+        "name": "$P_ACT_X",
+        "outcome": "ready",
+        "value": 12.5
+      },
+      {
+        "name": "$AA_IM[X]",
+        "outcome": "error",
+        "message": "system variable unavailable"
+      }
+    ]
+  },
+  "expected_events": [
+    {
+      "type": "completed"
+    }
+  ]
+})");
+
+  const auto trace = gcode::loadExecutionContractTrace(path.string());
+
+  ASSERT_TRUE(trace.runtime.has_value());
+  ASSERT_EQ(trace.runtime->system_variable_reads.size(), 3u);
+
+  EXPECT_EQ(trace.runtime->system_variable_reads[0].name, "$P_ACT_X");
+  EXPECT_EQ(trace.runtime->system_variable_reads[0].outcome,
+            gcode::ExecutionContractSystemVariableReadOutcome::Pending);
+  ASSERT_TRUE(trace.runtime->system_variable_reads[0].token.has_value());
+  EXPECT_EQ(trace.runtime->system_variable_reads[0].token->kind,
+            "system_variable");
+  EXPECT_EQ(trace.runtime->system_variable_reads[0].token->id, "read-001");
+
+  EXPECT_EQ(trace.runtime->system_variable_reads[1].outcome,
+            gcode::ExecutionContractSystemVariableReadOutcome::Ready);
+  ASSERT_TRUE(trace.runtime->system_variable_reads[1].value.has_value());
+  EXPECT_DOUBLE_EQ(*trace.runtime->system_variable_reads[1].value, 12.5);
+
+  EXPECT_EQ(trace.runtime->system_variable_reads[2].name, "$AA_IM[X]");
+  EXPECT_EQ(trace.runtime->system_variable_reads[2].outcome,
+            gcode::ExecutionContractSystemVariableReadOutcome::Error);
+  ASSERT_TRUE(trace.runtime->system_variable_reads[2].message.has_value());
+  EXPECT_EQ(*trace.runtime->system_variable_reads[2].message,
+            "system variable unavailable");
+
+  const auto roundtrip = gcode::executionContractTraceToJson(trace);
+  ASSERT_TRUE(roundtrip.contains("runtime"));
+  ASSERT_EQ(roundtrip["runtime"]["system_variable_reads"].size(), 3u);
+  EXPECT_EQ(roundtrip["runtime"]["system_variable_reads"][0]["outcome"],
+            "pending");
+  EXPECT_EQ(roundtrip["runtime"]["system_variable_reads"][0]["token"]["id"],
+            "read-001");
+  EXPECT_EQ(roundtrip["runtime"]["system_variable_reads"][1]["outcome"],
+            "ready");
+  EXPECT_EQ(roundtrip["runtime"]["system_variable_reads"][1]["value"], 12.5);
+  EXPECT_EQ(roundtrip["runtime"]["system_variable_reads"][2]["outcome"],
+            "error");
+  EXPECT_EQ(roundtrip["runtime"]["system_variable_reads"][2]["message"],
+            "system variable unavailable");
+}
+
 } // namespace

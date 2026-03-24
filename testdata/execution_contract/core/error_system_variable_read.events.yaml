@@ -1,0 +1,61 @@
+{
+  "name": "error_system_variable_read",
+  "description": "Runtime read errors emit an attempted read event before faulting.",
+  "initial_state": {
+    "modal": {
+      "motion_code": "",
+      "working_plane": "xy",
+      "rapid_mode": "linear",
+      "tool_radius_comp": "off",
+      "active_tool_selection": null,
+      "pending_tool_selection": null,
+      "selected_tool_selection": null
+    }
+  },
+  "options": {
+    "filename": null,
+    "active_skip_levels": [],
+    "tool_change_mode": "deferred_m6",
+    "enable_iso_m98_calls": false
+  },
+  "runtime": {
+    "system_variable_reads": [
+      {
+        "name": "$P_ACT_X",
+        "outcome": "error",
+        "message": "system variable unavailable"
+      }
+    ]
+  },
+  "expected_events": [
+    {
+      "type": "system_variable_read",
+      "source": {
+        "filename": null,
+        "line": 1,
+        "line_number": null
+      },
+      "name": "$P_ACT_X",
+      "outcome": "error",
+      "message": "system variable unavailable"
+    },
+    {
+      "type": "diagnostic",
+      "severity": "error",
+      "message": "system variable unavailable",
+      "location": {
+        "line": 1,
+        "column": 1
+      }
+    },
+    {
+      "type": "faulted",
+      "severity": "error",
+      "message": "system variable unavailable",
+      "location": {
+        "line": 1,
+        "column": 1
+      }
+    }
+  ]
+}

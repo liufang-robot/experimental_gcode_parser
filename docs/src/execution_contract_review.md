@@ -60,6 +60,7 @@ The read script is consumed in strict execution order, so it can model:
 - repeated reads of the same variable with different values
 - motion reads followed by later condition reads
 - post-resume reads that should appear later in the trace
+- per-attempt `ready`, `pending`, and `error` outcomes for the same variable
 
 For the first async fixture slice, `runtime.linear_move_results` can declare a
 deterministic sequence of linear-move submission outcomes such as:
@@ -81,6 +82,8 @@ The current enforced core suite covers:
 - `linear_move_blocked`
 - `linear_move_cancelled`
 - `linear_move_block_resume`
+- `pending_system_variable_read`
+- `error_system_variable_read`
 - `linear_move_system_variable_x`
 - `linear_move_system_variable_selector_x`
 - `motion_then_condition_system_variable_reads`
@@ -131,7 +134,17 @@ callback. It records:
 
 - the source line where execution performed the read
 - the variable name
-- the ready value returned by the runtime
+- the per-attempt outcome:
+  - `ready`
+  - `pending`
+  - `error`
+- for `ready`, the returned value
+- for `pending`, the wait token
+- for `error`, the runtime error message
+
+If a pending read later resumes and execution retries that same read, the
+retry emits a fresh `system_variable_read` event instead of mutating the
+earlier pending event in place.
 
 ## Review CLI
 
