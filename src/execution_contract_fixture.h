@@ -44,9 +44,19 @@ struct ExecutionContractRuntimeWaitResult {
   std::optional<WaitToken> token;
 };
 
+enum class ExecutionContractSystemVariableReadOutcome {
+  Ready,
+  Pending,
+  Error,
+};
+
 struct ExecutionContractSystemVariableRead {
   std::string name;
-  double value = 0.0;
+  ExecutionContractSystemVariableReadOutcome outcome =
+      ExecutionContractSystemVariableReadOutcome::Ready;
+  std::optional<double> value;
+  std::optional<WaitToken> token;
+  std::optional<std::string> message;
 };
 
 struct ExecutionContractRuntimeInputs {

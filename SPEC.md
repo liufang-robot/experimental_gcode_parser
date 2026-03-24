@@ -751,8 +751,15 @@ N130 G01 X20 Y20
   - when read timing matters, execution-contract fixtures may instead provide
     ordered `runtime.system_variable_reads` inputs that are consumed in strict
     trace order
-  - execution-contract traces may expose those reads explicitly through
-    `system_variable_read` events so repeated reads remain reviewable
+  - ordered runtime-read scripts may now declare per-attempt outcomes:
+    - `ready`
+    - `pending`
+    - `error`
+  - execution-contract traces may expose every read attempt explicitly through
+    `system_variable_read` events so repeated reads, blocked reads, and
+    faulting reads remain reviewable
+  - if resume causes execution to retry the same runtime read, the retry emits
+    a fresh `system_variable_read` event
   - current enforced runtime-backed public case is
     `if_system_variable_false_branch`
   - `G0/G1` axis expressions such as `G1 X=$P_ACT_X` and `G1 X=$AA_IM[X]`
@@ -798,8 +805,10 @@ N130 G01 X20 Y20
       - `pending` with explicit wait token
   - fixtures may declare ordered runtime read scripts under
     `runtime.system_variable_reads`
-    - current first implementation target:
-      - ready-valued system-variable reads
+    - each scripted read entry may declare:
+      - `outcome: ready` with `value`
+      - `outcome: pending` with `token`
+      - `outcome: error` with `message`
     - the script is consumed in strict trace order
   - current enforced Step 1 fixture cases are:
     - `modal_update`

@@ -237,7 +237,9 @@ public:
 
   RuntimeResult<double> readSystemVariable(std::string_view name) override {
     RuntimeResult<double> result;
-    auto record_read = [&](double value) {
+    auto record_read = [&](const char *outcome, std::optional<double> value,
+                           std::optional<WaitToken> token,
+                           std::optional<std::string> message) {
       if (events_ == nullptr) {
         return;
       }
@@ -247,7 +249,19 @@ public:
       }
       nlohmann::ordered_json data;
       data["name"] = std::string(name);
-      data["value"] = value;
+      data["outcome"] = outcome;
+      if (value.has_value()) {
+        data["value"] = *value;
+      }
+      if (token.has_value()) {
+        data["token"] = {
+            {"kind", token->kind},
+            {"id", token->id},
+        };
+      }
+      if (message.has_value()) {
+        data["message"] = *message;
+      }
       SourceRef event_source;
       event_source.filename = source->filename;
       event_source.line = source->line;
@@ -266,16 +280,30 @@ public:
         return result;
       }
       ++system_variable_read_index_;
-      result.status = RuntimeCallStatus::Ready;
-      result.value = configured.value;
-      record_read(configured.value);
-      return result;
+      switch (configured.outcome) {
+      case ExecutionContractSystemVariableReadOutcome::Ready:
+        result.status = RuntimeCallStatus::Ready;
+        result.value = configured.value;
+        record_read("ready", configured.value, std::nullopt, std::nullopt);
+        return result;
+      case ExecutionContractSystemVariableReadOutcome::Pending:
+        result.status = RuntimeCallStatus::Pending;
+        result.wait_token = configured.token;
+        record_read("pending", std::nullopt, configured.token, std::nullopt);
+        return result;
+      case ExecutionContractSystemVariableReadOutcome::Error:
+        result.status = RuntimeCallStatus::Error;
+        result.error_message =
+            configured.message.value_or("system variable read failed");
+        record_read("error", std::nullopt, std::nullopt, configured.message);
+        return result;
+      }
     }
     const auto it = runtime_inputs_.system_variables.find(std::string(name));
     if (it != runtime_inputs_.system_variables.end()) {
       result.status = RuntimeCallStatus::Ready;
       result.value = it->second;
-      record_read(it->second);
+      record_read("ready", it->second, std::nullopt, std::nullopt);
       return result;
     }
     result.status = RuntimeCallStatus::Error;
