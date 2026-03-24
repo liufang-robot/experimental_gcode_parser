@@ -1,5 +1,31 @@
 # CHANGELOG_AGENT
 
+## 2026-03-24 (public install/export layout developer slice)
+- Added a public install/export layout for headers, the parser library, and the
+  main public CLI binaries.
+- Added CMake package export support so downstream consumers can
+  `find_package(gcode)` against an installed prefix.
+- Added install support for generated mdBook docs and generated
+  execution-contract review output when those artifacts are present/configured.
+
+SPEC sections / tests:
+- SPEC: Section 2.2 installed public distribution
+- Developer verification/tests:
+  - `test/install_export_smoke.cmake.in`
+  - `test/install_smoke_consumer/CMakeLists.txt.in`
+  - `./dev/check.sh`
+
+Known limitations:
+- Generated docs/review installation is presence-sensitive by default; local
+  installs skip missing generated artifacts unless strict mode is enabled.
+- Hidden black-box repo automation remains separate follow-up work.
+
+How to reproduce locally (commands):
+- `cmake -S . -B build -DCMAKE_INSTALL_PREFIX=/tmp/gcode-install`
+- `cmake --build build -j`
+- `cmake --install build`
+- `./dev/check.sh`
+
 ## 2026-03-24 (runtime read outcome tester slice)
 - Refreshed the reviewed ready-path runtime-read fixtures so every
   `system_variable_read` event now records the explicit per-attempt
