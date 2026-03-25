@@ -3,7 +3,7 @@
 ## How To Use
 - Agent picks by priority and dependency order.
 - For the current architecture-planning queue (`T-037`..`T-047`), follow
-  [IMPLEMENTATION_PLAN.md](/home/liufang/optcnc/gcode/IMPLEMENTATION_PLAN.md)
+  [Repository Implementation Plan](../development/design/implementation_plan_root.md)
   Section 4 execution order.
 - Each task must include acceptance criteria before work starts.
 - Completed tasks are moved to a done section in this file or linked from PR.

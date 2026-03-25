@@ -1,5 +1,46 @@
 # CHANGELOG_AGENT
 
+## 2026-03-25 (documentation IA Slice A)
+- Moved canonical project docs out of the repo root into `docs/src/` and added
+  product/project sections to the mdBook navigation.
+- Reduced root `AGENTS.md` to a short startup map with explicit
+  developer-vs-integration-tester role guidance.
+- Removed root canonical markdown files other than `README.md` and `AGENTS.md`,
+  and rewired internal references to the new mdBook paths.
+
+SPEC sections / tests:
+- Docs IA only; no parser/runtime behavior change.
+- Verification:
+  - `mdbook build docs`
+  - `./dev/check.sh`
+
+Known limitations:
+- Some moved canonical pages still preserve older long-form content and will be
+  tightened in Slice A.5.
+- Build-tree docs generation remains deferred to Slice B.
+
+How to reproduce locally (commands):
+- `mdbook build docs`
+- `./dev/check.sh`
+
+## 2026-03-25 (documentation IA planning split)
+- Planned `WU-9` as three slices: Slice A for canonical-doc relocation into
+  `docs/src/`, Slice A.5 for editorial cleanup, and Slice B for build-tree docs
+  generation targets.
+- Recorded the rule that root `AGENTS.md` should become a short startup map
+  with explicit role-selection guidance instead of a long encyclopedia.
+- Recorded build-tree docs generation as a separate follow-up instead of
+  bundling it into the first docs reorganization PR.
+
+SPEC sections / tests:
+- Planning/docs only; no behavior change yet.
+
+Known limitations:
+- Editorial cleanup and build-tree docs generation remain follow-up work.
+
+How to reproduce locally (commands):
+- `mdbook build docs`
+
 ## 2026-03-24 (public install/export layout developer slice)
 - Added a public install/export layout for headers, the parser library, and the
   main public CLI binaries.

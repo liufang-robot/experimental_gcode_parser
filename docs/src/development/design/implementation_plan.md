@@ -30,7 +30,7 @@ The authoritative current plan is
 
 ## Dependency Order
 
-Current preferred order is maintained in root `IMPLEMENTATION_PLAN.md` Section 4,
+Current preferred order is maintained in `implementation_plan_root.md` Section 4,
 including:
 - comments before deeper modal/runtime families
 - grouped modal rollout before full tool/runtime integration
@@ -42,7 +42,7 @@ Per feature slice:
 - AIL tests
 - executor tests (if runtime behavior changes)
 - CLI/stage-output tests when schemas/output change
-- docs updates (`SPEC.md`, program/development references)
+- docs updates (`../../product/spec.md`, program/development references)
 
-This is a split summary of root `IMPLEMENTATION_PLAN.md`, not the primary
+This is a split summary of `implementation_plan_root.md`, not the primary
 requirements-driven execution plan.

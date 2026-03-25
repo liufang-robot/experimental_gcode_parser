@@ -42,4 +42,4 @@ flowchart LR
 
 ## Notes
 
-This is a summary of root `ARCHITECTURE.md` sections 3, 4, and 7.
+This is a summary of `architecture.md` sections 3, 4, and 7.

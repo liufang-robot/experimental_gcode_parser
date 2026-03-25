@@ -960,7 +960,7 @@ N130 G01 X20 Y20
 - Unresolved non-`GOTOC` target is runtime fault.
 
 ## 7. Testing Expectations
-- Golden tests for all examples in `SPEC.md`.
+- Golden tests for all examples in `docs/src/product/spec.md`.
 - CLI tests must cover parse mode and lower mode (`json` + `debug` formats).
 - CLI tests must cover parse/ail/packet/lower modes (`json` + `debug` formats).
 - Maintain stage-output CLI golden fixtures in `testdata/cli/` for
@@ -1017,19 +1017,16 @@ To keep product-facing behavior documentation aligned with code, maintain
 mdBook documentation under:
 - `docs/book.toml`
 - `docs/src/`
-- Program reference content in `docs/src/program_reference.md`
+- Program reference content in `docs/src/product/program_reference.md`
 - Development reference content in `docs/src/development/`
-- Product-level goals, scope, and public API expectations in `PRD.md`.
+- Product-level goals, scope, and public API expectations in `docs/src/product/prd.md`.
 
 Requirements:
 - Every feature/function PR must update the program reference in the same PR:
-  - `PROGRAM_REFERENCE.md` (repo root reference)
-  - and/or `docs/src/program_reference.md` (mdBook reference)
+  - `docs/src/product/program_reference.md`
   If behavior is unchanged, explicitly state "no program-reference change" in PR.
 - Architecture/design documentation must also be published under `docs/src/`
-  (mdBook), not only as repo-root markdown files.
-  - If design docs exist at root (for example `ARCHITECTURE.md`,
-    `IMPLEMENTATION_PLAN.md`), keep matching mdBook pages in sync.
+  (mdBook).
 - If a documentation page becomes too long, split it into smaller topical files
   and link them through `docs/src/SUMMARY.md`.
   - Prefer one topic per page (for example parser pipeline, modal strategy,
@@ -1047,10 +1044,10 @@ Requirements:
   - at least one example
   - test references (unit/golden/regression names or files)
 - If code/API/function behavior changes, the same PR must update mdBook docs
-  (`docs/src/program_reference.md` and/or `docs/src/development/`
+  (`docs/src/product/program_reference.md` and/or `docs/src/development/`
   as appropriate).
-- If `SPEC.md` adds planned behavior not yet implemented, docs must mark
-  it as `Planned` until code/tests are merged.
+- If `docs/src/product/spec.md` adds planned behavior not yet implemented, docs
+  must mark it as `Planned` until code/tests are merged.
 - CI must build mdBook documentation and publish Pages content from `main`.
 - Mermaid diagrams in `docs/src/` must build through the configured mdBook
   toolchain, including the `mdbook-mermaid` preprocessor and checked-in
@@ -1058,7 +1055,7 @@ Requirements:
 
 PR gate expectation:
 - Feature PR description must list:
-  - updated sections in `SPEC.md`
-  - updated sections in `docs/src/program_reference.md` and/or
+  - updated sections in `docs/src/product/spec.md`
+  - updated sections in `docs/src/product/program_reference.md` and/or
     `docs/src/development/`
   - tests proving the documented behavior
