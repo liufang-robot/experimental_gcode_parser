@@ -1,23 +1,23 @@
 # Repository Implementation Plan
 
-This page mirrors the repo-root `IMPLEMENTATION_PLAN.md` so it is readable in
-the published mdBook HTML. Keep this page in sync with the root document.
+This page is the canonical preserved copy of the older repository-level
+implementation plan.
 
 Status: summary/reference only.
 
 The authoritative current plan is
 [`implementation_plan_from_requirements.md`](implementation_plan_from_requirements.md).
 
-# IMPLEMENTATION PLAN — Siemens-Compatible Parser and Runtime
+## Siemens-Compatible Parser and Runtime
 
 ## 1. Goal
 Turn PRD Section 5 requirements into incremental, testable code changes while
 keeping `main` stable and each PR small.
 
 Inputs:
-- `PRD.md`
-- root `ARCHITECTURE.md`
-- `BACKLOG.md` (`T-037`..`T-047`)
+- `../../product/prd.md`
+- `architecture.md`
+- `../../project/backlog.md` (`T-037`..`T-047`)
 - acceptance fixture:
   - `testdata/integration/simple_integrated_case.ngc`
 
@@ -143,7 +143,7 @@ Reasoning:
 For each task:
 1. one narrow behavior slice
 2. tests first/with code
-3. docs updated in same PR (`SPEC.md`, `CHANGELOG_AGENT.md`, optionally `PRD.md`)
+3. docs updated in same PR (`../../product/spec.md`, `CHANGELOG_AGENT.md`, optionally `../../product/prd.md`)
 4. evidence of `./dev/check.sh` pass
 
 Suggested PR size:
@@ -184,7 +184,7 @@ Mitigation:
 
 ## 8. Review Checklist (per PR)
 - requirement trace to PRD subsection
-- architecture alignment with root `ARCHITECTURE.md`
+- architecture alignment with `architecture.md`
 - tests added/updated and meaningful
 - `./dev/check.sh` green
 - no unintended schema break without doc updates

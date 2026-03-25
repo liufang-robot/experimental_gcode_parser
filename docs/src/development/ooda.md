@@ -10,9 +10,9 @@ Collect current signals before choosing work:
 - `git` state: branch, uncommitted changes, ahead/behind.
 - CI status: latest workflow result and failing jobs.
 - Test health: `./dev/check.sh` output.
-- Spec drift: differences between implementation/tests and `SPEC.md`.
+- Spec drift: differences between implementation/tests and `../product/spec.md`.
 - Quality signals: diagnostics quality, parser failures, fuzz/crash findings.
-- Open work: unblocked items at top of `BACKLOG.md`.
+- Open work: unblocked items at top of `../project/backlog.md`.
 
 Required artifacts:
 - Short observation summary in PR description or task notes.
@@ -24,7 +24,7 @@ Interpret observations against priorities:
 - Third priority: roadmap milestone progress.
 
 Output:
-- selected task ID(s) from `BACKLOG.md`
+- selected task ID(s) from `../project/backlog.md`
 - explicit risks and assumptions
 
 ### 3) Decide
@@ -45,7 +45,7 @@ Implement and validate.
 Mandatory actions per feature PR:
 - code changes
 - tests in `test/`
-- updates to `SPEC.md` when behavior changes
+- updates to `../product/spec.md` when behavior changes
 - update `CHANGELOG_AGENT.md`
 - run `./dev/check.sh`
 
@@ -73,8 +73,8 @@ A task is done only when:
 - Tests proving behavior exist and pass.
 - Regression test added for every bug fixed.
 - PR links bug/issue identifier to regression test name(s).
-- `BACKLOG.md` updated (task moved/marked done).
-- `ROADMAP.md` updated if milestone status changed.
+- `../project/backlog.md` updated (task moved/marked done).
+- `../project/roadmap.md` updated if milestone status changed.
 
 ## Cadence
 - Run OODA loop at least once per PR.

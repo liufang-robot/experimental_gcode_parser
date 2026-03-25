@@ -1,64 +1,51 @@
 # AGENTS.md — CNC G-code parser library
 
-## Goal
-Implement a C++ library that parses G-code text/file into an AST + diagnostics.
+This file is the startup map, not the full documentation body.
 
-## Single Command Gate (authoritative)
-- Run: `./dev/check.sh`
-This script MUST run:
-- configure/build
-- unit tests + golden tests
-- clang-format check
-- clang-tidy (or a fast subset)
-- sanitizer run (ASan/UBSan) if supported
+## Purpose
+Implement a C++17 CNC G-code parser/execution library with:
+- AST + diagnostics
+- lowering into AIL
+- public execution through `ExecutionSession`
+- reviewed execution-contract fixtures
 
-If `./dev/check.sh` is green, CI should be green.
+## Session Role
+Before implementation work, the session must be acting as either:
+- `developer`
+- `integration tester`
 
-## Tooling Config
-- clang-format config: `.clang-format`
-- clang-tidy config: `.clang-tidy`
-- compile database: `build/compile_commands.json` (CMake must export it)
+If the user has not already assigned the role, ask first.
 
-## Code Style
-- Use `clang-tidy` to check code style.
-- Use `clang-format` to format code.
+Role workflow details:
+- `docs/src/development/dual_agent_workflow.md`
+- `docs/src/development/dual_agent_feature_checklist.md`
 
-## Architecture
-- public library headers in `include/gcode/`
-- implementation code in `src/`
-- test code in `test/`
-- test data sets in `testdata/`
+## Command Gate
+Authoritative local gate:
 
-## Rules
-- C++ standard: C++17
+```bash
+./dev/check.sh
+```
+
+If this is green, CI should be green.
+
+## Hard Rules
 - No new dependencies without asking.
-- Every feature requires:
-  1) tests in `test/`
-  2) updates to `SPEC.md` if behavior changes
-  3) a short entry in `CHANGELOG.md` (optional)
-- Every change must include a `CHANGELOG_AGENT.md` entry with:
-  - What changed (1–3 bullets)
-  - Which SPEC sections / tests cover it
-  - Any known limitations
-  - How to reproduce locally (commands)
-- Every feature PR must include evidence of passing `./dev/check.sh` and list
-  new tests plus SPEC sections covered.
-- Before starting implementation, the agent must run the OODA flow:
-  pick from `BACKLOG.md`, align priority with `ROADMAP.md`, and follow
-  `OODA.md` (Observe/Orient/Decide/Act, merge policy, and definition of done).
-- Prefer small PRs / small diffs.
-- Public header rule:
-  - only stable library entry points belong in `include/gcode/`
-  - do not mirror `src/` into `include/gcode/`
-  - if a header is internal/supporting-only, keep it in `src/` even if public
-    headers include it transitively
-  - if a type appears in a public signature or public struct field, its header
-    is public too and must live in `include/gcode/`
-  - prefer attaching a small support type to its owning public API header
-    instead of adding a standalone public header when that keeps the surface
-    smaller and clearer
-  - if only a few shared enums leak through otherwise-internal support code,
-    prefer splitting those enums into a narrow public header instead of making
-    the whole support header public
-  - when adding a new public header, update the public-header compile test
-    under `test/public_headers_tests.cpp`
+- Public headers belong in `include/gcode/` only when they are part of the
+  stable public surface.
+- Every behavior change must update canonical docs in `docs/src/`.
+- Every feature change must add a `CHANGELOG_AGENT.md` entry.
+- Follow OODA before implementation work.
+- Prefer small PRs and small diffs.
+
+## Read Next
+- `docs/src/index.md`
+- `docs/src/product/spec.md`
+- `docs/src/project/backlog.md`
+- `docs/src/project/roadmap.md`
+- `docs/src/development/ooda.md`
+- `docs/src/development/workflow.md`
+- `docs/src/development/design/index.md`
+
+If a topic grows, split it into smaller docs under `docs/src/` rather than
+expanding this file.

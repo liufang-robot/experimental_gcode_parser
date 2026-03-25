@@ -10,7 +10,7 @@ requirements-reviewed architecture.
 The following documents are summary/reference companions only:
 
 - [`implementation_plan.md`](implementation_plan.md)
-- [`repo_implementation_plan.md`](repo_implementation_plan.md)
+- [`implementation_plan_root.md`](implementation_plan_root.md)
 
 Use this document to answer:
 
@@ -36,9 +36,18 @@ The original refactor work units are complete. The next optimization work should
 be tracked separately:
 
 - `WU-9 Documentation Information Architecture Cleanup`
-  - reduce duplicated content across README, spec, reference, and design docs
-  - make function-level documentation more concise and structured for humans
-    and LLM agents
+  - Slice A:
+    - move canonical project docs into `docs/src/`
+    - make mdBook the main reading surface
+    - reduce root `AGENTS.md` to a short startup map
+  - Slice A.5:
+    - remove duplicated explanations inside the mdBook
+    - shorten oversized pages and split them into subtrees
+    - improve concision and progressive disclosure
+  - Slice B:
+    - add CMake docs targets
+    - move generated docs into `build/docs/...`
+    - update install/export to consume build-tree docs outputs
 - `WU-10 Execution Contract Fixtures Step 1`
   - add human-readable execution contract fixtures for the public
     `ExecutionSession` API

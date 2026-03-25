@@ -73,7 +73,7 @@ When generated outputs are present, install also publishes:
 ## OODA Development Loop
 
 1. Observe current repo and CI state.
-2. Orient against `ROADMAP.md`, `BACKLOG.md`, and `SPEC.md`.
+2. Orient against `../project/roadmap.md`, `../project/backlog.md`, and `../product/spec.md`.
 3. Decide one scoped backlog slice.
 4. Act with code, tests, and docs updates in one PR.
 
@@ -81,6 +81,6 @@ When generated outputs are present, install also publishes:
 
 - Keep C++17.
 - Add or adjust tests for every feature.
-- Update `SPEC.md` if behavior changes.
+- Update `../product/spec.md` if behavior changes.
 - Update `CHANGELOG_AGENT.md` in every change.
 - Keep `docs/` aligned with implementation changes.

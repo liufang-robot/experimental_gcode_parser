@@ -1,4 +1,8 @@
-# ARCHITECTURE — Parser and Runtime Design (v1 Draft)
+# Architecture
+
+This is the canonical architecture page for the repository.
+
+## Parser and Runtime Design (v1 Draft)
 
 ## 1. Purpose
 This document defines how the codebase will be organized to satisfy the current
@@ -145,7 +149,7 @@ classDiagram
   - deterministic prefix/suffix merge semantics and API behavior
   - parser-internal tree-reuse optimization is a later performance enhancement
 - Detailed API/merge design:
-  - [docs/src/design/incremental_session.md](/home/liufang/optcnc/gcode/docs/src/design/incremental_session.md)
+  - [Development: Incremental Session](incremental_session.md)
 
 ```mermaid
 stateDiagram-v2
@@ -204,19 +208,19 @@ stateDiagram-v2
   - comment compatibility extensions
   - current callback streaming path still parses the entire input first
 - Detailed exact-stop/continuous-path architecture note:
-  - [docs/src/design/exactstop_contpath_architecture.md](/home/liufang/optcnc/gcode/docs/src/design/exactstop_contpath_architecture.md)
+  - [Development: Exact-Stop/Continuous-Path](exactstop_contpath_architecture.md)
 - Detailed M-code architecture note:
-  - [docs/src/design/mcode_architecture.md](/home/liufang/optcnc/gcode/docs/src/design/mcode_architecture.md)
+  - [Development: M-Code Architecture](mcode_architecture.md)
 - Detailed rapid-traverse architecture note:
-  - [docs/src/design/rapid_traverse_architecture.md](/home/liufang/optcnc/gcode/docs/src/design/rapid_traverse_architecture.md)
+  - [Development: Rapid Traverse Architecture](rapid_traverse_architecture.md)
 - Detailed incremental parse-session API architecture note:
-  - [docs/src/design/incremental_session.md](/home/liufang/optcnc/gcode/docs/src/design/incremental_session.md)
+  - [Development: Incremental Session](incremental_session.md)
 - Detailed work-offset architecture note:
-  - [docs/src/design/work_offset_architecture.md](/home/liufang/optcnc/gcode/docs/src/design/work_offset_architecture.md)
+  - [Development: Work-Offset Architecture](work_offset_architecture.md)
 - Detailed dimensions/units architecture note:
-  - [docs/src/design/dimensions_architecture.md](/home/liufang/optcnc/gcode/docs/src/design/dimensions_architecture.md)
+  - [Development: Dimensions Architecture](dimensions_architecture.md)
 - Detailed tool-change architecture note:
-  - [docs/src/design/tool_change_architecture.md](/home/liufang/optcnc/gcode/docs/src/design/tool_change_architecture.md)
+  - [Development: Tool-Change Architecture](tool_change_architecture.md)
 - Planned:
   - modal groups 6/7/8/10/11/12/13/14/15 full state model
   - tool management behaviors

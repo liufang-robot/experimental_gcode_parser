@@ -1,25 +1,27 @@
 # Experimental G-code Parser Docs
 
-This mdBook is the product documentation entrypoint for this repository.
+This mdBook is the canonical documentation entry point for this repository.
 
 Use these sections:
 
-- Execution Workflow: the supported public execution model built around
-  `ExecutionSession`.
-- Execution Contract Review: the source-of-truth fixture model and the generated
-  review site.
-  Direct generated review entry:
-  [Open the generated execution contract review site](generated/execution-contract-review/index.html)
-- Requirements: target syntax, semantic validation, and execution behavior to
-  review before implementation work starts.
-- Development Reference: build/test workflow, contribution gates, and
-  developer architecture/design notes.
-- Program Reference: implemented G-code function syntax and output behavior.
+- [Product Reference](product/index.md): product goals, behavior contract, and
+  implemented program reference.
+- [Execution Workflow](execution_workflow.md): the supported public execution
+  model built around `ExecutionSession`.
+- [Execution Contract Review](execution_contract_review.md): the reviewed
+  public fixture model and generated review site.
+- [Requirements](requirements/index.md): reviewed syntax, semantic, and
+  execution requirements.
+- [Project Planning](project/index.md): roadmap and backlog.
+- [Development Reference](development/index.md): workflow, OODA, architecture,
+  and design notes.
+
+Direct generated review entry:
+[Open the generated execution contract review site](generated/execution-contract-review/index.html)
 
 Policy:
 
-- Code changes that modify parser/lowering behavior must update this book in the
-  same PR.
-- CI builds this book and publishes it to GitHub Pages from `main`.
-- The published docs site also includes the generated execution-contract review
-  subsite at `generated/execution-contract-review/index.html`.
+- Canonical project docs live in `docs/src/`.
+- Root `README.md` is the repository entry page.
+- Root `AGENTS.md` is the agent startup map, not the canonical docs body.
+- CI builds this book and publishes it from `main`.

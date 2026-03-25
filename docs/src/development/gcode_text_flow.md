@@ -158,6 +158,6 @@ Use these modes depending on what you need:
 ## Related Docs
 
 - [Development: Pipeline](design/pipeline.md)
-- [Program Reference](../program_reference.md)
-- Repo-root architecture document: `ARCHITECTURE.md`
-- Repo-root specification: `SPEC.md`
+- [Program Reference](../product/program_reference.md)
+- [Architecture](design/architecture.md)
+- [SPEC](../product/spec.md)

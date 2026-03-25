@@ -1,15 +1,13 @@
 # Architecture and Design
 
-This section mirrors repository design sources and keeps developer-facing
-architecture decisions available in published docs.
+This section contains canonical developer-facing architecture decisions and
+implementation-planning references for the parser project.
 
-Source-of-truth files in repo root:
-- `ARCHITECTURE.md`
-- `IMPLEMENTATION_PLAN.md`
+Top-level pages in this section:
 
-Mirrored mdBook pages:
-- [Repository Architecture](repo_architecture.md)
-- [Repository Implementation Plan](repo_implementation_plan.md)
+- [Architecture](architecture.md)
+- [Repository Implementation Plan](implementation_plan_root.md)
+- [Implementation Plan From Requirements](implementation_plan_from_requirements.md)
 
 Pages in this section are split by topic for easier review:
 - pipeline/modules

@@ -814,10 +814,10 @@ Acceptance expectation:
   - report total parse/parse+lower time and throughput (lines/sec, bytes/sec)
 
 ## 8. Documentation and Traceability
-- `PRD.md`: product goals, scope, API contract, prioritization.
-- `SPEC.md`: exact syntax/diagnostics/lowering behavior contract.
-- `PROGRAM_REFERENCE.md`: implementation snapshot (`Implemented/Partial/Planned`).
-- `BACKLOG.md`: executable tasks and acceptance criteria.
+- `docs/src/product/prd.md`: product goals, scope, API contract, prioritization.
+- `docs/src/product/spec.md`: exact syntax/diagnostics/lowering behavior contract.
+- `docs/src/product/program_reference.md`: implementation snapshot (`Implemented/Partial/Planned`).
+- `docs/src/project/backlog.md`: executable tasks and acceptance criteria.
 
 Every feature PR must update all impacted docs in the same PR.
 

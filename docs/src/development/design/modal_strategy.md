@@ -30,4 +30,4 @@ Auxiliary context state:
 - reparse/re-lower suffix from resume line
 - merge diagnostics and outputs deterministically
 
-This is a summary of root `ARCHITECTURE.md` sections 6 and 6.1.
+This is a summary of `architecture.md` sections 6 and 6.1.
