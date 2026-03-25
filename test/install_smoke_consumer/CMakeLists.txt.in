@@ -1,0 +1,10 @@
+cmake_minimum_required(VERSION 3.16)
+project(gcode_install_smoke LANGUAGES CXX)
+
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
+find_package(gcode CONFIG REQUIRED)
+
+add_executable(gcode_install_smoke main.cpp)
+target_link_libraries(gcode_install_smoke PRIVATE gcode::gcode_parser)

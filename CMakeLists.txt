@@ -5,6 +5,23 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
+include(GNUInstallDirs)
+include(CMakePackageConfigHelpers)
+
+option(GCODE_INSTALL_GENERATED_DOCS
+       "Install generated mdBook output when present" ON)
+option(GCODE_INSTALL_EXECUTION_CONTRACT_REVIEW
+       "Install generated execution-contract review output when present" ON)
+option(GCODE_REQUIRE_GENERATED_INSTALL_ARTIFACTS
+       "Fail install when requested generated docs/review outputs are absent"
+       OFF)
+
+set(GCODE_GENERATED_DOCS_DIR "${CMAKE_CURRENT_SOURCE_DIR}/docs/book"
+    CACHE PATH "Path to generated mdBook output for install")
+set(GCODE_GENERATED_EXECUTION_CONTRACT_REVIEW_DIR
+    "${CMAKE_CURRENT_SOURCE_DIR}/docs/src/generated/execution-contract-review"
+    CACHE PATH "Path to generated execution-contract review output for install")
+
 find_package(GTest REQUIRED)
 include(GoogleTest)
 find_package(nlohmann_json REQUIRED)
@@ -57,10 +74,6 @@ add_custom_command(
 
 add_custom_target(generate_gcode_parser DEPENDS ${GENERATED_SOURCES})
 
-add_library(gcode_antlr STATIC ${GENERATED_SOURCES})
-add_dependencies(gcode_antlr generate_gcode_parser)
-target_include_directories(gcode_antlr PUBLIC ${GENERATED_DIR})
-
 if(NOT ANTLR4_RUNTIME_ROOT)
   set(ANTLR4_RUNTIME_ROOT /home/liufang/optcnc/install)
 endif()
@@ -92,11 +105,9 @@ if(NOT ANTLR4_RUNTIME_INCLUDE_DIR OR NOT ANTLR4_RUNTIME_LIB)
   )
 endif()
 
-target_include_directories(gcode_antlr PUBLIC ${ANTLR4_RUNTIME_INCLUDE_DIR})
-target_link_libraries(gcode_antlr PUBLIC ${ANTLR4_RUNTIME_LIB})
-
 add_library(
-  gcode_parser STATIC src/gcode_parser.cpp src/semantic_rules.cpp
+  gcode_parser STATIC ${GENERATED_SOURCES}
+                      src/gcode_parser.cpp src/semantic_rules.cpp
                       src/ast_printer.cpp src/messages.cpp
                       src/ail.cpp src/ail_json.cpp
                       src/packet.cpp src/packet_json.cpp
@@ -116,12 +127,16 @@ add_library(
                       src/lowering_family_g4.cpp src/messages_json.cpp
                       src/session.cpp src/message_diff.cpp
                       src/machine_profile.cpp src/modal_registry.cpp)
+add_dependencies(gcode_parser generate_gcode_parser)
 target_include_directories(
   gcode_parser
-  PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include
-  PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src ${GENERATED_DIR})
-target_link_libraries(gcode_parser PUBLIC gcode_antlr)
-target_link_libraries(gcode_parser PRIVATE nlohmann_json::nlohmann_json)
+  PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+         $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
+  PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src ${GENERATED_DIR}
+          ${ANTLR4_RUNTIME_INCLUDE_DIR})
+target_link_libraries(gcode_parser PRIVATE ${ANTLR4_RUNTIME_LIB}
+                                           nlohmann_json::nlohmann_json)
+add_library(gcode::gcode_parser ALIAS gcode_parser)
 
 add_executable(gcode_parse src/main.cpp)
 target_link_libraries(gcode_parse PRIVATE gcode_parser)
@@ -150,6 +165,66 @@ add_executable(gcode_bench bench/gcode_bench.cpp)
 target_link_libraries(gcode_bench PRIVATE gcode_parser)
 target_link_libraries(gcode_bench PRIVATE nlohmann_json::nlohmann_json)
 target_include_directories(gcode_bench PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
+
+install(TARGETS gcode_parser
+                gcode_parse
+                gcode_stream_exec
+                gcode_exec_session
+                gcode_execution_contract_review
+        EXPORT gcodeTargets
+        RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+        LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+        ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+        INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
+install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/include/gcode
+        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
+
+configure_package_config_file(
+  ${CMAKE_CURRENT_SOURCE_DIR}/cmake/gcodeConfig.cmake.in
+  ${CMAKE_CURRENT_BINARY_DIR}/gcodeConfig.cmake
+  INSTALL_DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/gcode)
+
+install(EXPORT gcodeTargets
+        FILE gcodeTargets.cmake
+        NAMESPACE gcode::
+        DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/gcode)
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/gcodeConfig.cmake
+        DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/gcode)
+
+function(gcode_install_generated_directory source_dir install_subdir label)
+  string(CONFIGURE
+         [=[
+set(_src "@source_dir@")
+set(_dest "$ENV{DESTDIR}${CMAKE_INSTALL_PREFIX}/@install_subdir@")
+set(_label "@label@")
+set(_require "@GCODE_REQUIRE_GENERATED_INSTALL_ARTIFACTS@")
+if(EXISTS "${_src}")
+  file(MAKE_DIRECTORY "${_dest}")
+  file(INSTALL DESTINATION "${_dest}" TYPE DIRECTORY FILES "${_src}/")
+elseif(_require)
+  message(FATAL_ERROR
+          "Required generated ${_label} directory not found: ${_src}")
+else()
+  message(STATUS
+          "Skipping generated ${_label} install; directory not found: ${_src}")
+endif()
+]=]
+         install_code @ONLY)
+  install(CODE "${install_code}")
+endfunction()
+
+if(GCODE_INSTALL_GENERATED_DOCS)
+  gcode_install_generated_directory(
+    "${GCODE_GENERATED_DOCS_DIR}" "${CMAKE_INSTALL_DATADIR}/gcode/docs"
+    "mdBook docs")
+endif()
+
+if(GCODE_INSTALL_EXECUTION_CONTRACT_REVIEW)
+  gcode_install_generated_directory(
+    "${GCODE_GENERATED_EXECUTION_CONTRACT_REVIEW_DIR}"
+    "${CMAKE_INSTALL_DATADIR}/gcode/execution-contract-review"
+    "execution-contract review site")
+endif()
 
 enable_testing()
 
@@ -369,6 +444,17 @@ target_link_libraries(lowering_family_g4_tests PRIVATE GTest::gtest_main)
 target_include_directories(lowering_family_g4_tests
                            PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
 gtest_discover_tests(lowering_family_g4_tests DISCOVERY_MODE PRE_TEST)
+
+if(CMAKE_CXX_FLAGS MATCHES "-fsanitize=" OR
+   CMAKE_EXE_LINKER_FLAGS MATCHES "-fsanitize=")
+  message(STATUS "Skipping InstallExportSmoke in sanitizer-configured build")
+else()
+  configure_file(test/install_export_smoke.cmake.in
+                 ${CMAKE_CURRENT_BINARY_DIR}/install_export_smoke.cmake @ONLY)
+  add_test(NAME InstallExportSmoke
+           COMMAND ${CMAKE_COMMAND} -P
+                   ${CMAKE_CURRENT_BINARY_DIR}/install_export_smoke.cmake)
+endif()
 
 add_test(
   NAME BenchmarkSmoke

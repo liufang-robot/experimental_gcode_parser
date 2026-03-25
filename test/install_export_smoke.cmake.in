@@ -1,0 +1,97 @@
+set(prefix "@CMAKE_CURRENT_BINARY_DIR@/install-smoke-prefix")
+set(consumer_dir "@CMAKE_CURRENT_BINARY_DIR@/install-smoke-consumer")
+set(source_dir "@CMAKE_CURRENT_SOURCE_DIR@")
+set(generated_docs_dir "@GCODE_GENERATED_DOCS_DIR@")
+set(generated_review_dir "@GCODE_GENERATED_EXECUTION_CONTRACT_REVIEW_DIR@")
+
+file(REMOVE_RECURSE "${prefix}" "${consumer_dir}")
+
+execute_process(
+  COMMAND "@CMAKE_COMMAND@" --build "@CMAKE_CURRENT_BINARY_DIR@" -j --target
+          gcode_parser gcode_parse gcode_stream_exec gcode_exec_session
+          gcode_execution_contract_review
+  RESULT_VARIABLE target_build_result
+  OUTPUT_VARIABLE target_build_stdout
+  ERROR_VARIABLE target_build_stderr)
+if(NOT target_build_result EQUAL 0)
+  message(
+    FATAL_ERROR
+      "building installable targets failed\nSTDOUT:\n${target_build_stdout}\nSTDERR:\n${target_build_stderr}"
+  )
+endif()
+
+execute_process(
+  COMMAND "@CMAKE_COMMAND@" --install "@CMAKE_CURRENT_BINARY_DIR@" --prefix
+          "${prefix}"
+  RESULT_VARIABLE install_result
+  OUTPUT_VARIABLE install_stdout
+  ERROR_VARIABLE install_stderr)
+if(NOT install_result EQUAL 0)
+  message(
+    FATAL_ERROR
+      "cmake --install failed\nSTDOUT:\n${install_stdout}\nSTDERR:\n${install_stderr}"
+  )
+endif()
+
+foreach(required_file
+        "${prefix}/@CMAKE_INSTALL_INCLUDEDIR@/gcode/gcode_parser.h"
+        "${prefix}/@CMAKE_INSTALL_BINDIR@/gcode_parse"
+        "${prefix}/@CMAKE_INSTALL_BINDIR@/gcode_stream_exec"
+        "${prefix}/@CMAKE_INSTALL_BINDIR@/gcode_exec_session"
+        "${prefix}/@CMAKE_INSTALL_BINDIR@/gcode_execution_contract_review"
+        "${prefix}/@CMAKE_INSTALL_LIBDIR@/cmake/gcode/gcodeConfig.cmake"
+        "${prefix}/@CMAKE_INSTALL_LIBDIR@/cmake/gcode/gcodeTargets.cmake")
+  if(NOT EXISTS "${required_file}")
+    message(FATAL_ERROR "required installed artifact missing: ${required_file}")
+  endif()
+endforeach()
+
+file(GLOB installed_libs "${prefix}/@CMAKE_INSTALL_LIBDIR@/libgcode_parser*")
+if(installed_libs STREQUAL "")
+  message(FATAL_ERROR
+          "installed library artifact missing under @CMAKE_INSTALL_LIBDIR@")
+endif()
+
+if(EXISTS "${generated_docs_dir}/index.html" AND
+   NOT EXISTS "${prefix}/@CMAKE_INSTALL_DATADIR@/gcode/docs/index.html")
+  message(FATAL_ERROR
+          "generated docs exist but were not installed into share/gcode/docs")
+endif()
+
+if(EXISTS "${generated_review_dir}/index.html" AND
+   NOT EXISTS
+     "${prefix}/@CMAKE_INSTALL_DATADIR@/gcode/execution-contract-review/index.html")
+  message(FATAL_ERROR
+          "execution-contract review output exists but was not installed")
+endif()
+
+file(MAKE_DIRECTORY "${consumer_dir}")
+configure_file("${source_dir}/test/install_smoke_consumer/CMakeLists.txt.in"
+               "${consumer_dir}/CMakeLists.txt" @ONLY)
+configure_file("${source_dir}/test/install_smoke_consumer/main.cpp"
+               "${consumer_dir}/main.cpp" COPYONLY)
+
+execute_process(
+  COMMAND "@CMAKE_COMMAND@" -S "${consumer_dir}" -B "${consumer_dir}/build"
+          "-DCMAKE_PREFIX_PATH=${prefix}"
+  RESULT_VARIABLE configure_result
+  OUTPUT_VARIABLE configure_stdout
+  ERROR_VARIABLE configure_stderr)
+if(NOT configure_result EQUAL 0)
+  message(
+    FATAL_ERROR
+      "consumer configure failed\nSTDOUT:\n${configure_stdout}\nSTDERR:\n${configure_stderr}"
+  )
+endif()
+
+execute_process(
+  COMMAND "@CMAKE_COMMAND@" --build "${consumer_dir}/build" -j
+  RESULT_VARIABLE build_result
+  OUTPUT_VARIABLE build_stdout
+  ERROR_VARIABLE build_stderr)
+if(NOT build_result EQUAL 0)
+  message(
+    FATAL_ERROR
+      "consumer build failed\nSTDOUT:\n${build_stdout}\nSTDERR:\n${build_stderr}"
+  )
+endif()

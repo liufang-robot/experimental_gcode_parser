@@ -35,6 +35,30 @@ mdbook serve docs --open
 Mermaid diagrams in `docs/src/development/design/*.md` require
 `mdbook-mermaid`.
 
+## Public Install Prefix
+
+The repo can also install a public prefix for downstream consumers and external
+black-box validation:
+
+```bash
+cmake -S . -B build -DCMAKE_INSTALL_PREFIX=/tmp/gcode-install
+cmake --build build -j
+cmake --install build
+```
+
+The installed prefix includes:
+
+- public headers under `include/gcode/`
+- public CLI binaries under `bin/`
+- the public library under `lib/`
+- exported CMake package metadata under `lib/cmake/gcode/`
+
+When generated outputs are present, install also publishes:
+
+- mdBook docs under `share/gcode/docs/`
+- execution-contract review HTML under
+  `share/gcode/execution-contract-review/`
+
 ## CLI Modes
 
 `gcode_parse` supports:

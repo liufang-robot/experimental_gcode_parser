@@ -69,6 +69,24 @@ The `gcode_parse` CLI supports:
   - `--format debug`: stable line-oriented packet summary including packet id,
     type, source, and totals.
 
+Installed public distribution:
+- the project must support installation to a public prefix for downstream
+  consumers and external black-box validation
+- the installed public surface includes:
+  - public headers under `include/gcode/`
+  - the public parser library target
+  - installed CLI binaries:
+    - `gcode_parse`
+    - `gcode_stream_exec`
+    - `gcode_exec_session`
+    - `gcode_execution_contract_review`
+  - exported CMake package metadata under `lib/cmake/gcode/`
+  - generated mdBook docs under `share/gcode/docs/` when available/configured
+  - generated execution-contract review HTML under
+    `share/gcode/execution-contract-review/` when available/configured
+- downstream consumers should use the installed prefix rather than repository
+  relative source paths
+
 AST shape (v0.1):
 - Program: ordered list of `Line`
 - Line:
