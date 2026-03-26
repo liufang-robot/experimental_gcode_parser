@@ -22,7 +22,7 @@ Status values to use during review:
 
 Current state of this document:
 
-- `Wanted`: initial consolidated checklist extracted from the current product spec (`../product/spec.md`)
+- `Wanted`: initial consolidated checklist extracted from the current product spec (`../product/spec/index.md`)
 - not yet fully reviewed item-by-item
 
 ## 1. Line and Program Structure

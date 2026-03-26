@@ -15,7 +15,7 @@ Turn PRD Section 5 requirements into incremental, testable code changes while
 keeping `main` stable and each PR small.
 
 Inputs:
-- `../../product/prd.md`
+- `../../product/prd/index.md`
 - `architecture.md`
 - `../../project/backlog.md` (`T-037`..`T-047`)
 - acceptance fixture:
@@ -143,7 +143,7 @@ Reasoning:
 For each task:
 1. one narrow behavior slice
 2. tests first/with code
-3. docs updated in same PR (`../../product/spec.md`, `CHANGELOG_AGENT.md`, optionally `../../product/prd.md`)
+3. docs updated in same PR (`../../product/spec/index.md`, `CHANGELOG_AGENT.md`, optionally `../../product/prd/index.md`)
 4. evidence of `./dev/check.sh` pass
 
 Suggested PR size:

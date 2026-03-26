@@ -42,7 +42,7 @@ Per feature slice:
 - AIL tests
 - executor tests (if runtime behavior changes)
 - CLI/stage-output tests when schemas/output change
-- docs updates (`../../product/spec.md`, program/development references)
+- docs updates (`../../product/spec/index.md`, program/development references)
 
 This is a split summary of `implementation_plan_root.md`, not the primary
 requirements-driven execution plan.

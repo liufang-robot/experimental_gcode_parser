@@ -12,8 +12,8 @@ ANTLR-based parser/lowering library for CNC G-code with:
 
 Current source-of-truth docs:
 
-- `docs/src/product/spec.md` (behavior/spec contract)
-- `docs/src/product/prd.md` (product requirements and API expectations)
+- `docs/src/product/spec/index.md` (behavior/spec contract)
+- `docs/src/product/prd/index.md` (product requirements and API expectations)
 - `docs/src/` mdBook sources (canonical project docs)
 
 ## Implemented Status
@@ -88,7 +88,8 @@ interfaces:
 Key docs for the execution model:
 
 - `docs/src/development/design/streaming_execution_architecture.md`
-- `docs/src/product/spec.md` section 6 / 6.1 / 6.2
+- `docs/src/product/spec/diagnostics_and_lowering.md`
+- `docs/src/product/spec/execution_and_runtime.md`
 - `docs/src/execution_workflow.md`
 - `docs/src/execution_contract_review.md`
 - `docs/src/product/program_reference.md`
@@ -220,5 +221,5 @@ Header boundary direction:
 - Follow OODA flow using `docs/src/project/roadmap.md`,
   `docs/src/project/backlog.md`, and `docs/src/development/ooda.md`.
 - Every change must update `CHANGELOG_AGENT.md`.
-- Behavior/API changes must update `docs/src/product/spec.md` and relevant
+- Behavior/API changes must update `docs/src/product/spec/index.md` and relevant
   mdBook pages in the same PR.

@@ -5434,3 +5434,29 @@ Known limitations:
 How to reproduce locally (commands):
 - `./dev/build_docs_site.sh`
 - `test -f docs/book/generated/execution-contract-review/index.html`
+
+## 2026-03-26 (docs editorial cleanup slice a5)
+- Split the oversized product `SPEC` and `PRD` pages into smaller mdBook
+  subtrees under `docs/src/product/spec/` and `docs/src/product/prd/`.
+- Updated product navigation, README links, and development references to point
+  at the new canonical subtree entry pages.
+- Kept this pass structural/editorial only; requirements and large design docs
+  remain deferred for later cleanup slices.
+
+SPEC sections / tests:
+- Product docs only:
+  - `docs/src/product/index.md`
+  - `docs/src/product/spec/index.md`
+  - `docs/src/product/prd/index.md`
+  - `docs/src/SUMMARY.md`
+  - `README.md`
+
+Known limitations:
+- `docs/src/requirements/gcode_execution_requirements.md` and several large
+  design docs are still oversized and intentionally deferred.
+- This pass tightened structure and duplicated links, but it did not attempt a
+  full content rewrite of every product-facing page.
+
+How to reproduce locally (commands):
+- `mdbook build docs`
+- `./dev/check.sh`

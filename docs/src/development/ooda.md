@@ -10,7 +10,7 @@ Collect current signals before choosing work:
 - `git` state: branch, uncommitted changes, ahead/behind.
 - CI status: latest workflow result and failing jobs.
 - Test health: `./dev/check.sh` output.
-- Spec drift: differences between implementation/tests and `../product/spec.md`.
+- Spec drift: differences between implementation/tests and `../product/spec/index.md`.
 - Quality signals: diagnostics quality, parser failures, fuzz/crash findings.
 - Open work: unblocked items at top of `../project/backlog.md`.
 
@@ -45,7 +45,7 @@ Implement and validate.
 Mandatory actions per feature PR:
 - code changes
 - tests in `test/`
-- updates to `../product/spec.md` when behavior changes
+- updates to `../product/spec/index.md` when behavior changes
 - update `CHANGELOG_AGENT.md`
 - run `./dev/check.sh`
 
