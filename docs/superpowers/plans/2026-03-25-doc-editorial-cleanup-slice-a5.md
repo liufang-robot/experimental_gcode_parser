@@ -85,7 +85,7 @@
 ## Deferred After This A.5 Pass
 
 Still deferred after this first editorial pass:
-- `docs/src/requirements/gcode_execution_requirements.md`
+- `docs/src/requirements/execution/index.md`
 - large design docs under `docs/src/development/design/`
 - broader README tightening outside product-link cleanup
 

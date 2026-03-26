@@ -5488,3 +5488,13 @@ How to reproduce locally (commands):
 - Reordered the mdBook top-level chapters so `Requirements` comes before `Product Reference`, and maintainer-oriented sections now come later.
 - Clarified chapter ownership in `docs/src/index.md`, `docs/src/product/index.md`, and `docs/src/development/index.md`.
 - Moved maintainer-only test references out of `Program Reference` into `docs/src/development/testing_reference.md`.
+
+## 2026-03-26 (requirements subtree split planning)
+- Recorded the next documentation slice to split the oversized execution requirements page into a focused `requirements/execution/` subtree.
+- Kept the top-level requirements partition as syntax / semantic validation / execution.
+- Deferred syntax and semantic subtree splits until after the execution split.
+
+## 2026-03-26 (execution requirements subtree split)
+- Split `docs/src/requirements/gcode_execution_requirements.md` into a focused `docs/src/requirements/execution/` subtree.
+- Updated requirements navigation in `docs/src/requirements/index.md` and `docs/src/SUMMARY.md`.
+- Kept the top-level requirements partition as syntax / semantic validation / execution.

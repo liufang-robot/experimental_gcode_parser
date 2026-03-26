@@ -232,7 +232,7 @@ The first implementation slice should prove:
 ## Traceability
 
 - Requirements:
-  - `docs/src/requirements/gcode_execution_requirements.md`
+  - `docs/src/requirements/execution/index.md`
     - Diagnostics and Failure Policy
     - Streaming Execution Model
     - Test and Validation Requirements
