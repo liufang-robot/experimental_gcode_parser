@@ -48,6 +48,10 @@ be tracked separately:
     - add CMake docs targets
     - move generated docs into `build/docs/...`
     - update install/export to consume build-tree docs outputs
+  - Slice C:
+    - split `Requirements` into smaller subtrees
+    - start with `docs/src/requirements/execution/index.md`
+    - keep syntax/semantic as later follow-ups
 - `WU-10 Execution Contract Fixtures Step 1`
   - add human-readable execution contract fixtures for the public
     `ExecutionSession` API
