@@ -7,6 +7,7 @@ Use this section for:
 - local build and validation workflow
 - contribution expectations
 - task selection and OODA execution
+- test strategy, test references, and verification entry points
 - architecture and design rationale
 
 Key subsections:
@@ -15,4 +16,5 @@ Key subsections:
 - [Dual-Agent Workflow](dual_agent_workflow.md)
 - [Dual-Agent Feature Checklist](dual_agent_feature_checklist.md)
 - [G-code Text Flow](gcode_text_flow.md)
+- [Testing Reference](testing_reference.md)
 - [Architecture and Design](design/index.md)

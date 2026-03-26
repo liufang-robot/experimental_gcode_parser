@@ -5483,3 +5483,8 @@ Known limitations:
 How to reproduce locally (commands):
 - `mdbook build docs`
 - `./dev/check.sh`
+
+## 2026-03-26 (docs chapter ownership cleanup)
+- Reordered the mdBook top-level chapters so `Requirements` comes before `Product Reference`, and maintainer-oriented sections now come later.
+- Clarified chapter ownership in `docs/src/index.md`, `docs/src/product/index.md`, and `docs/src/development/index.md`.
+- Moved maintainer-only test references out of `Program Reference` into `docs/src/development/testing_reference.md`.

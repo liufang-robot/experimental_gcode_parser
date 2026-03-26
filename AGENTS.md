@@ -40,7 +40,8 @@ If this is green, CI should be green.
 
 ## Read Next
 - `docs/src/index.md`
-- `docs/src/product/spec.md`
+- `docs/src/requirements/index.md`
+- `docs/src/product/index.md`
 - `docs/src/project/backlog.md`
 - `docs/src/project/roadmap.md`
 - `docs/src/development/ooda.md`

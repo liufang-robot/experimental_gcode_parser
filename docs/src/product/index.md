@@ -3,6 +3,20 @@
 Use this section for product-level behavior, scope, API expectations, and the
 implemented program reference.
 
+Put content here when it explains:
+
+- supported syntax
+- meaning and semantics
+- public behavior and user-visible diagnostics
+- examples of valid or invalid program usage
+
+Do not put maintainer-only content here, such as:
+
+- test file inventories
+- verification command recipes
+- implementation-only rationale
+- repo-internal ownership notes
+
 Pages in this section:
 
 - [PRD](prd/index.md)
@@ -23,4 +37,4 @@ Pages in this section:
   - [Program Reference: APIs and Status Matrix](program_reference/api_and_status.md)
   - [Program Reference: Motion and Modal Commands](program_reference/motion_and_modal.md)
   - [Program Reference: Control Flow and Runtime](program_reference/control_flow_and_runtime.md)
-  - [Program Reference: Diagnostics and Test References](program_reference/diagnostics_and_tests.md)
+  - [Program Reference: Diagnostics and Invalid Programs](program_reference/diagnostics.md)
