@@ -2,19 +2,29 @@
 
 This mdBook is the canonical documentation entry point for this repository.
 
-Use these sections:
+Use these sections in this reading order:
 
-- [Product Reference](product/index.md): product goals, behavior contract, and
-  implemented program reference.
+- [Requirements](requirements/index.md): the review-first source of truth for
+  what the project should support.
+- [Product Reference](product/index.md): product goals, public behavior
+  contract, and implemented program reference.
 - [Execution Workflow](execution_workflow.md): the supported public execution
   model built around `ExecutionSession`.
 - [Execution Contract Review](execution_contract_review.md): the reviewed
   public fixture model and generated review site.
-- [Requirements](requirements/index.md): reviewed syntax, semantic, and
-  execution requirements.
-- [Project Planning](project/index.md): roadmap and backlog.
-- [Development Reference](development/index.md): workflow, OODA, architecture,
-  and design notes.
+- [Development Reference](development/index.md): workflow, OODA, testing,
+  architecture, and design notes for maintainers.
+- [Project Planning](project/index.md): roadmap, backlog, and work-unit
+  selection.
+
+Relationship between the sections:
+
+- `Requirements` says what the project should support.
+- `Product Reference` says what the public surface means today.
+- `Execution Workflow` explains how to drive the public execution API.
+- `Execution Contract Review` shows reviewed trace-based public behavior.
+- `Development Reference` is for maintainers, not users of the library.
+- `Project Planning` tracks prioritization and unfinished work.
 
 Direct generated review entry:
 [Open the generated execution contract review site](generated/execution-contract-review/index.html)

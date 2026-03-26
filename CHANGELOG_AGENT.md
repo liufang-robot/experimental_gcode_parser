@@ -5434,3 +5434,57 @@ Known limitations:
 How to reproduce locally (commands):
 - `./dev/build_docs_site.sh`
 - `test -f docs/book/generated/execution-contract-review/index.html`
+
+## 2026-03-26 (docs editorial cleanup slice a5)
+- Split the oversized product `SPEC` and `PRD` pages into smaller mdBook
+  subtrees under `docs/src/product/spec/` and `docs/src/product/prd/`.
+- Updated product navigation, README links, and development references to point
+  at the new canonical subtree entry pages.
+- Clarified the PRD front matter so the split Section 5 pages are easier to
+  understand and no longer use `0`-prefixed heading numbers.
+- Kept this pass structural/editorial only; requirements and large design docs
+  remain deferred for later cleanup slices.
+
+SPEC sections / tests:
+- Product docs only:
+  - `docs/src/product/index.md`
+  - `docs/src/product/spec/index.md`
+  - `docs/src/product/prd/index.md`
+  - `docs/src/SUMMARY.md`
+  - `README.md`
+
+Known limitations:
+- `docs/src/requirements/gcode_execution_requirements.md` and several large
+  design docs are still oversized and intentionally deferred.
+- This pass tightened structure and duplicated links, but it did not attempt a
+  full content rewrite of every product-facing page.
+
+How to reproduce locally (commands):
+- `mdbook build docs`
+- `./dev/check.sh`
+
+## 2026-03-26 (program reference subtree split)
+- Split `docs/src/product/program_reference.md` into a smaller mdBook subtree.
+- Added focused pages for API/status, motion/modal commands, runtime behavior,
+  and diagnostics/test references.
+- Updated product navigation and inbound links to use the new subtree entry.
+
+SPEC sections / tests:
+- Product docs only:
+  - `docs/src/product/program_reference/index.md`
+  - `docs/src/product/index.md`
+  - `docs/src/SUMMARY.md`
+  - `README.md`
+
+Known limitations:
+- This is still a structural/editorial pass; some individual command pages can
+  be split further in later cleanup slices if they grow again.
+
+How to reproduce locally (commands):
+- `mdbook build docs`
+- `./dev/check.sh`
+
+## 2026-03-26 (docs chapter ownership cleanup)
+- Reordered the mdBook top-level chapters so `Requirements` comes before `Product Reference`, and maintainer-oriented sections now come later.
+- Clarified chapter ownership in `docs/src/index.md`, `docs/src/product/index.md`, and `docs/src/development/index.md`.
+- Moved maintainer-only test references out of `Program Reference` into `docs/src/development/testing_reference.md`.
