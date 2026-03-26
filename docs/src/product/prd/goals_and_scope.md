@@ -1,6 +1,6 @@
 # PRD: Goals and Scope
 
-## 0. Review Guide
+## Review Guide
 
 Suggested review order:
 
@@ -12,9 +12,10 @@ Suggested review order:
    - `Needs Clarification`
    - `Out of Scope`
 
-## 0.1 Requirement Index
+## Functional Scope Index
 
-Section 5 domains:
+These are the major requirement areas now covered by the split Section 5
+functional-scope pages:
 
 - comments
 - tool change
@@ -29,7 +30,7 @@ Section 5 domains:
 - incremental parse/edit-resume
 - system and user variables
 
-## 0.2 Acceptance Fixture
+## Acceptance Fixture
 
 Reserved integrated acceptance scenario:
 

@@ -5440,6 +5440,8 @@ How to reproduce locally (commands):
   subtrees under `docs/src/product/spec/` and `docs/src/product/prd/`.
 - Updated product navigation, README links, and development references to point
   at the new canonical subtree entry pages.
+- Clarified the PRD front matter so the split Section 5 pages are easier to
+  understand and no longer use `0`-prefixed heading numbers.
 - Kept this pass structural/editorial only; requirements and large design docs
   remain deferred for later cleanup slices.
 
