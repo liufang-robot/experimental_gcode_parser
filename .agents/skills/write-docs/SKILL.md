@@ -33,30 +33,6 @@ Read first:
   - `product/` = public-facing meaning and behavior
   - `development/` = workflow, testing, verification, architecture
 
-## Placement Heuristics
-
-Put content in `product/` when it explains:
-
-- supported syntax
-- semantics
-- public behavior
-- user-visible diagnostics
-- usage examples
-
-Put content in `development/` when it explains:
-
-- workflow
-- testing references
-- verification commands
-- architecture rationale
-- implementation guidance
-
-Put content in `requirements/` when it explains:
-
-- what the project should support
-- reviewed requirement decisions
-- work-unit readiness or test-planning inputs
-
 ## Editing Rules
 
 - Prefer the smallest effective change.

@@ -71,35 +71,13 @@ Recommended limits:
 
 ## Chapter Ownership
 
-### Requirements
+Keep chapter ownership clear at a high level:
 
-Use `docs/src/requirements/` for review-first target behavior:
+- `requirements/` = review-first target behavior
+- `product/` = public-facing meaning and behavior
+- `development/` = workflow, testing, verification, architecture
 
-- what the project should support
-- reviewed requirement decisions
-- test-planning inputs and work-unit readiness
-
-### Product Reference
-
-Use `docs/src/product/` for public-facing meaning:
-
-- supported syntax
-- semantics
-- public behavior
-- user-visible diagnostics
-- examples of valid or invalid usage
-
-Do not put maintainer-only verification material here.
-
-### Development Reference
-
-Use `docs/src/development/` for maintainer-facing content:
-
-- workflow
-- OODA
-- testing strategy and test references
-- verification entry points
-- architecture and implementation guidance
+Avoid mixing maintainer-only material into public reference pages.
 
 ## Non-Redundancy
 
