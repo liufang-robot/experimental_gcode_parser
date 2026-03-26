@@ -158,6 +158,6 @@ Use these modes depending on what you need:
 ## Related Docs
 
 - [Development: Pipeline](design/pipeline.md)
-- [Program Reference](../product/program_reference.md)
+- [Program Reference](../product/program_reference/index.md)
 - [Architecture](design/architecture.md)
 - [SPEC](../product/spec/index.md)

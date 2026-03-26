@@ -92,7 +92,7 @@ Key docs for the execution model:
 - `docs/src/product/spec/execution_and_runtime.md`
 - `docs/src/execution_workflow.md`
 - `docs/src/execution_contract_review.md`
-- `docs/src/product/program_reference.md`
+- `docs/src/product/program_reference/index.md`
 
 Execution-session shape:
 
@@ -120,7 +120,7 @@ Control-flow examples are documented in:
 - `docs/src/execution_workflow.md`
   - `GOTO`
   - `IF / ELSE / ENDIF`
-- `docs/src/product/program_reference.md`
+- `docs/src/product/program_reference/index.md`
 
 Recovery demo CLI:
 
@@ -135,7 +135,7 @@ read:
 
 - `docs/src/execution_workflow.md`
 - `docs/src/execution_contract_review.md`
-- `docs/src/product/program_reference.md`
+- `docs/src/product/program_reference/index.md`
 
 Execution contract review CLI:
 
@@ -184,7 +184,7 @@ blocks instead of rendered diagrams.
 Main pages:
 
 - `docs/src/development/index.md`
-- `docs/src/product/program_reference.md`
+- `docs/src/product/program_reference/index.md`
 
 GitHub Pages publishes `docs/book` on pushes to `main`, including the generated
 execution contract review subsite under

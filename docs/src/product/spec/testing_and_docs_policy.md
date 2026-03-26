@@ -29,7 +29,7 @@ Canonical docs live under `docs/src/`.
 
 Key documentation surfaces:
 
-- `docs/src/product/program_reference.md`
+- `docs/src/product/program_reference/index.md`
 - `docs/src/product/prd/index.md`
 - `docs/src/product/spec/index.md`
 - `docs/src/development/`

@@ -5462,3 +5462,24 @@ Known limitations:
 How to reproduce locally (commands):
 - `mdbook build docs`
 - `./dev/check.sh`
+
+## 2026-03-26 (program reference subtree split)
+- Split `docs/src/product/program_reference.md` into a smaller mdBook subtree.
+- Added focused pages for API/status, motion/modal commands, runtime behavior,
+  and diagnostics/test references.
+- Updated product navigation and inbound links to use the new subtree entry.
+
+SPEC sections / tests:
+- Product docs only:
+  - `docs/src/product/program_reference/index.md`
+  - `docs/src/product/index.md`
+  - `docs/src/SUMMARY.md`
+  - `README.md`
+
+Known limitations:
+- This is still a structural/editorial pass; some individual command pages can
+  be split further in later cleanup slices if they grow again.
+
+How to reproduce locally (commands):
+- `mdbook build docs`
+- `./dev/check.sh`

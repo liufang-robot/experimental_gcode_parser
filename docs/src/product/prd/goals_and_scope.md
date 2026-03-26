@@ -14,13 +14,13 @@ Suggested review order:
 
 ## Functional Scope Index
 
-The old PRD Section 5 is now split across these pages:
+The old monolithic PRD Section 5 no longer appears as a single chapter; its content is now split across these pages:
 
 - [Functional Scope Overview](functional_scope_overview.md)
 - [Siemens Motion and Modal Domains](siemens_motion_and_modal.md)
 - [Variables and Program Structure](variables_and_program_structure.md)
 
-The major requirement areas covered there are:
+The major requirement areas moved from that old Section 5 are:
 
 - comments
 - tool change

@@ -29,7 +29,7 @@ Canonical linked product docs:
 
 - `docs/src/product/prd/index.md`
 - `docs/src/product/spec/index.md`
-- `docs/src/product/program_reference.md`
+- `docs/src/product/program_reference/index.md`
 - `docs/src/project/backlog.md`
 
 Every feature PR updates all impacted docs in the same PR.
