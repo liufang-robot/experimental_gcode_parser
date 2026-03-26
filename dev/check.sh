@@ -29,6 +29,9 @@ while IFS= read -r -d '' file; do
   format_targets+=("$file")
 done < <(find "$ROOT_DIR/src" "$ROOT_DIR/test" -type f \( -name "*.cpp" -o -name "*.h" \) -print0)
 
+echo "==> docs policy lint"
+python3 "$ROOT_DIR/dev/lint_docs_policy.py"
+
 echo "==> clang-format (check)"
 clang-format --dry-run -Werror "${format_targets[@]}"
 

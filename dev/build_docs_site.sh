@@ -8,6 +8,8 @@ if command -v apt-get >/dev/null 2>&1; then
   fi
 fi
 
+python3 dev/lint_docs_policy.py
+
 cmake -S . -B build
 cmake --build build -j --target gcode_execution_contract_review
 

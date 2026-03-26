@@ -5498,3 +5498,8 @@ How to reproduce locally (commands):
 - Split `docs/src/requirements/gcode_execution_requirements.md` into a focused `docs/src/requirements/execution/` subtree.
 - Updated requirements navigation in `docs/src/requirements/index.md` and `docs/src/SUMMARY.md`.
 - Kept the top-level requirements partition as syntax / semantic validation / execution.
+
+## 2026-03-26 (docs policy and linter)
+- Added `docs/src/development/docs_policy.md` as the canonical summary of the repository's documentation structure rules.
+- Added the repo-local `.agents/skills/write-docs/` skill so agents can follow the agreed mdBook-first documentation workflow.
+- Added `dev/lint_docs_policy.py` and wired it into `dev/check.sh` and `dev/build_docs_site.sh`.
