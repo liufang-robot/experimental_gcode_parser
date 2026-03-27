@@ -1,5 +1,15 @@
 # CHANGELOG_AGENT
 
+## 2026-03-27 (requirements syntax subtree)
+- Split the syntax requirements monolith into `docs/src/requirements/syntax/`.
+- Added a short syntax index page plus focused child pages for line/program
+  structure, comments/whitespace, motion/modal forms, and
+  variables/control-flow/subprogram/tool syntax.
+- Updated requirements navigation and the mdBook summary for the new subtree.
+
+
+
+
 ## 2026-03-25 (documentation IA Slice A)
 - Moved canonical project docs out of the repo root into `docs/src/` and added
   product/project sections to the mdBook navigation.

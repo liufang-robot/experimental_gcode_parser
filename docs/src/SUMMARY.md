@@ -2,7 +2,11 @@
 
 - [Overview](index.md)
 - [Requirements](requirements/index.md)
-  - [Requirements: G-code Syntax](requirements/gcode_syntax_requirements.md)
+  - [Requirements: G-code Syntax](requirements/syntax/index.md)
+    - [Syntax: Line and Program Structure](requirements/syntax/line_and_program_structure.md)
+    - [Syntax: Comments and Whitespace](requirements/syntax/comments_and_whitespace.md)
+    - [Syntax: Motion, Modal, Dwell, and M Functions](requirements/syntax/motion_modal_dwell_and_m_functions.md)
+    - [Syntax: Variables, Control Flow, Subprograms, and Tools](requirements/syntax/variables_control_flow_subprograms_and_tools.md)
   - [Requirements: G-code Semantic Validation](requirements/gcode_semantic_requirements.md)
   - [Requirements: Execution](requirements/execution/index.md)
     - [Execution: Modal State and Streaming](requirements/execution/modal_state_and_streaming.md)
