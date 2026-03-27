@@ -1,5 +1,10 @@
 # CHANGELOG_AGENT
 
+## 2026-03-27 (requirements semantic subtree)
+- Split the semantic requirements monolith into `docs/src/requirements/semantic/`.
+- Added a short semantic index page plus focused child pages for motion/dwell/modal rules, variables/control-flow/subprogram validation, and diagnostics/classification.
+- Updated requirements navigation and the mdBook summary for the new subtree.
+
 ## 2026-03-27 (requirements syntax subtree)
 - Split the syntax requirements monolith into `docs/src/requirements/syntax/`.
 - Added a short syntax index page plus focused child pages for line/program
