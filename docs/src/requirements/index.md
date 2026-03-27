@@ -13,5 +13,5 @@ Use these documents before starting implementation work:
 Current requirement sets:
 
 - [G-code Syntax Requirements](syntax/index.md)
-- [G-code Semantic Validation Requirements](gcode_semantic_requirements.md)
+- [G-code Semantic Validation Requirements](semantic/index.md)
 - [Execution Requirements](execution/index.md)
