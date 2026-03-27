@@ -1,5 +1,9 @@
 .cache
 .agents/
+!.agents/
+!.agents/skills/
+!.agents/skills/write-docs/
+!.agents/skills/write-docs/SKILL.md
 .worktrees/
 build
 openspec

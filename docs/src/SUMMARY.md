@@ -33,6 +33,7 @@
 - [Execution Workflow](execution_workflow.md)
 - [Execution Contract Review](execution_contract_review.md)
 - [Development Reference](development/index.md)
+  - [Development: Docs Policy](development/docs_policy.md)
   - [Development: Workflow](development/workflow.md)
   - [Development: OODA](development/ooda.md)
   - [Development: Dual-Agent Workflow](development/dual_agent_workflow.md)

@@ -7,10 +7,12 @@ Use this section for:
 - local build and validation workflow
 - contribution expectations
 - task selection and OODA execution
+- docs policy and documentation placement rules
 - test strategy, test references, and verification entry points
 - architecture and design rationale
 
 Key subsections:
+- [Docs Policy](docs_policy.md)
 - [Workflow](workflow.md)
 - [OODA](ooda.md)
 - [Dual-Agent Workflow](dual_agent_workflow.md)
