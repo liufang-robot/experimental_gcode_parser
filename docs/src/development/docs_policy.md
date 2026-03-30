@@ -91,11 +91,12 @@ Rules:
 
 ## Agent Guidance
 
-Repo-local agent guidance for documentation lives in:
+Repo-local docs-authoring guidance lives in:
 
 - `.agents/skills/write-docs/SKILL.md`
 
-Use that skill for writing or reorganizing docs. Use the linter for mechanical enforcement.
+Use that skill as the detailed authoring playbook for writing or reorganizing docs.
+Use the linter only for mechanical enforcement.
 
 ## Generated Docs
 
