@@ -1,5 +1,10 @@
 # CHANGELOG_AGENT
 
+## 2026-03-30 (write-docs skill refinement)
+- Expanded the repo-local `write-docs` skill from a short rule list into a docs-authoring playbook.
+- Kept `docs_policy.md` focused on stable repository rules while moving detailed docs workflow guidance into the skill.
+- Clarified that the linter should stay mechanical and the skill should carry tuneable writing guidance.
+
 ## 2026-03-27 (requirements semantic subtree)
 - Split the semantic requirements monolith into `docs/src/requirements/semantic/`.
 - Added a short semantic index page plus focused child pages for motion/dwell/modal rules, variables/control-flow/subprogram validation, and diagnostics/classification.
